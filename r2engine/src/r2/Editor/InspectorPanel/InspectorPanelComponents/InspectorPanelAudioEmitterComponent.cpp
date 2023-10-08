@@ -254,7 +254,7 @@ namespace r2::edit
 		coordinator->AddComponent<ecs::AudioEmitterComponent>(theEntity, audioEmitterComponent);
 	}
 
-	void InspectorPanelAudioEmitterComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelAudioEmitterComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
 
 	}

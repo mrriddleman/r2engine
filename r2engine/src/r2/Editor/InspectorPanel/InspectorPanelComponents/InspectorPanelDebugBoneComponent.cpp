@@ -155,21 +155,24 @@ namespace r2::edit
 		coordinator->AddComponent<r2::ecs::DebugBoneComponent>(theEntity, debugBoneComponent);
 	}
 
-	void InspectorPanelDebugBoneComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelDebugBoneComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
 		ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 
-		r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>* instancedDebugBoneComponentToUse = AddNewInstanceCapacity<ecs::DebugBoneComponent>(coordinator, theEntity);
+		r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>* instancedDebugBoneComponentToUse = AddNewInstanceCapacity<ecs::DebugBoneComponent>(coordinator, theEntity, numInstances);
 
-		ecs::DebugBoneComponent newDebugBoneComponent;
+		for (u32 i = 0; i < numInstances; ++i)
+		{
+			ecs::DebugBoneComponent newDebugBoneComponent;
 
-		newDebugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-		const ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<ecs::SkeletalAnimationComponent>(theEntity);
-		newDebugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*animationComponent.animModel->optrBoneInfo));
+			newDebugBoneComponent.color = glm::vec4(1, 1, 0, 1);
+			const ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<ecs::SkeletalAnimationComponent>(theEntity);
+			newDebugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*animationComponent.animModel->optrBoneInfo));
 
-		r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugBoneComponent);
+			r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugBoneComponent);
+		}
 
-		instancedDebugBoneComponentToUse->numInstances++;
+		instancedDebugBoneComponentToUse->numInstances += numInstances;
 	}
 
 }

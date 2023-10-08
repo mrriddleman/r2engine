@@ -457,6 +457,7 @@ namespace r2::edit
 
 			if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
 			{
+				const ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransforms = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
 
 				const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
 
@@ -520,6 +521,11 @@ namespace r2::edit
 				if (ImGui::Button("Add Component"))
 				{
 					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
+
+					if (instancedTransforms && instancedTransforms->numInstances > 0 && inspectorPanelComponentWidget->CanAddInstancedComponent())
+					{
+						inspectorPanelComponentWidget->AddInstancedComponentsToEntity(coordinator, mSelectedEntity, instancedTransforms->numInstances);
+					}
 				}
 				ImGui::PopItemWidth();
 
@@ -550,7 +556,7 @@ namespace r2::edit
 
 					ManipulateTransformComponent(*transformComponent);
 
-					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
+					/*auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
 					
 					R2_CHECK(transformComponentWidget != nullptr, "Should always exist");
 
@@ -579,15 +585,71 @@ namespace r2::edit
 							}
 						}
 						ImGui::PopItemWidth();
-					}
+					}*/
 				}
 
-				for (size_t i=0; i < mComponentWidgets.size(); ++i)
+				const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(mSelectedEntity);
+				R2_CHECK(editorComponent != nullptr, "Should always exist");
+
+				bool open = ImGui::CollapsingHeader(editorComponent->editorName.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen);
+				if (open)
 				{
-					if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
+					for (size_t i = 0; i < mComponentWidgets.size(); ++i)
 					{
-						mComponentWidgets[i].ImGuiDraw(*this, mSelectedEntity);
+						if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
+						{
+							mComponentWidgets[i].ImGuiDraw(*this, mSelectedEntity);
+						}
 					}
+				}
+				
+				
+				if (instancedTransforms && instancedTransforms->numInstances > 0)
+				{
+					ImGui::Indent();
+
+					for (u32 instanceIndex = 0; instanceIndex < instancedTransforms->numInstances; ++instanceIndex)
+					{
+						std::string instanceName = editorComponent->editorName + " - Instance: " + std::to_string(instanceIndex);
+
+						s32 flags = ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+						if (static_cast<s32>(instanceIndex) == mCurrentInstance)
+						{
+							flags |= ImGuiTreeNodeFlags_DefaultOpen;
+						}
+
+						open = ImGui::CollapsingHeader(instanceName.c_str(), flags);
+						
+						ImVec2 size = ImGui::GetContentRegionAvail();
+						ImGui::PushID(instanceIndex);
+						ImGui::PushItemWidth(50);
+						ImGui::SameLine(size.x - 50);
+
+						if (ImGui::SmallButton("Delete"))
+						{
+							//@TODO(Serge): implement
+							open = false;
+						}
+
+						ImGui::PopItemWidth();
+
+						if (open)
+						{
+							for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+							{
+								if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
+								{
+									mComponentWidgets[i].ImGuiDrawInstance(*this, mSelectedEntity, instanceIndex);
+								}
+							}
+						}
+						
+						ImGui::PopID();
+
+					}
+
+					//@TODO(Serge): Add instance here?
 				}
 			}
 			

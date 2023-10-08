@@ -44,6 +44,8 @@ namespace r2::edit
 
 		void ImGuiDraw(InspectorPanel& inspectorPanel, ecs::Entity theEntity);
 
+		void ImGuiDrawInstance(InspectorPanel& inspectorPanel, ecs::Entity theEntity, u32 instance);
+
 		inline s32 GetSortOrder() const { return mSortOrder; }
 
 		void AddComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity);
@@ -56,7 +58,9 @@ namespace r2::edit
 
 		bool CanAddInstancedComponent() const;
 
-		void AddInstancedComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity);
+		u32 GetNumInstances(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const;
+
+		void AddInstancedComponentsToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances);
 
 	private:
 

@@ -126,7 +126,7 @@ public:
         coordinator->AddComponent<DummyComponent>(theEntity, newDummyComponent);
     }
 
-	virtual void AddNewInstance(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override{}
+    virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances) override{}
 
 };
 

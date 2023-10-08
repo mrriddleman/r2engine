@@ -193,7 +193,7 @@ namespace r2::edit
 		coordinator->AddComponent<ecs::HierarchyComponent>(theEntity, newHierarchyComponent);
 	}
 
-	void InspectorPanelHierarchyComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelHierarchyComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
 
 	}

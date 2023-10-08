@@ -106,7 +106,12 @@ namespace r2::edit
 		R2_CHECK(editor != nullptr, "Should never be nullptr");
 		r2::ecs::ECSCoordinator* coordinator = editor->GetECSCoordinator();
 		R2_CHECK(coordinator != nullptr, "Should never be nullptr");
-		bool open = ImGui::CollapsingHeader(mComponentDataSource->GetComponentName().c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth);
+
+		std::string nodeName = mComponentDataSource->GetComponentName();
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
+
+		bool open = ImGui::TreeNodeEx(nodeName.c_str(), flags, "%s", nodeName.c_str());
+
 
 		const bool shouldDisableComponentDelete = mComponentDataSource->ShouldDisableRemoveComponentButton();
 		if (shouldDisableComponentDelete)
@@ -140,62 +145,48 @@ namespace r2::edit
 			void* componentData = mComponentDataSource->GetComponentData(coordinator, theEntity);
 			mComponentDataSource->DrawComponentData(componentData, coordinator, theEntity);
 
-			if (mComponentDataSource->InstancesEnabled())
-			{
-				const u32 numInstances = mComponentDataSource->GetNumInstances(coordinator, theEntity);
-
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
-
-				const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(theEntity);
-
-				R2_CHECK(editorComponent != nullptr, "Should always exist");
-
-				std::string nodeName = editorComponent->editorName + " - " + mComponentDataSource->GetComponentName() + " - Instance";				
-
-				for (u32 i = 0; i < numInstances; ++i)
-				{
-					ImGui::PushID(i);
-					std::string instanceNodeNode = nodeName + ": " + std::to_string(i);
-					
-					bool isInstanceOpen = ImGui::TreeNodeEx(instanceNodeNode.c_str(), flags, "%s", instanceNodeNode.c_str());
-
-					ImVec2 size = ImGui::GetContentRegionAvail();
-					//std::string instancedDeleteButtonID = nodeName + std::string(" delete - ") + std::to_string(i);
-					//ImGui::PushID(instancedDeleteButtonID.c_str());
-					ImGui::PushItemWidth(50);
-					ImGui::SameLine(size.x - 50);
-
-					if (ImGui::SmallButton("Delete"))
-					{
-						mComponentDataSource->DeleteInstance(i, coordinator, theEntity);
-						isInstanceOpen = false;
-					}
-
-					ImGui::PopItemWidth();
-			//		ImGui::PopID();
-
-					if (isInstanceOpen)
-					{
-						void* componentInstanceData = mComponentDataSource->GetInstancedComponentData(i, coordinator, theEntity);
-
-						mComponentDataSource->DrawComponentData(componentInstanceData, coordinator, theEntity);
-
-						ImGui::TreePop();
-					}
-
-					ImGui::PopID();
-				}
-
-				ImGui::Indent();
-				if (ImGui::Button("Add Instance"))
-				{
-					mComponentDataSource->AddNewInstance(coordinator, theEntity);
-				}
-				ImGui::Unindent();
-			}
+			ImGui::TreePop();
 		}
 
 		ImGui::PopID();
+	}
+
+	void InspectorPanelComponentWidget::ImGuiDrawInstance(InspectorPanel& inspectorPanel, ecs::Entity theEntity, u32 instance)
+	{
+		if (mComponentDataSource->InstancesEnabled())
+		{
+			Editor* editor = inspectorPanel.GetEditor();
+			R2_CHECK(editor != nullptr, "Should never be nullptr");
+			r2::ecs::ECSCoordinator* coordinator = editor->GetECSCoordinator();
+			R2_CHECK(coordinator != nullptr, "Should never be nullptr");
+
+			const u32 numInstances = mComponentDataSource->GetNumInstances(coordinator, theEntity);
+
+			if (numInstances == 0)
+			{
+				return;
+			}
+
+			R2_CHECK(instance < numInstances, "This should never happen");
+
+
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
+			std::string nodeName = mComponentDataSource->GetComponentName() + " - Instance: " + std::to_string(instance);
+			ImGui::PushID(instance);
+
+			bool isInstanceOpen = ImGui::TreeNodeEx(nodeName.c_str(), flags, "%s", nodeName.c_str());
+
+			if (isInstanceOpen)
+			{
+				void* componentInstanceData = mComponentDataSource->GetInstancedComponentData(instance, coordinator, theEntity);
+
+				mComponentDataSource->DrawComponentData(componentInstanceData, coordinator, theEntity);
+
+				ImGui::TreePop();
+			}
+
+			ImGui::PopID();
+		}
 	}
 
 	r2::ecs::ComponentType InspectorPanelComponentWidget::GetComponentType() const
@@ -218,9 +209,19 @@ namespace r2::edit
 		return mComponentDataSource->InstancesEnabled();
 	}
 
-	void InspectorPanelComponentWidget::AddInstancedComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	u32 InspectorPanelComponentWidget::GetNumInstances(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
 	{
-		mComponentDataSource->AddNewInstance(coordinator, theEntity);
+		if (!mComponentDataSource->InstancesEnabled())
+		{
+			return 0;
+		}
+
+		return mComponentDataSource->GetNumInstances(coordinator, theEntity);
+	}
+
+	void InspectorPanelComponentWidget::AddInstancedComponentsToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
+	{
+		mComponentDataSource->AddNewInstances(coordinator, theEntity, numInstances);
 	}
 
 	void InspectorPanelComponentWidget::AddComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)

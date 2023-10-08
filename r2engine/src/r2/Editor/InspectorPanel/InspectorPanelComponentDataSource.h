@@ -13,7 +13,7 @@ namespace r2::edit
 {
 	//Helper function for adding new instances
 	template<typename T>
-	inline ecs::InstanceComponentT<T>* AddNewInstanceCapacity(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	inline ecs::InstanceComponentT<T>* AddNewInstanceCapacity(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
 		const bool hasInstancedComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<T>>(theEntity);
 
@@ -25,7 +25,7 @@ namespace r2::edit
 		{
 			r2::ecs::InstanceComponentT<T> instancedComponent;
 			instancedComponent.numInstances = 0;
-			instancedComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, T, 1);
+			instancedComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, T, numInstances);
 
 			coordinator->AddComponent<r2::ecs::InstanceComponentT<T>>(theEntity, instancedComponent);
 
@@ -37,9 +37,9 @@ namespace r2::edit
 
 			R2_CHECK(tempInstancedComponents != nullptr, "This should never happen");
 
-			if (!(r2::sarr::Size(*tempInstancedComponents->instances) + 1 <= r2::sarr::Capacity(*tempInstancedComponents->instances)))
+			if (!(r2::sarr::Size(*tempInstancedComponents->instances) + numInstances <= r2::sarr::Capacity(*tempInstancedComponents->instances)))
 			{
-				r2::SArray<T>* components = ECS_WORLD_MAKE_SARRAY(ecsWorld, T, tempInstancedComponents->numInstances + 1);
+				r2::SArray<T>* components = ECS_WORLD_MAKE_SARRAY(ecsWorld, T, tempInstancedComponents->numInstances + numInstances);
 
 				r2::sarr::Copy(*components, *tempInstancedComponents->instances);
 
@@ -81,7 +81,7 @@ namespace r2::edit
 		virtual bool CanAddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) {return true;}
 
 		virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) = 0;
-		virtual void AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) = 0;
+		virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances) = 0;
 
 		inline ecs::ComponentType GetComponentType() const { return mComponentType; }
 		inline u64 GetComponentTypeHash() const { return mComponentTypeHash; }

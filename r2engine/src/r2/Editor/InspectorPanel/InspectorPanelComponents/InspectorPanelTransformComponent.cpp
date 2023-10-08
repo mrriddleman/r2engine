@@ -171,15 +171,18 @@ namespace r2::edit
 		coordinator->AddComponent<ecs::TransformComponent>(theEntity, newTransformComponent);
 	}
 
-	void InspectorPanelTransformDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelTransformDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
-		r2::ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponentToUse = AddNewInstanceCapacity<ecs::TransformComponent>(coordinator, theEntity);
+		r2::ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponentToUse = AddNewInstanceCapacity<ecs::TransformComponent>(coordinator, theEntity, numInstances);
 
-		ecs::TransformComponent newTransformComponent;
+		for (u32 i = 0; i < numInstances; ++i)
+		{
+			ecs::TransformComponent newTransformComponent;
 
-		r2::sarr::Push(*instancedTransformComponentToUse->instances, newTransformComponent);
+			r2::sarr::Push(*instancedTransformComponentToUse->instances, newTransformComponent);
+		}
 
-		instancedTransformComponentToUse->numInstances++;
+		instancedTransformComponentToUse->numInstances += numInstances;
 	}
 }
 

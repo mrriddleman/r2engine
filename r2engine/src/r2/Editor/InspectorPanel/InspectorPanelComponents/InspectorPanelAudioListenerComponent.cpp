@@ -111,7 +111,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelAudioListenerComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelAudioListenerComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
 
 	}

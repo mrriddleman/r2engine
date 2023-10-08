@@ -364,22 +364,26 @@ namespace r2::edit
 		coordinator->AddComponent<ecs::DebugRenderComponent>(theEntity, newDebugRenderComponent);
 	}
 
-	void InspectorPanelDebugRenderDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelDebugRenderDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
-		r2::ecs::InstanceComponentT<ecs::DebugRenderComponent>* instancedDebugBoneComponentToUse = AddNewInstanceCapacity<ecs::DebugRenderComponent>(coordinator, theEntity);
+		r2::ecs::InstanceComponentT<ecs::DebugRenderComponent>* instancedDebugBoneComponentToUse = AddNewInstanceCapacity<ecs::DebugRenderComponent>(coordinator, theEntity, numInstances);
 
-		ecs::DebugRenderComponent newDebugRenderComponent;
-		newDebugRenderComponent.debugModelType = draw::DEBUG_CUBE;
-		newDebugRenderComponent.radius = 1.0f;
-		newDebugRenderComponent.scale = glm::vec3(1.0f);
-		newDebugRenderComponent.direction = glm::vec3(0.0f, 0.0f, 1.0f);
-		newDebugRenderComponent.offset = glm::vec3(0);
-		newDebugRenderComponent.color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-		newDebugRenderComponent.filled = true;
-		newDebugRenderComponent.depthTest = true;
+		for (u32 i = 0; i < numInstances; ++i)
+		{
+			ecs::DebugRenderComponent newDebugRenderComponent;
+			newDebugRenderComponent.debugModelType = draw::DEBUG_CUBE;
+			newDebugRenderComponent.radius = 1.0f;
+			newDebugRenderComponent.scale = glm::vec3(1.0f);
+			newDebugRenderComponent.direction = glm::vec3(0.0f, 0.0f, 1.0f);
+			newDebugRenderComponent.offset = glm::vec3(0);
+			newDebugRenderComponent.color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+			newDebugRenderComponent.filled = true;
+			newDebugRenderComponent.depthTest = true;
 
-		r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugRenderComponent);
-		instancedDebugBoneComponentToUse->numInstances++;
+			r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugRenderComponent);
+		}
+
+		instancedDebugBoneComponentToUse->numInstances += numInstances;
 	}
 
 }

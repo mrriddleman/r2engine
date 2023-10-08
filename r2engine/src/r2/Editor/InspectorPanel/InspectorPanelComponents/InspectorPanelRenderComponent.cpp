@@ -946,7 +946,7 @@ namespace r2::edit
 		coordinator->AddComponent<ecs::RenderComponent>(theEntity, newRenderComponent);
 	}
 
-	void InspectorPanelRenderComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelRenderComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances) 
 	{
 
 	}

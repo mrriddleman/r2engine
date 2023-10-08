@@ -218,9 +218,9 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelSkeletonAnimationComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelSkeletonAnimationComponentDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)
 	{
-		r2::ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>* instancedSkeletalAnimationComponentToUse = AddNewInstanceCapacity<ecs::SkeletalAnimationComponent>(coordinator, theEntity);
+		r2::ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>* instancedSkeletalAnimationComponentToUse = AddNewInstanceCapacity<ecs::SkeletalAnimationComponent>(coordinator, theEntity, numInstances);
 
 		ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 
@@ -229,21 +229,25 @@ namespace r2::edit
 
 		const r2::draw::Model* renderModel = skeletalAnimationComponent.animModel;
 
-		r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
-		newSkeletalAnimationComponent.animModel = renderModel;
-		newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
+		for (u32 i = 0; i < numInstances; i++)
+		{
+			r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
+			newSkeletalAnimationComponent.animModel = renderModel;
+			newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
 
-		R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
 
-		newSkeletalAnimationComponent.startingAnimationIndex = 0;
-		newSkeletalAnimationComponent.shouldLoop = true;
-		newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
-		newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
-		newSkeletalAnimationComponent.startTime = 0;
-		newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+			newSkeletalAnimationComponent.startingAnimationIndex = 0;
+			newSkeletalAnimationComponent.shouldLoop = true;
+			newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+			newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
+			newSkeletalAnimationComponent.startTime = 0;
+			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
 
-		r2::sarr::Push(*instancedSkeletalAnimationComponentToUse->instances, newSkeletalAnimationComponent);
-		instancedSkeletalAnimationComponentToUse->numInstances++;
+			r2::sarr::Push(*instancedSkeletalAnimationComponentToUse->instances, newSkeletalAnimationComponent);
+		}
+
+		instancedSkeletalAnimationComponentToUse->numInstances += numInstances;
 	}
 
 	bool InspectorPanelSkeletonAnimationComponentDataSource::CanAddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
