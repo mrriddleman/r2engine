@@ -224,6 +224,11 @@ namespace r2::edit
 		mComponentDataSource->AddNewInstances(coordinator, theEntity, numInstances);
 	}
 
+	void InspectorPanelComponentWidget::DeleteInstanceFromEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 instanceIndex)
+	{
+		mComponentDataSource->DeleteInstance(instanceIndex, coordinator, theEntity);
+	}
+
 	void InspectorPanelComponentWidget::AddComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{ 
 		if (mComponentDataSource->CanAddComponent(coordinator, theEntity))

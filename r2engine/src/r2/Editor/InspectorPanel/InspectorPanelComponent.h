@@ -62,6 +62,8 @@ namespace r2::edit
 
 		void AddInstancedComponentsToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances);
 
+		void DeleteInstanceFromEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 instanceIndex);
+
 	private:
 
 		std::shared_ptr<InspectorPanelComponentDataSource> mComponentDataSource;

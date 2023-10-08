@@ -480,7 +480,7 @@ namespace r2::edit
 				{
 					currentComponentName = componentNames[mCurrentComponentIndexToAdd];
 				}
-				ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.5);
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.6);
 				if (ImGui::BeginCombo("##label components", currentComponentName.c_str()))
 				{
 					for (s32 i = 0; i < componentNames.size(); i++)
@@ -517,8 +517,8 @@ namespace r2::edit
 					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
 				}
 
-				ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.2);
-				if (ImGui::Button("Add Component"))
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.2);
+				if (ImGui::Button("Add"))
 				{
 					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
 
@@ -534,8 +534,10 @@ namespace r2::edit
 					ImGui::PopStyleVar();
 					ImGui::EndDisabled();
 				}
+				
+				const bool hasTransformComponent = coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity);
 
-				if (coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity) &&
+				if ( hasTransformComponent &&
 					coordinator->HasComponent<ecs::RenderComponent>(mSelectedEntity))
 				{
 
@@ -622,17 +624,32 @@ namespace r2::edit
 						open = ImGui::CollapsingHeader(instanceName.c_str(), flags);
 						
 						ImVec2 size = ImGui::GetContentRegionAvail();
-						ImGui::PushID(instanceIndex);
-						ImGui::PushItemWidth(50);
-						ImGui::SameLine(size.x - 50);
+						ImGui::PushID( (std::string("DeleteInstance:") + std::to_string(instanceIndex)).c_str());
+						ImGui::PushItemWidth(40);
+						ImGui::SameLine(size.x - 40);
 
 						if (ImGui::SmallButton("Delete"))
 						{
-							//@TODO(Serge): implement
 							open = false;
+
+							//Doing a copy to ensure nothing changes inbetween loop iterations and any event that my happen
+							auto entityToDelete = mSelectedEntity;
+							auto instanceToDelete = instanceIndex;
+
+							for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+							{
+								auto& componentWidget = mComponentWidgets[i];
+								if (entitySignature.test(componentWidget.GetComponentType()) && componentWidget.CanAddInstancedComponent())
+								{
+									componentWidget.DeleteInstanceFromEntity(coordinator, entityToDelete, instanceToDelete);
+								}
+							}
+							
 						}
 
 						ImGui::PopItemWidth();
+						ImGui::PopID();
+
 
 						if (open)
 						{
@@ -645,11 +662,25 @@ namespace r2::edit
 							}
 						}
 						
-						ImGui::PopID();
-
+						
 					}
+				}
 
-					//@TODO(Serge): Add instance here?
+				if (hasTransformComponent)
+				{
+					if (ImGui::Button("Add Instance"))
+					{
+						u32 numInstancesToAdd = 1;
+
+						for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+						{
+							auto& componentWidget = mComponentWidgets[i];
+							if (entitySignature.test(componentWidget.GetComponentType()) && componentWidget.CanAddInstancedComponent())
+							{
+								componentWidget.AddInstancedComponentsToEntity(coordinator, mSelectedEntity, numInstancesToAdd);
+							}
+						}
+					}
 				}
 			}
 			

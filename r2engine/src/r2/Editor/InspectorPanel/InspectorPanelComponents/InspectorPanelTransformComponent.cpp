@@ -153,14 +153,13 @@ namespace r2::edit
 
 		ecs::SelectionComponent* selectionComponent = coordinator->GetComponentPtr<ecs::SelectionComponent>(theEntity);
 
+		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedTransformComponent->instances, i);
+		instancedTransformComponent->numInstances--;
+
 		if (selectionComponent != nullptr)
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, 0, -1, theEntity, static_cast<s32>(i)));
 		}
-
-
-		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedTransformComponent->instances, i);
-		instancedTransformComponent->numInstances--;
 	}
 
 	void InspectorPanelTransformDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
