@@ -1391,13 +1391,17 @@ namespace r2::draw::renderer
 		cmdbkt::Submit(*renderer.mEditorPickingBucket);
 #endif
 
-		cmdbkt::Submit(*renderer.mCommandBucket);
-		cmdbkt::Submit(*renderer.mTransparentBucket);
+		cmdbkt::Submit(*renderer.mCommandBucket); 
+		
 		cmdbkt::Submit(*renderer.mSSRBucket);
+
+		//We want the debug submits to be after we use the depth buffer for all passes since we need to write to it
+		//for debug shapes to look correct
 #ifdef R2_DEBUG
 		cmdbkt::Submit(*renderer.mPreDebugCommandBucket);
 		cmdbkt::Submit(*renderer.mDebugCommandBucket);
 #endif
+		cmdbkt::Submit(*renderer.mTransparentBucket);
 
 		cmdbkt::Submit(*renderer.mFinalBucket);
 		cmdbkt::Submit(*renderer.mPostRenderBucket);
@@ -6621,7 +6625,7 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 				drawBatch->state.depthFunction = LESS;
-				drawBatch->state.depthWriteEnabled = false;
+				drawBatch->state.depthWriteEnabled = true;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultCullState(drawBatch->state.cullState);
