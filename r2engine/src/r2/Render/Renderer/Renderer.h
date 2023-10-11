@@ -458,6 +458,8 @@ namespace r2::draw
 #ifdef R2_DEBUG
 		r2::draw::ShaderHandle mDebugLinesShaderHandle;
 		r2::draw::ShaderHandle mDebugModelShaderHandle;
+		r2::draw::ShaderHandle mDebugTransparentModelShaderHandle;
+		r2::draw::ShaderHandle mDebugTransparentLineShaderHandle;
 
 		vb::VertexBufferLayoutHandle mDebugLinesVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mDebugModelVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;

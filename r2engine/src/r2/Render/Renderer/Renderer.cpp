@@ -902,6 +902,8 @@ namespace r2::draw::renderer
 #ifdef R2_DEBUG
 		newRenderer->mDebugLinesShaderHandle = shadersystem::FindShaderHandle(STRING_ID("Debug"));
 		newRenderer->mDebugModelShaderHandle = shadersystem::FindShaderHandle(STRING_ID("DebugModel"));
+		newRenderer->mDebugTransparentLineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("TransparentDebug"));
+		newRenderer->mDebugTransparentModelShaderHandle = shadersystem::FindShaderHandle(STRING_ID("TransparentDebugModel"));
 #endif
 		newRenderer->mFinalCompositeShaderHandle = shadersystem::FindShaderHandle(STRING_ID("Screen"));
 		newRenderer->mDefaultStaticOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("StaticOutline"));

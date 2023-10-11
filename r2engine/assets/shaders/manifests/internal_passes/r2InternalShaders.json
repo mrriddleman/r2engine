@@ -28,6 +28,24 @@
 		    partPath: ""
 		},
 		{
+			shaderName: "TransparentDebugModel",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug/DebugModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug/DebugTransparent.fs",
+			geometryPath: "",
+		    computePath: "",
+		    binaryPath: "",
+		    partPath: ""
+		},
+		{
+			shaderName: "TransparentDebug",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug/Debug.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug/DebugTransparent.fs",
+			geometryPath: "",
+		    computePath: "",
+		    binaryPath: "",
+		    partPath: ""
+		},
+		{
 			shaderName: "Denoise",
 			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
 			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/GTAO/Denoise.fs",
