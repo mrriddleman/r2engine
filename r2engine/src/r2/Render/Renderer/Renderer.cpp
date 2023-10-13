@@ -845,12 +845,12 @@ namespace r2::draw::renderer
 			debugRenderBatch.drawFlags = MAKE_SARRAY(*rendererArena, DrawFlags, MAX_NUM_DRAWS);
 			debugRenderBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
 
-			if (debugRenderBatch.debugDrawType == DDT_LINES)
+			if (debugRenderBatch.debugDrawType == DDT_LINES || debugRenderBatch.debugDrawType == DDT_LINES_TRANSPARENT)
 			{
 				debugRenderBatch.matTransforms = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				debugRenderBatch.vertices = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DRAWS * 2);
 			}
-			else if (debugRenderBatch.debugDrawType == DDT_MODELS)
+			else if (debugRenderBatch.debugDrawType == DDT_MODELS || debugRenderBatch.debugDrawType == DDT_MODELS_TRANSPARENT)
 			{
 				debugRenderBatch.transforms = MAKE_SARRAY(*rendererArena, math::Transform, MAX_NUM_DRAWS);
 				debugRenderBatch.debugModelTypesToDraw = MAKE_SARRAY(*rendererArena, DebugModelType, MAX_NUM_DRAWS);
@@ -1472,12 +1472,12 @@ namespace r2::draw::renderer
 		{
 			DebugRenderBatch& debugRenderBatch = r2::sarr::At(*renderer->mDebugRenderBatches, i);
 
-			if ((DebugDrawType)i == DDT_LINES)
+			if ((DebugDrawType)i == DDT_LINES || (DebugDrawType)i == DDT_LINES_TRANSPARENT)
 			{
 				FREE(debugRenderBatch.vertices, *arena);
 				FREE(debugRenderBatch.matTransforms, *arena);
 			}
-			else if ((DebugDrawType)i == DDT_MODELS)
+			else if ((DebugDrawType)i == DDT_MODELS || (DebugDrawType)i == DDT_MODELS_TRANSPARENT)
 			{
 				FREE(debugRenderBatch.debugModelTypesToDraw, *arena);
 				FREE(debugRenderBatch.transforms, *arena);
@@ -1778,6 +1778,19 @@ namespace r2::draw::renderer
 			debugModelRenderBatch.shaderHandle = renderer.mDebugModelShaderHandle;
 			debugModelRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
 			debugModelRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugModelSubCommandsConfigHandle;
+
+			DebugRenderBatch& debugLinesTransparentRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
+			debugLinesTransparentRenderBatch.vertexBufferLayoutHandle = renderer.mDebugLinesVertexConfigHandle;
+			debugLinesTransparentRenderBatch.shaderHandle = renderer.mDebugTransparentLineShaderHandle;
+			debugLinesTransparentRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
+			debugLinesTransparentRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugLinesSubCommandsConfigHandle;
+
+			DebugRenderBatch& debugModelTransparentRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
+			debugModelTransparentRenderBatch.vertexBufferLayoutHandle = renderer.mDebugModelVertexConfigHandle;
+			debugModelTransparentRenderBatch.shaderHandle = renderer.mDebugTransparentModelShaderHandle;
+			debugModelTransparentRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
+			debugModelTransparentRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugModelSubCommandsConfigHandle;
+
 #endif
 
 			for (s32 i = 0; i < DrawType::NUM_DRAW_TYPES; ++i)
@@ -2488,8 +2501,8 @@ namespace r2::draw::renderer
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2
-			+ r2::mem::utils::GetMaxMemoryForAllocation(DebugRenderBatch::MemorySize(MAX_NUM_DRAWS, false, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking)
-			+ r2::mem::utils::GetMaxMemoryForAllocation(DebugRenderBatch::MemorySize(MAX_NUM_DRAWS, true, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(DebugRenderBatch::MemorySize(MAX_NUM_DRAWS, false, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) *2
+			+ r2::mem::utils::GetMaxMemoryForAllocation(DebugRenderBatch::MemorySize(MAX_NUM_DRAWS, true, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) *2
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DebugKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 3
 			+ r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking)
 			+ r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY 
@@ -6414,7 +6427,7 @@ namespace r2::draw::renderer
 				debugDrawCommandData = ALLOC(DebugDrawCommandData, *renderer.mPreRenderStackArena);
 				r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
 
-				if (modelType != DEBUG_LINE)
+				if (modelType != DEBUG_LINE )
 				{
 					debugDrawCommandData->debugModelDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numDebugObjectsToDraw); //@NOTE(Serge): overestimate
 					r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData->debugModelDrawBatchCommands);
@@ -6546,7 +6559,6 @@ namespace r2::draw::renderer
 					batchCommandData = (void*)debugDrawCommandData->debugLineDrawBatchCommands->mData;
 				}
 
-
 				batchSubCommandsMemorySize = numSubCommandsInBatch * subCommandMemorySize;
 				memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), batchCommandData, batchSubCommandsMemorySize);
 
@@ -6586,7 +6598,7 @@ namespace r2::draw::renderer
 	}
 
 
-	void FillDebugDrawCommands(Renderer& renderer, r2::SArray<BatchRenderOffsets>* debugBatchOffsets, const BufferLayoutHandle& debugBufferLayoutHandle, ConstantBufferHandle subCommandsBufferHandle, bool debugLines)
+	void FillDebugDrawCommands(Renderer& renderer, r2::SArray<BatchRenderOffsets>* debugBatchOffsets, const BufferLayoutHandle& debugBufferLayoutHandle, ConstantBufferHandle subCommandsBufferHandle, bool debugLines, bool transparentBatch)
 	{
 		const u64 numDebugModelBatchOffsets = r2::sarr::Size(*debugBatchOffsets);
 
@@ -6598,7 +6610,19 @@ namespace r2::draw::renderer
 			
 			if (debugLines)
 			{
-				cmd::DrawDebugBatch* drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
+
+				cmd::DrawDebugBatch* drawBatch = nullptr;
+				if (!transparentBatch)
+				{
+					drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
+				}
+				else
+				{
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+
+					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
+				}
+
 				drawBatch->batchHandle = subCommandsBufferHandle;
 				drawBatch->bufferLayoutHandle = debugBufferLayoutHandle;
 				drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -6614,10 +6638,25 @@ namespace r2::draw::renderer
 				cmd::SetDefaultCullState(drawBatch->state.cullState);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 				cmd::SetDefaultBlendState(drawBatch->state.blendState);
+				if (transparentBatch)
+				{
+					SetDefaultTransparencyBlendState(drawBatch->state.blendState);
+				}
 			}
 			else
 			{
-				cmd::DrawBatch* drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
+				cmd::DrawBatch* drawBatch = nullptr;
+				if (!transparentBatch)
+				{
+					drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
+				}
+				else
+				{
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+
+					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
+				}
+
 				drawBatch->batchHandle = subCommandsBufferHandle;
 				drawBatch->bufferLayoutHandle = debugBufferLayoutHandle;
 				drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -6633,6 +6672,10 @@ namespace r2::draw::renderer
 				cmd::SetDefaultCullState(drawBatch->state.cullState);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 				cmd::SetDefaultBlendState(drawBatch->state.blendState);
+				if (transparentBatch)
+				{
+					SetDefaultTransparencyBlendState(drawBatch->state.blendState);
+				}
 			}
 		}
 	}
@@ -6643,12 +6686,13 @@ namespace r2::draw::renderer
 
 		const DebugRenderBatch& debugModelsRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
 		const DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
+		const DebugRenderBatch& debugModelsTransparentRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
+		const DebugRenderBatch& debugLinesTransparentBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
 
 		ConstantBufferHandle debugModelsSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugModelsRenderBatch.subCommandsConstantConfigHandle);
 		ConstantBufferHandle debugLinesSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugLinesRenderBatch.subCommandsConstantConfigHandle);
-
-		//const VertexLayoutConfigHandle& debugModelsVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugModelsRenderBatch.vertexConfigHandle);
-		//const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugLinesRenderBatch.vertexConfigHandle);
+		ConstantBufferHandle debugModelsTransparentSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugModelsTransparentRenderBatch.subCommandsConstantConfigHandle);
+		ConstantBufferHandle debugLinesTransparentSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugLinesTransparentBatch.subCommandsConstantConfigHandle);
 
 		BufferLayoutHandle debugModelBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_DEBUG_MODEL));
 		BufferLayoutHandle debugLinesBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_DEBUG_LINES));
@@ -6656,7 +6700,11 @@ namespace r2::draw::renderer
 		const auto numModelsToDraw = r2::sarr::Size(*debugModelsRenderBatch.numInstances);
 		const auto numDebugModelsToDraw  = r2::sarr::Size(*debugModelsRenderBatch.debugModelTypesToDraw);
 
+		const auto numTransparentModelsToDraw = r2::sarr::Size(*debugModelsTransparentRenderBatch.numInstances);
+		const auto numDebugTransparentModelsToDraw = r2::sarr::Size(*debugModelsTransparentRenderBatch.debugModelTypesToDraw);
+
 		R2_CHECK(numModelsToDraw == numDebugModelsToDraw, "These should be the same!");
+		R2_CHECK(numDebugTransparentModelsToDraw == numTransparentModelsToDraw, "These should be the same!");
 
 		u32 numModelInstancesToDraw = 0;
 
@@ -6665,11 +6713,20 @@ namespace r2::draw::renderer
 			numModelInstancesToDraw += static_cast<u32>(r2::sarr::At(*debugModelsRenderBatch.numInstances, i));
 		}
 
+		u32 numTransparentModelInstancesToDraw = 0;
+		for (u32 i = 0; i < numTransparentModelsToDraw; ++i)
+		{
+			numTransparentModelInstancesToDraw += static_cast<u32>(r2::sarr::At(*debugModelsTransparentRenderBatch.numInstances, i));
+		}
+
+
 		//R2_CHECK(numModelsToDraw == numModelInstancesToDraw, "These should be the same for right now!");
 
 		u64 numLinesToDraw = r2::sarr::Size(*debugLinesRenderBatch.vertices) / 2;
-		
-		const u64 totalObjectsToDraw = numModelInstancesToDraw + numLinesToDraw;
+		u32 numTransparentLinesToDraw = r2::sarr::Size(*debugLinesTransparentBatch.vertices) / 2;
+
+
+		const u64 totalObjectsToDraw = numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw + numTransparentLinesToDraw;
 		
 		r2::SArray<void*>* tempAllocations = nullptr;
 
@@ -6715,6 +6772,31 @@ namespace r2::draw::renderer
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
 			AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesRenderBatch, debugDrawCommandData, linesBatchRenderOffsets, numLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
 		}
+
+		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
+
+		if (numTransparentModelsToDraw > 0)
+		{
+			r2::shashmap::Clear(*debugDrawCommandData);
+
+			transparentModelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentModelsToDraw);
+			r2::sarr::Push(*tempAllocations, (void*)transparentModelBatchRenderOffsets);
+
+			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			AddDebugSubCommandPreAndPostCMDs(renderer, debugModelsTransparentRenderBatch, debugDrawCommandData, transparentModelBatchRenderOffsets, numTransparentModelsToDraw, sizeof(cmd::DrawBatchSubCommand));
+		}
+
+		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
+		if (numTransparentLinesToDraw > 0)
+		{
+			r2::shashmap::Clear(*debugDrawCommandData);
+
+			transparentLinesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentLinesToDraw);
+			r2::sarr::Push(*tempAllocations, (void*)transparentLinesBatchRenderOffsets);
+
+			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesTransparentBatch, debugDrawCommandData, transparentLinesBatchRenderOffsets, numTransparentLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
+		}
 		
 
 		key::DebugKey emptyDebugKey;
@@ -6750,7 +6832,7 @@ namespace r2::draw::renderer
 			completeRenderConstantsCMD->count = totalObjectsToDraw;
 		}
 
-		if (modelBatchRenderOffsets || linesBatchRenderOffsets)
+		if (modelBatchRenderOffsets || linesBatchRenderOffsets || transparentLinesBatchRenderOffsets || transparentModelBatchRenderOffsets)
 		{
 			key::DebugKey setDebugRenderTargetKey = key::GenerateDebugKey(0, PrimitiveType::POINTS, 0, 0, 0);
 
@@ -6763,25 +6845,25 @@ namespace r2::draw::renderer
 
 		if (modelBatchRenderOffsets)
 		{
-			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsSubCommandsBufferHandle, false);
+			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsSubCommandsBufferHandle, false, false);
 		}
 		
 		if (linesBatchRenderOffsets)
 		{
-			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesBufferLayoutHandle, debugLinesSubCommandsBufferHandle, true);
+			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesBufferLayoutHandle, debugLinesSubCommandsBufferHandle, true, false);
+		}
+
+		if (transparentModelBatchRenderOffsets)
+		{
+			FillDebugDrawCommands(renderer, transparentModelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsTransparentSubCommandsBufferHandle, false, true);
+		}
+
+		if (transparentLinesBatchRenderOffsets)
+		{
+			FillDebugDrawCommands(renderer, transparentLinesBatchRenderOffsets, debugLinesBufferLayoutHandle, debugLinesTransparentSubCommandsBufferHandle, true, true);
 		}
 
 		RESET_ARENA(*renderer.mPreRenderStackArena);
-		/*const s64 numAllocations = r2::sarr::Size(*tempAllocations);
-
-		for (s64 i = numAllocations - 1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*tempAllocations, i), *MEM_ENG_SCRATCH_PTR);
-		}
-
-		r2::sarr::Clear(*tempAllocations);
-
-		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);*/
 	}
 
 	void ClearDebugRenderData(Renderer& renderer)
@@ -6795,12 +6877,12 @@ namespace r2::draw::renderer
 			r2::sarr::Clear(*batch.drawFlags);
 			r2::sarr::Clear(*batch.numInstances);
 
-			if (batch.debugDrawType == DDT_LINES)
+			if (batch.debugDrawType == DDT_LINES || batch.debugDrawType == DDT_LINES_TRANSPARENT)
 			{ 
 				r2::sarr::Clear(*batch.matTransforms);
 				r2::sarr::Clear(*batch.vertices);
 			}
-			else if (batch.debugDrawType == DDT_MODELS)
+			else if (batch.debugDrawType == DDT_MODELS || batch.debugDrawType == DDT_MODELS_TRANSPARENT)
 			{
 				r2::sarr::Clear(*batch.transforms);
 				r2::sarr::Clear(*batch.debugModelTypesToDraw);
@@ -7009,8 +7091,17 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
+		DebugRenderBatch& debugTransparentLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
 
-		R2_CHECK(debugLinesRenderBatch.vertices != nullptr, "We haven't properly initialized the debug render batches!");
+		DebugRenderBatch* debugRenderBatchToUse = &debugLinesRenderBatch;
+		if (color.a < 1.0f)
+		{
+			debugRenderBatchToUse = &debugTransparentLinesRenderBatch;
+		}
+
+		R2_CHECK(debugRenderBatchToUse != nullptr, "This should never happen");
+
+		R2_CHECK(debugRenderBatchToUse->vertices != nullptr, "We haven't properly initialized the debug render batches!");
 
 		r2::draw::DebugVertex v1{ p0 };
 		r2::draw::DebugVertex v2{ p1 };
@@ -7018,12 +7109,12 @@ namespace r2::draw::renderer
 		DrawFlags flags;
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
-		r2::sarr::Push(*debugLinesRenderBatch.colors, color);
-		r2::sarr::Push(*debugLinesRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugLinesRenderBatch.vertices, v1);
-		r2::sarr::Push(*debugLinesRenderBatch.vertices, v2);
-		r2::sarr::Push(*debugLinesRenderBatch.matTransforms, modelMat);
-		r2::sarr::Push(*debugLinesRenderBatch.numInstances, 1u);
+		r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+		r2::sarr::Push(*debugRenderBatchToUse->drawFlags, flags);
+		r2::sarr::Push(*debugRenderBatchToUse->vertices, v1);
+		r2::sarr::Push(*debugRenderBatchToUse->vertices, v2);
+		r2::sarr::Push(*debugRenderBatchToUse->matTransforms, modelMat);
+		r2::sarr::Push(*debugRenderBatchToUse->numInstances, 1u);
 	}
 
 	void DrawTangentVectors(Renderer& renderer, DefaultModel defaultModel, const glm::mat4& transform)
@@ -7078,20 +7169,39 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		DebugRenderBatch& debugTransparentModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
+
 		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		R2_CHECK(debugTransparentModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
 
 		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(scales) && r2::sarr::Size(centers) == r2::sarr::Size(colors) && r2::sarr::Size(centers) == r2::sarr::Size(normals),
 			"There should be the same amount of elements in all arrays");
 
-		const auto numInstances = r2::sarr::Size(centers);
+		const auto numCenters = r2::sarr::Size(centers);
+		u32 numOpaqueInstances = 0;
+		u32 numTransparentInstances = 0;
+
 		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
 
-		for (u32 i = 0; i < numInstances; i++)
+		for (u32 i = 0; i < numCenters; i++)
 		{
 			glm::vec3 position = r2::sarr::At(centers, i);
 			glm::vec2 scale = r2::sarr::At(scales, i);
 			glm::vec3 normal = glm::normalize(r2::sarr::At(normals, i));
 			glm::vec4 color = r2::sarr::At(colors, i);
+
+			DebugRenderBatch* debugRenderBatchToUse = nullptr;
+
+			if (color.a < 1.0f)
+			{
+				debugRenderBatchToUse = &debugTransparentModelRenderBatch;
+				numTransparentInstances++;
+			}
+			else
+			{
+				debugRenderBatchToUse = &debugModelRenderBatch;
+				numOpaqueInstances++;
+			}
 
 			math::Transform t;
 			t.position = position;
@@ -7108,17 +7218,27 @@ namespace r2::draw::renderer
 
 			t.rotation = glm::angleAxis(angleBetween, axis);
 
-			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
-			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_QUAD);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+		if (numOpaqueInstances > 0)
+		{
+			r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_QUAD);
+			r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numOpaqueInstances));
+		}
+
+		if(numTransparentInstances > 0)
+		{
+			r2::sarr::Push(*debugTransparentModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.debugModelTypesToDraw, DEBUG_QUAD);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.numInstances, static_cast<u32>(numTransparentInstances));
+		}
 	}
 
 	void DrawSphereInstanced(
@@ -7136,34 +7256,62 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		DebugRenderBatch& debugTransparentModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
 
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		R2_CHECK(debugTransparentModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		
 		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(radii) && r2::sarr::Size(centers) == r2::sarr::Size(colors),
 			"There should be the same amount of elements in all arrays");
 
-		const auto numInstances = r2::sarr::Size(centers);
+		const auto numCenters = r2::sarr::Size(centers);
+		u32 numOpaqueInstances = 0;
+		u32 numTransparentInstances = 0;
 
-		for (u32 i = 0; i < numInstances; i++)
+		for (u32 i = 0; i < numCenters; i++)
 		{
 			const glm::vec3& center = r2::sarr::At(centers, i);
 			float radius = r2::sarr::At(radii, i);
 			const glm::vec4& color = r2::sarr::At(colors, i);
 
+			DebugRenderBatch* debugRenderBatchToUse = nullptr;
+
+			if (color.a < 1.0f)
+			{
+				debugRenderBatchToUse = &debugTransparentModelRenderBatch;
+				numTransparentInstances++;
+			}
+			else
+			{
+				debugRenderBatchToUse = &debugModelRenderBatch;
+				numOpaqueInstances++;
+			}
+
 			math::Transform t;
 			t.position = center;
 			t.scale = glm::vec3(radius);
 
-			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
-			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_SPHERE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+		if (numOpaqueInstances > 0)
+		{
+			r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_SPHERE);
+			r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numOpaqueInstances));
+		}
+		
+		if (numTransparentInstances > 0)
+		{
+			r2::sarr::Push(*debugTransparentModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.debugModelTypesToDraw, DEBUG_SPHERE);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.numInstances, static_cast<u32>(numTransparentInstances));
+		}
 	}
 
 	void DrawCubeInstanced(
@@ -7181,35 +7329,63 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		DebugRenderBatch& debugTransparentModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
 
 		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		R2_CHECK(debugTransparentModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
 
 		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(scales) && r2::sarr::Size(centers) == r2::sarr::Size(colors),
 			"There should be the same amount of elements in all arrays");
 
-		const auto numInstances = r2::sarr::Size(centers);
+		const auto numCenters = r2::sarr::Size(centers);
+		u32 numOpaqueInstances = 0;
+		u32 numTransparentInstances = 0;
 
-		for (u64 i = 0; i < numInstances; i++)
+		for (u64 i = 0; i < numCenters; i++)
 		{
 			const glm::vec3& center = r2::sarr::At(centers, i);
 			float scale = r2::sarr::At(scales, i);
 			const glm::vec4& color = r2::sarr::At(colors, i);
 
+			DebugRenderBatch* debugRenderBatchToUse = nullptr;
+
+			if (color.a < 1.0f)
+			{
+				debugRenderBatchToUse = &debugTransparentModelRenderBatch;
+				numTransparentInstances++;
+			}
+			else
+			{
+				debugRenderBatchToUse = &debugModelRenderBatch;
+				numOpaqueInstances++;
+			}
+
 			math::Transform t;
 			t.position = center;
 			t.scale = glm::vec3(scale);
 
-			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
-			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CUBE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+		if (numOpaqueInstances > 0)
+		{
+			r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CUBE);
+			r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numOpaqueInstances));
+		}
+		
+		if (numTransparentInstances)
+		{
+			r2::sarr::Push(*debugTransparentModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.debugModelTypesToDraw, DEBUG_CUBE);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.numInstances, static_cast<u32>(numTransparentInstances));
+		}
+
 	}
 
 	void DrawCylinderInstanced(
@@ -7229,8 +7405,10 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		DebugRenderBatch& debugTransparentModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
 
 		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		R2_CHECK(debugTransparentModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
 
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
@@ -7243,15 +7421,30 @@ namespace r2::draw::renderer
 			r2::sarr::Size(basePositions) == r2::sarr::Size(colors),
 			"There should be the same amount of elements in all arrays");
 
-		const auto numInstances = r2::sarr::Size(basePositions);
+		const auto numBasePositions = r2::sarr::Size(basePositions);
+		u32 numOpaqueInstances = 0;
+		u32 numTransparentInstances = 0;
 
-		for (u64 i = 0; i < numInstances; i++)
+		for (u64 i = 0; i < numBasePositions; i++)
 		{
 			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
 			float radius = r2::sarr::At(radii, i);
 			const glm::vec3& dir = r2::sarr::At(directions, i);
 			float height = r2::sarr::At(heights, i);
 			const glm::vec4& color = r2::sarr::At(colors, i);
+
+			DebugRenderBatch* debugRenderBatchToUse = nullptr;
+
+			if (color.a < 1.0f)
+			{
+				debugRenderBatchToUse = &debugTransparentModelRenderBatch;
+				numTransparentInstances++;
+			}
+			else
+			{
+				debugRenderBatchToUse = &debugModelRenderBatch;
+				numOpaqueInstances++;
+			}
 
 			math::Transform t;
 
@@ -7282,14 +7475,23 @@ namespace r2::draw::renderer
 			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
 			transformToDraw.position += basePosition;
 
-			r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
-			r2::sarr::Push(*debugModelRenderBatch.colors, color);
-
+			r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
+			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+		if (numOpaqueInstances > 0)
+		{
+			r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
+			r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numOpaqueInstances));
+		}
+
+		if (numTransparentInstances > 0)
+		{
+			r2::sarr::Push(*debugTransparentModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.numInstances, static_cast<u32>(numTransparentInstances));
+		}
 	}
 
 	void DrawConeInstanced(
@@ -7309,8 +7511,10 @@ namespace r2::draw::renderer
 		}
 
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		DebugRenderBatch& debugTransparentModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
 
 		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+		R2_CHECK(debugTransparentModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
 
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
@@ -7323,9 +7527,12 @@ namespace r2::draw::renderer
 			r2::sarr::Size(basePositions) == r2::sarr::Size(colors),
 			"There should be the same amount of elements in all arrays");
 
-		const auto numInstances = r2::sarr::Size(basePositions);
+		const auto numBasePositions = r2::sarr::Size(basePositions);
+		u32 numOpaqueInstances = 0;
+		u32 numTransparentInstances = 0;
 
-		for (u64 i = 0; i < numInstances; i++)
+
+		for (u64 i = 0; i < numBasePositions; i++)
 		{
 			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
 			float radius = r2::sarr::At(radii, i);
@@ -7333,6 +7540,19 @@ namespace r2::draw::renderer
 			float height = r2::sarr::At(heights, i);
 			const glm::vec4& color = r2::sarr::At(colors, i);
 			
+			DebugRenderBatch* debugRenderBatchToUse = nullptr;
+
+			if (color.a < 1.0f)
+			{
+				debugRenderBatchToUse = &debugTransparentModelRenderBatch;
+				numTransparentInstances++;
+			}
+			else
+			{
+				debugRenderBatchToUse = &debugModelRenderBatch;
+				numOpaqueInstances++;
+			}
+
 			math::Transform t;
 
 			glm::vec3 ndir = glm::normalize(dir);
@@ -7362,14 +7582,23 @@ namespace r2::draw::renderer
 			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
 			transformToDraw.position += basePosition;
 
-			r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
-			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+			r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
+			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
-		
+		if (numOpaqueInstances > 0)
+		{
+			r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
+			r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numOpaqueInstances));
+		}
+
+		if (numTransparentInstances > 0)
+		{
+			r2::sarr::Push(*debugTransparentModelRenderBatch.drawFlags, flags);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
+			r2::sarr::Push(*debugTransparentModelRenderBatch.numInstances, static_cast<u32>(numTransparentInstances));
+		}
 	}
 
 	void DrawArrowInstanced(

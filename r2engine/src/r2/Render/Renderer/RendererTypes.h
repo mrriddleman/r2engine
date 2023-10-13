@@ -55,6 +55,8 @@ namespace r2::draw
     {
         DDT_LINES = 0,
         DDT_MODELS,
+        DDT_LINES_TRANSPARENT,
+        DDT_MODELS_TRANSPARENT,
         NUM_DEBUG_DRAW_TYPES
     };
 
