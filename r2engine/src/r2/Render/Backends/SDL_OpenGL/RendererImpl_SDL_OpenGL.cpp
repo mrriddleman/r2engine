@@ -997,12 +997,6 @@ namespace r2::draw::rendererimpl
 		if (isPersistent)
 		{
 
-			if (bufferType == GL_DRAW_INDIRECT_BUFFER)
-			{
-				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cBufferHandle);
-			}
-
-
 			RingBuffer theDefault;
 			RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, cBufferHandle, theDefault);
 

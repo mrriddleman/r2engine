@@ -19,7 +19,7 @@ void main()
 
 	// blend func: GL_ONE, GL_ONE
 	// switch to pre-multiplied alpha and weight
-    Accum = vec4(fs_in.color.rgb * fs_in.color.a, fs_in.color.a) * weight;
+    Accum = vec4(fs_in.color.rgb * fs_in.color.a, fs_in.color.a);
 
     // blend func: GL_ZERO, GL_ONE_MINUS_SRC_COLOR
     Reveal = fs_in.color.a;

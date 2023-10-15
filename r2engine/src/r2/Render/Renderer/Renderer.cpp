@@ -6486,56 +6486,14 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void AddDebugSubCommandPreAndPostCMDs(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData, r2::SArray<BatchRenderOffsets>* debugRenderBatchesOffsets, u32 numObjectsToDraw, u64 subCommandMemorySize)
+	void PopulateDebugRenderBatchesOffsets(
+		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData,
+		ShaderHandle shaderID,
+		u32& subCommandsOffset,
+		r2::SArray<BatchRenderOffsets>* debugRenderBatchesOffsets,
+		r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* drawBatchSubCommands,
+		r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>* drawDebugBatchSubCommands)
 	{
-		if (numObjectsToDraw <= 0)
-		{
-			return;
-		}
-
-		R2_CHECK(debugRenderBatch.shaderHandle != r2::draw::InvalidShader, "This can't be invalid!");
-
-		ShaderHandle shaderID = debugRenderBatch.shaderHandle;
-
-		key::DebugKey preDrawKey;
-		preDrawKey.keyValue = 0;
-
-		cmd::FillVertexBuffer* fillVertexBufferCMD = nullptr;
-
-		if (debugRenderBatch.vertices)
-		{
-
-			VertexBufferHandle vboHandle = vbsys::GetVertexBufferHandle(*renderer.mVertexBufferLayoutSystem, debugRenderBatch.vertexBufferLayoutHandle, 0);
-
-			//const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugRenderBatch.vertexConfigHandle);
-			u64 vOffset = 0;
-
-			fillVertexBufferCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::FillVertexBuffer>(*renderer.mDebugCommandArena, *renderer.mPreDebugCommandBucket, preDrawKey, 0);
-
-			cmd::FillVertexBufferCommand(fillVertexBufferCMD, *debugRenderBatch.vertices, vboHandle, vOffset);
-		}
-
-		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
-
-		const u64 subCommandsMemorySize = subCommandMemorySize * numObjectsToDraw;
-		
-		cmd::FillConstantBuffer* subCommandsCMD = nullptr;
-		if (fillVertexBufferCMD)
-		{
-			subCommandsCMD = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mDebugCommandArena, fillVertexBufferCMD, subCommandsMemorySize);
-		}
-		else
-		{
-			subCommandsCMD = cmdbkt::AddCommand<r2::draw::key::DebugKey, r2::mem::StackArena, cmd::FillConstantBuffer>(*renderer.mDebugCommandArena, *renderer.mPreDebugCommandBucket, preDrawKey, subCommandsMemorySize);
-		}
-		 
-
-		char* subCommandsAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(subCommandsCMD);
-
-		u64 subCommandsMemoryOffset = 0;
-		u32 subCommandsOffset = 0;
-
-
 		auto hashIter = r2::shashmap::Begin(*debugDrawCommandData);
 
 		for (; hashIter != r2::shashmap::End(*debugDrawCommandData); ++hashIter)
@@ -6543,24 +6501,18 @@ namespace r2::draw::renderer
 			DebugDrawCommandData* debugDrawCommandData = hashIter->value;
 			if (debugDrawCommandData != nullptr)
 			{
-
 				u32 numSubCommandsInBatch = 0;
-				u64 batchSubCommandsMemorySize = 0;
-				void* batchCommandData = nullptr;
 
 				if (debugDrawCommandData->debugModelDrawBatchCommands)
 				{
 					numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*debugDrawCommandData->debugModelDrawBatchCommands));
-					batchCommandData = (void*)debugDrawCommandData->debugModelDrawBatchCommands->mData;
+					r2::sarr::Append(*drawBatchSubCommands, *debugDrawCommandData->debugModelDrawBatchCommands);
 				}
 				else
 				{
 					numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*debugDrawCommandData->debugLineDrawBatchCommands));
-					batchCommandData = (void*)debugDrawCommandData->debugLineDrawBatchCommands->mData;
+					r2::sarr::Append(*drawDebugBatchSubCommands, *debugDrawCommandData->debugLineDrawBatchCommands);
 				}
-
-				batchSubCommandsMemorySize = numSubCommandsInBatch * subCommandMemorySize;
-				memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), batchCommandData, batchSubCommandsMemorySize);
 
 				BatchRenderOffsets offsets;
 				offsets.drawState.layer = DL_DEBUG;
@@ -6571,13 +6523,32 @@ namespace r2::draw::renderer
 				offsets.subCommandsOffset = subCommandsOffset;
 
 				subCommandsOffset += offsets.numSubCommands;
-				subCommandsMemoryOffset += batchSubCommandsMemorySize;
 
 				r2::sarr::Push(*debugRenderBatchesOffsets, offsets);
 			}
 		}
+	}
 
-		auto subCommandsConstantBufferHandle = r2::sarr::At(*constHandles, debugRenderBatch.subCommandsConstantConfigHandle);
+
+	void FillPreDebugCommandBucketModelData(Renderer& renderer, r2::SArray<cmd::DrawBatchSubCommand>* drawBatchSubCommands, ConstantConfigHandle subCommandsConstantConfigHandle)
+	{
+		R2_CHECK(drawBatchSubCommands != nullptr, "Should never happen");
+
+		const auto subCommandsMemorySize = sizeof(cmd::DrawBatchSubCommand)* drawBatchSubCommands->mSize;
+
+		key::DebugKey preDrawKey;
+		preDrawKey.keyValue = 0;
+
+		cmd::FillConstantBuffer* subCommandsCMD = nullptr;
+
+		subCommandsCMD = cmdbkt::AddCommand<r2::draw::key::DebugKey, r2::mem::StackArena, cmd::FillConstantBuffer>(*renderer.mDebugCommandArena, *renderer.mPreDebugCommandBucket, preDrawKey, subCommandsMemorySize);
+
+		char* subCommandsAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(subCommandsCMD);
+
+		memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, 0), drawBatchSubCommands->mData, subCommandsMemorySize);
+
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
+		auto subCommandsConstantBufferHandle = r2::sarr::At(*constHandles, subCommandsConstantConfigHandle);
 
 		ConstantBufferData* subCommandsConstData = GetConstData(renderer, subCommandsConstantBufferHandle);
 
@@ -6589,14 +6560,60 @@ namespace r2::draw::renderer
 		subCommandsCMD->isPersistent = subCommandsConstData->isPersistent;
 
 		subCommandsConstData->AddDataSize(subCommandsMemorySize);
-
-		key::DebugKey postKey;
-		postKey.keyValue = 0;
-		cmd::CompleteConstantBuffer* completeSubCommandsCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::CompleteConstantBuffer>(*renderer.mDebugCommandArena, *renderer.mPostDebugCommandBucket, postKey, 0);
-		completeSubCommandsCMD->constantBufferHandle = subCommandsConstantBufferHandle;
-		completeSubCommandsCMD->count = subCommandsOffset;
 	}
 
+	void FillPreDebugCommandBucketVertexData(
+		Renderer& renderer,
+		r2::SArray<DebugVertex>* debugVertices,
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* drawBatchSubCommands,
+		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle,
+		ConstantConfigHandle subCommandsConstantConfigHandle)
+	{
+		R2_CHECK(debugVertices != nullptr, "Should never happen");
+
+		key::DebugKey preDrawKey;
+		preDrawKey.keyValue = 0;
+
+		cmd::FillVertexBuffer* fillVertexBufferCMD = nullptr;
+
+		const auto subCommandsMemorySize = sizeof(cmd::DrawDebugBatchSubCommand) * drawBatchSubCommands->mSize;
+		const auto vertexMemorySize = sizeof(DebugVertex) * debugVertices->mSize;
+
+		VertexBufferHandle vboHandle = vbsys::GetVertexBufferHandle(*renderer.mVertexBufferLayoutSystem, vertexBufferLayoutHandle, 0);
+
+		u64 vOffset = 0;
+
+		fillVertexBufferCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::FillVertexBuffer>(*renderer.mDebugCommandArena, *renderer.mPreDebugCommandBucket, preDrawKey, vertexMemorySize);
+
+		char* vertexAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillVertexBuffer>(fillVertexBufferCMD);
+
+		memcpy(mem::utils::PointerAdd(vertexAuxMemory, 0), debugVertices->mData, vertexMemorySize);
+
+		fillVertexBufferCMD->vertexBufferHandle = vboHandle;
+		fillVertexBufferCMD->offset = 0;
+		fillVertexBufferCMD->dataSize = vertexMemorySize;
+		fillVertexBufferCMD->data = vertexAuxMemory;
+
+		cmd::FillConstantBuffer* subCommandsCMD = subCommandsCMD = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mDebugCommandArena, fillVertexBufferCMD, subCommandsMemorySize);
+
+		char* subCommandsAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(subCommandsCMD);
+
+		memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, 0), drawBatchSubCommands->mData, subCommandsMemorySize);
+
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
+		auto subCommandsConstantBufferHandle = r2::sarr::At(*constHandles, subCommandsConstantConfigHandle);
+
+		ConstantBufferData* subCommandsConstData = GetConstData(renderer, subCommandsConstantBufferHandle);
+
+		subCommandsCMD->constantBufferHandle = subCommandsConstantBufferHandle;
+		subCommandsCMD->data = subCommandsAuxMemory;
+		subCommandsCMD->dataSize = subCommandsMemorySize;
+		subCommandsCMD->offset = subCommandsConstData->currentOffset;
+		subCommandsCMD->type = subCommandsConstData->type;
+		subCommandsCMD->isPersistent = subCommandsConstData->isPersistent;
+
+		subCommandsConstData->AddDataSize(subCommandsMemorySize);
+	}
 
 	void FillDebugDrawCommands(Renderer& renderer, r2::SArray<BatchRenderOffsets>* debugBatchOffsets, const BufferLayoutHandle& debugBufferLayoutHandle, ConstantBufferHandle subCommandsBufferHandle, bool debugLines, bool transparentBatch)
 	{
@@ -6618,7 +6635,7 @@ namespace r2::draw::renderer
 				}
 				else
 				{
-					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
 
 					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
 				}
@@ -6652,7 +6669,7 @@ namespace r2::draw::renderer
 				}
 				else
 				{
-					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
 
 					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
 				}
@@ -6666,7 +6683,7 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 				drawBatch->state.depthFunction = LESS;
-				drawBatch->state.depthWriteEnabled = true;
+				drawBatch->state.depthWriteEnabled = !transparentBatch;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultCullState(drawBatch->state.cullState);
@@ -6719,11 +6736,21 @@ namespace r2::draw::renderer
 			numTransparentModelInstancesToDraw += static_cast<u32>(r2::sarr::At(*debugModelsTransparentRenderBatch.numInstances, i));
 		}
 
-
-		//R2_CHECK(numModelsToDraw == numModelInstancesToDraw, "These should be the same for right now!");
-
 		u64 numLinesToDraw = r2::sarr::Size(*debugLinesRenderBatch.vertices) / 2;
 		u32 numTransparentLinesToDraw = r2::sarr::Size(*debugLinesTransparentBatch.vertices) / 2;
+
+		r2::SArray<DebugVertex>* debugVertices = nullptr;
+		u64 totalNumLines = numLinesToDraw + numTransparentLinesToDraw;
+		if (totalNumLines > 0)
+		{
+			debugVertices = MAKE_SARRAY(*renderer.mPreRenderStackArena, DebugVertex, totalNumLines * 2);
+
+			if(numLinesToDraw > 0)
+				r2::sarr::Append(*debugVertices, *debugLinesRenderBatch.vertices);
+
+			if (numTransparentLinesToDraw > 0)
+				r2::sarr::Append(*debugVertices, *debugLinesTransparentBatch.vertices);
+		}
 
 
 		const u64 totalObjectsToDraw = numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw + numTransparentLinesToDraw;
@@ -6748,19 +6775,38 @@ namespace r2::draw::renderer
 			return; //there's nothing to do!
 		}
 
-		
+		u32 modelSubCommandOffset = 0;
+		u32 lineSubCommandOffset = 0;
+
 		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
+
+		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = nullptr;
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = nullptr;
+
+		if (numModelsToDraw + numTransparentModelsToDraw > 0)
+		{
+			modelDrawBatchSubCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numModelsToDraw + numTransparentModelsToDraw);
+		}
 		
+		if (numLinesToDraw + numTransparentLinesToDraw > 0)
+		{
+			linesDrawBatchSubCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawDebugBatchSubCommand, numLinesToDraw + numTransparentLinesToDraw);
+		}
+
 		if (numModelsToDraw > 0)
 		{
+			r2::shashmap::Clear(*debugDrawCommandData);
+
 			modelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numModelsToDraw);
 			r2::sarr::Push(*tempAllocations, (void*)modelBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, tempAllocations, debugRenderConstants, debugDrawCommandData);
-			AddDebugSubCommandPreAndPostCMDs(renderer, debugModelsRenderBatch, debugDrawCommandData, modelBatchRenderOffsets, numModelsToDraw, sizeof(cmd::DrawBatchSubCommand));
-		}
 
-		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+		}
 
 		if (numLinesToDraw > 0)
 		{
@@ -6770,10 +6816,9 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*tempAllocations, (void*)linesBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
-			AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesRenderBatch, debugDrawCommandData, linesBatchRenderOffsets, numLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
-		}
 
-		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+		}
 
 		if (numTransparentModelsToDraw > 0)
 		{
@@ -6783,10 +6828,10 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*tempAllocations, (void*)transparentModelBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
-			AddDebugSubCommandPreAndPostCMDs(renderer, debugModelsTransparentRenderBatch, debugDrawCommandData, transparentModelBatchRenderOffsets, numTransparentModelsToDraw, sizeof(cmd::DrawBatchSubCommand));
+
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
-		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
 		if (numTransparentLinesToDraw > 0)
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
@@ -6795,7 +6840,8 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*tempAllocations, (void*)transparentLinesBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
-			AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesTransparentBatch, debugDrawCommandData, transparentLinesBatchRenderOffsets, numTransparentLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
+
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 		
 
@@ -6830,6 +6876,35 @@ namespace r2::draw::renderer
 
 			completeRenderConstantsCMD->constantBufferHandle = renderDebugConstantsBufferHandle;
 			completeRenderConstantsCMD->count = totalObjectsToDraw;
+
+
+			if (modelDrawBatchSubCommands)
+			{
+				FillPreDebugCommandBucketModelData(renderer, modelDrawBatchSubCommands, debugModelsRenderBatch.subCommandsConstantConfigHandle);
+			}
+
+			if (linesDrawBatchSubCommands && debugVertices)
+			{
+				FillPreDebugCommandBucketVertexData(renderer, debugVertices, linesDrawBatchSubCommands, debugLinesRenderBatch.vertexBufferLayoutHandle, debugLinesRenderBatch.subCommandsConstantConfigHandle);
+			}
+
+			if (modelSubCommandOffset > 0)
+			{
+				key::DebugKey postKey;
+				postKey.keyValue = 0;
+				cmd::CompleteConstantBuffer* completeSubCommandsCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::CompleteConstantBuffer>(*renderer.mDebugCommandArena, *renderer.mPostDebugCommandBucket, postKey, 0);
+				completeSubCommandsCMD->constantBufferHandle = debugModelsSubCommandsBufferHandle;
+				completeSubCommandsCMD->count = modelSubCommandOffset;
+			}
+
+			if (lineSubCommandOffset > 0)
+			{
+				key::DebugKey postKey;
+				postKey.keyValue = 0;
+				cmd::CompleteConstantBuffer* completeSubCommandsCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::CompleteConstantBuffer>(*renderer.mDebugCommandArena, *renderer.mPostDebugCommandBucket, postKey, 0);
+				completeSubCommandsCMD->constantBufferHandle = debugLinesSubCommandsBufferHandle;
+				completeSubCommandsCMD->count = lineSubCommandOffset;
+			}
 		}
 
 		if (modelBatchRenderOffsets || linesBatchRenderOffsets || transparentLinesBatchRenderOffsets || transparentModelBatchRenderOffsets)
@@ -6843,6 +6918,7 @@ namespace r2::draw::renderer
 			cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_GBUFFER], 0, *setRenderTarget, gbufferRenderPass->config);
 		}
 
+		
 		if (modelBatchRenderOffsets)
 		{
 			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsSubCommandsBufferHandle, false, false);
@@ -6855,7 +6931,7 @@ namespace r2::draw::renderer
 
 		if (transparentModelBatchRenderOffsets)
 		{
-			FillDebugDrawCommands(renderer, transparentModelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsTransparentSubCommandsBufferHandle, false, true);
+			FillDebugDrawCommands(renderer, transparentModelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsSubCommandsBufferHandle, false, true);
 		}
 
 		if (transparentLinesBatchRenderOffsets)
