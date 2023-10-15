@@ -36,6 +36,7 @@ layout (location = 1) in uint DrawID;
 out VS_OUT
 {
 	vec4 color;
+	vec4 fragPos;
 	flat uint drawID;
 } vs_out;
 
@@ -43,5 +44,6 @@ void main()
 {
 	vs_out.drawID = DrawID;
 	vs_out.color = constants[DrawID].color;
-	gl_Position = projection * view * constants[DrawID].modelMatrix * vec4(aPos, 1.0);
+	vs_out.fragPos = constants[DrawID].modelMatrix * vec4(aPos, 1.0);
+	gl_Position = projection * view * vs_out.fragPos;
 }
