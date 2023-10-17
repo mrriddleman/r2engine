@@ -6347,7 +6347,7 @@ namespace r2::draw::renderer
 		r2::SArray<cmd::DrawDebugBatchSubCommand>* debugLineDrawBatchCommands = nullptr;
 	};
 
-	void CreateDebugSubCommands(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset, r2::SArray<void*>* tempAllocations, r2::SArray<DebugRenderConstants>* debugRenderConstants, r2::SHashMap<DebugDrawCommandData*>* debugModelDrawCommandData)
+	void CreateDebugSubCommands(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset, r2::SArray<DebugRenderConstants>* debugRenderConstants, r2::SHashMap<DebugDrawCommandData*>* debugModelDrawCommandData)
 	{
 		//@NOTE: this isn't at all thread safe! 
 		if (renderer.mDebugCommandBucket == nullptr)
@@ -6425,17 +6425,14 @@ namespace r2::draw::renderer
 			if (debugDrawCommandData == defaultDebugDrawCommandData)
 			{
 				debugDrawCommandData = ALLOC(DebugDrawCommandData, *renderer.mPreRenderStackArena);
-				r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
 
 				if (modelType != DEBUG_LINE )
 				{
 					debugDrawCommandData->debugModelDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numDebugObjectsToDraw); //@NOTE(Serge): overestimate
-					r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData->debugModelDrawBatchCommands);
 				}
 				else
 				{
 					debugDrawCommandData->debugLineDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawDebugBatchSubCommand, numDebugObjectsToDraw);
-					r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData->debugLineDrawBatchCommands);
 				}
 
 				debugDrawCommandData->shaderID = shaderID;
@@ -6754,21 +6751,14 @@ namespace r2::draw::renderer
 
 
 		const u64 totalObjectsToDraw = numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw + numTransparentLinesToDraw;
-		
-		r2::SArray<void*>* tempAllocations = nullptr;
 
 		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
 		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData = nullptr;
 
 		if (totalObjectsToDraw > 0)
 		{
-			tempAllocations = MAKE_SARRAY(*renderer.mPreRenderStackArena, void*, 1000);
-
 			debugRenderConstants = MAKE_SARRAY(*renderer.mPreRenderStackArena, DebugRenderConstants, totalObjectsToDraw);
-			r2::sarr::Push(*tempAllocations, (void*)debugRenderConstants);
-
 			debugDrawCommandData = MAKE_SHASHMAP(*renderer.mPreRenderStackArena, DebugDrawCommandData*, (totalObjectsToDraw)*r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
-			r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
 		}
 		else
 		{
@@ -6801,9 +6791,8 @@ namespace r2::draw::renderer
 			r2::shashmap::Clear(*debugDrawCommandData);
 
 			modelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numModelsToDraw);
-			r2::sarr::Push(*tempAllocations, (void*)modelBatchRenderOffsets);
 
-			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
@@ -6813,9 +6802,8 @@ namespace r2::draw::renderer
 			r2::shashmap::Clear(*debugDrawCommandData);
 
 			linesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numLinesToDraw);
-			r2::sarr::Push(*tempAllocations, (void*)linesBatchRenderOffsets);
 
-			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
@@ -6825,9 +6813,8 @@ namespace r2::draw::renderer
 			r2::shashmap::Clear(*debugDrawCommandData);
 
 			transparentModelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentModelsToDraw);
-			r2::sarr::Push(*tempAllocations, (void*)transparentModelBatchRenderOffsets);
 
-			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
@@ -6837,9 +6824,8 @@ namespace r2::draw::renderer
 			r2::shashmap::Clear(*debugDrawCommandData);
 
 			transparentLinesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentLinesToDraw);
-			r2::sarr::Push(*tempAllocations, (void*)transparentLinesBatchRenderOffsets);
-
-			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+	
+			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
