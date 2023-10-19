@@ -18,7 +18,7 @@
 #include "r2/Render/Renderer/CommandBucket.h"
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/RenderKey.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 

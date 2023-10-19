@@ -3,7 +3,7 @@
 
 
 #include "r2/Render/Model/Materials/MaterialTypes.h"
-#include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Model/Shader/Shader.h"
 
 namespace flat
 {

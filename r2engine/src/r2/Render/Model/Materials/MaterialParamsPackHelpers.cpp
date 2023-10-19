@@ -4,7 +4,7 @@
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Model_generated.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Utils/Hash.h"
 
 namespace r2::mat

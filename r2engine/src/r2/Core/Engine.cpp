@@ -31,7 +31,7 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"

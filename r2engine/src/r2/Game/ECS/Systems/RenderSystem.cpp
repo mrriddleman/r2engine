@@ -15,7 +15,7 @@
 
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Utils/Hash.h"

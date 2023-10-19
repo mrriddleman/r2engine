@@ -2,7 +2,7 @@
 #define __SHADER_SYSTEM_H__
 
 #include "r2/Core/Memory/Memory.h"
-#include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Model/Shader/Shader.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 

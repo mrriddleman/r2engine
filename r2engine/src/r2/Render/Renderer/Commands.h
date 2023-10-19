@@ -4,7 +4,7 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/BackendDispatch.h"
 #include "r2/Render/Renderer/BufferLayout.h"
-#include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Model/Shader/Shader.h"
 
 namespace r2::draw
 {

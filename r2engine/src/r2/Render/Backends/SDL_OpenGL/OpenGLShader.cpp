@@ -8,8 +8,8 @@
 
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
-#include "r2/Render/Renderer/Shader.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/Shader.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "glad/glad.h"
 #include "glm/gtc/type_ptr.hpp"
 

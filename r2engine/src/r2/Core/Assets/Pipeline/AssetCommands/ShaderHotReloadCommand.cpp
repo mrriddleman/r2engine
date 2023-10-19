@@ -2,7 +2,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
-#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Core/File/PathUtils.h"
 
 namespace r2::asset::pln

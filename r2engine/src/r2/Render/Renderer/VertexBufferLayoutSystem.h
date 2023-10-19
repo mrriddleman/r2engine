@@ -11,7 +11,7 @@
 #include "r2/Render/Renderer/GPUBuffer.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
-#include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Model/Shader/Shader.h"
 
 namespace r2::draw
 {
