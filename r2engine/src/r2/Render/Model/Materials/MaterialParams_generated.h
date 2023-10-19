@@ -34,6 +34,114 @@ struct MaterialTextureParamBuilder;
 struct MaterialParams;
 struct MaterialParamsBuilder;
 
+enum MinTextureFilter {
+  MinTextureFilter_LINEAR = 0,
+  MinTextureFilter_NEAREST = 1,
+  MinTextureFilter_NEAREST_MIPMAP_NEAREST = 2,
+  MinTextureFilter_LINEAR_MIPMAP_NEAREST = 3,
+  MinTextureFilter_NEAREST_MIPMAP_LINEAR = 4,
+  MinTextureFilter_LINEAR_MIPMAP_LINEAR = 5,
+  MinTextureFilter_MIN = MinTextureFilter_LINEAR,
+  MinTextureFilter_MAX = MinTextureFilter_LINEAR_MIPMAP_LINEAR
+};
+
+inline const MinTextureFilter (&EnumValuesMinTextureFilter())[6] {
+  static const MinTextureFilter values[] = {
+    MinTextureFilter_LINEAR,
+    MinTextureFilter_NEAREST,
+    MinTextureFilter_NEAREST_MIPMAP_NEAREST,
+    MinTextureFilter_LINEAR_MIPMAP_NEAREST,
+    MinTextureFilter_NEAREST_MIPMAP_LINEAR,
+    MinTextureFilter_LINEAR_MIPMAP_LINEAR
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMinTextureFilter() {
+  static const char * const names[7] = {
+    "LINEAR",
+    "NEAREST",
+    "NEAREST_MIPMAP_NEAREST",
+    "LINEAR_MIPMAP_NEAREST",
+    "NEAREST_MIPMAP_LINEAR",
+    "LINEAR_MIPMAP_LINEAR",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMinTextureFilter(MinTextureFilter e) {
+  if (flatbuffers::IsOutRange(e, MinTextureFilter_LINEAR, MinTextureFilter_LINEAR_MIPMAP_LINEAR)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMinTextureFilter()[index];
+}
+
+enum MagTextureFilter {
+  MagTextureFilter_LINEAR = 0,
+  MagTextureFilter_NEAREST = 1,
+  MagTextureFilter_MIN = MagTextureFilter_LINEAR,
+  MagTextureFilter_MAX = MagTextureFilter_NEAREST
+};
+
+inline const MagTextureFilter (&EnumValuesMagTextureFilter())[2] {
+  static const MagTextureFilter values[] = {
+    MagTextureFilter_LINEAR,
+    MagTextureFilter_NEAREST
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMagTextureFilter() {
+  static const char * const names[3] = {
+    "LINEAR",
+    "NEAREST",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMagTextureFilter(MagTextureFilter e) {
+  if (flatbuffers::IsOutRange(e, MagTextureFilter_LINEAR, MagTextureFilter_NEAREST)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMagTextureFilter()[index];
+}
+
+enum TextureWrapMode {
+  TextureWrapMode_REPEAT = 0,
+  TextureWrapMode_CLAMP_TO_EDGE = 1,
+  TextureWrapMode_CLAMP_TO_BORDER = 2,
+  TextureWrapMode_MIRRORED_REPEAT = 3,
+  TextureWrapMode_MIN = TextureWrapMode_REPEAT,
+  TextureWrapMode_MAX = TextureWrapMode_MIRRORED_REPEAT
+};
+
+inline const TextureWrapMode (&EnumValuesTextureWrapMode())[4] {
+  static const TextureWrapMode values[] = {
+    TextureWrapMode_REPEAT,
+    TextureWrapMode_CLAMP_TO_EDGE,
+    TextureWrapMode_CLAMP_TO_BORDER,
+    TextureWrapMode_MIRRORED_REPEAT
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTextureWrapMode() {
+  static const char * const names[5] = {
+    "REPEAT",
+    "CLAMP_TO_EDGE",
+    "CLAMP_TO_BORDER",
+    "MIRRORED_REPEAT",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTextureWrapMode(TextureWrapMode e) {
+  if (flatbuffers::IsOutRange(e, TextureWrapMode_REPEAT, TextureWrapMode_MIRRORED_REPEAT)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTextureWrapMode()[index];
+}
+
 enum MaterialPropertyType {
   MaterialPropertyType_ALBEDO = 0,
   MaterialPropertyType_NORMAL = 1,
@@ -164,114 +272,6 @@ inline const char *EnumNameMaterialPropertyPackingType(MaterialPropertyPackingTy
   if (flatbuffers::IsOutRange(e, MaterialPropertyPackingType_R, MaterialPropertyPackingType_RGBA)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMaterialPropertyPackingType()[index];
-}
-
-enum MinTextureFilter {
-  MinTextureFilter_LINEAR = 0,
-  MinTextureFilter_NEAREST = 1,
-  MinTextureFilter_NEAREST_MIPMAP_NEAREST = 2,
-  MinTextureFilter_LINEAR_MIPMAP_NEAREST = 3,
-  MinTextureFilter_NEAREST_MIPMAP_LINEAR = 4,
-  MinTextureFilter_LINEAR_MIPMAP_LINEAR = 5,
-  MinTextureFilter_MIN = MinTextureFilter_LINEAR,
-  MinTextureFilter_MAX = MinTextureFilter_LINEAR_MIPMAP_LINEAR
-};
-
-inline const MinTextureFilter (&EnumValuesMinTextureFilter())[6] {
-  static const MinTextureFilter values[] = {
-    MinTextureFilter_LINEAR,
-    MinTextureFilter_NEAREST,
-    MinTextureFilter_NEAREST_MIPMAP_NEAREST,
-    MinTextureFilter_LINEAR_MIPMAP_NEAREST,
-    MinTextureFilter_NEAREST_MIPMAP_LINEAR,
-    MinTextureFilter_LINEAR_MIPMAP_LINEAR
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMinTextureFilter() {
-  static const char * const names[7] = {
-    "LINEAR",
-    "NEAREST",
-    "NEAREST_MIPMAP_NEAREST",
-    "LINEAR_MIPMAP_NEAREST",
-    "NEAREST_MIPMAP_LINEAR",
-    "LINEAR_MIPMAP_LINEAR",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMinTextureFilter(MinTextureFilter e) {
-  if (flatbuffers::IsOutRange(e, MinTextureFilter_LINEAR, MinTextureFilter_LINEAR_MIPMAP_LINEAR)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMinTextureFilter()[index];
-}
-
-enum MagTextureFilter {
-  MagTextureFilter_LINEAR = 0,
-  MagTextureFilter_NEAREST = 1,
-  MagTextureFilter_MIN = MagTextureFilter_LINEAR,
-  MagTextureFilter_MAX = MagTextureFilter_NEAREST
-};
-
-inline const MagTextureFilter (&EnumValuesMagTextureFilter())[2] {
-  static const MagTextureFilter values[] = {
-    MagTextureFilter_LINEAR,
-    MagTextureFilter_NEAREST
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMagTextureFilter() {
-  static const char * const names[3] = {
-    "LINEAR",
-    "NEAREST",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMagTextureFilter(MagTextureFilter e) {
-  if (flatbuffers::IsOutRange(e, MagTextureFilter_LINEAR, MagTextureFilter_NEAREST)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMagTextureFilter()[index];
-}
-
-enum TextureWrapMode {
-  TextureWrapMode_REPEAT = 0,
-  TextureWrapMode_CLAMP_TO_EDGE = 1,
-  TextureWrapMode_CLAMP_TO_BORDER = 2,
-  TextureWrapMode_MIRRORED_REPEAT = 3,
-  TextureWrapMode_MIN = TextureWrapMode_REPEAT,
-  TextureWrapMode_MAX = TextureWrapMode_MIRRORED_REPEAT
-};
-
-inline const TextureWrapMode (&EnumValuesTextureWrapMode())[4] {
-  static const TextureWrapMode values[] = {
-    TextureWrapMode_REPEAT,
-    TextureWrapMode_CLAMP_TO_EDGE,
-    TextureWrapMode_CLAMP_TO_BORDER,
-    TextureWrapMode_MIRRORED_REPEAT
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesTextureWrapMode() {
-  static const char * const names[5] = {
-    "REPEAT",
-    "CLAMP_TO_EDGE",
-    "CLAMP_TO_BORDER",
-    "MIRRORED_REPEAT",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameTextureWrapMode(TextureWrapMode e) {
-  if (flatbuffers::IsOutRange(e, TextureWrapMode_REPEAT, TextureWrapMode_MIRRORED_REPEAT)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesTextureWrapMode()[index];
 }
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Colour FLATBUFFERS_FINAL_CLASS {

@@ -1,0 +1,14 @@
+include "ShaderEffectPasses.fbs";
+
+namespace flat;
+
+file_identifier "mtrl";
+file_extension "mtrl";
+
+table Material
+{
+	shaderEffectPasses:ShaderEffectPasses;
+	shaderParams:ShaderParams;
+}
+
+root_type Material;

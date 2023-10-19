@@ -1,0 +1,17 @@
+namespace flat;
+
+file_identifier "seff";
+file_extension "seff";
+
+enum eShaderEffectNames:ulong
+{
+	NONE = 0
+}
+
+table ShaderEffect
+{
+	staticShader:ulong(hash:"fnv1a_64");
+	dynamicShader:ulong(hash:"fnv1a_64");
+}
+
+root_type ShaderEffect;

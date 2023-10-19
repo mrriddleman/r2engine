@@ -3,6 +3,30 @@ namespace flat;
 file_identifier "mprm";
 file_extension "mprm";
 
+enum MinTextureFilter : uint8
+{
+	LINEAR = 0,
+	NEAREST,
+	NEAREST_MIPMAP_NEAREST,
+	LINEAR_MIPMAP_NEAREST,
+	NEAREST_MIPMAP_LINEAR,
+	LINEAR_MIPMAP_LINEAR
+}
+
+enum MagTextureFilter : uint8
+{
+	LINEAR = 0,
+	NEAREST,
+}
+
+enum TextureWrapMode : uint8
+{
+	REPEAT = 0,
+	CLAMP_TO_EDGE,
+	CLAMP_TO_BORDER,
+	MIRRORED_REPEAT,
+}
+
 
 struct Colour
 {
@@ -84,31 +108,6 @@ table MaterialShaderParam
 	shader:ulong (hash:"fnv1a_64");
 	shaderStageName:ulong (hash:"fnv1a_64");
 	value:string;
-}
-
-enum MinTextureFilter : uint8
-{
-	LINEAR = 0,
-	NEAREST,
-	NEAREST_MIPMAP_NEAREST,
-	LINEAR_MIPMAP_NEAREST,
-	NEAREST_MIPMAP_LINEAR,
-	LINEAR_MIPMAP_LINEAR
-}
-
-enum MagTextureFilter : uint8
-{
-	LINEAR = 0,
-	NEAREST,
-}
-
-
-enum TextureWrapMode : uint8
-{
-	REPEAT = 0,
-	CLAMP_TO_EDGE,
-	CLAMP_TO_BORDER,
-	MIRRORED_REPEAT,
 }
 
 table MaterialTextureParam

@@ -1,0 +1,30 @@
+include "ShaderEffect.fbs";
+include "ShaderParams.fbs";
+
+namespace flat;
+
+file_identifier "sfxp";
+file_extension "sfxp";
+
+enum eShaderEffectPass : uint16
+{
+	FORWARD = 0,
+	TRANSPARENT, 
+//Maybe add more here in the future
+	NUM_SHADER_EFFECT_PASSES
+}
+
+enum eTransparencyType : uint8
+{
+	OPAQUE = 0,
+	TRANSPARENT
+}
+
+table ShaderEffectPasses
+{
+	shaderPasses:[ShaderEffect];
+	transparency:eTransparencyType;
+	defaultShaderParams:ShaderParams;
+}
+
+root_type ShaderEffectPasses;
