@@ -6,24 +6,21 @@ namespace flat;
 file_identifier "sfxp";
 file_extension "sfxp";
 
-enum eShaderEffectPass : uint16
+enum eMeshPass : uint16
 {
 	FORWARD = 0,
 	TRANSPARENT, 
+	DEPTH,
+	SHADOW_DIRECTIONAL,
+	SHADOW_POINT,
+	SHADOW_SPOTLIGHT,
 //Maybe add more here in the future
 	NUM_SHADER_EFFECT_PASSES
 }
 
-enum eTransparencyType : uint8
-{
-	OPAQUE = 0,
-	TRANSPARENT
-}
-
 table ShaderEffectPasses
 {
-	shaderPasses:[ShaderEffect];
-	transparency:eTransparencyType;
+	shaderEffectPasses:[ShaderEffect];
 	defaultShaderParams:ShaderParams;
 }
 

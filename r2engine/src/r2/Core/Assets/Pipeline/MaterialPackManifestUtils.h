@@ -8,6 +8,7 @@
 namespace flat
 {
 	struct Material;
+	struct MaterialParams;
 }
 
 
@@ -27,6 +28,8 @@ namespace r2::asset::pln
 	//@Temporary
 	//bool GenerateMaterialParamsFromOldMaterialPack(const flat::Material* const materialData, const std::string& pathOfSource, const std::string& outputDir);
 	
+	//@Temporary
+	bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& ouptDir);
 
 	bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateMaterialParamsFromJSON(const std::string& outputDir, const std::string& path);

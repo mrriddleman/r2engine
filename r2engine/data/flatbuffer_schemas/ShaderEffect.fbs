@@ -10,6 +10,8 @@ enum eShaderEffectNames:ulong
 
 table ShaderEffect
 {
+	assetName:ulong(hash:"fnv1a_64");
+	assetNameString:string;
 	staticShader:ulong(hash:"fnv1a_64");
 	dynamicShader:ulong(hash:"fnv1a_64");
 }

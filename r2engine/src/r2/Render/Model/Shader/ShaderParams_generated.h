@@ -10,8 +10,6 @@
 
 namespace flat {
 
-struct ShaderColour;
-
 struct ShaderFloatParam;
 struct ShaderFloatParamBuilder;
 
@@ -168,38 +166,6 @@ inline const char *EnumNameShaderPropertyPackingType(ShaderPropertyPackingType e
   return EnumNamesShaderPropertyPackingType()[index];
 }
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ShaderColour FLATBUFFERS_FINAL_CLASS {
- private:
-  float r_;
-  float g_;
-  float b_;
-  float a_;
-
- public:
-  ShaderColour() {
-    memset(static_cast<void *>(this), 0, sizeof(ShaderColour));
-  }
-  ShaderColour(float _r, float _g, float _b, float _a)
-      : r_(flatbuffers::EndianScalar(_r)),
-        g_(flatbuffers::EndianScalar(_g)),
-        b_(flatbuffers::EndianScalar(_b)),
-        a_(flatbuffers::EndianScalar(_a)) {
-  }
-  float r() const {
-    return flatbuffers::EndianScalar(r_);
-  }
-  float g() const {
-    return flatbuffers::EndianScalar(g_);
-  }
-  float b() const {
-    return flatbuffers::EndianScalar(b_);
-  }
-  float a() const {
-    return flatbuffers::EndianScalar(a_);
-  }
-};
-FLATBUFFERS_STRUCT_END(ShaderColour, 16);
-
 struct ShaderFloatParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ShaderFloatParamBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -261,13 +227,13 @@ struct ShaderColorParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flat::ShaderPropertyType propertyType() const {
     return static_cast<flat::ShaderPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
   }
-  const flat::ShaderColour *value() const {
-    return GetStruct<const flat::ShaderColour *>(VT_VALUE);
+  const flat::Colour *value() const {
+    return GetStruct<const flat::Colour *>(VT_VALUE);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_PROPERTYTYPE) &&
-           VerifyField<flat::ShaderColour>(verifier, VT_VALUE) &&
+           VerifyField<flat::Colour>(verifier, VT_VALUE) &&
            verifier.EndTable();
   }
 };
@@ -279,7 +245,7 @@ struct ShaderColorParamBuilder {
   void add_propertyType(flat::ShaderPropertyType propertyType) {
     fbb_.AddElement<uint16_t>(ShaderColorParam::VT_PROPERTYTYPE, static_cast<uint16_t>(propertyType), 0);
   }
-  void add_value(const flat::ShaderColour *value) {
+  void add_value(const flat::Colour *value) {
     fbb_.AddStruct(ShaderColorParam::VT_VALUE, value);
   }
   explicit ShaderColorParamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -297,7 +263,7 @@ struct ShaderColorParamBuilder {
 inline flatbuffers::Offset<ShaderColorParam> CreateShaderColorParam(
     flatbuffers::FlatBufferBuilder &_fbb,
     flat::ShaderPropertyType propertyType = flat::ShaderPropertyType_ALBEDO,
-    const flat::ShaderColour *value = 0) {
+    const flat::Colour *value = 0) {
   ShaderColorParamBuilder builder_(_fbb);
   builder_.add_value(value);
   builder_.add_propertyType(propertyType);

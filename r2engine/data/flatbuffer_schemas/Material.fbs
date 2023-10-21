@@ -5,8 +5,17 @@ namespace flat;
 file_identifier "mtrl";
 file_extension "mtrl";
 
+enum eTransparencyType : uint8
+{
+	OPAQUE = 0,
+	TRANSPARENT
+}
+
 table Material
 {
+	assetName:ulong (hash:"fnv1a_64");
+	stringName:string;
+	transparencyType:eTransparencyType;
 	shaderEffectPasses:ShaderEffectPasses;
 	shaderParams:ShaderParams;
 }

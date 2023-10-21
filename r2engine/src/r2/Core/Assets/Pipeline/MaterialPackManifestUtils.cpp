@@ -4,6 +4,13 @@
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Render/Model/Materials/Material_generated.h"
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
+
+#include "r2/Render/Model/Shader/ShaderEffect_generated.h"
+#include "r2/Render/Model/Shader/ShaderEffectPasses_generated.h"
+#include "r2/Render/Model/Shader/ShaderParams_generated.h"
+
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
 #include "r2/Utils/Flags.h"
@@ -24,7 +31,7 @@ namespace r2::asset::pln
 	const std::string JSON_EXT = ".json";
 	
 	const std::string MPAK_EXT = ".mpak";
-	const std::string MMAT_EXT = ".mmat";
+	const std::string MTRL_EXT = ".mtrl";
 
 	const std::string MPPK_EXT = ".mppk";
 	const std::string MPRM_EXT = ".mprm";
@@ -33,6 +40,7 @@ namespace r2::asset::pln
 	const std::string MATERIAL_BIN_DIR = "material_bin";
 
 	const bool GENERATE_PARAMS = false;
+	const bool GENERATE_MATERIAL_PACK = false;
 
 	bool GenerateMaterialFromJSON(const std::string& outputDir, const std::string& path)
 	{
@@ -383,6 +391,374 @@ namespace r2::asset::pln
 
 	//	return generatedJSON;
 	//}
+	bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& outputDir)
+	{
+		R2_CHECK(materialParamsData != nullptr, "Passed in nullptr for the materialParamsData!");
+
+		std::filesystem::path sourceFilePath = pathOfSource;
+
+		//For the engine materials: First we need to check to see if the string "Dynamic" or "Static" is at the start of the material name
+		//if it is then we strip it off
+		std::string materialName = sourceFilePath.stem().string();
+
+		static const std::string STATIC_STRING = "Static";
+		static const std::string DYNAMIC_STRING = "Dynamic";
+
+		
+
+		//for engine materials only
+		if (materialName.find(STATIC_STRING, 0))
+		{
+			materialName = materialName.substr(STATIC_STRING.size());
+		}
+		else if (materialName.find(DYNAMIC_STRING, 0))
+		{
+			materialName = materialName.substr(DYNAMIC_STRING.size());
+		}
+
+		std::filesystem::path materialDir = std::filesystem::path(outputDir) / materialName;
+
+		if (std::filesystem::exists(materialDir))
+		{
+			//we already made the material - don't do it again
+			return true;
+		}
+
+		struct ShaderEffect
+		{
+			std::string shaderEffectName = "";
+			u64 staticShader = 0;
+			u64 dynamicShader = 0;
+		};
+
+		struct ShaderEffectPasses
+		{
+			ShaderEffect shaderEffectPasses[flat::eMeshPass::eMeshPass_NUM_SHADER_EFFECT_PASSES];
+			bool isOpaque;
+		};
+
+		static ShaderEffect forwardOpaqueShaderEffect = {
+			"forward_opaque_shader_effect",
+			STRING_ID("Sandbox"),
+			STRING_ID("AnimModel")
+		};
+
+		static ShaderEffect forwardTransparentShaderEffect = {
+			"forward_transparent_shader_effect",
+			STRING_ID("TransparentModel"),
+			STRING_ID("TransparentAnimModel")
+		};
+
+		static ShaderEffect skyboxShaderEffect = {
+			"default_skybox_shader_effect",
+			STRING_ID("Skybox"),
+			0
+		};
+
+		static ShaderEffect ellenEyeShaderEffect = {
+			"ellen_eye_shader_effect",
+			0,
+			STRING_ID("EllenEyeShader")
+		};
+
+		static ShaderEffect debugShaderEffect = {
+			"debug_shader_effect",
+			STRING_ID("Debug"),
+			0
+		};
+
+		static ShaderEffect debugTransparentShaderEffect = {
+			"debug_transparent_shader_effect",
+			STRING_ID("TransparentDebug"),
+			0
+		};
+
+		static ShaderEffect debugModelShaderEffect = {
+			"debug_model_shader_effect",
+			STRING_ID("DebugModel"),
+			0
+		};
+
+		static ShaderEffect debugModelTransparentShaderEffect = {
+			"debug_model_transparent_shader_effect",
+			STRING_ID("TransparentDebugModel"),
+			0
+		};
+
+		static ShaderEffect depthShaderEffect = {
+			"depth_shader_effect",
+			STRING_ID("StaticDepth"),
+			STRING_ID("DynamicDepth")
+		};
+
+		static ShaderEffect entityColorEffect = {
+			"entity_color_effect",
+			STRING_ID("StaticEntityColor"),
+			STRING_ID("DynamicEntityColor")
+		};
+
+		static ShaderEffect defaultOutlineEffect = {
+			"default_outline_effect",
+			STRING_ID("StaticOutline"),
+			STRING_ID("DynamicOutline")
+		};
+
+		static ShaderEffect directionShadowEffect = {
+			"direction_shadow_effect",
+			STRING_ID("StaticShadowDepth"),
+			STRING_ID("DynamicShaderDepth")
+		};
+
+		static ShaderEffect screenCompositeEffect = {
+			"screen_composite_effect",
+			STRING_ID("Screen"),
+			0
+		};
+
+		static ShaderEffect pointShadowEffect = {
+			"point_shadow_effect",
+			STRING_ID("PointLightStaticShadowDepth"),
+			STRING_ID("PointLightDynamicShadowDepth")
+		};
+
+		static ShaderEffect spotLightShadowEffect = {
+			"spotlight_shadow_effect",
+			STRING_ID("SpotLightStaticShadowDepth"),
+			STRING_ID("SpotLightDynamicShadowDepth")
+		};
+
+
+		static ShaderEffectPasses opaqueForwardPass = {
+			{forwardOpaqueShaderEffect, {}, depthShaderEffect, directionShadowEffect, pointShadowEffect, spotLightShadowEffect},
+			true
+		};
+
+		static ShaderEffectPasses transparentForwardPass = {
+			{{}, forwardTransparentShaderEffect, {}, {}, {}, {}},
+			false
+		};
+
+		static ShaderEffectPasses skyboxPass = {
+			{skyboxShaderEffect, {}, {}, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses ellenEyePass = {
+			{ellenEyeShaderEffect,{}, depthShaderEffect, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses debugOpaquePass = {
+			{debugShaderEffect,{},{},{}, {}, {} },
+			true
+		};
+
+		static ShaderEffectPasses debugTransparentPass = {
+			{{}, debugTransparentShaderEffect, {}, {}, {}, {}},
+			false
+		};
+
+		static ShaderEffectPasses debugModelOpaquePass = {
+			{debugModelShaderEffect, {}, depthShaderEffect, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses debugModelTransparentPass = {
+			{{},debugModelTransparentShaderEffect,{}, {}, {}, {}},
+			false
+		};
+
+		static ShaderEffectPasses depthPass = {
+			{{}, {}, depthShaderEffect, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses entityColorPass = {
+			{entityColorEffect, {}, {}, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses defaultOutlinePass = {
+			{defaultOutlineEffect, {}, {}, {}, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses shadowDepthPass = {
+			{{}, {}, {}, directionShadowEffect, {}, {}},
+			true
+		};
+
+		static ShaderEffectPasses screenCompositePass = {
+			{screenCompositeEffect, {}, {}, {}, {}, {}},
+			true
+		};
+
+		static std::unordered_map<u64, ShaderEffectPasses> s_shaderAssetNameToShaderEffectPassesMap =
+		{
+			{STRING_ID("AnimModel"), opaqueForwardPass},
+			{STRING_ID("Sandbox"), opaqueForwardPass},
+			{STRING_ID("TransparentModel"), transparentForwardPass},
+			{STRING_ID("TransparentAnimModel"), transparentForwardPass},
+			{STRING_ID("Skybox"), skyboxPass},
+			{STRING_ID("EllenEyeShader"), ellenEyePass},
+
+			//@TODO(Serge): the internal renderer materials
+			{STRING_ID("Debug"), debugOpaquePass},
+			{STRING_ID("DebugModel"), debugModelOpaquePass},
+			{STRING_ID("TransparentDebug"), debugTransparentPass},
+			{STRING_ID("TransparentDebugModel"), debugModelTransparentPass},
+			{STRING_ID("DynamicDepth"), depthPass},
+			{STRING_ID("StaticDepth"), depthPass},
+			{STRING_ID("DynamicEntityColor"), entityColorPass},
+			{STRING_ID("StaticEntityColor"), entityColorPass},
+			{STRING_ID("DynamicOutline"), defaultOutlinePass},
+			{STRING_ID("StaticOutline"), defaultOutlinePass},
+			{STRING_ID("DynamicShadowDepth"), shadowDepthPass},
+			{STRING_ID("StaticShadowDepth"), shadowDepthPass},
+			{STRING_ID("Screen"), screenCompositePass}
+		};
+
+		std::filesystem::create_directory(materialDir);
+
+		flatbuffers::FlatBufferBuilder builder;
+
+		std::vector<flatbuffers::Offset<flat::ShaderULongParam>> shaderULongParams;
+		std::vector<flatbuffers::Offset<flat::ShaderBoolParam>>  shaderBoolParams;
+		std::vector<flatbuffers::Offset<flat::ShaderFloatParam>> shaderFloatParams;
+		std::vector<flatbuffers::Offset<flat::ShaderColorParam>> shaderColorParams;
+		std::vector<flatbuffers::Offset<flat::ShaderTextureParam>> shaderTextureParams;
+		std::vector<flatbuffers::Offset<flat::ShaderStringParam>> shaderStringParams;
+		std::vector<flatbuffers::Offset<flat::ShaderStageParam>> shaderStageParams;
+
+		const flatbuffers::uoffset_t numULongParams = materialParamsData->ulongParams()->size();
+		const flatbuffers::uoffset_t numBoolParams = materialParamsData->boolParams()->size();
+		const flatbuffers::uoffset_t numFloatParams = materialParamsData->floatParams()->size();
+		const flatbuffers::uoffset_t numColorParams = materialParamsData->colorParams()->size();
+		const flatbuffers::uoffset_t numTextureParams = materialParamsData->textureParams()->size();
+		const flatbuffers::uoffset_t numStringParams = materialParamsData->stringParams()->size();
+		const flatbuffers::uoffset_t numShaderStageParams = materialParamsData->shaderParams()->size();
+
+		u64 shaderName = 0;
+
+		for (flatbuffers::uoffset_t i = 0; i < numULongParams; ++i)
+		{
+			const flat::MaterialULongParam* materialULongParam = materialParamsData->ulongParams()->Get(i);
+
+			if (materialULongParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_SHADER)
+			{
+				//don't bother with shaders though we'll need to use this later to create the shader effect data
+				shaderName = materialULongParam->value();
+				continue;
+			}
+
+			shaderULongParams.push_back(flat::CreateShaderULongParam(builder, static_cast<flat::ShaderPropertyType>(materialULongParam->propertyType()), materialULongParam->value()));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numBoolParams; ++i)
+		{
+			const flat::MaterialBoolParam* materialBoolParam = materialParamsData->boolParams()->Get(i);
+			shaderBoolParams.push_back(flat::CreateShaderBoolParam(builder, static_cast<flat::ShaderPropertyType>(materialBoolParam->propertyType()), materialBoolParam->value()));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numFloatParams; ++i)
+		{
+			const flat::MaterialFloatParam* materialFloatParam = materialParamsData->floatParams()->Get(i);
+			shaderFloatParams.push_back(flat::CreateShaderFloatParam(builder, static_cast<flat::ShaderPropertyType>(materialFloatParam->propertyType()), materialFloatParam->value()));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numColorParams; ++i)
+		{
+			const flat::MaterialColorParam* materialColorParam = materialParamsData->colorParams()->Get(i);
+			shaderColorParams.push_back(flat::CreateShaderColorParam(builder, static_cast<flat::ShaderPropertyType>(materialColorParam->propertyType()), materialColorParam->value()));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numTextureParams; ++i)
+		{
+			const flat::MaterialTextureParam* materialTextureParam = materialParamsData->textureParams()->Get(i);
+
+			shaderTextureParams.push_back(flat::CreateShaderTextureParam(
+				builder,
+				static_cast<flat::ShaderPropertyType>(materialTextureParam->propertyType()),
+				materialTextureParam->value(),
+				static_cast<flat::ShaderPropertyPackingType>(materialTextureParam->packingType()),
+				materialTextureParam->texturePackName(),
+				builder.CreateString(materialTextureParam->texturePackNameStr()),
+				materialTextureParam->minFilter(),
+				materialTextureParam->magFilter(),
+				materialTextureParam->anisotropicFiltering(),
+				materialTextureParam->wrapS(),
+				materialTextureParam->wrapT(),
+				materialTextureParam->wrapR()));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numStringParams; ++i)
+		{
+			const flat::MaterialStringParam* materialStringParam = materialParamsData->stringParams()->Get(i);
+			shaderStringParams.push_back(flat::CreateShaderStringParam(builder, static_cast<flat::ShaderPropertyType>(materialStringParam->propertyType()), builder.CreateString(materialStringParam->value())));
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numShaderStageParams; ++i)
+		{
+			const flat::MaterialShaderParam* materialShaderParam= materialParamsData->shaderParams()->Get(i);
+			shaderStageParams.push_back(flat::CreateShaderStageParam(builder, static_cast<flat::ShaderPropertyType>(materialShaderParam->propertyType()), materialShaderParam->shader(), materialShaderParam->shaderStageName(), builder.CreateString(materialShaderParam->value())));
+		}
+
+		auto shaderParams = flat::CreateShaderParams(
+			builder,
+			builder.CreateVector(shaderULongParams),
+			builder.CreateVector(shaderBoolParams),
+			builder.CreateVector(shaderFloatParams),
+			builder.CreateVector(shaderColorParams),
+			builder.CreateVector(shaderTextureParams),
+			builder.CreateVector(shaderStringParams),
+			builder.CreateVector(shaderStageParams));
+
+		//@TODO(Serge): now we need to figure out the ShaderEffectPasses
+		const auto& shaderEffectPasses = s_shaderAssetNameToShaderEffectPassesMap[shaderName];
+
+		std::vector<flatbuffers::Offset<flat::ShaderEffect>> flatShaderEffects;
+
+		for (s32 i = 0; i < flat::eMeshPass::eMeshPass_NUM_SHADER_EFFECT_PASSES; ++i)
+		{
+			const auto& effect = shaderEffectPasses.shaderEffectPasses[i];
+			const auto effectName = effect.shaderEffectName;
+			flatShaderEffects.push_back(flat::CreateShaderEffect(builder, STRING_ID(effectName.c_str()), builder.CreateString(effectName), effect.staticShader, effect.dynamicShader));
+		}
+
+		const auto flatShaderEffectPasses = flat::CreateShaderEffectPasses(builder, builder.CreateVector(flatShaderEffects));
+
+		const auto flatMaterial = flat::CreateMaterial(
+			builder,
+			STRING_ID(materialName.c_str()),
+			builder.CreateString(materialName),
+			shaderEffectPasses.isOpaque ? flat::eTransparencyType_OPAQUE : flat::eTransparencyType_TRANSPARENT,
+			flatShaderEffectPasses, shaderParams);
+
+		builder.Finish(flatMaterial);
+
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		std::string tempFile = (materialDir / sourceFilePath.stem()).string() + ".bin";
+		
+		bool wroteTempFile = utils::WriteFile(tempFile, (char*)buf, size);
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char materialSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialSchemaPath, MATERIAL_NAME_FBS.c_str());
+
+		bool generatedJSON = flathelp::GenerateFlatbufferJSONFile(materialDir.string(), materialSchemaPath, tempFile);
+		
+		R2_CHECK(generatedJSON, "We didn't generate the JSON file from: %s", tempFile);
+
+		std::filesystem::remove(tempFile);
+
+		return generatedJSON;
+	}
+
 
 	bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
 	{

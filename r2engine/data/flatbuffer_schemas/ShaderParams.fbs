@@ -5,14 +5,6 @@ namespace flat;
 file_identifier "sprm";
 file_extension "sprm";
 
-struct ShaderColour
-{
-	r:float;
-	g:float;
-	b:float;
-	a:float;
-}
-
 enum ShaderPropertyType: uint16
 {
 	ALBEDO = 0,
@@ -58,7 +50,7 @@ table ShaderFloatParam
 table ShaderColorParam
 {
 	propertyType:ShaderPropertyType;
-	value:ShaderColour;
+	value:Colour;
 }
 
 table ShaderBoolParam

@@ -41,9 +41,17 @@ inline const char *EnumNameeShaderEffectNames(eShaderEffectNames e) {
 struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ShaderEffectBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_STATICSHADER = 4,
-    VT_DYNAMICSHADER = 6
+    VT_ASSETNAME = 4,
+    VT_ASSETNAMESTRING = 6,
+    VT_STATICSHADER = 8,
+    VT_DYNAMICSHADER = 10
   };
+  uint64_t assetName() const {
+    return GetField<uint64_t>(VT_ASSETNAME, 0);
+  }
+  const flatbuffers::String *assetNameString() const {
+    return GetPointer<const flatbuffers::String *>(VT_ASSETNAMESTRING);
+  }
   uint64_t staticShader() const {
     return GetField<uint64_t>(VT_STATICSHADER, 0);
   }
@@ -52,6 +60,9 @@ struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_ASSETNAME) &&
+           VerifyOffset(verifier, VT_ASSETNAMESTRING) &&
+           verifier.VerifyString(assetNameString()) &&
            VerifyField<uint64_t>(verifier, VT_STATICSHADER) &&
            VerifyField<uint64_t>(verifier, VT_DYNAMICSHADER) &&
            verifier.EndTable();
@@ -62,6 +73,12 @@ struct ShaderEffectBuilder {
   typedef ShaderEffect Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_assetName(uint64_t assetName) {
+    fbb_.AddElement<uint64_t>(ShaderEffect::VT_ASSETNAME, assetName, 0);
+  }
+  void add_assetNameString(flatbuffers::Offset<flatbuffers::String> assetNameString) {
+    fbb_.AddOffset(ShaderEffect::VT_ASSETNAMESTRING, assetNameString);
+  }
   void add_staticShader(uint64_t staticShader) {
     fbb_.AddElement<uint64_t>(ShaderEffect::VT_STATICSHADER, staticShader, 0);
   }
@@ -82,12 +99,31 @@ struct ShaderEffectBuilder {
 
 inline flatbuffers::Offset<ShaderEffect> CreateShaderEffect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t assetName = 0,
+    flatbuffers::Offset<flatbuffers::String> assetNameString = 0,
     uint64_t staticShader = 0,
     uint64_t dynamicShader = 0) {
   ShaderEffectBuilder builder_(_fbb);
   builder_.add_dynamicShader(dynamicShader);
   builder_.add_staticShader(staticShader);
+  builder_.add_assetName(assetName);
+  builder_.add_assetNameString(assetNameString);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ShaderEffect> CreateShaderEffectDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t assetName = 0,
+    const char *assetNameString = nullptr,
+    uint64_t staticShader = 0,
+    uint64_t dynamicShader = 0) {
+  auto assetNameString__ = assetNameString ? _fbb.CreateString(assetNameString) : 0;
+  return flat::CreateShaderEffect(
+      _fbb,
+      assetName,
+      assetNameString__,
+      staticShader,
+      dynamicShader);
 }
 
 inline const flat::ShaderEffect *GetShaderEffect(const void *buf) {
