@@ -19,11 +19,12 @@
 #include <fstream>
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/Asset.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 
 namespace r2::asset::pln
 {
 	const std::string MATERIAL_PACK_MANIFEST_NAME_FBS = "MaterialPack.fbs";
-	const std::string MATERIAL_NAME_FBS = "Material.fbs";
+	const std::string MATERIAL_FBS = "Material.fbs";
 
 	const std::string MATERIAL_PARAMS_FBS = "MaterialParams.fbs";
 	const std::string MATERIAL_PARAMS_PACK_MANIFEST_FBS = "MaterialParamsPack.fbs";
@@ -36,11 +37,14 @@ namespace r2::asset::pln
 	const std::string MPPK_EXT = ".mppk";
 	const std::string MPRM_EXT = ".mprm";
 
-	const std::string MATERIAL_JSON_DIR = "material_raw";
-	const std::string MATERIAL_BIN_DIR = "material_bin";
+	const std::string MATERIALS_JSON_DIR = "materials_raw";
+	const std::string MATERIALS_BIN_DIR = "materials_bin";
 
 	const bool GENERATE_PARAMS = false;
-	const bool GENERATE_MATERIAL_PACK = false;
+	const bool GENERATE_MATERIALS = false; //@TODO(Serge): change to true when we need to generate this
+
+	//@HACKY but meh...
+	char sanitizeRootMaterialDirPath[r2::fs::FILE_PATH_LENGTH];
 
 	bool GenerateMaterialFromJSON(const std::string& outputDir, const std::string& path)
 	{
@@ -48,7 +52,7 @@ namespace r2::asset::pln
 
 		char materialSchemaPath[r2::fs::FILE_PATH_LENGTH];
 
-		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialSchemaPath, MATERIAL_NAME_FBS.c_str());
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialSchemaPath, MATERIAL_FBS.c_str());
 
 		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, materialSchemaPath, path);
 	}
@@ -748,7 +752,7 @@ namespace r2::asset::pln
 
 		char materialSchemaPath[r2::fs::FILE_PATH_LENGTH];
 
-		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialSchemaPath, MATERIAL_NAME_FBS.c_str());
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialSchemaPath, MATERIAL_FBS.c_str());
 
 		bool generatedJSON = flathelp::GenerateFlatbufferJSONFile(materialDir.string(), materialSchemaPath, tempFile);
 		
@@ -787,9 +791,176 @@ namespace r2::asset::pln
 		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, materialParamsPackManifestSchemaPath, jsonMaterialParamsPackManifestFilePath);
 	}
 
+
+	bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
+	{
+
+		//first generate all of the materials from JSON if they need to be generated
+		for (const auto& materialDir : std::filesystem::directory_iterator(rawDir))
+		{
+			if (materialDir.path().filename() == ".DS_Store")
+			{
+				continue;
+			}
+
+			//look for a json file in the raw dir
+			std::filesystem::path jsonDir = materialDir;
+
+			std::filesystem::path binDir = std::filesystem::path(binaryDir) / materialDir.path().stem();
+
+			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+
+			//make the directory if we need it
+
+			r2::fs::utils::SanitizeSubPath(binDir.string().c_str(), sanitizedPath);
+
+			std::filesystem::create_directory(sanitizedPath);
+
+			for (const auto& jsonfile : std::filesystem::directory_iterator(jsonDir))
+			{
+				if (jsonfile.path().filename() == ".DS_Store" ||
+					std::filesystem::file_size(jsonfile.path()) <= 0 ||
+					std::filesystem::path(jsonfile.path()).extension().string() != JSON_EXT)
+				{
+					continue;
+				}
+
+				//check to see if we have the corresponding .mprm file
+				bool found = false;
+				for (const auto& binFile : std::filesystem::directory_iterator(sanitizedPath))
+				{
+					if (std::filesystem::file_size(binFile.path()) > 0 &&
+						binFile.path().stem() == jsonfile.path().stem() &&
+						std::filesystem::path(binFile.path()).extension().string() == MTRL_EXT)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if (found)
+					continue;
+
+				//we didn't find it so generate it
+				bool generated = GenerateMaterialFromJSON(std::string(sanitizedPath), jsonfile.path().string());
+				R2_CHECK(generated, "Failed to generate the material params: %s", jsonfile.path().string().c_str());
+			}
+		}
+
+		return GenerateBinaryMaterialPackManifest(binaryDir, binFilePath, rawFilePath);
+	}
+
+	bool GenerateBinaryMaterialPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		std::vector < flatbuffers::Offset< flat::Material >> flatMaterials;
+
+
+		//okay now we know that we have all of the material generated properly
+		//so now we need to make the manifests by reading in all of the material.mmat files in the binary directory
+		//we do that for each pack
+		for (const auto& materialParamsPackDir : std::filesystem::directory_iterator(binaryDir))
+		{
+			if (materialParamsPackDir.path().filename() == ".DS_Store" || std::filesystem::is_empty(materialParamsPackDir))
+			{
+				continue;
+			}
+
+			//Get the path
+			std::filesystem::path binDir = materialParamsPackDir;
+			std::string packToRead = "";
+			for (const auto& binFile : std::filesystem::directory_iterator(binDir))
+			{
+				if (std::filesystem::file_size(binFile.path()) > 0 &&
+					std::filesystem::path(binFile.path()).extension().string() == MPRM_EXT)
+				{
+					packToRead = binFile.path().string();
+					break;
+				}
+			}
+
+			//read the file
+			char* materialData = utils::ReadFile(packToRead);
+
+			const auto binMaterial = flat::GetMaterial(materialData);
+			
+			auto shaderEffectPassesOffset = builder.CreateVector(binMaterial->shaderEffectPasses()->shaderEffectPasses()->data(), binMaterial->shaderEffectPasses()->shaderEffectPasses()->size());
+			auto shaderEffectPasses = flat::CreateShaderEffectPasses(builder, shaderEffectPassesOffset, 0);
+
+			auto shaderUlongParams = builder.CreateVector(binMaterial->shaderParams()->ulongParams()->data(), binMaterial->shaderParams()->ulongParams()->size());
+			auto shaderBoolParams = builder.CreateVector(binMaterial->shaderParams()->boolParams()->data(), binMaterial->shaderParams()->boolParams()->size());
+			auto shaderFloatParams = builder.CreateVector(binMaterial->shaderParams()->floatParams()->data(), binMaterial->shaderParams()->floatParams()->size());
+			auto shaderColorParams = builder.CreateVector(binMaterial->shaderParams()->colorParams()->data(), binMaterial->shaderParams()->colorParams()->size());
+			auto shaderTextureParams = builder.CreateVector(binMaterial->shaderParams()->textureParams()->data(), binMaterial->shaderParams()->textureParams()->size());
+			auto shaderStringParams = builder.CreateVector(binMaterial->shaderParams()->stringParams()->data(), binMaterial->shaderParams()->stringParams()->size());
+			auto shaderStageParams = builder.CreateVector(binMaterial->shaderParams()->shaderStageParams()->data(), binMaterial->shaderParams()->shaderStageParams()->size());
+
+			auto shaderParams = flat::CreateShaderParams(
+				builder,
+				shaderUlongParams,
+				shaderBoolParams,
+				shaderFloatParams,
+				shaderColorParams,
+				shaderTextureParams,
+				shaderStringParams,
+				shaderStageParams);
+
+			flatMaterials.push_back(flat::CreateMaterialDirect(
+				builder,
+				binMaterial->assetName(),
+				binMaterial->stringName()->c_str(),
+				binMaterial->transparencyType(),
+				shaderEffectPasses,
+				shaderParams
+			));
+
+			delete[] materialData;
+		}
+
+		std::filesystem::path binPath = binFilePath;
+
+		//add the texture packs to the manifest
+
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(binPath.string().c_str(), r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		auto manifest = flat::CreateMaterialPack(
+			builder, materialPackName, builder.CreateVector(flatMaterials));
+
+		//generate the manifest
+		builder.Finish(manifest);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		utils::WriteFile(binPath.string(), (char*)buf, size);
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char materialPackManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialPackManifestSchemaPath, MATERIAL_PACK_MANIFEST_NAME_FBS.c_str());
+
+		std::filesystem::path jsonPath = rawFilePath;
+
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), materialPackManifestSchemaPath, binPath.string());
+
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binPath.parent_path().string(), materialPackManifestSchemaPath, jsonPath.string());
+
+		return generatedJSON && generatedBinary;
+	}
+
 	bool GenerateMaterialParamsPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
 	{
 		//the directory we get passed in is the top level directory for all of the materials in the pack
+		
+
+		if (GENERATE_MATERIALS)
+		{
+			std::filesystem::path rootMaterialParamsDir = std::filesystem::path(rawDir).parent_path() / MATERIALS_JSON_DIR;
+			r2::fs::utils::SanitizeSubPath(rootMaterialParamsDir.string().c_str(), sanitizeRootMaterialDirPath);
+			std::filesystem::create_directory(sanitizeRootMaterialDirPath);
+		}
+
 
 		//first generate all of the materials from JSON if they need to be generated
 		for (const auto& materialParamsPackDir : std::filesystem::directory_iterator(rawDir))
@@ -802,14 +973,11 @@ namespace r2::asset::pln
 			//look for a json file in the raw dir
 			std::filesystem::path jsonDir = materialParamsPackDir;
 
-			//std::filesystem::path tempDir = std::filesystem::path(binaryDir) / materialParamsPackDir.path().stem();
 			std::filesystem::path binDir = std::filesystem::path(binaryDir) / materialParamsPackDir.path().stem();
 
 			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-			//r2::fs::utils::SanitizeSubPath(tempDir.string().c_str(), sanitizedPath);
 
 			//make the directory if we need it
-			//std::filesystem::create_directory(sanitizedPath);
 
 			r2::fs::utils::SanitizeSubPath(binDir.string().c_str(), sanitizedPath);
 
@@ -881,6 +1049,13 @@ namespace r2::asset::pln
 			char* materialParamsData = utils::ReadFile(packToRead);
 
 			const auto materialParams = flat::GetMaterialParams(materialParamsData);
+
+			if (GENERATE_MATERIALS)
+			{
+				bool result = GenerateMaterialFromOldMaterialParamsPack(materialParams, packToRead, sanitizeRootMaterialDirPath);
+
+				R2_CHECK(result, "We couldn't generate the material from: %s\n", packToRead.c_str());
+			}
 
 			std::vector<flatbuffers::Offset<flat::MaterialULongParam>> ulongParams;
 			std::vector<flatbuffers::Offset<flat::MaterialBoolParam>> boolParams;

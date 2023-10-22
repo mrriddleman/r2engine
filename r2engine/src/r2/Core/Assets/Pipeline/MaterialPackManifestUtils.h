@@ -21,6 +21,9 @@ namespace r2::asset::pln
 
 	bool GenerateMaterialFromJSON(const std::string& outputDir, const std::string& path);
 	bool GenerateMaterialPackManifestFromJson(const std::string& jsonMaterialPackManifestFilePath, const std::string& outputDir);
+	bool GenerateBinaryMaterialPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath);
+	bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
+
 	//bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	//bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
 
@@ -38,7 +41,8 @@ namespace r2::asset::pln
 	bool FindMaterialParamsPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
 	bool GenerateBinaryParamsPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath);
 
-	
+
+
 }
 
 #endif
