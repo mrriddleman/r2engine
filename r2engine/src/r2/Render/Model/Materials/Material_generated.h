@@ -7,9 +7,9 @@
 #include "flatbuffers/flatbuffers.h"
 
 #include "MaterialParams_generated.h"
-#include "r2/Render/Model/Shader/ShaderEffect_generated.h"
-#include "r2/Render/Model/Shader/ShaderEffectPasses_generated.h"
-#include "r2/Render/Model/Shader/ShaderParams_generated.h"
+#include "ShaderEffect_generated.h"
+#include "ShaderEffectPasses_generated.h"
+#include "ShaderParams_generated.h"
 
 namespace flat {
 
