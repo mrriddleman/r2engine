@@ -175,7 +175,7 @@ namespace r2
 
             modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
             modelAssetCMD->AddRawModelDirectories(rawModelPaths);
-            modelAssetCMD->AddMaterialManifestPaths(binaryMaterialManifestPaths);
+            modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths[1] }); //@TODO(Serge): fix this - shouldn't have the [1]
 
             //std::vector<std::string> binaryAnimationPaths;
             //std::vector<std::string> rawAnimationPaths;
@@ -209,33 +209,35 @@ namespace r2
 			//Material pack command data
             {
 				//for the engine
-			//	std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
-			//	std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
+				std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
+				std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
 
 				std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
 				std::string engineMaterialParamsPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN;
 
-				//std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
-				//std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
+				std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
+				std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
 
 				std::string engineMaterialParamsPackManifestRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_params_pack.json");
 				std::string engineMaterialParamsPackManifestBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_params_pack.mppk");
 
-				//manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
-				//manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
+				manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
+				manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
 
 				manifestRawFilePaths.push_back(engineMaterialParamsPackManifestRaw);
 				manifestBinaryFilePaths.push_back(engineMaterialParamsPackManifestBin);
 
-			//	materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
-			//	materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
+                //@TODO(Serge): add in for hot-reloading later
+				materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
+				materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
 
 				materialPacksWatchDirectoriesRaw.push_back(engineMaterialParamsPackDirRaw);
 				materialPacksWatchDirectoriesBin.push_back(engineMaterialParamsPackDirBin);
 
-				//findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
+				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
 				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialParamsPackManifestFile);
-			//	generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
+
+				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
 				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories);
 
 				//for the app

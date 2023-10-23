@@ -115,8 +115,8 @@ project "r2engine"
 		'R2_ENGINE_INTERNAL_SHADER_PASSES_BIN_DIR="'..os.getcwd()..'/r2engine/assets_bin/shaders/manifests/internal_passes"',
 
 		'R2_ENGINE_INTERNAL_MATERIALS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials"',
-		'R2_ENGINE_INTERNAL_MATERIALS_DIR="'..os.getcwd()..'/r2engine/assets/materials/packs"',
-		'R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/packs"',
+		'R2_ENGINE_INTERNAL_MATERIALS_DIR="'..os.getcwd()..'/r2engine/assets/materials/materials_raw"',
+		'R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/materials_bin"',
 		'R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS="'..os.getcwd()..'/r2engine/assets/materials/manifests"',
 		'R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/manifests"',
 		
@@ -513,8 +513,8 @@ project "Sandbox"
 		'APP_DIR="'..os.getcwd()..'/%{prj.name}"',
 
 		'SANDBOX_MATERIALS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials"',
-		'SANDBOX_MATERIALS_DIR="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Materials/packs"',
-		'SANDBOX_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials/packs"',
+		'SANDBOX_MATERIALS_DIR="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Materials/materials_raw"',
+		'SANDBOX_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials/materials_bin"',
 		'SANDBOX_MATERIALS_MANIFESTS="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Materials/manifests"',
 		'SANDBOX_MATERIALS_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials/manifests"',
 

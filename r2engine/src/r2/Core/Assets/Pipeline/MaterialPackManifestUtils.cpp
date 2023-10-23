@@ -40,8 +40,8 @@ namespace r2::asset::pln
 	const std::string MATERIALS_JSON_DIR = "materials_raw";
 	const std::string MATERIALS_BIN_DIR = "materials_bin";
 
-	const bool GENERATE_PARAMS = false;
-	const bool GENERATE_MATERIALS = false; //@TODO(Serge): change to true when we need to generate this
+
+	const bool GENERATE_MATERIALS = false; 
 
 	//@HACKY but meh...
 	char sanitizeRootMaterialDirPath[r2::fs::FILE_PATH_LENGTH];
@@ -232,29 +232,29 @@ namespace r2::asset::pln
 	//	return generatedJSON && generatedBinary;
 	//}
 
-	//bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary)
-	//{
-	//	for (auto& file : std::filesystem::recursive_directory_iterator(directory))
-	//	{
-	//		//UGH MAC - ignore .DS_Store
-	//		if (std::filesystem::file_size(file.path()) <= 0 ||
-	//			(std::filesystem::path(file.path()).extension().string() != JSON_EXT &&
-	//				std::filesystem::path(file.path()).extension().string() != MPAK_EXT &&
-	//				file.path().stem().string() != stemName))
-	//		{
-	//			continue;
-	//		}
+	bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary)
+	{
+		for (auto& file : std::filesystem::recursive_directory_iterator(directory))
+		{
+			//UGH MAC - ignore .DS_Store
+			if (std::filesystem::file_size(file.path()) <= 0 ||
+				(std::filesystem::path(file.path()).extension().string() != JSON_EXT &&
+					std::filesystem::path(file.path()).extension().string() != MPAK_EXT &&
+					file.path().stem().string() != stemName))
+			{
+				continue;
+			}
 
-	//		if ((isBinary && std::filesystem::path(file.path()).extension().string() == MPAK_EXT) || 
-	//			(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT))
-	//		{
-	//			outPath = file.path().string();
-	//			return true;
-	//		}
-	//	}
+			if (file.path().stem().string() == stemName && ((isBinary && std::filesystem::path(file.path()).extension().string() == MPAK_EXT) ||
+				(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT)))
+			{
+				outPath = file.path().string();
+				return true;
+			}
+		}
 
-	//	return false;
-	//}
+		return false;
+	}
 
 
 	//@Temporary
@@ -408,24 +408,31 @@ namespace r2::asset::pln
 		static const std::string STATIC_STRING = "Static";
 		static const std::string DYNAMIC_STRING = "Dynamic";
 
-		
-
 		//for engine materials only
-		if (materialName.find(STATIC_STRING, 0))
+		if (materialName.find(STATIC_STRING, 0) != std::string::npos)
 		{
 			materialName = materialName.substr(STATIC_STRING.size());
 		}
-		else if (materialName.find(DYNAMIC_STRING, 0))
+		else if (materialName.find(DYNAMIC_STRING, 0) != std::string::npos)
 		{
 			materialName = materialName.substr(DYNAMIC_STRING.size());
 		}
 
 		std::filesystem::path materialDir = std::filesystem::path(outputDir) / materialName;
 
-		if (std::filesystem::exists(materialDir))
+		std::filesystem::path materialJSONPath = materialDir / (materialName + JSON_EXT);
+
+		bool materialDirExists = std::filesystem::exists(materialDir);
+
+		if (materialDirExists && std::filesystem::exists(materialJSONPath))
 		{
 			//we already made the material - don't do it again
 			return true;
+		}
+
+		if (!materialDirExists)
+		{
+			std::filesystem::create_directory(materialDir);
 		}
 
 		struct ShaderEffect
@@ -622,7 +629,7 @@ namespace r2::asset::pln
 			{STRING_ID("Screen"), screenCompositePass}
 		};
 
-		std::filesystem::create_directory(materialDir);
+		
 
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -634,13 +641,33 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::ShaderStringParam>> shaderStringParams;
 		std::vector<flatbuffers::Offset<flat::ShaderStageParam>> shaderStageParams;
 
-		const flatbuffers::uoffset_t numULongParams = materialParamsData->ulongParams()->size();
-		const flatbuffers::uoffset_t numBoolParams = materialParamsData->boolParams()->size();
-		const flatbuffers::uoffset_t numFloatParams = materialParamsData->floatParams()->size();
-		const flatbuffers::uoffset_t numColorParams = materialParamsData->colorParams()->size();
-		const flatbuffers::uoffset_t numTextureParams = materialParamsData->textureParams()->size();
-		const flatbuffers::uoffset_t numStringParams = materialParamsData->stringParams()->size();
-		const flatbuffers::uoffset_t numShaderStageParams = materialParamsData->shaderParams()->size();
+		flatbuffers::uoffset_t numULongParams = 0;
+		if(materialParamsData->ulongParams())
+			numULongParams = materialParamsData->ulongParams()->size();
+
+		flatbuffers::uoffset_t numBoolParams = 0;
+		if(materialParamsData->boolParams())
+			numBoolParams = materialParamsData->boolParams()->size();
+
+		flatbuffers::uoffset_t numFloatParams = 0;
+		if (materialParamsData->floatParams())
+			numFloatParams = materialParamsData->floatParams()->size();
+
+		flatbuffers::uoffset_t numColorParams = 0;
+		if (materialParamsData->colorParams())
+			numColorParams = materialParamsData->colorParams()->size();
+		
+		flatbuffers::uoffset_t numTextureParams = 0;
+		if(materialParamsData->textureParams())
+			numTextureParams = materialParamsData->textureParams()->size();
+
+		flatbuffers::uoffset_t numStringParams = 0;
+		if(materialParamsData->stringParams())
+			numStringParams = materialParamsData->stringParams()->size();
+
+		flatbuffers::uoffset_t numShaderStageParams = 0;
+		if (materialParamsData->shaderParams())
+			numShaderStageParams = materialParamsData->shaderParams()->size();
 
 		u64 shaderName = 0;
 
@@ -744,7 +771,7 @@ namespace r2::asset::pln
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
 
-		std::string tempFile = (materialDir / sourceFilePath.stem()).string() + ".bin";
+		std::string tempFile = (materialDir / materialName).string() + ".bin";
 		
 		bool wroteTempFile = utils::WriteFile(tempFile, (char*)buf, size);
 
@@ -872,7 +899,7 @@ namespace r2::asset::pln
 			for (const auto& binFile : std::filesystem::directory_iterator(binDir))
 			{
 				if (std::filesystem::file_size(binFile.path()) > 0 &&
-					std::filesystem::path(binFile.path()).extension().string() == MPRM_EXT)
+					std::filesystem::path(binFile.path()).extension().string() == MTRL_EXT)
 				{
 					packToRead = binFile.path().string();
 					break;
@@ -883,36 +910,121 @@ namespace r2::asset::pln
 			char* materialData = utils::ReadFile(packToRead);
 
 			const auto binMaterial = flat::GetMaterial(materialData);
-			
-			auto shaderEffectPassesOffset = builder.CreateVector(binMaterial->shaderEffectPasses()->shaderEffectPasses()->data(), binMaterial->shaderEffectPasses()->shaderEffectPasses()->size());
-			auto shaderEffectPasses = flat::CreateShaderEffectPasses(builder, shaderEffectPassesOffset, 0);
 
-			auto shaderUlongParams = builder.CreateVector(binMaterial->shaderParams()->ulongParams()->data(), binMaterial->shaderParams()->ulongParams()->size());
-			auto shaderBoolParams = builder.CreateVector(binMaterial->shaderParams()->boolParams()->data(), binMaterial->shaderParams()->boolParams()->size());
-			auto shaderFloatParams = builder.CreateVector(binMaterial->shaderParams()->floatParams()->data(), binMaterial->shaderParams()->floatParams()->size());
-			auto shaderColorParams = builder.CreateVector(binMaterial->shaderParams()->colorParams()->data(), binMaterial->shaderParams()->colorParams()->size());
-			auto shaderTextureParams = builder.CreateVector(binMaterial->shaderParams()->textureParams()->data(), binMaterial->shaderParams()->textureParams()->size());
-			auto shaderStringParams = builder.CreateVector(binMaterial->shaderParams()->stringParams()->data(), binMaterial->shaderParams()->stringParams()->size());
-			auto shaderStageParams = builder.CreateVector(binMaterial->shaderParams()->shaderStageParams()->data(), binMaterial->shaderParams()->shaderStageParams()->size());
+			std::vector<flatbuffers::Offset<flat::ShaderEffect>> flatShaderEffects;
+
+			for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderEffectPasses()->shaderEffectPasses()->size(); ++i)
+			{
+				const auto* shaderEffect = binMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(i);
+
+				flatShaderEffects.push_back(flat::CreateShaderEffect(
+					builder,
+					shaderEffect->assetName(),
+					builder.CreateString(shaderEffect->assetNameString()),
+					shaderEffect->staticShader(),
+					shaderEffect->dynamicShader()));
+			}
+
+			auto shaderEffectPasses = flat::CreateShaderEffectPasses(builder, builder.CreateVector(flatShaderEffects), 0); //@NOTE(Serge): we should probably have some kind of defaults here
+
+			std::vector<flatbuffers::Offset<flat::ShaderULongParam>> shaderULongParams;
+			std::vector<flatbuffers::Offset<flat::ShaderBoolParam>> shaderBoolParams;
+			std::vector<flatbuffers::Offset<flat::ShaderFloatParam>> shaderFloatParams;
+			std::vector<flatbuffers::Offset<flat::ShaderColorParam>> shaderColorParams;
+			std::vector<flatbuffers::Offset<flat::ShaderTextureParam>> shaderTextureParams;
+			std::vector<flatbuffers::Offset<flat::ShaderStringParam>> shaderStringParams;
+			std::vector<flatbuffers::Offset<flat::ShaderStageParam>> shaderStageParams;
+
+			if (binMaterial->shaderParams()->ulongParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->ulongParams()->size(); ++i)
+				{
+					const auto* shaderULongParam = binMaterial->shaderParams()->ulongParams()->Get(i);
+					shaderULongParams.push_back(flat::CreateShaderULongParam(builder, shaderULongParam->propertyType(), shaderULongParam->value()));
+				}
+			}
+
+			if (binMaterial->shaderParams()->boolParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->boolParams()->size(); ++i)
+				{
+					const auto* shaderBoolParam = binMaterial->shaderParams()->boolParams()->Get(i);
+					shaderBoolParams.push_back(flat::CreateShaderBoolParam(builder, shaderBoolParam->propertyType(), shaderBoolParam->value()));
+				}
+			}
+
+			if (binMaterial->shaderParams()->floatParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->floatParams()->size(); ++i)
+				{
+					const auto* shaderFloatParam = binMaterial->shaderParams()->floatParams()->Get(i);
+					shaderFloatParams.push_back(flat::CreateShaderFloatParam(builder, shaderFloatParam->propertyType(), shaderFloatParam->value()));
+				}
+			}
+
+			if (binMaterial->shaderParams()->colorParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->colorParams()->size(); ++i)
+				{
+					const auto* shaderColorParam = binMaterial->shaderParams()->colorParams()->Get(i);
+					shaderColorParams.push_back(flat::CreateShaderColorParam(builder, shaderColorParam->propertyType(), shaderColorParam->value()));
+				}
+			}
+
+			if (binMaterial->shaderParams()->textureParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->textureParams()->size(); ++i)
+				{
+					const auto* shaderTextureParam = binMaterial->shaderParams()->textureParams()->Get(i);
+					shaderTextureParams.push_back(
+						flat::CreateShaderTextureParam(
+							builder,
+							shaderTextureParam->propertyType(),
+							shaderTextureParam->value(),
+							shaderTextureParam->packingType(),
+							shaderTextureParam->texturePackName(),
+							builder.CreateString(shaderTextureParam->texturePackNameStr()),
+							shaderTextureParam->minFilter(),
+							shaderTextureParam->magFilter(),
+							shaderTextureParam->anisotropicFiltering(), shaderTextureParam->wrapS(), shaderTextureParam->wrapT(), shaderTextureParam->wrapR()));
+				}
+			}
+
+			if (binMaterial->shaderParams()->stringParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->stringParams()->size(); ++i)
+				{
+					const auto* shaderStringParam = binMaterial->shaderParams()->stringParams()->Get(i);
+					shaderStringParams.push_back(flat::CreateShaderStringParam(builder, shaderStringParam->propertyType(), builder.CreateString(shaderStringParam->value())));
+				}
+			}
+
+			if (binMaterial->shaderParams()->shaderStageParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->shaderStageParams()->size(); ++i)
+				{
+					const auto* shaderStageParam = binMaterial->shaderParams()->shaderStageParams()->Get(i);
+					shaderStageParams.push_back(flat::CreateShaderStageParam(builder, shaderStageParam->propertyType(), shaderStageParam->shader(), shaderStageParam->shaderStageName(), builder.CreateString(shaderStageParam->value())));
+				}
+			}
 
 			auto shaderParams = flat::CreateShaderParams(
 				builder,
-				shaderUlongParams,
-				shaderBoolParams,
-				shaderFloatParams,
-				shaderColorParams,
-				shaderTextureParams,
-				shaderStringParams,
-				shaderStageParams);
+				builder.CreateVector(shaderULongParams),
+				builder.CreateVector(shaderBoolParams),
+				builder.CreateVector(shaderFloatParams),
+				builder.CreateVector(shaderColorParams),
+				builder.CreateVector(shaderTextureParams),
+				builder.CreateVector(shaderStringParams),
+				builder.CreateVector(shaderStageParams));
 
-			flatMaterials.push_back(flat::CreateMaterialDirect(
+			flatMaterials.push_back(flat::CreateMaterial(
 				builder,
-				binMaterial->assetName(),
-				binMaterial->stringName()->c_str(),
+				binMaterial->assetName(), 
+				builder.CreateString(binMaterial->stringName()),
 				binMaterial->transparencyType(),
 				shaderEffectPasses,
-				shaderParams
-			));
+				shaderParams));
 
 			delete[] materialData;
 		}
@@ -1205,8 +1317,8 @@ namespace r2::asset::pln
 				continue;
 			}
 
-			if ((isBinary && std::filesystem::path(file.path()).extension().string() == MPPK_EXT) ||
-				(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT))
+			if (file.path().stem().string() == stemName && ((isBinary && std::filesystem::path(file.path()).extension().string() == MPPK_EXT ) ||
+				(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT)))
 			{
 				outPath = file.path().string();
 				return true;
@@ -1215,6 +1327,8 @@ namespace r2::asset::pln
 
 		return false;
 	}
+
+	
 
 	/*std::vector<r2::draw::MaterialHandle> FindMaterialHandleForTexturePaths(const std::string& binFilePath, const std::vector<std::string>& texturePaths)
 	{
