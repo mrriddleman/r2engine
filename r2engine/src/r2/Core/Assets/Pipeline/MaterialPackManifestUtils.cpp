@@ -1035,8 +1035,11 @@ namespace r2::asset::pln
 
 		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(binPath.string().c_str(), r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
-		auto manifest = flat::CreateMaterialPack(
-			builder, materialPackName, builder.CreateVector(flatMaterials));
+		char materialPackNameStr[r2::fs::FILE_PATH_LENGTH];
+
+		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), materialPackNameStr, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		auto manifest = flat::CreateMaterialPack(builder, materialPackName, builder.CreateString(materialPackNameStr), builder.CreateVector(flatMaterials));
 
 		//generate the manifest
 		builder.Finish(manifest);

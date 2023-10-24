@@ -430,7 +430,7 @@ namespace r2
 
             SetupAssetLib(
                 materialsPath,
-                appMaterialPacksManifests,
+                { appMaterialPacksManifests[1] },
                 texturePackPath,
                 appInitialTexturePackManifests,
                 noptrApp->GetSoundDefinitionPath().c_str());
@@ -439,7 +439,7 @@ namespace r2
 
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
 
-			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, appMaterialPacksManifests.size() + 1);
+			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, appMaterialPacksManifests.size()); //@TODO(Serge): add 1 again
 			if (!shaderSystemIntialized)
 			{
 				R2_CHECK(false, "We couldn't initialize the shader system");

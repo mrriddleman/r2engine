@@ -7,7 +7,8 @@ file_extension "mpak";
 
 table MaterialPack
 {
-	name:ulong (hash:"fnv1a_64");
+	assetName:ulong (hash:"fnv1a_64");
+	assetNameString:string;
 	pack:[Material];
 }
 
