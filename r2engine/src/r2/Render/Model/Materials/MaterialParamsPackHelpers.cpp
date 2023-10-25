@@ -219,32 +219,26 @@ namespace r2::mat
 #endif
 
 #ifdef R2_EDITOR
-	std::vector<std::string> GetAllTexturePacksForMaterialNames(const r2::SArray<MaterialName>& materialNames)
-	{
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+	//std::vector<std::string> GetAllTexturePacksForMaterialNames(const r2::SArray<MaterialName>& materialNames)
+	//{
+	//	r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		const u32 numMaterialNames = r2::sarr::Size(materialNames);
+	//	const u32 numMaterialNames = r2::sarr::Size(materialNames);
 
-		for (u32 i = 0; i < numMaterialNames; ++i)
-		{
-			const MaterialName& materialName = r2::sarr::At(materialNames, i);
+	//	for (u32 i = 0; i < numMaterialNames; ++i)
+	//	{
+	//		const MaterialName& materialName = r2::sarr::At(materialNames, i);
 
-			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+	//		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-			R2_CHECK(manifestData != nullptr, "");
+	//		R2_CHECK(manifestData != nullptr, "");
 
-			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+	//		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
 
-			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+	//		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+	//	}
 
-
-
-		}
-
-		
-
-
-		return {};
-	}
+	//	return {};
+	//}
 #endif
 }
