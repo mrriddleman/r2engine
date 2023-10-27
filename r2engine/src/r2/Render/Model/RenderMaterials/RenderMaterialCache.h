@@ -12,7 +12,9 @@
 
 namespace flat
 {
-	struct MaterialParams;
+	//struct MaterialParams;
+	struct Material;
+	struct MaterialPack;
 }
 
 namespace r2::draw
@@ -48,11 +50,11 @@ namespace r2::draw::rmat
 	RenderMaterialCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numMaterials, const char* areaName);
 	void Shutdown(RenderMaterialCache* cache);
 
-	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload);
-	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialParamsPack* materialParamsPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures);
+	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload);
+	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialPack* materialPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures);
 
-	bool UnloadMaterialParams(RenderMaterialCache& renderMaterialCache, u64 materialName);
-	bool UnloadMaterialParamsArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames);
+	bool UnloadMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
+	bool UnloadMaterialArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames);
 
 	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, u64 materialName);
 

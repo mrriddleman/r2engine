@@ -10,8 +10,12 @@
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
-#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
+
+//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Renderer/Renderer.h"
 
 #ifdef R2_ASSET_PIPELINE
@@ -439,7 +443,7 @@ namespace r2
 
 			const flatbuffers::uoffset_t numMaterials = materialNames->size();
 
-			r2::SArray<const flat::MaterialParams*>* materialParamsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParams*, numMaterials);
+			r2::SArray<const flat::Material*>* materialsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::Material*, numMaterials);
 
 			u32 numTexturesTotal = 0;
 			u32 numCubemapTexturesTotal = numMaterials;
@@ -451,13 +455,13 @@ namespace r2
 
 				r2::mat::MaterialName materialName = r2::mat::MakeMaterialNameFromFlatMaterial(flatMaterialName);
 
-				const flat::MaterialParams* materialParams = r2::mat::GetMaterialParamsForMaterialName(materialName);
+				const flat::Material* material = r2::mat::GetMaterialForMaterialName(materialName);
 
-				R2_CHECK(materialParams != nullptr, "This should never be nullptr");
+				R2_CHECK(material != nullptr, "This should never be nullptr");
 
-				numTexturesTotal = std::max(materialParams->textureParams()->size(), numTexturesTotal);
+				numTexturesTotal = std::max(material->shaderParams()->textureParams()->size(), numTexturesTotal);
 
-				r2::sarr::Push(*materialParamsToLoad, materialParams);
+				r2::sarr::Push(*materialsToLoad, material);
 
 				r2::sarr::Push(*materials, materialName);
 				//r2::mat::GetAllTexturePacksForMaterial(materialParams, textureAssets);
@@ -468,7 +472,7 @@ namespace r2
 			//Load from disk
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
-				bool result = gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialParamsToLoad, i));
+				bool result = gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialsToLoad, i));
 				R2_CHECK(result, "Should always work");
 			}
 
@@ -482,8 +486,8 @@ namespace r2
 			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
-				const flat::MaterialParams* materialParams = r2::sarr::At(*materialParamsToLoad, i);
-				bool result = gameAssetManager.GetTexturesForMaterialParams(materialParams, gameTextures, gameCubemaps);
+				const flat::Material* material = r2::sarr::At(*materialsToLoad, i);
+				bool result = gameAssetManager.GetTexturesForMaterial(material, gameTextures, gameCubemaps);
 				R2_CHECK(result, "Should always work");
 
 				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
@@ -499,7 +503,7 @@ namespace r2
 				}
 
 				f64 texParamUploadStart = CENG.GetTicks();
-				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTexture, false);
+				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, material, texturesToUse, cubemapTexture, false);
 				f64 texParamUploadEnd = CENG.GetTicks();
 				totalTextureUploadTime += (texParamUploadEnd - texParamUploadStart);
 
@@ -510,7 +514,7 @@ namespace r2
 			FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
 			FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 
-			FREE(materialParamsToLoad, *MEM_ENG_SCRATCH_PTR);
+			FREE(materialsToLoad, *MEM_ENG_SCRATCH_PTR);
 
 			materialUploadEnd = CENG.GetTicks();
 		}
@@ -551,7 +555,7 @@ namespace r2
 
 		for (u32 i = 0; i < numMaterialsInLevelToUnload; ++i)
 		{
-			r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialParamsForMaterialName(r2::sarr::At(*level.mMaterials, i)), levelToUnloadTexturePacks);
+			r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialForMaterialName(r2::sarr::At(*level.mMaterials, i)), levelToUnloadTexturePacks);
 		}
 
 		for (u32 i = 0; i < r2::sarr::Size(*mLoadedLevels); ++i)
@@ -562,7 +566,7 @@ namespace r2
 
 			for (u32 j = 0; j < numMaterials; ++j)
 			{
-				r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialParamsForMaterialName(r2::sarr::At(*nextLoadedLevel.mMaterials, j)), loadedLevelsTexturePacks);
+				r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialForMaterialName(r2::sarr::At(*nextLoadedLevel.mMaterials, j)), loadedLevelsTexturePacks);
 			}
 		}
 

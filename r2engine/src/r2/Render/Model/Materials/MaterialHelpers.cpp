@@ -138,7 +138,7 @@ namespace r2::mat
 		{
 			const auto* texParam = textureParams->Get(i);
 
-			if (texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+			if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
 			{
 				return texParam->value();
 			}

@@ -31,8 +31,10 @@ namespace r2::asset
 
 namespace flat
 {
-	struct MaterialParamsPack;
-	struct MaterialParams;
+//	struct MaterialParamsPack;
+//	struct MaterialParams;
+	struct MaterialPack;
+	struct Material;
 }
 
 namespace r2
@@ -196,16 +198,16 @@ namespace r2
 		bool AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		bool UpdateTexturePacksManifest(u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		
-		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
-		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);
+		bool LoadMaterialTextures(const flat::Material* material);
+		bool LoadMaterialTextures(const flat::MaterialPack* materialPack);
 		
 		bool UnloadTexturePack(u64 texturePackName);
 
-		bool GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
-		bool GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+		bool GetTexturesForMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+		bool GetTexturesForMaterialPack(const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
-		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
-		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
+		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);
+		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);
 
 #if defined(R2_ASSET_PIPELINE) || defined(R2_EDITOR)
 
@@ -224,7 +226,7 @@ namespace r2
 	private:
 
 		void FreeAllAssets();
-		void GetTexturesForMaterialParamsInternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+		void GetTexturesForMaterialnternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
 		r2::asset::AssetCacheRecord FindAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);
 		void RemoveAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);

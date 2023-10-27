@@ -13,7 +13,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Hash.h"
 #include "assetlib/DiskAssetFile.h"
-#include "Materials/MaterialParamsPack_generated.h"
+//#include "Materials/MaterialParamsPack_generated.h"
+#include "Materials/MaterialPack_generated.h"
+#include "Shader/ShaderParams_generated.h"
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
@@ -627,7 +629,7 @@ namespace r2::assets::assetlib
 
 				assert(readSize == fileSize && "Didn't read whole file");
 
-				const auto materialManifest = flat::GetMaterialParamsPack(materialManifestData);
+				const auto materialManifest = flat::GetMaterialPack(materialManifestData);//flat::GetMaterialParamsPack(materialManifestData);
 				
 				if (numTextures > 0)
 				{
@@ -655,18 +657,27 @@ namespace r2::assets::assetlib
 						//@TODO(Serge): we've put the texture pack name into the material for each texture (we only need the diffuse/albedo texture)
 						//				thus we need to build the texture name like: texturePackNameStr() / albedo / diffuseTextureName
 
-						const auto numMaterials = materialManifest->pack()->size();
+						const auto materials = materialManifest->pack();
+
+						const auto numMaterials = materials->size();//materialManifest->pack()->size();
 						bool found = false;
 
 						for (flatbuffers::uoffset_t i = 0; i < numMaterials && !found; ++i)
 						{
-							const flat::MaterialParams* materialParams = materialManifest->pack()->Get(i);
+						//	const flat::MaterialParams* materialParams = materialManifest->pack()->Get(i);
 
-							for (flatbuffers::uoffset_t t = 0; t < materialParams->textureParams()->size() && !found; ++t)
+							const flat::Material* material = materials->Get(i);
+
+
+							const auto* textureParams = material->shaderParams()->textureParams();
+
+							for (flatbuffers::uoffset_t t = 0; t < textureParams->size() && !found; ++t)
 							{
-								const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(t);
+								//const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(t);
+								const flat::ShaderTextureParam* texParam = textureParams->Get(t);
 
-								if (texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+
+								if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
 								{
 									auto packNameStr = texParam->texturePackNameStr()->str();
 									
@@ -676,8 +687,8 @@ namespace r2::assets::assetlib
 
 									if (textureNameID == texParam->value())
 									{
-										materialName.name = materialParams->name();
-										materialName.materialPackName = materialManifest->name();
+										materialName.name = material->assetName();//materialParams->name();
+										materialName.materialPackName = materialManifest->assetName();//materialManifest->name();
 										found = true;
 										break;
 									}
@@ -692,7 +703,7 @@ namespace r2::assets::assetlib
 				{
 					const char* matName = material->GetName().C_Str();
 					materialName.name = STRING_ID(matName);
-					materialName.materialPackName = materialManifest->name();
+					materialName.materialPackName = materialManifest->assetName();//materialManifest->name();
 				}
 
 

@@ -188,8 +188,7 @@ namespace r2::draw
 		r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
 		r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
 
-		r2::draw::RenderMaterialParams mDefaultStaticOutlineRenderMaterialParams;
-		r2::draw::RenderMaterialParams mDefaultDynamicOutlineRenderMaterialParams;
+		r2::draw::RenderMaterialParams mDefaultOutlineRenderMaterialParams;
 
 		r2::draw::RenderMaterialParams mMissingTextureRenderMaterialParams;
 		r2::draw::RenderMaterialParams mBlueNoiseRenderMaterialParams;

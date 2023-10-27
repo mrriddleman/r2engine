@@ -26,6 +26,8 @@ project "assetconverter"
 	{
 		"include",
 		"../../src/r2/Render/Model/Textures/",
+		"../../src/r2/Render/Model/Shader/",
+		"../../src/r2/Render/Model/Materials/",
 		"%{assetconverterIncludeDirs.assetlib}",
 		"%{assetconverterIncludeDirs.glm}",
 		"%{assetconverterIncludeDirs.cmdln}",

@@ -4,7 +4,8 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Textures/Texture.h"
@@ -14,7 +15,8 @@
 
 namespace
 {
-	const std::string MPRM_EXT = ".mprm";
+	//const std::string MPRM_EXT = ".mprm";
+	const std::string MTRL_EXT = ".mtrl";
 }
 
 namespace r2::asset::pln
@@ -115,7 +117,9 @@ namespace r2::asset::pln
 	{
 		//first find the material if it exists
 		//if it doesn't then it probably was removed so unload it
-		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+		//const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+		const flat::MaterialPack* materialPack = flat::GetMaterialPack(manifestData);
+
 
 		//@TODO(Serge): this is how it should be I think
 		//u64 materialName = r2::asset::Asset::GetAssetNameForFilePath(changedFilePath, r2::asset::MATERIAL);
@@ -132,30 +136,35 @@ namespace r2::asset::pln
 		bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialName);
 
 		//now find it in the MaterialParamsPack. If we don't find it then, we know it was removed
-		const flat::MaterialParams* foundMaterialParams = nullptr;
+		//const flat::MaterialParams* foundMaterialParams = nullptr;
+		const flat::Material* foundMaterial = nullptr;
 
-		const auto numMaterialParams = materialParamsPack->pack()->size();
+		//const auto numMaterialParams = materialParamsPack->pack()->size();
+		const auto* materials = materialPack->pack();
+		const auto numMaterials = materialPack->pack()->size();
 
-		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
+		for (flatbuffers::uoffset_t i = 0; i < numMaterials; ++i)
 		{
-			const auto* materialParams = materialParamsPack->pack()->Get(i);
+			//const auto* materialParams = materialParamsPack->pack()->Get(i);
 
-			if (materialParams->name() == materialName)
+			const auto* material = materials->Get(i);
+
+			if (material->assetName() == materialName)//materialParams->name() == materialName)
 			{
-				foundMaterialParams = materialParams;
-
+				//foundMaterialParams = materialParams;
+				foundMaterial = material;
 				break;
 			}
 		}
 
-		if (foundMaterialParams)
+		if (foundMaterial)
 		{
 			//load the material params again
 			r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
 			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
-			bool result = gameAssetManager.GetTexturesForMaterialParams(foundMaterialParams, textures, cubemaps);
+			bool result = gameAssetManager.GetTexturesForMaterial(foundMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");
 
 			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
@@ -173,8 +182,8 @@ namespace r2::asset::pln
 
 			if (isLoaded)
 			{
-				gameAssetManager.LoadMaterialTextures(foundMaterialParams); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
-				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterialParams, texturesToUse, cubemapTextureToUse, true);
+				gameAssetManager.LoadMaterialTextures(foundMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
+				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterial, texturesToUse, cubemapTextureToUse, true);
 				R2_CHECK(result, "This should always work");
 			}
 
@@ -183,7 +192,7 @@ namespace r2::asset::pln
 		}
 		else
 		{
-			r2::draw::rmat::UnloadMaterialParams(*renderMaterialCache, materialName);
+			r2::draw::rmat::UnloadMaterial(*renderMaterialCache, materialName);
 		}
 
 		return true;
@@ -302,7 +311,7 @@ namespace r2::asset::pln
 
 		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
 		{
-			if (file.path().extension() == MPRM_EXT)
+			if (file.path().extension() == MTRL_EXT)//MPRM_EXT)
 			{
 				std::filesystem::remove(file.path());
 				break;
@@ -384,7 +393,7 @@ namespace r2::asset::pln
 
 		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
 		{
-			if (file.path().extension() == MPRM_EXT)
+			if (file.path().extension() == MTRL_EXT)
 			{
 				std::filesystem::remove(file.path());
 				break;

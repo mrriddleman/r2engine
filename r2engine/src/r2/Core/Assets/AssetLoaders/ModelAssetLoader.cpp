@@ -116,7 +116,7 @@ namespace r2::asset
 		{
 			auto defaultMaterialName = STRING_ID("Default");
 			char materialsPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");//"engine_material_params_pack.mppk");
 			const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
 			for (u64 i = numMaterialNames; i < numMeshes; ++i)

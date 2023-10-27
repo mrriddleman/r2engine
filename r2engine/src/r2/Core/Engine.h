@@ -31,10 +31,10 @@ namespace r2::ecs
     class ECSWorld;
 }
 
-namespace flat
-{
-    struct MaterialParamsPack;
-}
+//namespace flat
+//{
+//    struct MaterialParamsPack;
+//}
 
 namespace r2::asset
 {

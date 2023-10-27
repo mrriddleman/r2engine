@@ -39,9 +39,11 @@
 #include "r2/Game/ECS/System.h"
 //
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
-#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 
 #include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
@@ -440,7 +442,7 @@ public:
 
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+        r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
 
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
@@ -450,7 +452,7 @@ public:
 
 		const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
 
-		const flat::MaterialParamsPack* gameMaterialPack = flat::GetMaterialParamsPack(materialManifestData);
+		const flat::MaterialPack* gameMaterialPack = flat::GetMaterialPack(materialManifestData);
 
 		gameAssetManager.LoadMaterialTextures(gameMaterialPack);
 
@@ -463,7 +465,7 @@ public:
 		r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
 		r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-		gameAssetManager.GetTexturesForMaterialParamsPack(gameMaterialPack, gameTextures, gameCubemaps);
+		gameAssetManager.GetTexturesForMaterialPack(gameMaterialPack, gameTextures, gameCubemaps);
 
         r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 		r2::draw::rmat::UploadMaterialTextureParamsArray(*renderMaterialCache, gameMaterialPack, gameTextures, gameCubemaps);
@@ -1079,7 +1081,7 @@ public:
         //r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+        r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
 
         u64 materialParamsPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
         //draw transparent windows
@@ -1204,7 +1206,7 @@ public:
         r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
 		const r2::draw::RenderMaterialParams* skyboxRenderMaterialParams = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportSkybox"));
-		r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName });
+		r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName }, r2::draw::eMeshPass::MP_FORWARD, r2::draw::SET_STATIC);
 
         r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
         r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);
@@ -1322,7 +1324,7 @@ public:
         std::vector<std::string> manifestBinPaths
         {
             SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak"),
-            SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialParamsPack.mppk")
+      //      SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialParamsPack.mppk")
 		};
 		return manifestBinPaths;
     }
@@ -1332,7 +1334,7 @@ public:
 		std::vector<std::string> manifestRawPaths
 		{
             SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json"),
-            SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialParamsPack.json")
+      //      SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialParamsPack.json")
 		};
 		return manifestRawPaths;
     }
@@ -1370,7 +1372,8 @@ public:
 	std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const
 	{
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+		//r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
 		return {std::string( materialsPath )};
 	}
 
@@ -1558,22 +1561,22 @@ public:
 
     virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
     {
-        return  { SANDBOX_MATERIALS_DIR, SANDBOX_MATERIAL_PARAMS_DIR };
+        return  { SANDBOX_MATERIALS_DIR };// , SANDBOX_MATERIAL_PARAMS_DIR};
     }
 
 	std::vector<std::string> GetMaterialPacksBinaryPaths() const
 	{
-		return { SANDBOX_MATERIALS_PACKS_DIR_BIN, SANDBOX_MATERIALS_PARAMS_DIR_BIN };
+        return { SANDBOX_MATERIALS_PACKS_DIR_BIN };// , SANDBOX_MATERIALS_PARAMS_DIR_BIN};
 	}
 
     std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const
     {
-        return {r2::asset::pln::FindMaterialPackManifestFile, r2::asset::pln::FindMaterialParamsPackManifestFile };
+        return { r2::asset::pln::FindMaterialPackManifestFile };//, r2::asset::pln::FindMaterialParamsPackManifestFile};
     }
 
     std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const
     {
-        return {r2::asset::pln::GenerateMaterialPackManifestFromDirectories, r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories };
+        return { r2::asset::pln::GenerateMaterialPackManifestFromDirectories };// , r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories};
     }
 
     r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const

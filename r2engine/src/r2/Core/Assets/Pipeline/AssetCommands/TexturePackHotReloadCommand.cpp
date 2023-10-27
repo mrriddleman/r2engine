@@ -6,8 +6,13 @@
 #include "assetlib/ImageConvert.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Textures/Texture.h"
@@ -100,7 +105,7 @@ namespace r2::asset::pln
 			r2::SArray<const byte*>* materialManifestDataArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, 100); //dunno how many - I guess we could query the assetLib for it but w/e
 			
 			r2::asset::lib::GetManifestDataForType(assetLib, MATERIAL_PACK_MANIFEST, materialManifestDataArray);
-			std::vector<const flat::MaterialParams*> materialsToReload;
+			std::vector<const flat::Material*> materialsToReload;
 			u32 numMaterialManifests = r2::sarr::Size(*materialManifestDataArray);
 
 			if (!isTexturePack)
@@ -125,9 +130,9 @@ namespace r2::asset::pln
 
 				for (u32 i = 0; i < numMaterialManifests; ++i)
 				{
-					const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(r2::sarr::At(*materialManifestDataArray, i));
-					R2_CHECK(materialParamsPack != nullptr, "Should never happen");
-					auto materialParams = r2::mat::GetAllMaterialParamsInMaterialPackThatContainTexture(materialParamsPack, texturePackNameFromPath, textureNameFromPath);
+					const flat::MaterialPack* materialPack = flat::GetMaterialPack(r2::sarr::At(*materialManifestDataArray, i));
+					R2_CHECK(materialPack != nullptr, "Should never happen");
+					auto materialParams = r2::mat::GetAllMaterialsInMaterialPackThatContainTexture(materialPack, texturePackNameFromPath, textureNameFromPath);
 					materialsToReload.insert(materialsToReload.end(), materialParams.begin(), materialParams.end());
 				}
 			}
@@ -151,9 +156,9 @@ namespace r2::asset::pln
 
 				for (u32 i = 0; i < numMaterialManifests; ++i)
 				{
-					const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(r2::sarr::At(*materialManifestDataArray, i));
-					R2_CHECK(materialParamsPack != nullptr, "Should never happen");
-					auto materialParams = r2::mat::GetAllMaterialParamsInMaterialPackThatContainTexturePack(materialParamsPack, texturePackNameFromPath);
+					const flat::MaterialPack* materialPack = flat::GetMaterialPack(r2::sarr::At(*materialManifestDataArray, i));
+					R2_CHECK(materialPack != nullptr, "Should never happen");
+					auto materialParams = r2::mat::GetAllMaterialsInMaterialPackThatContainTexturePack(materialPack, texturePackNameFromPath);
 					materialsToReload.insert(materialsToReload.end(), materialParams.begin(), materialParams.end());
 				}
 
@@ -166,9 +171,9 @@ namespace r2::asset::pln
 			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, r2::draw::tex::Cubemap);
 			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
 
-			for (const flat::MaterialParams* materialParams : materialsToReload)
+			for (const flat::Material* material : materialsToReload)
 			{
-				bool result = gameAssetManager.GetTexturesForMaterialParams(materialParams, textures, cubemaps);
+				bool result = gameAssetManager.GetTexturesForMaterial(material, textures, cubemaps);
 				R2_CHECK(result, "Should never be false");
 
 				r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
@@ -184,11 +189,11 @@ namespace r2::asset::pln
 					cubemapTextureToUse = &r2::sarr::At(*cubemaps, 0);
 				}
 
-				bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialParams->name());
+				bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material->assetName());
 
 				if (isLoaded)
 				{
-					result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTextureToUse, true);
+					result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, material, texturesToUse, cubemapTextureToUse, true);
 				}
 
 				r2::sarr::Clear(*textures);

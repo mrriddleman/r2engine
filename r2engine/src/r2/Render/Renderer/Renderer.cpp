@@ -5,9 +5,11 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Render/Model/Light.h"
-#include "r2/Render/Model/Materials/MaterialParams_generated.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
-#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+//#include "r2/Render/Model/Materials/MaterialParams_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
@@ -1231,11 +1233,11 @@ namespace r2::draw::renderer
 
 		//@TODO(Serge): Clean this up - I don't like how we have to know what the material + texture manifest names are in the renderer
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");//"engine_material_params_pack.mppk");
 
 		const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
 
-		const flat::MaterialParamsPack* engineMaterialPack = flat::GetMaterialParamsPack(materialManifestData);
+		const flat::MaterialPack* engineMaterialPack = flat::GetMaterialPack(materialManifestData);
 
 		gameAssetManager.LoadMaterialTextures(engineMaterialPack);
 
@@ -1252,10 +1254,10 @@ namespace r2::draw::renderer
 		r2::SArray<r2::draw::tex::Texture>* engineTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
 		r2::SArray<r2::draw::tex::CubemapTexture>* engineCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-		gameAssetManager.GetTexturesForMaterialParamsPack(engineMaterialPack, engineTextures, engineCubemaps);
+		gameAssetManager.GetTexturesForMaterialPack(engineMaterialPack, engineTextures, engineCubemaps);
 
 		//We want these to be set before we upload them since they might use the missing texture in UploadMaterialTextureParamsArray()
-		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("StaticMissingTexture"));
+		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
 
 		newRenderer->mRenderMaterialCache->mMissingTexture = newRenderer->mMissingTexture;
@@ -1265,10 +1267,10 @@ namespace r2::draw::renderer
 		FREE(engineCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
 
-		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));
-		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
+		newRenderer->mDefaultOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("Outline"));
+	//	newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
 	
-		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticMissingTexture"));
+		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
 
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
@@ -2607,11 +2609,11 @@ namespace r2::draw::renderer
 
 	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic)
 	{
-		if (isStatic)
-		{
-			return renderer.mDefaultStaticOutlineRenderMaterialParams;
-		}
-		return renderer.mDefaultDynamicOutlineRenderMaterialParams;
+		//if (isStatic)
+		//{
+		//	return renderer.mDefaultStaticOutlineRenderMaterialParams;
+		//}
+		return renderer.mDefaultOutlineRenderMaterialParams;
 	}
 
 	void UploadEngineModels(Renderer& renderer)
@@ -2678,20 +2680,22 @@ namespace r2::draw::renderer
 
 		const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+		//r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
 			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
 
-			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+			//const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+		//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+		//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
 			r2::sarr::Push(*modelRef->materialNames, materialName);
 
-			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+
+			//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
+			ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2755,7 +2759,7 @@ namespace r2::draw::renderer
 		
 		const auto numModelRefs = r2::sarr::Size(modelRefs);
 
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+		//r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
 		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
 		{
@@ -2770,15 +2774,16 @@ namespace r2::draw::renderer
 			for (u32 i = 0; i < numMaterialNames; ++i)
 			{
 				auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
-				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+		//		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+			//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+			//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
 				r2::sarr::Push(*modelRef->materialNames, materialName);
 
-				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-
+				//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
+				ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+					
 				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
 				r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);

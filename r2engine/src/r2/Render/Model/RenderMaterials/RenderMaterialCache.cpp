@@ -1,17 +1,16 @@
 #include "r2pch.h"
 
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
-#include "r2/Render/Model/Materials/MaterialParams_generated.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParams_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Utils/Hash.h"
 
 namespace r2::draw
 {
-	
-
-
 	u64 RenderMaterialCache::MemorySize(u32 numMaterials)
 	{
 		constexpr u32 ALIGNMENT = 16;
@@ -45,10 +44,10 @@ namespace r2::draw::rmat
 	const u64 EMPTY_TEXTURE = STRING_ID("");
 	constexpr u32 ALIGNMENT = 16;
 
-	void UpdateGPURenderMaterialForMaterialParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
-	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams);
+	void UpdateGPURenderMaterialForMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material);
 	void RemoveGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
-	tex::TextureType GetTextureTypeForPropertyType(flat::MaterialPropertyType propertyType);
+	tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType);
 
 	RenderMaterialCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numMaterials, const char* areaName)
 	{
@@ -219,12 +218,12 @@ namespace r2::draw::rmat
 		return nullptr;
 	}
 
-	bool IsTextureParamCubemapTexture(const tex::CubemapTexture* cubemapTexture, u64 textureName, flat::MaterialPropertyType propertyType)
+	bool IsTextureParamCubemapTexture(const tex::CubemapTexture* cubemapTexture, u64 textureName, flat::ShaderPropertyType propertyType)
 	{
 		return tex::GetCubemapAssetHandle(*cubemapTexture).handle == textureName && GetTextureTypeForPropertyType(propertyType) == tex::Diffuse;
 	}
 
-	bool IsTextureParamCubemapTexture(const r2::SArray<tex::CubemapTexture>* cubemapTextures, u64 textureName, flat::MaterialPropertyType propertyType, const tex::CubemapTexture** foundCubemap)
+	bool IsTextureParamCubemapTexture(const r2::SArray<tex::CubemapTexture>* cubemapTextures, u64 textureName, flat::ShaderPropertyType propertyType, const tex::CubemapTexture** foundCubemap)
 	{
 		if (!cubemapTextures)
 		{
@@ -247,7 +246,7 @@ namespace r2::draw::rmat
 		return false;
 	}
 
-	s32 GetWrapMode(const flat::MaterialTextureParam* texParam)
+	s32 GetWrapMode(const flat::ShaderTextureParam* texParam)
 	{
 		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
 		switch (texParam->wrapS())
@@ -267,7 +266,7 @@ namespace r2::draw::rmat
 		return 0;
 	}
 
-	s32 GetMinFilter(const flat::MaterialTextureParam* texParam)
+	s32 GetMinFilter(const flat::ShaderTextureParam* texParam)
 	{
 		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
 		switch (texParam->minFilter())
@@ -291,7 +290,7 @@ namespace r2::draw::rmat
 		return 0;
 	}
 
-	s32 GetMagFilter(const flat::MaterialTextureParam* texParam)
+	s32 GetMagFilter(const flat::ShaderTextureParam* texParam)
 	{
 		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
 		if (texParam->magFilter() == flat::MagTextureFilter_LINEAR)
@@ -307,9 +306,9 @@ namespace r2::draw::rmat
 		return 0;
 	}
 
-	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload)
+	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload)
 	{
-		if (!materialParams)
+		if (!material)
 		{
 			R2_CHECK(false, "materialParams is nullptr");
 			return false;
@@ -321,7 +320,9 @@ namespace r2::draw::rmat
 			return false;
 		}
 
-		const auto numTextureParams = materialParams->textureParams()->size();
+		const auto* textureParams = material->shaderParams()->textureParams();
+
+		const auto numTextureParams = textureParams->size();
 		bool isCubemap = cubemapTexture != nullptr;
 
 		r2::SArray < tex::Texture > * materialTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, tex::Texture, numTextureParams);
@@ -329,7 +330,7 @@ namespace r2::draw::rmat
 
 		for (flatbuffers::uoffset_t i = 0; i < numTextureParams; ++i)
 		{
-			const flat::MaterialTextureParam* textureParam = materialParams->textureParams()->Get(i);
+			const flat::ShaderTextureParam* textureParam = textureParams->Get(i);
 
 			u64 textureHandle = textureParam->value();
 
@@ -359,7 +360,7 @@ namespace r2::draw::rmat
 			}
 			else
 			{
-				flat::MaterialPropertyType propertyType = textureParam->propertyType();
+				flat::ShaderPropertyType propertyType = textureParam->propertyType();
 				if (IsTextureParamCubemapTexture(cubemapTexture, textureHandle, propertyType))
 				{
 					const auto cubemapTextureAssetHandle = tex::GetCubemapAssetHandle(*cubemapTexture);
@@ -376,33 +377,41 @@ namespace r2::draw::rmat
 		}
 
 		//Now update the GPURenderMaterials
-		UpdateGPURenderMaterialForMaterialParams(renderMaterialCache, materialParams, materialTextures, cubemapTexture);
+		UpdateGPURenderMaterialForMaterial(renderMaterialCache, material, materialTextures, cubemapTexture);
 
 		FREE(materialTextures, *MEM_ENG_SCRATCH_PTR);
 
 		return true;
 	}
 
-	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialParamsPack* materialParamsPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures)
+	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialPack* materialPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures)
 	{
-		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
-		{
-			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+		R2_CHECK(materialPack != nullptr, "Should never happen");
 
-			const auto numTextureParams = materialParams->textureParams()->size();
+		const auto* materials = materialPack->pack();
+
+		for (flatbuffers::uoffset_t i = 0; i < materials->size(); ++i)
+		{
+			const flat::Material* material = materials->Get(i);
+
+			const auto* textureParams = material->shaderParams()->textureParams();
+
+
+			const auto numTextureParams = textureParams->size();//materialParams->textureParams()->size();
 			
 			bool isCubemap = false;
 			const tex::CubemapTexture* foundCubemap = nullptr;
-			const flat::MaterialTextureParam* cubemapTextureParam = nullptr;
+			//const flat::MaterialTextureParam* cubemapTextureParam = nullptr;
+			const flat::ShaderTextureParam* cubemapTextureParam = nullptr;
 
 			for (flatbuffers::uoffset_t j = 0; j < numTextureParams; ++j)
 			{
-				const flat::MaterialTextureParam* textureParam = materialParams->textureParams()->Get(j);
+				const flat::ShaderTextureParam* textureParam = textureParams->Get(j);
 
 				u64 textureHandle = textureParam->value();
-				flat::MaterialPropertyType propertyType = textureParam->propertyType();
+				flat::ShaderPropertyType propertyType = textureParam->propertyType();
 
-				if (textureHandle == EMPTY_TEXTURE || propertyType != flat::MaterialPropertyType_ALBEDO)
+				if (textureHandle == EMPTY_TEXTURE || propertyType != flat::ShaderPropertyType_ALBEDO)
 				{
 					continue;
 				}
@@ -421,10 +430,10 @@ namespace r2::draw::rmat
 			{
 				for (flatbuffers::uoffset_t j = 0; j < numTextureParams; ++j)
 				{
-					const flat::MaterialTextureParam* textureParam = materialParams->textureParams()->Get(j);
+					const flat::ShaderTextureParam* textureParam = textureParams->Get(j);
 
 					u64 textureHandle = textureParam->value();
-					flat::MaterialPropertyType propertyType = textureParam->propertyType();
+					flat::ShaderPropertyType propertyType = textureParam->propertyType();
 
 					if (textureHandle == EMPTY_TEXTURE)
 					{
@@ -446,7 +455,7 @@ namespace r2::draw::rmat
 				r2::draw::texsys::UploadToGPU(*foundCubemap, cubemapTextureParam->anisotropicFiltering(), GetWrapMode(cubemapTextureParam), GetMinFilter(cubemapTextureParam), GetMagFilter(cubemapTextureParam));
 			}
 
-			UpdateGPURenderMaterialForMaterialParams(renderMaterialCache, materialParams, materialTextures, foundCubemap);
+			UpdateGPURenderMaterialForMaterial(renderMaterialCache, material, materialTextures, foundCubemap);
 
 			FREE(materialTextures, *MEM_ENG_SCRATCH_PTR);
 		}
@@ -454,7 +463,7 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	bool UnloadMaterialParams(RenderMaterialCache& renderMaterialCache, u64 materialName)
+	bool UnloadMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName)
 	{
 		r2::SArray<r2::asset::AssetHandle>* defaultAssetHandles = nullptr;
 
@@ -482,13 +491,13 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	bool UnloadMaterialParamsArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames)
+	bool UnloadMaterialArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames)
 	{
 		const u32 numMaterialsToUnload = r2::sarr::Size(materialNames);
 
 		for (u32 i = 0; i < numMaterialsToUnload; ++i)
 		{
-			UnloadMaterialParams(renderMaterialCache, r2::sarr::At(materialNames, i));
+			UnloadMaterial(renderMaterialCache, r2::sarr::At(materialNames, i));
 		}
 
 		return true;
@@ -549,73 +558,76 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	s32 GetPackingType(const flat::MaterialParams* materialParams, tex::TextureType textureType)
+	s32 GetPackingType(const flat::Material* material, tex::TextureType textureType)
 	{
-		R2_CHECK(materialParams != nullptr, "This shouldn't be null!");
+		R2_CHECK(material != nullptr, "This shouldn't be null!");
 
-		for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
+
+		const auto* textureParams = material->shaderParams()->textureParams();
+
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
 		{
-			const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(i);
+			const flat::ShaderTextureParam* texParam = textureParams->Get(i);
 
 			if (textureType == tex::TextureType::Roughness &&
-				texParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ROUGHNESS)
+				texParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_ROUGHNESS)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Metallic && texParam->propertyType() == flat::MaterialPropertyType_METALLIC)
+			if (textureType == tex::TextureType::Metallic && texParam->propertyType() == flat::ShaderPropertyType_METALLIC)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Diffuse && texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+			if (textureType == tex::TextureType::Diffuse && texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Occlusion && texParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION)
+			if (textureType == tex::TextureType::Occlusion && texParam->propertyType() == flat::ShaderPropertyType_AMBIENT_OCCLUSION)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::ClearCoat && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
+			if (textureType == tex::TextureType::ClearCoat && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
+			if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::ClearCoatNormal && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_NORMAL)
+			if (textureType == tex::TextureType::ClearCoatNormal && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT_NORMAL)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Anisotropy && texParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
+			if (textureType == tex::TextureType::Anisotropy && texParam->propertyType() == flat::ShaderPropertyType_ANISOTROPY)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Height && texParam->propertyType() == flat::MaterialPropertyType_HEIGHT)
+			if (textureType == tex::TextureType::Height && texParam->propertyType() == flat::ShaderPropertyType_HEIGHT)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Emissive && texParam->propertyType() == flat::MaterialPropertyType_EMISSION)
+			if (textureType == tex::TextureType::Emissive && texParam->propertyType() == flat::ShaderPropertyType_EMISSION)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Normal && texParam->propertyType() == flat::MaterialPropertyType_NORMAL)
+			if (textureType == tex::TextureType::Normal && texParam->propertyType() == flat::ShaderPropertyType_NORMAL)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			if (textureType == tex::TextureType::Detail && texParam->propertyType() == flat::MaterialPropertyType_DETAIL)
+			if (textureType == tex::TextureType::Detail && texParam->propertyType() == flat::ShaderPropertyType_DETAIL)
 			{
-				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 		}
 
@@ -627,20 +639,20 @@ namespace r2::draw::rmat
 		*renderMaterialParams = {};
 	}
 
-	void UpdateGPURenderMaterialForMaterialParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture)
+	void UpdateGPURenderMaterialForMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture)
 	{
-		R2_CHECK(materialParams != nullptr, "This should not be nullptr");
+		R2_CHECK(material != nullptr, "This should not be nullptr");
 
 		s32 defaultIndex;
 
-		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, materialParams->name(), defaultIndex);
+		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, material->assetName(), defaultIndex);
 
 		RenderMaterialParams* gpuRenderMaterial = nullptr;
 
 		if (index == defaultIndex)
 		{
 			//make a new one
-			gpuRenderMaterial = AddNewGPURenderMaterial(renderMaterialCache, materialParams);
+			gpuRenderMaterial = AddNewGPURenderMaterial(renderMaterialCache, material);
 		}
 		else
 		{
@@ -650,65 +662,67 @@ namespace r2::draw::rmat
 
 		R2_CHECK(gpuRenderMaterial != nullptr, "Should never happen");
 
-		for (flatbuffers::uoffset_t i = 0; i < materialParams->colorParams()->size(); ++i)
+		const auto* shaderParams = material->shaderParams();
+
+		for (flatbuffers::uoffset_t i = 0; i < shaderParams->colorParams()->size(); ++i)
 		{
-			const flat::MaterialColorParam* colorParam = materialParams->colorParams()->Get(i);
-			if (colorParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ALBEDO)
+			const flat::ShaderColorParam* colorParam = shaderParams->colorParams()->Get(i);
+			if (colorParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_ALBEDO)
 			{
 				gpuRenderMaterial->albedo.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
 			}
 		}
 
-		for (flatbuffers::uoffset_t i = 0; i < materialParams->floatParams()->size(); ++i)
+		for (flatbuffers::uoffset_t i = 0; i < shaderParams->floatParams()->size(); ++i)
 		{
-			const flat::MaterialFloatParam* floatParam = materialParams->floatParams()->Get(i);
+			const flat::ShaderFloatParam* floatParam = shaderParams->floatParams()->Get(i);
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ROUGHNESS)
+			if (floatParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_ROUGHNESS)
 			{
 				gpuRenderMaterial->roughness.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_METALLIC)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_METALLIC)
 			{
 				gpuRenderMaterial->metallic.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_REFLECTANCE)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_REFLECTANCE)
 			{
 				gpuRenderMaterial->reflectance = floatParam->value();
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_AMBIENT_OCCLUSION)
 			{
 				gpuRenderMaterial->ao.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT)
 			{
 				gpuRenderMaterial->clearCoat.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS)
 			{
 				gpuRenderMaterial->clearCoatRoughness.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_ANISOTROPY)
 			{
 				gpuRenderMaterial->anisotropy.color = glm::vec4(floatParam->value());
 			}
 
-			if (floatParam->propertyType() == flat::MaterialPropertyType_HEIGHT_SCALE)
+			if (floatParam->propertyType() == flat::ShaderPropertyType_HEIGHT_SCALE)
 			{
 				gpuRenderMaterial->heightScale = floatParam->value();
 			}
 		}
 
-		for (flatbuffers::uoffset_t i = 0; i < materialParams->boolParams()->size(); ++i)
+		for (flatbuffers::uoffset_t i = 0; i < shaderParams->boolParams()->size(); ++i)
 		{
-			const flat::MaterialBoolParam* boolParam = materialParams->boolParams()->Get(i);
+			const flat::ShaderBoolParam* boolParam = shaderParams->boolParams()->Get(i);
 
-			if (boolParam->propertyType() == flat::MaterialPropertyType_DOUBLE_SIDED)
+			if (boolParam->propertyType() == flat::ShaderPropertyType_DOUBLE_SIDED)
 			{
 				gpuRenderMaterial->doubleSided = boolParam->value();
 			}
@@ -716,9 +730,9 @@ namespace r2::draw::rmat
 
 		if (!cubemapTexture)
 		{
-			for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
+			for (flatbuffers::uoffset_t i = 0; i < shaderParams->textureParams()->size(); ++i)
 			{
-				const auto* textureParam = materialParams->textureParams()->Get(i);
+				const auto* textureParam = shaderParams->textureParams()->Get(i);
 				u64 textureHandle = textureParam->value();
 
 				if (textureHandle == EMPTY_TEXTURE)
@@ -739,7 +753,7 @@ namespace r2::draw::rmat
 
 				tex::TextureType textureType = GetTextureTypeForPropertyType(textureParam->propertyType());
 
-			 	s32 channel = GetPackingType(materialParams, textureType);
+			 	s32 channel = GetPackingType(material, textureType);
 
 				switch (textureType)
 				{
@@ -799,27 +813,27 @@ namespace r2::draw::rmat
 
 			r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
 
-			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name()))
+			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()))
 			{
 				textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
 
-				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name(), textureAssetHandles);
+				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
 			}
 			else
 			{
 				r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
 				
-				textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name(), defaultTextureAssetHandles);
+				textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), defaultTextureAssetHandles);
 			
 				if (r2::sarr::Capacity(*textureAssetHandles) < r2::sarr::Size(*textures))
 				{
 					FREE(textureAssetHandles, *renderMaterialCache.mAssetHandleArena);
 
-					r2::shashmap::Remove(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name());
+					r2::shashmap::Remove(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName());
 
 					textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
 
-					r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name(), textureAssetHandles);
+					r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
 				}
 			}
 
@@ -838,17 +852,17 @@ namespace r2::draw::rmat
 			
 			r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
 
-			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name()))
+			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()))
 			{
 				textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, numAssetHandles);
 
-				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name(), textureAssetHandles);
+				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
 			}
 			else
 			{
 				r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
 
-				textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, materialParams->name(), defaultTextureAssetHandles);
+				textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), defaultTextureAssetHandles);
 
 				R2_CHECK(r2::sarr::Capacity(*textureAssetHandles) >= numAssetHandles, "Since this is a cubemap this must be true");
 			}
@@ -865,11 +879,11 @@ namespace r2::draw::rmat
 		}
 	}
 
-	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams)
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material)
 	{
-		R2_CHECK(materialParams != nullptr, "Should never be the case");
+		R2_CHECK(material != nullptr, "Should never be the case");
 
-		u64 materialName = materialParams->name();
+		u64 materialName = material->assetName();
 
 		R2_CHECK(!r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName), "Shouldn't have this already");
 
@@ -911,33 +925,33 @@ namespace r2::draw::rmat
 		r2::shashmap::Remove(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
 	}
 
-	tex::TextureType GetTextureTypeForPropertyType(flat::MaterialPropertyType propertyType)
+	tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType)
 	{
 		switch (propertyType)
 		{
-		case flat::MaterialPropertyType_ALBEDO:
+		case flat::ShaderPropertyType_ALBEDO:
 			return tex::TextureType::Diffuse;
-		case flat::MaterialPropertyType_AMBIENT_OCCLUSION:
+		case flat::ShaderPropertyType_AMBIENT_OCCLUSION:
 			return tex::TextureType::Occlusion;
-		case  flat::MaterialPropertyType_ANISOTROPY:
+		case  flat::ShaderPropertyType_ANISOTROPY:
 			return tex::TextureType::Anisotropy;
-		case flat::MaterialPropertyType_CLEAR_COAT:
+		case flat::ShaderPropertyType_CLEAR_COAT:
 			return tex::TextureType::ClearCoat;
-		case flat::MaterialPropertyType_CLEAR_COAT_NORMAL:
+		case flat::ShaderPropertyType_CLEAR_COAT_NORMAL:
 			return tex::TextureType::ClearCoatNormal;
-		case flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS:
+		case flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS:
 			return tex::TextureType::ClearCoatRoughness;
-		case flat::MaterialPropertyType_DETAIL:
+		case flat::ShaderPropertyType_DETAIL:
 			return tex::TextureType::Detail;
-		case flat::MaterialPropertyType_EMISSION:
+		case flat::ShaderPropertyType_EMISSION:
 			return tex::TextureType::Emissive;
-		case flat::MaterialPropertyType::MaterialPropertyType_HEIGHT:
+		case flat::ShaderPropertyType::ShaderPropertyType_HEIGHT:
 			return tex::TextureType::Height;
-		case flat::MaterialPropertyType_METALLIC:
+		case flat::ShaderPropertyType_METALLIC:
 			return tex::TextureType::Metallic;
-		case flat::MaterialPropertyType_NORMAL:
+		case flat::ShaderPropertyType_NORMAL:
 			return tex::TextureType::Normal;
-		case flat::MaterialPropertyType_ROUGHNESS:
+		case flat::ShaderPropertyType_ROUGHNESS:
 			return tex::TextureType::Roughness;
 
 		default:

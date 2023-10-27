@@ -3,8 +3,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Model/Shader/Shader.h"
-#include "r2/Render/Model/Materials/MaterialParams_generated.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialPack_generated.h"
 
 #ifdef R2_ASSET_PIPELINE
 namespace r2::asset::pln
@@ -37,8 +36,8 @@ namespace r2::draw::shadersystem
 
     const char* FindShaderPathByName(const char* name);
     
-    void GetMaterialShaderPiecesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& materialParts);
-    void GetDefinesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& defines);
+    void GetMaterialShaderPiecesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::ShaderStageParam*>& materialParts);
+    void GetDefinesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::ShaderStageParam*>& defines);
 
 #ifdef R2_ASSET_PIPELINE
     void ReloadShadersFromChangedPath(const std::string& path);

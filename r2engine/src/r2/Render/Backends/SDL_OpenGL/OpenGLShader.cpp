@@ -613,7 +613,7 @@ namespace r2::draw::shader
 
             if (hasPassedVersion && !hasInjectedDefines)
             {
-				r2::SArray<const flat::MaterialShaderParam*>* materialShaderDefines = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialShaderParam*, 50); //I dunno how many?
+				r2::SArray<const flat::ShaderStageParam*>* materialShaderDefines = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::ShaderStageParam*, 50); //I dunno how many?
 
                 shadersystem::GetDefinesForShader(hashName, shaderStage, *materialShaderDefines);
 
@@ -621,7 +621,7 @@ namespace r2::draw::shader
 
                 for (u32 i = 0; i < numDefines; ++i)
                 {
-                    const flat::MaterialShaderParam* shaderDefine = r2::sarr::At(*materialShaderDefines, i);
+                    const flat::ShaderStageParam* shaderDefine = r2::sarr::At(*materialShaderDefines, i);
                     u32 strLen = strlen(shaderDefine->value()->c_str());
                     const char* define = shaderDefine->value()->c_str();
                     strcat(&shaderParsedOutIncludes[currentOffset], define);

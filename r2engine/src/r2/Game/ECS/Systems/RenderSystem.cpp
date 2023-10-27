@@ -13,8 +13,10 @@
 #include "r2/Game/ECS/Components/SelectionComponent.h"
 #endif
 
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
-#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+
 #include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RenderKey.h"
@@ -346,11 +348,19 @@ namespace r2::ecs
 				R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
 				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;
 
-				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+				//const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-				const flat::MaterialParamsPack* materialManifest = flat::GetMaterialParamsPack(manifestData);
+				//const flat::MaterialPack* materialManifest = flat::GetMaterialPack(manifestData);
 
-				r2::draw::ShaderHandle materialShaderHandle = r2::draw::shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialManifest, materialName.name));
+				//@TODO(Serge): I'm not sure if this is always correct - shouldn't it depend on the material?
+				//				Perhaps we should add something to the material to fix this - for now will work
+				r2::draw::eMeshPass meshPass = draw::MP_FORWARD;
+				if (renderComponent.drawParameters.layer == draw::DL_TRANSPARENT)
+				{
+					meshPass = draw::MP_TRANSPARENT; 
+				}
+
+				r2::draw::ShaderHandle materialShaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, draw::MP_FORWARD, renderComponent.isAnimated ? draw::SET_DYNAMIC : draw::SET_STATIC);//r2::draw::shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialManifest, materialName.name));
 
 				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
 				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);

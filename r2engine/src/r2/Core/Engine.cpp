@@ -33,7 +33,7 @@
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Core/File/FileSystem.h"
-#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Game/Level/LevelManager.h"
@@ -175,7 +175,7 @@ namespace r2
 
             modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
             modelAssetCMD->AddRawModelDirectories(rawModelPaths);
-            modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths[1] }); //@TODO(Serge): fix this - shouldn't have the [1]
+            modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths }); //@TODO(Serge): fix this - shouldn't have the [1]
 
             //std::vector<std::string> binaryAnimationPaths;
             //std::vector<std::string> rawAnimationPaths;
@@ -212,33 +212,33 @@ namespace r2
 				std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
 				std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
 
-				std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
-				std::string engineMaterialParamsPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN;
+			//	std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
+			//	std::string engineMaterialParamsPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN;
 
 				std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
 				std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
 
-				std::string engineMaterialParamsPackManifestRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_params_pack.json");
-				std::string engineMaterialParamsPackManifestBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_params_pack.mppk");
+			//	std::string engineMaterialParamsPackManifestRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_params_pack.json");
+			//	std::string engineMaterialParamsPackManifestBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_params_pack.mppk");
 
 				manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
 				manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
 
-				manifestRawFilePaths.push_back(engineMaterialParamsPackManifestRaw);
-				manifestBinaryFilePaths.push_back(engineMaterialParamsPackManifestBin);
+			//	manifestRawFilePaths.push_back(engineMaterialParamsPackManifestRaw);
+			//	manifestBinaryFilePaths.push_back(engineMaterialParamsPackManifestBin);
 
                 //@TODO(Serge): add in for hot-reloading later
 				materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
 				materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
 
-				materialPacksWatchDirectoriesRaw.push_back(engineMaterialParamsPackDirRaw);
-				materialPacksWatchDirectoriesBin.push_back(engineMaterialParamsPackDirBin);
+			//	materialPacksWatchDirectoriesRaw.push_back(engineMaterialParamsPackDirRaw);
+			//	materialPacksWatchDirectoriesBin.push_back(engineMaterialParamsPackDirBin);
 
 				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
-				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialParamsPackManifestFile);
+			//	findMaterialFuncs.push_back(r2::asset::pln::FindMaterialParamsPackManifestFile);
 
 				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
-				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories);
+			//	generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories);
 
 				//for the app
 				for (const std::string& nextPath : noptrApp->GetMaterialPackManifestsBinaryPaths())
@@ -423,14 +423,15 @@ namespace r2
 
             //Do all the material setup 
 			char materialsPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+			//r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+            r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
 
 			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
             SetupAssetLib(
                 materialsPath,
-                { appMaterialPacksManifests[1] },
+                { appMaterialPacksManifests },
                 texturePackPath,
                 appInitialTexturePackManifests,
                 noptrApp->GetSoundDefinitionPath().c_str());
@@ -439,7 +440,7 @@ namespace r2
 
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
 
-			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, appMaterialPacksManifests.size()); //@TODO(Serge): add 1 again
+			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, appMaterialPacksManifests.size() + 1); //@TODO(Serge): add 1 again
 			if (!shaderSystemIntialized)
 			{
 				R2_CHECK(false, "We couldn't initialize the shader system");

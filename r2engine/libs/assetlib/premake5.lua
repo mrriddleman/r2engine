@@ -29,6 +29,8 @@ project "assetlib"
 		"include",
 		"../../src/r2/Render/Model/Textures",
 		"../../src/r2/Render/Model",
+		"../../src/r2/Render/Model/Shader",
+		"../../src/r2/Render/Model/Materials",
 		"../../src/r2/Utils",
 		"%{libIncludeDirs.lz4}",
 		"%{libIncludeDirs.flatbuffers}",
