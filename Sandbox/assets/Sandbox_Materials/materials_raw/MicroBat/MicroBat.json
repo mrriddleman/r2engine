@@ -1,0 +1,152 @@
+{
+  assetName: 17351122780281340654,
+  stringName: "MicroBat",
+  shaderEffectPasses: {
+    shaderEffectPasses: [
+      {
+        assetName: 17478432312770277864,
+        assetNameString: "forward_opaque_shader_effect",
+        staticShader: 3292306756035476612,
+        dynamicShader: 3766703618186070365
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 7375268703464826122,
+        assetNameString: "depth_shader_effect",
+        staticShader: 8833047848476087300,
+        dynamicShader: 13212531284513343367
+      },
+      {
+        assetName: 1677822248225226985,
+        assetNameString: "direction_shadow_effect",
+        staticShader: 13510344869207716212,
+        dynamicShader: 16072647257208596960
+      },
+      {
+        assetName: 16974676560190486050,
+        assetNameString: "point_shadow_effect",
+        staticShader: 14902893998735471386,
+        dynamicShader: 8182487414207287337
+      },
+      {
+        assetName: 15326242058090129472,
+        assetNameString: "spotlight_shadow_effect",
+        staticShader: 14930033009169502222,
+        dynamicShader: 12180725488998902253
+      }
+    ]
+  },
+  shaderParams: {
+    ulongParams: [
+
+    ],
+    boolParams: [
+
+    ],
+    floatParams: [
+      {
+        propertyType: "ROUGHNESS",
+        value: 0.9
+      },
+      {
+        propertyType: "METALLIC",
+        value: 0.1
+      },
+      {
+        propertyType: "REFLECTANCE",
+        value: 0.2
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION"
+      },
+      {
+        propertyType: "CLEAR_COAT"
+      },
+      {
+        propertyType: "CLEAR_COAT_ROUGHNESS"
+      },
+      {
+        propertyType: "HEIGHT_SCALE"
+      },
+      {
+        propertyType: "ANISOTROPY"
+      }
+    ],
+    colorParams: [
+      {
+        value: {
+          r: 1.0,
+          g: 0.0,
+          b: 0.0,
+          a: 1.0
+        }
+      }
+    ],
+    textureParams: [
+      {
+        value: 4168401993807687909,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "NORMAL",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "EMISSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "METALLIC",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "ROUGHNESS",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "HEIGHT",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      },
+      {
+        propertyType: "ANISOTROPY",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 14781115403476922414,
+        texturePackNameStr: "microbat"
+      }
+    ],
+    stringParams: [
+
+    ],
+    shaderStageParams: [
+
+    ]
+  }
+}

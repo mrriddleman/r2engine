@@ -1,0 +1,148 @@
+{
+  assetName: 17743152345863433361,
+  stringName: "TransparentWindow",
+  transparencyType: "TRANSPARENT",
+  shaderEffectPasses: {
+    shaderEffectPasses: [
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 8291330512872998603,
+        assetNameString: "forward_transparent_shader_effect",
+        staticShader: 12135062320484436070,
+        dynamicShader: 7039749134391479097
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      }
+    ]
+  },
+  shaderParams: {
+    ulongParams: [
+
+    ],
+    boolParams: [
+      {
+        propertyType: "DOUBLE_SIDED",
+        value: true
+      }
+    ],
+    floatParams: [
+      {
+        propertyType: "ROUGHNESS"
+      },
+      {
+        propertyType: "METALLIC",
+        value: 0.2
+      },
+      {
+        propertyType: "REFLECTANCE",
+        value: 0.4
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 1.0
+      },
+      {
+        propertyType: "CLEAR_COAT"
+      },
+      {
+        propertyType: "CLEAR_COAT_ROUGHNESS"
+      },
+      {
+        propertyType: "HEIGHT_SCALE"
+      },
+      {
+        propertyType: "ANISOTROPY"
+      }
+    ],
+    colorParams: [
+      {
+        value: {
+          r: 1.0,
+          g: 1.0,
+          b: 1.0,
+          a: 1.0
+        }
+      }
+    ],
+    textureParams: [
+      {
+        value: 12654673806030675710,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "NORMAL",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "EMISSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "METALLIC",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "ROUGHNESS",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "HEIGHT",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      },
+      {
+        propertyType: "ANISOTROPY",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 8561905345233882129,
+        texturePackNameStr: "transparentwindow"
+      }
+    ],
+    stringParams: [
+
+    ],
+    shaderStageParams: [
+
+    ]
+  }
+}

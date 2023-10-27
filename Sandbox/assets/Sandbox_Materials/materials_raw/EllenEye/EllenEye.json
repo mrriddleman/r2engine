@@ -1,0 +1,145 @@
+{
+  assetName: 10074459559892431748,
+  stringName: "EllenEye",
+  shaderEffectPasses: {
+    shaderEffectPasses: [
+      {
+        assetName: 7086617848070717557,
+        assetNameString: "ellen_eye_shader_effect",
+        dynamicShader: 7608013471622948757
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 7375268703464826122,
+        assetNameString: "depth_shader_effect",
+        staticShader: 8833047848476087300,
+        dynamicShader: 13212531284513343367
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      }
+    ]
+  },
+  shaderParams: {
+    ulongParams: [
+
+    ],
+    boolParams: [
+
+    ],
+    floatParams: [
+      {
+        propertyType: "ROUGHNESS",
+        value: 1.0
+      },
+      {
+        propertyType: "METALLIC"
+      },
+      {
+        propertyType: "REFLECTANCE",
+        value: 1.0
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 1.0
+      },
+      {
+        propertyType: "CLEAR_COAT"
+      },
+      {
+        propertyType: "CLEAR_COAT_ROUGHNESS"
+      },
+      {
+        propertyType: "HEIGHT_SCALE"
+      },
+      {
+        propertyType: "ANISOTROPY"
+      }
+    ],
+    colorParams: [
+      {
+        value: {
+          r: 1.0,
+          g: 0.0,
+          b: 0.0,
+          a: 1.0
+        }
+      }
+    ],
+    textureParams: [
+      {
+        value: 1392971798304760317,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "NORMAL",
+        value: 9457471972328044689,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "EMISSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "METALLIC",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "ROUGHNESS",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "HEIGHT",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      },
+      {
+        propertyType: "ANISOTROPY",
+        value: 14695981039346656837,
+        packingType: "RGBA",
+        texturePackName: 1741090675266394315,
+        texturePackNameStr: "ellen"
+      }
+    ],
+    stringParams: [
+
+    ],
+    shaderStageParams: [
+
+    ]
+  }
+}
