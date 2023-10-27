@@ -306,10 +306,10 @@ namespace r2::asset::pln
 
 
 		//delete the mprm associated with this material
-	    std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / changedMaterialPath.parent_path().stem();
+	    std::filesystem::path mtrlParentDirBinPath = std::filesystem::path(materialPackDirBin) / changedMaterialPath.parent_path().stem();
 		
 
-		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
+		for (const auto& file : std::filesystem::directory_iterator(mtrlParentDirBinPath))
 		{
 			if (file.path().extension() == MTRL_EXT)//MPRM_EXT)
 			{
@@ -319,10 +319,11 @@ namespace r2::asset::pln
 		}
 
 		//Then make the mprm again
-		GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), changedPath);
+		//GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), changedPath);
+		GenerateMaterialFromJSON(mtrlParentDirBinPath.string(), changedPath);
 
 		//now regenerate the params packs manifest
-		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+		bool result = RegenerateMaterialPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
 
 		if (!result)
 		{
@@ -351,16 +352,17 @@ namespace r2::asset::pln
 		std::string materialPackDirRaw = mMaterialPacksWatchDirectoriesRaw[index];
 		std::string materialPackDirBin = mMaterialPacksWatchDirectoriesBin[index];
 
-		std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / nameOfMaterial;
+		std::filesystem::path mtrlParentDirBinPath = std::filesystem::path(materialPackDirBin) / nameOfMaterial;
 
-		if (!std::filesystem::exists(mprmParentDirBinPath))
+		if (!std::filesystem::exists(mtrlParentDirBinPath))
 		{
-			std::filesystem::create_directory(mprmParentDirBinPath);
+			std::filesystem::create_directory(mtrlParentDirBinPath);
 		}
 
-		GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), newPath);
+		//GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), newPath);
+		GenerateMaterialFromJSON(mtrlParentDirBinPath.string(), newPath);
 
-		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+		bool result = RegenerateMaterialPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
 
 		if (!result)
 		{
@@ -405,7 +407,7 @@ namespace r2::asset::pln
 			std::filesystem::remove(mprmParentDirBinPath);
 		}
 
-		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+		bool result = RegenerateMaterialPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
 
 		if (!result)
 		{

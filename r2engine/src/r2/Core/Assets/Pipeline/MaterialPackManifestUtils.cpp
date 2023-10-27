@@ -256,6 +256,11 @@ namespace r2::asset::pln
 		return false;
 	}
 
+	bool RegenerateMaterialPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
+	{
+		return GenerateBinaryMaterialPackManifest(binaryDir, binFilePath, rawFilePath);//GenerateBinaryParamsPackManifest(binaryDir, binFilePath, rawFilePath);
+	}
+
 
 	//@Temporary
 	//bool GenerateMaterialParamsFromOldMaterialPack(const flat::Material* const materialData, const std::string& pathOfSource, const std::string& outputDir)
