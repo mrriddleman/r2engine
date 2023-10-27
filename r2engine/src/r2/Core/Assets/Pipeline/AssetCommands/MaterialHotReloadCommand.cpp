@@ -4,7 +4,6 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Core/Assets/AssetLib.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"

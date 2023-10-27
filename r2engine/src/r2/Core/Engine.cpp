@@ -33,7 +33,6 @@
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Core/File/FileSystem.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Game/Level/LevelManager.h"

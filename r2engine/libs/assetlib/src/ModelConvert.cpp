@@ -13,7 +13,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Hash.h"
 #include "assetlib/DiskAssetFile.h"
-//#include "Materials/MaterialParamsPack_generated.h"
 #include "Materials/MaterialPack_generated.h"
 #include "Shader/ShaderParams_generated.h"
 #include "assetlib/RModelMetaData_generated.h"

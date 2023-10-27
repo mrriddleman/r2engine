@@ -6,9 +6,9 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-#include "MaterialParams_generated.h"
-
 namespace flat {
+
+struct Colour;
 
 struct ShaderFloatParam;
 struct ShaderFloatParamBuilder;
@@ -33,6 +33,114 @@ struct ShaderTextureParamBuilder;
 
 struct ShaderParams;
 struct ShaderParamsBuilder;
+
+enum MinTextureFilter {
+  MinTextureFilter_LINEAR = 0,
+  MinTextureFilter_NEAREST = 1,
+  MinTextureFilter_NEAREST_MIPMAP_NEAREST = 2,
+  MinTextureFilter_LINEAR_MIPMAP_NEAREST = 3,
+  MinTextureFilter_NEAREST_MIPMAP_LINEAR = 4,
+  MinTextureFilter_LINEAR_MIPMAP_LINEAR = 5,
+  MinTextureFilter_MIN = MinTextureFilter_LINEAR,
+  MinTextureFilter_MAX = MinTextureFilter_LINEAR_MIPMAP_LINEAR
+};
+
+inline const MinTextureFilter (&EnumValuesMinTextureFilter())[6] {
+  static const MinTextureFilter values[] = {
+    MinTextureFilter_LINEAR,
+    MinTextureFilter_NEAREST,
+    MinTextureFilter_NEAREST_MIPMAP_NEAREST,
+    MinTextureFilter_LINEAR_MIPMAP_NEAREST,
+    MinTextureFilter_NEAREST_MIPMAP_LINEAR,
+    MinTextureFilter_LINEAR_MIPMAP_LINEAR
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMinTextureFilter() {
+  static const char * const names[7] = {
+    "LINEAR",
+    "NEAREST",
+    "NEAREST_MIPMAP_NEAREST",
+    "LINEAR_MIPMAP_NEAREST",
+    "NEAREST_MIPMAP_LINEAR",
+    "LINEAR_MIPMAP_LINEAR",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMinTextureFilter(MinTextureFilter e) {
+  if (flatbuffers::IsOutRange(e, MinTextureFilter_LINEAR, MinTextureFilter_LINEAR_MIPMAP_LINEAR)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMinTextureFilter()[index];
+}
+
+enum MagTextureFilter {
+  MagTextureFilter_LINEAR = 0,
+  MagTextureFilter_NEAREST = 1,
+  MagTextureFilter_MIN = MagTextureFilter_LINEAR,
+  MagTextureFilter_MAX = MagTextureFilter_NEAREST
+};
+
+inline const MagTextureFilter (&EnumValuesMagTextureFilter())[2] {
+  static const MagTextureFilter values[] = {
+    MagTextureFilter_LINEAR,
+    MagTextureFilter_NEAREST
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMagTextureFilter() {
+  static const char * const names[3] = {
+    "LINEAR",
+    "NEAREST",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMagTextureFilter(MagTextureFilter e) {
+  if (flatbuffers::IsOutRange(e, MagTextureFilter_LINEAR, MagTextureFilter_NEAREST)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMagTextureFilter()[index];
+}
+
+enum TextureWrapMode {
+  TextureWrapMode_REPEAT = 0,
+  TextureWrapMode_CLAMP_TO_EDGE = 1,
+  TextureWrapMode_CLAMP_TO_BORDER = 2,
+  TextureWrapMode_MIRRORED_REPEAT = 3,
+  TextureWrapMode_MIN = TextureWrapMode_REPEAT,
+  TextureWrapMode_MAX = TextureWrapMode_MIRRORED_REPEAT
+};
+
+inline const TextureWrapMode (&EnumValuesTextureWrapMode())[4] {
+  static const TextureWrapMode values[] = {
+    TextureWrapMode_REPEAT,
+    TextureWrapMode_CLAMP_TO_EDGE,
+    TextureWrapMode_CLAMP_TO_BORDER,
+    TextureWrapMode_MIRRORED_REPEAT
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTextureWrapMode() {
+  static const char * const names[5] = {
+    "REPEAT",
+    "CLAMP_TO_EDGE",
+    "CLAMP_TO_BORDER",
+    "MIRRORED_REPEAT",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTextureWrapMode(TextureWrapMode e) {
+  if (flatbuffers::IsOutRange(e, TextureWrapMode_REPEAT, TextureWrapMode_MIRRORED_REPEAT)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTextureWrapMode()[index];
+}
 
 enum ShaderPropertyType {
   ShaderPropertyType_ALBEDO = 0,
@@ -165,6 +273,38 @@ inline const char *EnumNameShaderPropertyPackingType(ShaderPropertyPackingType e
   const size_t index = static_cast<size_t>(e);
   return EnumNamesShaderPropertyPackingType()[index];
 }
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Colour FLATBUFFERS_FINAL_CLASS {
+ private:
+  float r_;
+  float g_;
+  float b_;
+  float a_;
+
+ public:
+  Colour() {
+    memset(static_cast<void *>(this), 0, sizeof(Colour));
+  }
+  Colour(float _r, float _g, float _b, float _a)
+      : r_(flatbuffers::EndianScalar(_r)),
+        g_(flatbuffers::EndianScalar(_g)),
+        b_(flatbuffers::EndianScalar(_b)),
+        a_(flatbuffers::EndianScalar(_a)) {
+  }
+  float r() const {
+    return flatbuffers::EndianScalar(r_);
+  }
+  float g() const {
+    return flatbuffers::EndianScalar(g_);
+  }
+  float b() const {
+    return flatbuffers::EndianScalar(b_);
+  }
+  float a() const {
+    return flatbuffers::EndianScalar(a_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Colour, 16);
 
 struct ShaderFloatParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ShaderFloatParamBuilder Builder;

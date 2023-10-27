@@ -34,14 +34,14 @@ namespace r2::asset::pln
 	//bool GenerateMaterialParamsFromOldMaterialPack(const flat::Material* const materialData, const std::string& pathOfSource, const std::string& outputDir);
 	
 	//@Temporary
-	bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& ouptDir);
+	//bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& ouptDir);
 
-	bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
+	/*bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateMaterialParamsFromJSON(const std::string& outputDir, const std::string& path);
 	bool GenerateMaterialParamsPackManifestFromJson(const std::string& jsonMaterialParamsPackManifestFilePath, const std::string& outputDir);
 	bool GenerateMaterialParamsPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool FindMaterialParamsPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
-	bool GenerateBinaryParamsPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath);
+	bool GenerateBinaryParamsPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath);*/
 
 
 

@@ -37,13 +37,12 @@
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
-//
+
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 
 #include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"

@@ -2,8 +2,6 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
-//#include "r2/Render/Model/Materials/MaterialParams_generated.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Utils/Hash.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"

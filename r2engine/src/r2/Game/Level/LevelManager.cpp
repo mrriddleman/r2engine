@@ -14,8 +14,6 @@
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 
-//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Renderer/Renderer.h"
 
 #ifdef R2_ASSET_PIPELINE

@@ -1,9 +1,31 @@
-include "MaterialParams.fbs";
-
 namespace flat;
 
 file_identifier "sprm";
 file_extension "sprm";
+
+enum MinTextureFilter : uint8
+{
+	LINEAR = 0,
+	NEAREST,
+	NEAREST_MIPMAP_NEAREST,
+	LINEAR_MIPMAP_NEAREST,
+	NEAREST_MIPMAP_LINEAR,
+	LINEAR_MIPMAP_LINEAR
+}
+
+enum MagTextureFilter : uint8
+{
+	LINEAR = 0,
+	NEAREST,
+}
+
+enum TextureWrapMode : uint8
+{
+	REPEAT = 0,
+	CLAMP_TO_EDGE,
+	CLAMP_TO_BORDER,
+	MIRRORED_REPEAT,
+}
 
 enum ShaderPropertyType: uint16
 {
@@ -39,6 +61,14 @@ enum ShaderPropertyPackingType : int8
 	A,
 	RGB,
 	RGBA,
+}
+
+struct Colour
+{
+	r:float;
+	g:float;
+	b:float;
+	a:float;
 }
 
 table ShaderFloatParam

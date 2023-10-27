@@ -37,7 +37,6 @@
 #include "r2/Game/SceneGraph/SceneGraph.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
-//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Render/Renderer/Renderer.h"
 

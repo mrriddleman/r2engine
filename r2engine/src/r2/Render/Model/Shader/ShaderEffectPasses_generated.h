@@ -6,7 +6,6 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-#include "MaterialParams_generated.h"
 #include "ShaderEffect_generated.h"
 #include "ShaderParams_generated.h"
 

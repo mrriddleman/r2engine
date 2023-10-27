@@ -7,9 +7,6 @@
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
 #include "r2/Core/Assets/AssetLib.h"
 
-//#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
-//#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
-
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
 
