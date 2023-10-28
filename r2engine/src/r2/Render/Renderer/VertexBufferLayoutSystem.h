@@ -43,11 +43,17 @@ namespace r2::draw::vb
 		u64 assetName;
 
 		r2::SArray<MeshEntry>* meshEntries;
-		r2::SArray<r2::mat::MaterialName>* materialNames;
-		r2::SArray<ShaderHandle>* shaderHandles;
 		
-		GPUBufferEntry boneEntry;
+		//@NOTE(Serge): it is weird that we have these but they effectively serve as the model's default materials
+		r2::SArray<r2::mat::MaterialName>* materialNames;
+		
+		//@NOTE(Serge): why are these here? They have nothing to do with uploading or unloading the models
+		//the only thing we might care about is how many materials the model can have - which is below
+		//even then, we don't actually use it in this system at all!
+		r2::SArray<ShaderHandle>* shaderHandles;
 		u32 numMaterials;
+
+		GPUBufferEntry boneEntry;
 		u32 numBones;
 		b32 isAnimated;
 	};
