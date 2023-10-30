@@ -584,10 +584,6 @@ namespace r2::draw::vbsys
 		modelRef->numMaterials = numMaterals;
 		R2_CHECK(modelRef->materialNames != nullptr, "renderMaterialHandles is nullptr!");
 
-		/*modelRef->shaderHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, ShaderHandle, numMaterals);
-		R2_CHECK(modelRef->shaderHandles != nullptr, "shaderHandles is nullptr!");*/
-
-
 		for (u64 i = 0; i < numMeshes; ++i)
 		{
 			r2::sarr::Push(*modelRef->meshEntries, vb::MeshEntry());
@@ -846,7 +842,6 @@ namespace r2::draw::vbsys
 		vb::gpubuf::DeleteEntry(vertexBufferLayout->indexBuffer, indexEntry);
 		vb::gpubuf::DeleteEntry(vertexBufferLayout->vertexBuffers[0], vertexEntry);
 
-		//FREE(modelRef->shaderHandles, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef->materialNames, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef->meshEntries, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef, *vertexBufferLayout->gpuModelRefArena);

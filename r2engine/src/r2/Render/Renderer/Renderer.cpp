@@ -1281,9 +1281,6 @@ namespace r2::draw::renderer
 
 		newRenderer->mDefaultOutlineMaterialName = { STRING_ID("Outline"), engineMaterialPack->assetName() };
 
-		//newRenderer->mDefaultOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("Outline"));
-	//	newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
-	
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
 
@@ -2758,8 +2755,6 @@ namespace r2::draw::renderer
 		
 		const auto numModelRefs = r2::sarr::Size(modelRefs);
 
-		//r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
 		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
 		{
 			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
@@ -2770,27 +2765,7 @@ namespace r2::draw::renderer
 
 			const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
-
 			r2::sarr::Append(*modelRef->materialNames, *model->optrMaterialNames);
-
-		//	for (u32 i = 0; i < numMaterialNames; ++i)
-		//	{
-		//		auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
-		////		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
-
-		//	//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-		//	//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
-
-		//		//@NOTE(Serge): it's weird we store this here but it serves as the default material for the model (as opposed to the overrides)
-		//		r2::sarr::Push(*modelRef->materialNames, materialName);
-
-		//		//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
-		//	//	ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-		//			
-		//	//	R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
-
-		//	//	r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-		//	}
 		}
 	}
 
@@ -3095,8 +3070,6 @@ namespace r2::draw::renderer
 			{
 				const vb::MeshEntry& meshRef = r2::sarr::At(*modelRef->meshEntries, meshRefIndex);
 
-				//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses?
-				//Here we're just going to base it on which layer / mesh pass we care about
 				const ShaderEffectPasses& shaderEffectPasses = r2::sarr::At(*renderBatch.materialBatch.shaderEffectPasses, meshRef.materialIndex + materialBatchInfo.start); 
 
 				//Here we're just going to base it on which layer / mesh pass we care about
@@ -3126,7 +3099,6 @@ namespace r2::draw::renderer
 
 					R2_CHECK(drawCommandData != nullptr, "We couldn't allocate a drawCommandData!");
 
-					//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses?
 					drawCommandData->shaderEffectPasses = shaderEffectPasses;
 					drawCommandData->isDynamic = modelRef->isAnimated;
 					drawCommandData->drawState = drawState;
@@ -3441,7 +3413,7 @@ namespace r2::draw::renderer
 				}
 
 				BatchRenderOffsets batchOffsets;
-				//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses? Or do we just put the shader effects into BatchRenderOffsets?
+
 				batchOffsets.shaderEffectPasses = drawCommandData->shaderEffectPasses;
 				batchOffsets.subCommandsOffset = subCommandsOffset;
 				batchOffsets.numSubCommands = numSubCommandsInBatch;
@@ -3485,7 +3457,7 @@ namespace r2::draw::renderer
 			finalBatchOffsets.numSubCommands = 1;
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
 			finalBatchOffsets.isDynamic = false;
-			//@NOTE(Serge): we need to figure out if we should have ShaderEffectPasses here instead
+
 			finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle = renderer.mFinalCompositeShaderHandle;
 			
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
@@ -6100,11 +6072,6 @@ namespace r2::draw::renderer
 			return;
 		}
 
-	//	R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
-	//	R2_CHECK(r2::sarr::Size(renderMaterials) == r2::sarr::Size(shadersPerMesh), "These always need to be the same size");
-		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
-		//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
-
 		const vb::GPUModelRef* gpuModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
 		R2_CHECK(gpuModelRef != nullptr, "Failed to get the GPUModelRef for handle: %llu", modelRefHandle);
 
@@ -6167,21 +6134,15 @@ namespace r2::draw::renderer
 		{
 			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
 			{
-				//@NOTE(Serge): we should get the render materials from the material name and push it here
-				//				we should also get the Material (or ShaderEffectPasses) and push it here 
-				//				we may even want to build a separate version of ShaderEffectPasses (like RenderMaterialParams)
-				//				so that we don't have issues with material hot-reloading
-
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, i);
 
 				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
 
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
 
-				//@Optimization(Serge): this is fairly slow since we need to do a few lookups each time we draw the same model
+				//@Optimization(Serge): this is fairly slow since we need to do a few lookups each time we draw the model
 				//						It would be smart to cache the ShaderEffects somehow
 				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
-				//r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, i));
 			}
 		}
 		else
@@ -6195,12 +6156,8 @@ namespace r2::draw::renderer
 
 			for (u32 i = 0; i < gpuModelRef->numMaterials; ++i)
 			{
-				//@NOTE(Serge): we should get the render materials from the material name and push it here
-				//				we should also get the Material (or ShaderEffectPasses) and push it here
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
 				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, shaderEffectPasses);
-
-				//r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, 0));
 			}
 		}
 
@@ -6380,10 +6337,7 @@ namespace r2::draw::renderer
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, j + materialOffset);
 
 				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName.name);
-				//@NOTE(Serge): we should get the render materials from the material name and push it here
-				//				we should also get the Material (or ShaderEffectPasses) and push it here 
-				//				we may even want to build a separate version of ShaderEffectPasses (like RenderMaterialParams)
-				//				so that we don't have issues with material hot-reloading
+
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
 				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
 			}
