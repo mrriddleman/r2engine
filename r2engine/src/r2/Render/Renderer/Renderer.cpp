@@ -244,13 +244,14 @@ namespace r2::draw
 
 	u64 RenderBatch::MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
-		u64 totalBytes =
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawState>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numModelRefs * AVG_NUM_OF_MESHES_PER_MODEL), alignment, headerSize, boundsChecking);
+		u64 totalBytes = 0;
+
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawState>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderEffectPasses>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking); 
 
 		if (numModels > 0)
 		{
@@ -392,8 +393,10 @@ namespace r2::draw::renderer
 	//void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	//r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 
-	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic);
-	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic);
+	//r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic);
+	//const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic);
+
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer);
 
 	void SetDefaultTransparencyBlendState(BlendState& blendState);
 	void SetDefaultTransparentCompositeBlendState(BlendState& blendState);
@@ -526,20 +529,29 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		u32 numInstances,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		
+		//u32 numInstances,
+		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialNames,
+
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 	void DrawModels(
 		Renderer& renderer,
+
+		const r2::SArray<u32>& entities,
+		const r2::SArray<s32>& entityInstances,
+		const r2::SArray<u32>& numEntityInstancesPerEntity,
+
 		const DrawParameters& drawParameters,
 		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<u32>& numInstancesPerModel,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+
+		const r2::SArray<r2::mat::MaterialName>& materialNames,
+
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
@@ -906,8 +918,10 @@ namespace r2::draw::renderer
 		newRenderer->mDebugTransparentModelShaderHandle = shadersystem::FindShaderHandle(STRING_ID("TransparentDebugModel"));
 #endif
 		newRenderer->mFinalCompositeShaderHandle = shadersystem::FindShaderHandle(STRING_ID("Screen"));
-		newRenderer->mDefaultStaticOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("StaticOutline"));
-		newRenderer->mDefaultDynamicOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("DynamicOutline"));
+		//newRenderer->mDefaultStaticOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("StaticOutline"));
+		//newRenderer->mDefaultDynamicOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("DynamicOutline"));
+
+
 
 		//Get the depth shader handles
 		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
@@ -1164,9 +1178,9 @@ namespace r2::draw::renderer
 
 				nextBatch.materialBatch.infos = MAKE_SARRAY(*rendererArena, MaterialBatch::Info, MAX_NUM_DRAWS);
 				
-				//@TODO(Serge): maybe change this to be GPURenderMaterialHandle when that is integrated to save memory?
+				
 				nextBatch.materialBatch.renderMaterialParams = MAKE_SARRAY(*rendererArena, RenderMaterialParams, MAX_NUM_DRAWS);
-				nextBatch.materialBatch.shaderHandles = MAKE_SARRAY(*rendererArena, ShaderHandle, MAX_NUM_DRAWS);
+				nextBatch.materialBatch.shaderEffectPasses = MAKE_SARRAY(*rendererArena, ShaderEffectPasses, MAX_NUM_DRAWS);
 
 				nextBatch.models = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				nextBatch.drawState = MAKE_SARRAY(*rendererArena, cmd::DrawState, MAX_NUM_DRAWS);
@@ -1265,7 +1279,9 @@ namespace r2::draw::renderer
 		FREE(engineCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
 
-		newRenderer->mDefaultOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("Outline"));
+		newRenderer->mDefaultOutlineMaterialName = { STRING_ID("Outline"), engineMaterialPack->assetName() };
+
+		//newRenderer->mDefaultOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("Outline"));
 	//	newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
 	
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
@@ -1520,7 +1536,7 @@ namespace r2::draw::renderer
 			FREE(nextBatch.drawState, *arena);
 			FREE(nextBatch.models, *arena);
 
-			FREE(nextBatch.materialBatch.shaderHandles, *arena);
+			FREE(nextBatch.materialBatch.shaderEffectPasses, *arena);
 			FREE(nextBatch.materialBatch.renderMaterialParams, *arena);
 
 			FREE(nextBatch.materialBatch.infos, *arena);
@@ -2595,23 +2611,28 @@ namespace r2::draw::renderer
 		return &renderer->mBlueNoiseTexture;
 	}
 
-	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic)
-	{
-		if (isStatic)
-		{
-			return renderer.mDefaultStaticOutlineShaderHandle;
-		}
+	//r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic)
+	//{
+	//	if (isStatic)
+	//	{
+	//		return renderer.mDefaultStaticOutlineShaderHandle;
+	//	}
 
-		return renderer.mDefaultDynamicOutlineShaderHandle;
-	}
+	//	return renderer.mDefaultDynamicOutlineShaderHandle;
+	//}
 
-	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic)
+	//const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic)
+	//{
+	//	//if (isStatic)
+	//	//{
+	//	//	return renderer.mDefaultStaticOutlineRenderMaterialParams;
+	//	//}
+	//	return renderer.mDefaultOutlineRenderMaterialParams;
+	//}
+
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer)
 	{
-		//if (isStatic)
-		//{
-		//	return renderer.mDefaultStaticOutlineRenderMaterialParams;
-		//}
-		return renderer.mDefaultOutlineRenderMaterialParams;
+		return renderer.mDefaultOutlineMaterialName;
 	}
 
 	void UploadEngineModels(Renderer& renderer)
@@ -2670,44 +2691,15 @@ namespace r2::draw::renderer
 		}
 
 		vb::GPUModelRefHandle result = vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, configHandleToUse, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
-		
-
-		
 
 		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
 
 		R2_CHECK(modelRef != nullptr, "?");
 		//now resolve the material name
-
-
-
 						
 		const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
-		//r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-		
-
-		for (u32 i = 0; i < numMaterialNames; ++i)
-		{
-			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
-
-			//const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
-
-		//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-		//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
-
-			//@NOTE(Serge): it's weird we store this here but it serves as the default material for the model (as opposed to the overrides)
-			r2::sarr::Push(*modelRef->materialNames, materialName);
-
-
-			//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
-			ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-
-			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
-
-			r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-		}
+		r2::sarr::Append(*modelRef->materialNames, *model->optrMaterialNames);
 		
 		return result;
 	}
@@ -2778,24 +2770,27 @@ namespace r2::draw::renderer
 
 			const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
-			for (u32 i = 0; i < numMaterialNames; ++i)
-			{
-				auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
-		//		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-			//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-			//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+			r2::sarr::Append(*modelRef->materialNames, *model->optrMaterialNames);
 
-				//@NOTE(Serge): it's weird we store this here but it serves as the default material for the model (as opposed to the overrides)
-				r2::sarr::Push(*modelRef->materialNames, materialName);
+		//	for (u32 i = 0; i < numMaterialNames; ++i)
+		//	{
+		//		auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
+		////		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-				//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
-				ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-					
-				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
+		//	//	const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+		//	//	R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-				r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-			}
+		//		//@NOTE(Serge): it's weird we store this here but it serves as the default material for the model (as opposed to the overrides)
+		//		r2::sarr::Push(*modelRef->materialNames, materialName);
+
+		//		//@TODO(Serge): GET RID OF THIS - should never exist for upload!!!
+		//	//	ShaderHandle shaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, eMeshPass::MP_FORWARD, model->optrAnimations != nullptr ? SET_DYNAMIC : SET_STATIC);//shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+		//			
+		//	//	R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
+
+		//	//	r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
+		//	}
 		}
 	}
 
@@ -3029,7 +3024,7 @@ namespace r2::draw::renderer
 	struct DrawCommandData
 	{
 		//@TODO(Serge): Should this be the forward pass' shader? or should this be ShaderEffectPasses?
-		ShaderHandle shaderId = InvalidShader;
+		ShaderEffectPasses shaderEffectPasses;
 		cmd::DrawState drawState;
 		b32 isDynamic = false;
 		r2::SArray<cmd::DrawBatchSubCommand>* subCommands = nullptr;
@@ -3039,14 +3034,16 @@ namespace r2::draw::renderer
 	struct BatchRenderOffsets
 	{
 		//@TODO(Serge): Should this be the forward pass' shader? or should this be ShaderEffectPasses?
-		ShaderHandle shaderId = InvalidShader;
+		ShaderEffectPasses shaderEffectPasses;
 		PrimitiveType primitiveType;
 		cmd::DrawState drawState;
 		u32 subCommandsOffset = 0;
 		u32 numSubCommands = 0;
 		u32 cameraDepth;
-		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
 		u32 depthFunction;
+		b32 isDynamic = false;
+		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
+		
 	};
 
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
@@ -3098,13 +3095,24 @@ namespace r2::draw::renderer
 			{
 				const vb::MeshEntry& meshRef = r2::sarr::At(*modelRef->meshEntries, meshRefIndex);
 
-
 				//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses?
-				ShaderHandle shaderId = r2::sarr::At(*renderBatch.materialBatch.shaderHandles, meshRef.materialIndex + materialBatchInfo.start); //r2::sarr::At(*shaders, meshRef.materialIndex);
+				//Here we're just going to base it on which layer / mesh pass we care about
+				const ShaderEffectPasses& shaderEffectPasses = r2::sarr::At(*renderBatch.materialBatch.shaderEffectPasses, meshRef.materialIndex + materialBatchInfo.start); 
 
-				R2_CHECK(shaderId != r2::draw::InvalidShader, "We don't have a proper shader?");
+				//Here we're just going to base it on which layer / mesh pass we care about
+				ShaderHandle shaderHandleToUse = r2::draw::InvalidShader;
+				eMeshPass meshPass = MP_FORWARD;
 
-				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderId, drawStateHash);
+				if (drawState.layer == DL_TRANSPARENT)
+				{
+					meshPass = MP_TRANSPARENT;
+				}
+				
+				shaderHandleToUse = modelRef->isAnimated ? shaderEffectPasses.meshPasses[meshPass].dynamicShaderHandle : shaderEffectPasses.meshPasses[meshPass].staticShaderHandle;
+
+				R2_CHECK(shaderHandleToUse != r2::draw::InvalidShader, "We don't have a proper shader?");
+
+				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderHandleToUse, drawStateHash);
 
 				DrawCommandData* defaultDrawCommandData = nullptr;
 
@@ -3119,7 +3127,7 @@ namespace r2::draw::renderer
 					R2_CHECK(drawCommandData != nullptr, "We couldn't allocate a drawCommandData!");
 
 					//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses?
-					drawCommandData->shaderId = shaderId;
+					drawCommandData->shaderEffectPasses = shaderEffectPasses;
 					drawCommandData->isDynamic = modelRef->isAnimated;
 					drawCommandData->drawState = drawState;
 					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
@@ -3141,6 +3149,8 @@ namespace r2::draw::renderer
 				subCommand.count = meshRef.gpuIndexEntry.size;
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
+
+
 				CameraDepth cameraDepth;
 				cameraDepth.cameraDepth = cameraDepthToModel;
 				cameraDepth.index = r2::sarr::Size(*drawCommandData->cameraDepths);
@@ -3384,7 +3394,7 @@ namespace r2::draw::renderer
 			prevFillCMD = boneTransformOffsetsCMD;
 		}
 
-
+		//@NOTE(Serge): can we get away with just one of these?
 		r2::SArray<BatchRenderOffsets>* staticRenderBatchesOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, staticDrawCommandBatchSize);//@NOTE: pretty sure this is an overestimate - could reduce to save mem
 		r2::SArray<BatchRenderOffsets>* dynamicRenderBatchesOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, dynamicDrawCommandBatchSize);
 
@@ -3418,7 +3428,7 @@ namespace r2::draw::renderer
 				//@TODO(Serge): I'm not sure this does all of the requisite sorting - what about sorting between DrawCommandData?
 				std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
 					return s1.cameraDepth < s2.cameraDepth;
-					});
+				});
 
 				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 
@@ -3432,13 +3442,14 @@ namespace r2::draw::renderer
 
 				BatchRenderOffsets batchOffsets;
 				//@NOTE(Serge): we have a problem here now - which shader do we use if we change it to be the ShaderEffectPasses? Or do we just put the shader effects into BatchRenderOffsets?
-				batchOffsets.shaderId = drawCommandData->shaderId;
+				batchOffsets.shaderEffectPasses = drawCommandData->shaderEffectPasses;
 				batchOffsets.subCommandsOffset = subCommandsOffset;
 				batchOffsets.numSubCommands = numSubCommandsInBatch;
-				
+				batchOffsets.isDynamic = drawCommandData->isDynamic;
+
 				memcpy(&batchOffsets.drawState, &drawCommandData->drawState, sizeof(cmd::DrawState));
 
-				batchOffsets.cameraDepth = 0; //@TODO(Serge): why is this 0?
+				batchOffsets.cameraDepth = 0; //@TODO(Serge): I think it's zero because camera depth doesn't apply well to big batches of stuff
 				batchOffsets.blendingFunctionKeyValue = key::GetBlendingFunctionKeyValue(drawCommandData->drawState.blendState);
 				
 
@@ -3473,9 +3484,9 @@ namespace r2::draw::renderer
 			finalBatchOffsets.drawState.layer = DL_SCREEN;
 			finalBatchOffsets.numSubCommands = 1;
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
-
+			finalBatchOffsets.isDynamic = false;
 			//@NOTE(Serge): we need to figure out if we should have ShaderEffectPasses here instead
-			finalBatchOffsets.shaderId = renderer.mFinalCompositeShaderHandle;
+			finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle = renderer.mFinalCompositeShaderHandle;
 			
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 			subCommandsOffset += 1;
@@ -3562,7 +3573,12 @@ namespace r2::draw::renderer
 		if (numStaticDrawBatches > 0)
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
-			clearShaderHandle = batchOffset.shaderId;
+
+			clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			if (batchOffset.drawState.layer == DL_TRANSPARENT)
+			{
+				clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+			} 
 		}
 
 		ClearSurfaceOptions clearDepthOptions;
@@ -3628,12 +3644,19 @@ namespace r2::draw::renderer
 #endif
 
 		//@NOTE(Serge): we need to figure out if we even need to separate the static and dynamic draw batches anymore
-		//				like having to do this twice is pretty dumb... We would need to add the bufferLayoutHandle to the BatchOffsets
+		//				like having to do this twice is pretty dumb... We would need to add the bufferLayoutHandle and isDynamic (to choose the proper shader) to the BatchOffsets
 
 		for (u64 i = 0; i < numStaticDrawBatches; ++i)
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
-			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
+
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			if (batchOffset.drawState.layer == DL_TRANSPARENT)
+			{
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+			}
+
+			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, shaderToUse);
 
 			cmd::DrawBatch* drawBatch = nullptr;
 
@@ -3874,7 +3897,13 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*dynamicRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].dynamicShaderHandle;
+			if (batchOffset.drawState.layer == DL_TRANSPARENT)
+			{
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].dynamicShaderHandle;
+			}
+
+			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, shaderToUse);
 
 			cmd::DrawBatch* drawBatch = nullptr;
 
@@ -4392,11 +4421,11 @@ namespace r2::draw::renderer
 		//BeginRenderPass<key::Basic>(renderer, RPT_BLOOM, clearGBufferOptions, *renderer.mCommandBucket, clearBloomKey, *renderer.mCommandArena);
 		//EndRenderPass<key::Basic>(renderer, RPT_BLOOM, *renderer.mCommandBucket);
 
-		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
+		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_FINAL_COMPOSITE, clearCompositeOptions, *renderer.mFinalBucket, finalBatchClearKey, *renderer.mCommandArena);
 
-		key::Basic finalBatchKey = key::GenerateBasicKey(0, 0, finalBatchOffsets.drawState.layer, 0, 0, finalBatchOffsets.shaderId);
+		key::Basic finalBatchKey = key::GenerateBasicKey(0, 0, finalBatchOffsets.drawState.layer, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle);
 
 		cmd::DrawBatch* finalDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, finalBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		finalDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4454,7 +4483,7 @@ namespace r2::draw::renderer
 			r2::sarr::Clear(*batch.gpuModelRefs);
 			r2::sarr::Clear(*batch.materialBatch.infos);
 			r2::sarr::Clear(*batch.materialBatch.renderMaterialParams);
-			r2::sarr::Clear(*batch.materialBatch.shaderHandles);
+			r2::sarr::Clear(*batch.materialBatch.shaderEffectPasses);
 			//r2::sarr::Clear(*batch.materialBatch.materialHandles);
 			
 #ifdef R2_EDITOR
@@ -6055,15 +6084,7 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandle,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		//@NOTE(Serge): We don't need the numInstances here at all
-		//				we can just use the size of the model matrices
-		u32 numInstances,
-
-		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		//				
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterials,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
-		
+		const r2::SArray<r2::mat::MaterialName>& materialNames,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
@@ -6079,8 +6100,8 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
-		R2_CHECK(r2::sarr::Size(renderMaterials) == r2::sarr::Size(shadersPerMesh), "These always need to be the same size");
+	//	R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
+	//	R2_CHECK(r2::sarr::Size(renderMaterials) == r2::sarr::Size(shadersPerMesh), "These always need to be the same size");
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
 		//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
 
@@ -6088,7 +6109,7 @@ namespace r2::draw::renderer
 		R2_CHECK(gpuModelRef != nullptr, "Failed to get the GPUModelRef for handle: %llu", modelRefHandle);
 
 
-		R2_CHECK(gpuModelRef->numMaterials == r2::sarr::Size(renderMaterials) || ((r2::sarr::Size(renderMaterials) == 1) && gpuModelRef->numMaterials >= 1), "These must be the same");
+		R2_CHECK(gpuModelRef->numMaterials == r2::sarr::Size(materialNames) || ((r2::sarr::Size(materialNames) == 1) && gpuModelRef->numMaterials >= 1), "These must be the same");
 
 		DrawType drawType = STATIC;
 
@@ -6117,7 +6138,7 @@ namespace r2::draw::renderer
 
 		r2::sarr::Append(*batch.models, modelMatrices);
 
-		r2::sarr::Push(*batch.numInstances, numInstances);
+		r2::sarr::Push(*batch.numInstances, static_cast<u32>( r2::sarr::Size(modelMatrices)));
 
 		cmd::DrawState state;
 
@@ -6131,8 +6152,7 @@ namespace r2::draw::renderer
 
 		r2::sarr::Push(*batch.drawState, state);
 
-		bool isMaterialSizesSame = r2::sarr::Size(renderMaterials) == gpuModelRef->numMaterials;
-
+		bool isMaterialSizesSame = r2::sarr::Size(materialNames) == gpuModelRef->numMaterials;
 
 		MaterialBatch::Info materialBatchInfo;
 
@@ -6140,6 +6160,8 @@ namespace r2::draw::renderer
 		materialBatchInfo.numMaterials = gpuModelRef->numMaterials;
 
 		r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
+
+		r2::draw::RenderMaterialCache* renderMaterialCache = renderer.mRenderMaterialCache;
 
 		if (isMaterialSizesSame)
 		{
@@ -6149,18 +6171,36 @@ namespace r2::draw::renderer
 				//				we should also get the Material (or ShaderEffectPasses) and push it here 
 				//				we may even want to build a separate version of ShaderEffectPasses (like RenderMaterialParams)
 				//				so that we don't have issues with material hot-reloading
-				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterials, i));
-				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, i));
+
+				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, i);
+
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
+
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
+
+				//@Optimization(Serge): this is fairly slow since we need to do a few lookups each time we draw the same model
+				//						It would be smart to cache the ShaderEffects somehow
+				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
+				//r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, i));
 			}
 		}
 		else
 		{
+			R2_CHECK(r2::sarr::Size(materialNames) == 1, "You should only have 1 material in this case");
+
+			const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, 0);
+
+			const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
+			r2::draw::ShaderEffectPasses shaderEffectPasses = r2::mat::GetShaderEffectPassesForMaterialName(materialName);
+
 			for (u32 i = 0; i < gpuModelRef->numMaterials; ++i)
 			{
 				//@NOTE(Serge): we should get the render materials from the material name and push it here
 				//				we should also get the Material (or ShaderEffectPasses) and push it here
-				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterials, 0));
-				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, 0));
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
+				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, shaderEffectPasses);
+
+				//r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, 0));
 			}
 		}
 
@@ -6175,15 +6215,14 @@ namespace r2::draw::renderer
 
 	void DrawModels(
 		Renderer& renderer,
+		const r2::SArray<u32>& entities,
+		const r2::SArray<s32>& entityInstances,
+		const r2::SArray<u32>& numEntityInstancesPerEntity,
 		const DrawParameters& drawParameters,
 		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<u32>& numInstancesPerModel,
-
-		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
-		
+		const r2::SArray<r2::mat::MaterialName>& materialNames,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms) 
 	{
 		if (renderer.mRenderBatches == nullptr)
@@ -6200,7 +6239,6 @@ namespace r2::draw::renderer
 
 		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
 		R2_CHECK(numModelRefs == numInstancesInArray, "These must be the same!");
-		R2_CHECK(r2::sarr::Size(renderMaterialParamsPerMesh) == r2::sarr::Size(shadersPerMesh), "These always need to be the same");
 
 #if R2_DEBUG
 		u32 numInstancesInTotal = 0;
@@ -6270,13 +6308,33 @@ namespace r2::draw::renderer
 			numMaterialsForGPUModelRefs += modelRef->numMaterials;
 		}
 
-		R2_CHECK(r2::sarr::Size(renderMaterialParamsPerMesh) == numMaterialsForGPUModelRefs, "These should be the same in this case");
-		R2_CHECK(r2::sarr::Size(shadersPerMesh) == numMaterialsForGPUModelRefs, "These need to be the same as well");
+		R2_CHECK(r2::sarr::Size(materialNames) == numMaterialsForGPUModelRefs, "These should be the same in this case");
+
 #endif
 
 		DrawType drawType = (!boneTransforms) ? DrawType::STATIC : DrawType::DYNAMIC;
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+
+#ifdef R2_EDITOR
+		R2_CHECK(r2::sarr::Size(numEntityInstancesPerEntity) == r2::sarr::Size(entities), "These should always be the same");
+
+		r2::sarr::Append(*batch.entityIDs, entities);
+
+		auto startEntityInstances = r2::sarr::Size(*batch.entityInstances);
+		for (u32 i = 0; i < r2::sarr::Size(numEntityInstancesPerEntity); ++i)
+		{
+			EntityInstanceBatchOffset entityInstanceBatchOffset;
+			entityInstanceBatchOffset.start = startEntityInstances;
+			entityInstanceBatchOffset.numInstances = r2::sarr::At(numEntityInstancesPerEntity, i);
+
+			startEntityInstances += entityInstanceBatchOffset.numInstances;
+
+			r2::sarr::Push(*batch.entityInstanceOffsetBatches, entityInstanceBatchOffset);
+		}
+		
+		r2::sarr::Append(*batch.entityInstances, entityInstances);
+#endif
 
 		r2::sarr::Append(*batch.gpuModelRefs, *modelRefArray);
 
@@ -6319,12 +6377,15 @@ namespace r2::draw::renderer
 
 			for (u32 j = 0; j < info.numMaterials; ++j)
 			{
+				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, j + materialOffset);
+
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName.name);
 				//@NOTE(Serge): we should get the render materials from the material name and push it here
 				//				we should also get the Material (or ShaderEffectPasses) and push it here 
 				//				we may even want to build a separate version of ShaderEffectPasses (like RenderMaterialParams)
 				//				so that we don't have issues with material hot-reloading
-				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterialParamsPerMesh, j + materialOffset));
-				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, j + materialOffset));
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
+				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
 			}
 
 			materialOffset += info.numMaterials;
@@ -6528,6 +6589,7 @@ namespace r2::draw::renderer
 	void PopulateDebugRenderBatchesOffsets(
 		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData,
 		ShaderHandle shaderID,
+		eMeshPass meshPass,
 		u32& subCommandsOffset,
 		r2::SArray<BatchRenderOffsets>* debugRenderBatchesOffsets,
 		r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* drawBatchSubCommands,
@@ -6557,7 +6619,7 @@ namespace r2::draw::renderer
 				offsets.drawState.layer = DL_DEBUG;
 				offsets.primitiveType = debugDrawCommandData->primitiveType;
 				offsets.drawState.depthEnabled = debugDrawCommandData->depthEnabled;
-				offsets.shaderId = shaderID;
+				offsets.shaderEffectPasses.meshPasses[meshPass].staticShaderHandle = shaderID;
 				offsets.numSubCommands = numSubCommandsInBatch;
 				offsets.subCommandsOffset = subCommandsOffset;
 
@@ -6662,8 +6724,15 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*debugBatchOffsets, i);
 
-			key::DebugKey key = key::GenerateDebugKey(batchOffset.shaderId, batchOffset.primitiveType, batchOffset.drawState.depthEnabled, 0, 0);//key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			if (transparentBatch)
+			{
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+			}
+
+			key::DebugKey key = key::GenerateDebugKey(shaderToUse, batchOffset.primitiveType, batchOffset.drawState.depthEnabled, 0, 0);//key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
 			
+
 			if (debugLines)
 			{
 
@@ -6674,7 +6743,7 @@ namespace r2::draw::renderer
 				}
 				else
 				{
-					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, shaderToUse);
 
 					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
 				}
@@ -6708,7 +6777,7 @@ namespace r2::draw::renderer
 				}
 				else
 				{
-					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, batchOffset.shaderId);
+					key::Basic transparentKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, r2::draw::DrawLayer::DL_DEBUG, r2::draw::key::TR_ADDITIVE, 0, shaderToUse);
 
 					drawBatch = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mTransparentBucket, transparentKey, 0);
 				}
@@ -6836,7 +6905,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, MP_FORWARD, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numLinesToDraw > 0)
@@ -6847,7 +6916,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, MP_FORWARD, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentModelsToDraw > 0)
@@ -6858,7 +6927,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, MP_TRANSPARENT, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentLinesToDraw > 0)
@@ -6869,7 +6938,7 @@ namespace r2::draw::renderer
 	
 			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, MP_TRANSPARENT, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 		
 
@@ -9332,7 +9401,7 @@ namespace r2::draw::renderer
 	{
 		return GetRenderMaterialCache(MENG.GetCurrentRendererRef());
 	}
-
+	/*
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic)
 	{
 		return GetDefaultOutlineShaderHandle(MENG.GetCurrentRendererRef(), isStatic);
@@ -9341,6 +9410,12 @@ namespace r2::draw::renderer
 	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic)
 	{
 		return GetDefaultOutlineRenderMaterialParams(MENG.GetCurrentRendererRef(), isStatic);
+	}
+	*/
+
+	r2::mat::MaterialName GetDefaultOutlineMaterialName()
+	{
+		return  GetDefaultOutlineMaterialName(MENG.GetCurrentRendererRef());
 	}
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam()
@@ -9367,16 +9442,19 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		u32 numInstances,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		//u32 numInstances,
+		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
+
+
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		//0 is then invalid entity - if we change that - we need to change this
 		//Also we should not be doing this silly emptyInstances thing!
-		r2::SArray<s32>* emptyInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, s32, 1);
-		DrawModel(MENG.GetCurrentRendererRef(), 0, *emptyInstances, drawParameters, modelRefHandles, modelMatrices, numInstances, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
-		FREE(emptyInstances, *MEM_ENG_SCRATCH_PTR);
+		r2::SArray<s32>* emptyEntityInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, s32, 1);
+		DrawModel(MENG.GetCurrentRendererRef(), 0, *emptyEntityInstances, drawParameters, modelRefHandles, modelMatrices, materialsPerMesh, boneTransforms);
+		FREE(emptyEntityInstances, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void DrawModels(
@@ -9384,11 +9462,24 @@ namespace r2::draw::renderer
 		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<u32>& numInstancesPerModel,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+
+		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
+		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
+		r2::SArray<u32>* entities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
+		r2::SArray<u32>* numEntityInstancesPerEntity = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
+		r2::SArray<s32>* emptyEntityInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, s32, 1);
+
+		r2::sarr::Fill(*entities, 0u);
+		r2::sarr::Fill(*numEntityInstancesPerEntity, 1u);
+
+		DrawModels(MENG.GetCurrentRendererRef(), *entities, *emptyEntityInstances, *numEntityInstancesPerEntity, drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialsPerMesh, boneTransforms);
+
+		FREE(emptyEntityInstances, *MEM_ENG_SCRATCH_PTR);
+		FREE(numEntityInstancesPerEntity, *MEM_ENG_SCRATCH_PTR);
+		FREE(entities, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void SetDefaultStencilState(DrawParameters& drawParameters)
@@ -9501,12 +9592,29 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
+		/*const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,*/
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		R2_CHECK(entityInstances.mSize == modelMatrices.mSize, "Should always be true");
-		DrawModel(MENG.GetCurrentRendererRef(), entity, entityInstances, drawParameters, modelRefHandles, modelMatrices, r2::sarr::Size(modelMatrices), renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
+		DrawModel(MENG.GetCurrentRendererRef(), entity, entityInstances, drawParameters, modelRefHandles, modelMatrices, materialsPerMesh, boneTransforms);
+	}
+
+	void DrawModelEntities(
+		const r2::SArray<u32>& entities,
+		const r2::SArray<s32>& entityInstances,
+		const r2::SArray<u32>& numEntityInstancesPerEntity,
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	{
+		R2_CHECK(entityInstances.mSize == modelMatrices.mSize, "Should always be true");
+
+		DrawModels(MENG.GetCurrentRendererRef(), entities, entityInstances, numEntityInstancesPerEntity, drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialNamesPerMesh, boneTransforms);
 	}
 
 #endif

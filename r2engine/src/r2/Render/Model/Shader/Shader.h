@@ -32,6 +32,17 @@ namespace r2::draw
     using ShaderName = u64;
     static const ShaderHandle InvalidShader = 0;
 
+    struct ShaderEffect
+    {
+        ShaderHandle staticShaderHandle = InvalidShader;
+        ShaderHandle dynamicShaderHandle = InvalidShader;
+    };
+
+    struct ShaderEffectPasses
+    {
+        ShaderEffect meshPasses[NUM_MESH_PASSES];
+    };
+
     struct Shader
     {
         //maybe have a hash here?

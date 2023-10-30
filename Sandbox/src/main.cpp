@@ -1051,22 +1051,22 @@ public:
 
 			const r2::draw::vb::GPUModelRef* sponzaGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSponzaModelRefHandle);
 
-			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, sponzaGPUModelRef->numMaterials);
-			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, sponzaGPUModelRef->numMaterials);
+			//r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, sponzaGPUModelRef->numMaterials);
+			//r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, sponzaGPUModelRef->numMaterials);
 
-			for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
+			/*for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
 			{
-                const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->materialNames, i).name);
+				const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->materialNames, i).name);
 
-                R2_CHECK(renderMaterial != nullptr, "...");
-                r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-                r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));
-			}
+				R2_CHECK(renderMaterial != nullptr, "...");
+				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+				r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));
+			}*/
 
-			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, *renderMaterialParams, *shaderHandles, nullptr);
+			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, *sponzaGPUModelRef->materialNames, nullptr);
 
-			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+			//FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			//FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
 			FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
         }
 
@@ -1201,19 +1201,25 @@ public:
 
         drawWorldParams.layer = r2::draw::DL_SKYBOX;
 
-        r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
-        r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-		const r2::draw::RenderMaterialParams* skyboxRenderMaterialParams = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportSkybox"));
-		r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName }, r2::draw::eMeshPass::MP_FORWARD, r2::draw::SET_STATIC);
+        r2::mat::MaterialName skyboxMaterialName = { STRING_ID("NewportSkybox"), materialParamsPackName };
 
-        r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
-        r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);
+		/*  r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
+		  r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, *skyboxRenderParams, *skyboxShaderHandles, nullptr);
+		  const r2::draw::RenderMaterialParams* skyboxRenderMaterialParams = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportSkybox"));
+		  r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName }, r2::draw::eMeshPass::MP_FORWARD, r2::draw::SET_STATIC);
 
-        FREE(skyboxShaderHandles, *MEM_ENG_SCRATCH_PTR);
-        FREE(skyboxRenderParams, *MEM_ENG_SCRATCH_PTR);
+		  r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
+		  r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);*/
+        r2::SArray<r2::mat::MaterialName>* skyboxMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
+        r2::sarr::Push(*skyboxMaterials, skyboxMaterialName);
+
+        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, *skyboxMaterials, nullptr);
+
+        FREE(skyboxMaterials, *MEM_ENG_SCRATCH_PTR);
+     //   FREE(skyboxShaderHandles, *MEM_ENG_SCRATCH_PTR);
+    //    FREE(skyboxRenderParams, *MEM_ENG_SCRATCH_PTR);
         FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the axis

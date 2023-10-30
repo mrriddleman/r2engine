@@ -61,8 +61,8 @@ namespace r2::draw::vb
 				(
 					r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GPUModelRef), ALIGNMENT, freelistHeaderSize, boundsChecking) +
 					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking) +
-					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking) +
-					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ShaderHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking)
+					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking)
+					//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ShaderHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking)
 				) * maxModelsLoaded
 			);
 
@@ -584,8 +584,8 @@ namespace r2::draw::vbsys
 		modelRef->numMaterials = numMaterals;
 		R2_CHECK(modelRef->materialNames != nullptr, "renderMaterialHandles is nullptr!");
 
-		modelRef->shaderHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, ShaderHandle, numMaterals);
-		R2_CHECK(modelRef->shaderHandles != nullptr, "shaderHandles is nullptr!");
+		/*modelRef->shaderHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, ShaderHandle, numMaterals);
+		R2_CHECK(modelRef->shaderHandles != nullptr, "shaderHandles is nullptr!");*/
 
 
 		for (u64 i = 0; i < numMeshes; ++i)
@@ -846,7 +846,7 @@ namespace r2::draw::vbsys
 		vb::gpubuf::DeleteEntry(vertexBufferLayout->indexBuffer, indexEntry);
 		vb::gpubuf::DeleteEntry(vertexBufferLayout->vertexBuffers[0], vertexEntry);
 
-		FREE(modelRef->shaderHandles, *vertexBufferLayout->gpuModelRefArena);
+		//FREE(modelRef->shaderHandles, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef->materialNames, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef->meshEntries, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef, *vertexBufferLayout->gpuModelRefArena);

@@ -50,7 +50,7 @@ namespace r2::draw::vb
 		//@NOTE(Serge): why are these here? They have nothing to do with uploading or unloading the models
 		//the only thing we might care about is how many materials the model can have - which is below
 		//even then, we don't actually use it in this system at all!
-		r2::SArray<ShaderHandle>* shaderHandles;
+		
 		u32 numMaterials;
 
 		GPUBufferEntry boneEntry;

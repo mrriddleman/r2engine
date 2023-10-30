@@ -140,11 +140,11 @@ namespace r2::ecs
 
 
 
-		r2::draw::renderer::DrawModelEntity(entity, *instancesToDraw, renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+		r2::draw::renderer::DrawModelEntity(entity, *instancesToDraw, renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.materialNames, shaderBoneTransforms);
 		FREE(instancesToDraw, *MEM_ENG_SCRATCH_PTR);
 
 #else
-		r2::draw::renderer::DrawModel(renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, numInstances, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+		r2::draw::renderer::DrawModel(renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.materialNames, shaderBoneTransforms);
 #endif
 
 		
@@ -237,7 +237,7 @@ namespace r2::ecs
 			stencilDrawParams.stencilState.func.ref = 1;
 			stencilDrawParams.stencilState.func.mask = 0xFF;
 
-			r2::draw::renderer::DrawModelEntity(entity, *selectionComponent.selectedInstances, stencilDrawParams, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+			r2::draw::renderer::DrawModelEntity(entity, *selectionComponent.selectedInstances, stencilDrawParams, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.materialNames, shaderBoneTransforms);
 
 
 			//Then we have to submit the outline shader version with its own state 
@@ -249,18 +249,16 @@ namespace r2::ecs
 			stencilDrawParams.stencilState.func.ref = 1;
 			stencilDrawParams.stencilState.func.mask = 0xFF;
 
-			r2::SArray<r2::draw::RenderMaterialParams>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
-			r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
+			r2::SArray<r2::mat::MaterialName>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
+		//	r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-			r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineRenderMaterialParams(!isAnimated));
-			r2::sarr::Push(*outlineShaderHandles, r2::draw::renderer::GetDefaultOutlineShaderHandle(!isAnimated));
+			r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineMaterialName());
+			//r2::sarr::Push(*outlineShaderHandles, r2::draw::renderer::GetDefaultOutlineShaderHandle(!isAnimated));
 
-			r2::draw::renderer::DrawModelEntity(entity, *selectionComponent.selectedInstances, stencilDrawParams, renderComponent.gpuModelRefHandle, *mBatch.transforms, *outlineMaterialParams, *outlineShaderHandles, shaderBoneTransforms);
+			r2::draw::renderer::DrawModelEntity(entity, *selectionComponent.selectedInstances, stencilDrawParams, renderComponent.gpuModelRefHandle, *mBatch.transforms, *outlineMaterialParams, shaderBoneTransforms);
 
-			FREE(outlineShaderHandles, *MEM_ENG_SCRATCH_PTR);
+			//FREE(outlineShaderHandles, *MEM_ENG_SCRATCH_PTR);
 			FREE(outlineMaterialParams, *MEM_ENG_SCRATCH_PTR);
-
-
 		}
 		
 		if (totalInstances - numSelectedInstances > 0)
@@ -318,9 +316,7 @@ namespace r2::ecs
 				shaderBoneTransforms = mBatch.boneTransforms;
 			}
 
-
-
-			r2::draw::renderer::DrawModelEntity(entity, *instancesToDraw, renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+			r2::draw::renderer::DrawModelEntity(entity, *instancesToDraw, renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, *mBatch.materialNames, shaderBoneTransforms);
 
 			FREE(instancesToDraw, *MEM_ENG_SCRATCH_PTR);
 		}
@@ -334,17 +330,18 @@ namespace r2::ecs
 
 		if (hasMaterialOverrides)
 		{
-			u32 numOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
+			r2::sarr::Append(*mBatch.materialNames, *renderComponent.optrMaterialOverrideNames);
+			//u32 numOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
 
-			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+			//r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
-			for (u32 i = 0; i < numOverrides; ++i)
-			{
-				const r2::mat::MaterialName& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
+			//for (u32 i = 0; i < numOverrides; ++i)
+			//{
+			//	const r2::mat::MaterialName& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
-				R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
-				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;
+			//	const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
+			//	R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
+			//	const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;
 
 				//const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
@@ -352,17 +349,17 @@ namespace r2::ecs
 
 				//@TODO(Serge): I'm not sure if this is always correct - shouldn't it depend on the material?
 				//				Perhaps we should add something to the material to fix this - for now will work
-				r2::draw::eMeshPass meshPass = draw::MP_FORWARD;
-				if (renderComponent.drawParameters.layer == draw::DL_TRANSPARENT)
-				{
-					meshPass = draw::MP_TRANSPARENT; 
-				}
+				//r2::draw::eMeshPass meshPass = draw::MP_FORWARD;
+				//if (renderComponent.drawParameters.layer == draw::DL_TRANSPARENT)
+				//{
+				//	meshPass = draw::MP_TRANSPARENT; 
+				//}
 
-				r2::draw::ShaderHandle materialShaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, draw::MP_FORWARD, renderComponent.isAnimated ? draw::SET_DYNAMIC : draw::SET_STATIC);//r2::draw::shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialManifest, materialName.name));
+				//r2::draw::ShaderHandle materialShaderHandle = r2::mat::GetShaderHandleForMaterialName(materialName, draw::MP_FORWARD, renderComponent.isAnimated ? draw::SET_DYNAMIC : draw::SET_STATIC);//r2::draw::shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialManifest, materialName.name));
 
-				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
-				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
-			}
+			//	r2::sarr::Push(*mBatch.materialNames, materialName);
+				//r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
+			//}
 		}
 		else
 		{
@@ -372,7 +369,11 @@ namespace r2::ecs
 
 			const u32 numMaterialHandles = gpuModelRef->numMaterials;
 
-			for (u32 i = 0; i < numMaterialHandles; ++i)
+			R2_CHECK(r2::sarr::Size(*gpuModelRef->materialNames) == numMaterialHandles, "Should be the same?");
+
+			r2::sarr::Append(*mBatch.materialNames, *gpuModelRef->materialNames);
+
+			/*for (u32 i = 0; i < numMaterialHandles; ++i)
 			{
 				r2::draw::ShaderHandle materialShaderHandle = r2::sarr::At(*gpuModelRef->shaderHandles, i);
 
@@ -385,7 +386,7 @@ namespace r2::ecs
 
 				r2::sarr::Push(*mBatch.renderMaterialParams, *nextRenderMaterial);
 				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
-			}
+			}*/
 		}
 	}
 
@@ -393,8 +394,8 @@ namespace r2::ecs
 	{
 
 		r2::sarr::Clear(*mBatch.transforms);
-		r2::sarr::Clear(*mBatch.renderMaterialParams);
-		r2::sarr::Clear(*mBatch.shaderHandles);
+		r2::sarr::Clear(*mBatch.materialNames);
+		//r2::sarr::Clear(*mBatch.shaderHandles);
 		r2::sarr::Clear(*mBatch.boneTransforms);
 	}
 
@@ -418,8 +419,8 @@ namespace r2::ecs
 
 		memorySize +=
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(maxNumInstancesPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(maxNumMaterialsPerModel ), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(maxNumMaterialsPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(maxNumMaterialsPerModel ), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(maxNumMaterialsPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 
 			//@NOTE: this is inadvertently correct - pretty sure we can only have this many bones anyways (shaderwise)
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderBoneTransform>::MemorySize(maxNumShaderBoneTransforms), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking);

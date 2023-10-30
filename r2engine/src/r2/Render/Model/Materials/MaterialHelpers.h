@@ -22,12 +22,16 @@ namespace r2::mat
 
 	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
 	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
-	
+	r2::draw::ShaderEffectPasses GetShaderEffectPassesForMaterialName(MaterialName materialName);
+
+
 	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName);
 
 	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName);
 
 	void GetAllTexturePacksForMaterial(const flat::Material* material, r2::SArray<u64>* texturePacks);
+
+	
 
 #ifdef R2_ASSET_PIPELINE
 	std::vector<const flat::Material*> GetAllMaterialsInMaterialPackThatContainTexture(const flat::MaterialPack* materialPack, u64 texturePackName, u64 textureName);

@@ -28,8 +28,10 @@ namespace r2::ecs
 		{
 			r2::SArray<glm::mat4>* transforms;
 
-			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams;
-			r2::SArray<r2::draw::ShaderHandle>* shaderHandles;
+		//	r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams;
+		//	r2::SArray<r2::draw::ShaderHandle>* shaderHandles;
+
+			r2::SArray<r2::mat::MaterialName>* materialNames;
 
 			r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms;
 
@@ -63,8 +65,8 @@ namespace r2::ecs
 			R2_CHECK(mArena != nullptr, "We couldn't emplace the stack arena");
 
 			mBatch.transforms = MAKE_SARRAY(*mArena, glm::mat4, maxNumInstancesPerModel);
-			mBatch.renderMaterialParams = MAKE_SARRAY(*mArena, r2::draw::RenderMaterialParams, maxNumMaterialsPerModel);
-			mBatch.shaderHandles = MAKE_SARRAY(*mArena, r2::draw::ShaderHandle, maxNumMaterialsPerModel);
+			mBatch.materialNames = MAKE_SARRAY(*mArena, r2::mat::MaterialName, maxNumMaterialsPerModel);
+			//mBatch.shaderHandles = MAKE_SARRAY(*mArena, r2::draw::ShaderHandle, maxNumMaterialsPerModel);
 			mBatch.boneTransforms = MAKE_SARRAY(*mArena, r2::draw::ShaderBoneTransform, maxNumShaderBoneTransforms);
 
 			return true;

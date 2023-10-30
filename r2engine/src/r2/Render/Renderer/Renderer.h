@@ -45,9 +45,12 @@ namespace r2::draw
 
 		//@NOTE(Serge): I THINK these should just be MaterialNames and we'll resolve them later?
 		//				alternatively we could resolve them into flat::Material* here instead?
-		//				Or we could resolve the RenderMaterialParams and ALOS have SArray<flat::Material*> just for the shaders (or the flat::ShaderEffectPasses)
+		//				Or we could resolve the RenderMaterialParams and ALSO have SArray<flat::Material*> just for the shaders (or the flat::ShaderEffectPasses)
 		r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = nullptr;
-		r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
+		r2::SArray<r2::draw::ShaderEffectPasses>* shaderEffectPasses = nullptr;
+
+		//r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
+
 	};
 
 	struct EntityInstanceBatchOffset
@@ -189,10 +192,12 @@ namespace r2::draw
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
 		
 		r2::draw::ShaderHandle mFinalCompositeShaderHandle;
-		r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
-		r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
 
-		r2::draw::RenderMaterialParams mDefaultOutlineRenderMaterialParams;
+		r2::mat::MaterialName mDefaultOutlineMaterialName;
+		//r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
+		//r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
+
+		//r2::draw::RenderMaterialParams mDefaultOutlineRenderMaterialParams;
 
 		r2::draw::RenderMaterialParams mMissingTextureRenderMaterialParams;
 		r2::draw::RenderMaterialParams mBlueNoiseRenderMaterialParams;
@@ -530,8 +535,9 @@ namespace r2::draw::renderer
 	r2::draw::RenderMaterialCache* GetRenderMaterialCache();
 
 
-	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
-	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
+	r2::mat::MaterialName GetDefaultOutlineMaterialName();
+	//r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
+	//const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
 	const tex::Texture* GetMissingTexture();
@@ -576,11 +582,12 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& modelMatrices,
 		//@NOTE(Serge): We don't need the numInstances here at all
 		//				we can just use the size of the model matrices
-		u32 numInstances,
+		//u32 numInstances,
 
 		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
 
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
@@ -591,8 +598,9 @@ namespace r2::draw::renderer
 		const r2::SArray<u32>& numInstancesPerModel,
 		
 		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
 
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
@@ -649,9 +657,20 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<r2::mat::MaterialName>& materialNamePerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
+
+	void DrawModelEntities(
+		const r2::SArray<u32>& entities,
+		const r2::SArray<s32>& entityInstances,
+		const r2::SArray<u32>& numEntityInstancesPerEntity,
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
+
 
 #endif
 
