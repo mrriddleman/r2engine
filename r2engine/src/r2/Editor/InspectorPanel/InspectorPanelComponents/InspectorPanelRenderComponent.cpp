@@ -21,10 +21,16 @@
 #include "r2/Core/Engine.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
 
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
+#include "r2/Render/Model/Materials/Material_generated.h"
+
 //this is dumb but...
 #include "r2/Render/Animation/AnimationPlayer.h"
 
+
 #include "imgui.h"
+
+#include "r2/ImGui/CustomFont.h"
 
 namespace r2::edit
 {
@@ -568,7 +574,6 @@ namespace r2::edit
 					{
 						if (nextModelFileName != modelFileName)
 						{
-							//@TODO(Serge): implement
 							std::filesystem::path assetFilePath = assetFile->FilePath();
 							auto assetHandle = assetFile->GetAssetHandle(0);
 							const r2::draw::Model* renderModel = nullptr;
@@ -604,10 +609,6 @@ namespace r2::edit
 								renderComponent.drawParameters.layer = draw::DL_WORLD;
 							}
 
-							//@TODO(Serge): figure out how the override materials will work here
-							//				I think we'll have to delete the array and make a new one based on 
-							//				the new renderModel's materialNames
-
 							bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
 							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, theEntity, 0, renderComponent);
@@ -616,6 +617,131 @@ namespace r2::edit
 				}
 
 				ImGui::EndCombo();
+			}
+
+			static bool s_openMaterialsWindow = false;
+			static r2::mat::MaterialName s_materialToEdit;
+
+			if (ImGui::CollapsingHeader("Materials"))
+			{
+				ImGui::Indent();
+				//@TODO(Serge): figure out how the override materials will work here
+				const r2::draw::vb::GPUModelRef* modelRef = r2::draw::renderer::GetGPUModelRef(renderComponent.gpuModelRefHandle);
+
+				R2_CHECK(modelRef->numMaterials == r2::sarr::Size(*modelRef->materialNames), "Should be the same");
+
+				//we need to figure out if we're using overrides or the default (GPUModelRef) materials
+
+				bool overridesDisabled = false;
+				if (renderComponent.optrMaterialOverrideNames)
+				{
+					overridesDisabled = true;
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				if (ImGui::Button("Override Materials"))
+				{
+
+				}
+
+				ImGui::SameLine();
+
+				if (overridesDisabled)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+				
+				
+				bool isClearOverridesDisabled = !renderComponent.optrMaterialOverrideNames;
+				if (isClearOverridesDisabled)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				if (ImGui::Button("Clear overrides"))
+				{
+					ECS_WORLD_FREE(ecsWorld, renderComponent.optrMaterialOverrideNames);
+					renderComponent.optrMaterialOverrideNames = nullptr;
+					isClearOverridesDisabled = false;
+				}
+
+				if (isClearOverridesDisabled)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+
+				u32 numMaterials = modelRef->numMaterials;
+				r2::SArray<r2::mat::MaterialName>* materialsToUse = modelRef->materialNames;
+
+				if (renderComponent.optrMaterialOverrideNames != nullptr)
+				{
+					materialsToUse = renderComponent.optrMaterialOverrideNames;
+					numMaterials = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
+				}
+
+				if (!renderComponent.optrMaterialOverrideNames)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				for (u32 j = 0; j < numMaterials; ++j)
+				{
+					const auto& materialName = r2::sarr::At(*materialsToUse, j);
+
+					const flat::Material* flatMaterial = r2::mat::GetMaterialForMaterialName(materialName);
+
+					std::string materialNameString = flatMaterial->stringName()->str();
+					ImGui::PushID(j);
+
+					ImGui::Text("Slot %u:", j); 
+					ImGui::SameLine();
+
+					ImGui::PushItemWidth(220.0f);
+
+					if (ImGui::BeginCombo("##label materialslot", materialNameString.c_str()))
+					{
+						//@TODO(Serge): somehow we need to populate the combo with suitable materials
+
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::PopItemWidth();
+
+					ImGui::SameLine();
+					if (ImGui::Button(ICON_IGFD_EDIT))
+					{
+						s_openMaterialsWindow = true;
+						s_materialToEdit = materialName;
+					}
+
+					ImGui::PopID();
+				}
+
+				if (!renderComponent.optrMaterialOverrideNames)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+
+				ImGui::Unindent();
+			}
+
+			if (s_openMaterialsWindow)
+			{
+				ImGui::SetNextWindowSize(ImVec2(500, 500));
+
+				if (ImGui::Begin("Material Editor", &s_openMaterialsWindow))
+				{
+					//@TODO(Serge): implement
+
+					ImGui::End();
+				}
 			}
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));
