@@ -625,7 +625,7 @@ namespace r2::edit
 			if (ImGui::CollapsingHeader("Materials"))
 			{
 				ImGui::Indent();
-				//@TODO(Serge): figure out how the override materials will work here
+				
 				const r2::draw::vb::GPUModelRef* modelRef = r2::draw::renderer::GetGPUModelRef(renderComponent.gpuModelRefHandle);
 
 				R2_CHECK(modelRef->numMaterials == r2::sarr::Size(*modelRef->materialNames), "Should be the same");
@@ -645,6 +645,12 @@ namespace r2::edit
 					//@TODO(Serge): implement
 					//				I think by default we should just copy in all of the default material names to our new overrides.
 					//				That's the simplest thing we can do keep everything working normally
+					renderComponent.optrMaterialOverrideNames = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::mat::MaterialName, modelRef->numMaterials);
+
+					for (u32 i = 0; i < modelRef->numMaterials; ++i)
+					{
+						r2::sarr::Push(*renderComponent.optrMaterialOverrideNames, r2::sarr::At(*modelRef->materialNames, i));
+					}
 				}
 
 				ImGui::SameLine();
@@ -691,6 +697,17 @@ namespace r2::edit
 					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
 				}
 
+
+				flat::eMeshPass meshPass = flat::eMeshPass_FORWARD;
+				if (renderComponent.drawParameters.layer == draw::DL_TRANSPARENT)
+				{
+					meshPass == flat::eMeshPass_TRANSPARENT;
+				}
+
+				const flat::Material* firstMaterial = GetMaterialForMaterialName(r2::sarr::At(*modelRef->materialNames, 0));
+				std::vector<r2::mat::MaterialParam> suitableMaterials = r2::mat::GetAllMaterialsThatMatchVertexLayout(meshPass, firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->staticVertexLayout(),
+					firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->dynamicVertexLayout());
+
 				for (u32 j = 0; j < numMaterials; ++j)
 				{
 					const auto& materialName = r2::sarr::At(*materialsToUse, j);
@@ -707,12 +724,15 @@ namespace r2::edit
 
 					if (ImGui::BeginCombo("##label materialslot", materialNameString.c_str()))
 					{
-						//@TODO(Serge): somehow we need to populate the combo with suitable materials
-						//				Maybe we need to use the first default material (GPUModelRef's version) to see
-						//				what shader effect it's using (based on the layer eg. WORLD, CHARACTER and TRANSPARENT) 
-						//				and query the asset lib (via MaterialHelpers) for all materials that can match? 
-						//				Matching here would mean it would have the same vertex layout for the shaders?
-						//				Is that something we need to include into our material data?
+						for (u32 k = 0; k < suitableMaterials.size(); ++k)
+						{
+							r2::mat::MaterialParam materialParam = suitableMaterials[k];
+							const flat::Material* suitableMaterial = materialParam.flatMaterial;
+							if (ImGui::Selectable(suitableMaterial->stringName()->str().c_str(), flatMaterial->stringName()->str() == suitableMaterial->stringName()->str()))
+							{
+								r2::sarr::At(*materialsToUse, j) = materialParam.materialName;
+							}
+						}
 
 						ImGui::EndCombo();
 					}

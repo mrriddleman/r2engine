@@ -8,6 +8,8 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Utils/Hash.h"
 
+#include "r2/Core/Memory/InternalEngineMemory.h"
+
 namespace r2::mat
 {
 	const flat::Material* GetMaterialForMaterialName(const flat::MaterialPack* materialPack, u64 materialName)
@@ -300,5 +302,52 @@ namespace r2::mat
 		}
 		return materialsToReturn;
 	}
+
+	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout)
+	{
+		std::vector<MaterialParam> materialsToReturn = {};
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		u32 numManifests = r2::asset::lib::GetManifestDataCountForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		R2_CHECK(numManifests > 0, "Should always have at least 1 manifest for materials");
+
+		r2::SArray<const byte*>* manifests = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, numManifests);
+
+		r2::asset::lib::GetManifestDataForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST, manifests);
+
+		for (u32 i = 0; i < numManifests; ++i)
+		{
+			const byte* manifestData = r2::sarr::At(*manifests, i);
+
+			R2_CHECK(manifestData != nullptr, "");
+
+			const flat::MaterialPack* materialParamsPack = flat::GetMaterialPack(manifestData);
+
+			const auto* pack = materialParamsPack->pack();
+
+			for (flatbuffers::uoffset_t j = 0; j < pack->size(); ++j)
+			{
+				const flat::Material* material = pack->Get(j);
+
+				const flat::ShaderEffect* shaderEffect = material->shaderEffectPasses()->shaderEffectPasses()->Get(pass);
+
+				R2_CHECK(shaderEffect != nullptr, "Should always be valid");
+
+				if (shaderEffect->staticVertexLayout() == staticVertexLayout && shaderEffect->dynamicVertexLayout() == dynamicVertexLayout)
+				{
+					MaterialParam materialParam;
+					materialParam.flatMaterial = material;
+					materialParam.materialName = { material->assetName(), materialParamsPack->assetName() };
+					materialsToReturn.push_back(materialParam);
+				}
+			}
+		}
+		
+		FREE(manifests, *MEM_ENG_SCRATCH_PTR);
+
+		return materialsToReturn;
+	}
+
 #endif
 }

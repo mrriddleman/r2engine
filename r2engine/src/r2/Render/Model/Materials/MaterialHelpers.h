@@ -6,6 +6,8 @@
 #include "r2/Render/Model/Shader/Shader.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Utils/Utils.h"
+#include "r2/Render/Model/Shader/ShaderEffect_generated.h"
+#include "r2/Render/Model/Shader/ShaderEffectPasses_generated.h"
 
 namespace flat
 {
@@ -36,6 +38,15 @@ namespace r2::mat
 #ifdef R2_ASSET_PIPELINE
 	std::vector<const flat::Material*> GetAllMaterialsInMaterialPackThatContainTexture(const flat::MaterialPack* materialPack, u64 texturePackName, u64 textureName);
 	std::vector<const flat::Material*> GetAllMaterialsInMaterialPackThatContainTexturePack(const flat::MaterialPack* materialPack, u64 texturePackName);
+
+	struct MaterialParam
+	{
+		const flat::Material* flatMaterial;
+		MaterialName materialName;
+	};
+
+	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout);
+
 #endif
 }
 
