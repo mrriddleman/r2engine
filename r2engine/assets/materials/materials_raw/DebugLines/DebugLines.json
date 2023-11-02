@@ -6,7 +6,9 @@
       {
         assetName: 1411852927756737380,
         assetNameString: "debug_shader_effect",
-        staticShader: 849706416261927096
+        staticShader: 849706416261927096,
+        dynamicShader: 0,
+        staticVertexLayout:"VLT_DEFAULT_DEBUG_LINE",
       },
       {
         assetName: 14695981039346656837,

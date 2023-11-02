@@ -11,31 +11,40 @@ namespace flat {
 struct ShaderEffect;
 struct ShaderEffectBuilder;
 
-enum eShaderEffectNames {
-  eShaderEffectNames_NONE = 0,
-  eShaderEffectNames_MIN = eShaderEffectNames_NONE,
-  eShaderEffectNames_MAX = eShaderEffectNames_NONE
+enum eVertexLayoutType {
+  eVertexLayoutType_VLT_NONE = 0,
+  eVertexLayoutType_VLT_DEFAULT_STATIC = 1,
+  eVertexLayoutType_VLT_DEFAULT_DYNAMIC = 2,
+  eVertexLayoutType_VLT_DEFAULT_DEBUG_LINE = 3,
+  eVertexLayoutType_MIN = eVertexLayoutType_VLT_NONE,
+  eVertexLayoutType_MAX = eVertexLayoutType_VLT_DEFAULT_DEBUG_LINE
 };
 
-inline const eShaderEffectNames (&EnumValueseShaderEffectNames())[1] {
-  static const eShaderEffectNames values[] = {
-    eShaderEffectNames_NONE
+inline const eVertexLayoutType (&EnumValueseVertexLayoutType())[4] {
+  static const eVertexLayoutType values[] = {
+    eVertexLayoutType_VLT_NONE,
+    eVertexLayoutType_VLT_DEFAULT_STATIC,
+    eVertexLayoutType_VLT_DEFAULT_DYNAMIC,
+    eVertexLayoutType_VLT_DEFAULT_DEBUG_LINE
   };
   return values;
 }
 
-inline const char * const *EnumNameseShaderEffectNames() {
-  static const char * const names[2] = {
-    "NONE",
+inline const char * const *EnumNameseVertexLayoutType() {
+  static const char * const names[5] = {
+    "VLT_NONE",
+    "VLT_DEFAULT_STATIC",
+    "VLT_DEFAULT_DYNAMIC",
+    "VLT_DEFAULT_DEBUG_LINE",
     nullptr
   };
   return names;
 }
 
-inline const char *EnumNameeShaderEffectNames(eShaderEffectNames e) {
-  if (flatbuffers::IsOutRange(e, eShaderEffectNames_NONE, eShaderEffectNames_NONE)) return "";
+inline const char *EnumNameeVertexLayoutType(eVertexLayoutType e) {
+  if (flatbuffers::IsOutRange(e, eVertexLayoutType_VLT_NONE, eVertexLayoutType_VLT_DEFAULT_DEBUG_LINE)) return "";
   const size_t index = static_cast<size_t>(e);
-  return EnumNameseShaderEffectNames()[index];
+  return EnumNameseVertexLayoutType()[index];
 }
 
 struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -44,7 +53,9 @@ struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ASSETNAME = 4,
     VT_ASSETNAMESTRING = 6,
     VT_STATICSHADER = 8,
-    VT_DYNAMICSHADER = 10
+    VT_DYNAMICSHADER = 10,
+    VT_STATICVERTEXLAYOUT = 12,
+    VT_DYNAMICVERTEXLAYOUT = 14
   };
   uint64_t assetName() const {
     return GetField<uint64_t>(VT_ASSETNAME, 0);
@@ -58,6 +69,12 @@ struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t dynamicShader() const {
     return GetField<uint64_t>(VT_DYNAMICSHADER, 0);
   }
+  flat::eVertexLayoutType staticVertexLayout() const {
+    return static_cast<flat::eVertexLayoutType>(GetField<uint16_t>(VT_STATICVERTEXLAYOUT, 0));
+  }
+  flat::eVertexLayoutType dynamicVertexLayout() const {
+    return static_cast<flat::eVertexLayoutType>(GetField<uint16_t>(VT_DYNAMICVERTEXLAYOUT, 0));
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_ASSETNAME) &&
@@ -65,6 +82,8 @@ struct ShaderEffect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(assetNameString()) &&
            VerifyField<uint64_t>(verifier, VT_STATICSHADER) &&
            VerifyField<uint64_t>(verifier, VT_DYNAMICSHADER) &&
+           VerifyField<uint16_t>(verifier, VT_STATICVERTEXLAYOUT) &&
+           VerifyField<uint16_t>(verifier, VT_DYNAMICVERTEXLAYOUT) &&
            verifier.EndTable();
   }
 };
@@ -85,6 +104,12 @@ struct ShaderEffectBuilder {
   void add_dynamicShader(uint64_t dynamicShader) {
     fbb_.AddElement<uint64_t>(ShaderEffect::VT_DYNAMICSHADER, dynamicShader, 0);
   }
+  void add_staticVertexLayout(flat::eVertexLayoutType staticVertexLayout) {
+    fbb_.AddElement<uint16_t>(ShaderEffect::VT_STATICVERTEXLAYOUT, static_cast<uint16_t>(staticVertexLayout), 0);
+  }
+  void add_dynamicVertexLayout(flat::eVertexLayoutType dynamicVertexLayout) {
+    fbb_.AddElement<uint16_t>(ShaderEffect::VT_DYNAMICVERTEXLAYOUT, static_cast<uint16_t>(dynamicVertexLayout), 0);
+  }
   explicit ShaderEffectBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -102,12 +127,16 @@ inline flatbuffers::Offset<ShaderEffect> CreateShaderEffect(
     uint64_t assetName = 0,
     flatbuffers::Offset<flatbuffers::String> assetNameString = 0,
     uint64_t staticShader = 0,
-    uint64_t dynamicShader = 0) {
+    uint64_t dynamicShader = 0,
+    flat::eVertexLayoutType staticVertexLayout = flat::eVertexLayoutType_VLT_NONE,
+    flat::eVertexLayoutType dynamicVertexLayout = flat::eVertexLayoutType_VLT_NONE) {
   ShaderEffectBuilder builder_(_fbb);
   builder_.add_dynamicShader(dynamicShader);
   builder_.add_staticShader(staticShader);
   builder_.add_assetName(assetName);
   builder_.add_assetNameString(assetNameString);
+  builder_.add_dynamicVertexLayout(dynamicVertexLayout);
+  builder_.add_staticVertexLayout(staticVertexLayout);
   return builder_.Finish();
 }
 
@@ -116,14 +145,18 @@ inline flatbuffers::Offset<ShaderEffect> CreateShaderEffectDirect(
     uint64_t assetName = 0,
     const char *assetNameString = nullptr,
     uint64_t staticShader = 0,
-    uint64_t dynamicShader = 0) {
+    uint64_t dynamicShader = 0,
+    flat::eVertexLayoutType staticVertexLayout = flat::eVertexLayoutType_VLT_NONE,
+    flat::eVertexLayoutType dynamicVertexLayout = flat::eVertexLayoutType_VLT_NONE) {
   auto assetNameString__ = assetNameString ? _fbb.CreateString(assetNameString) : 0;
   return flat::CreateShaderEffect(
       _fbb,
       assetName,
       assetNameString__,
       staticShader,
-      dynamicShader);
+      dynamicShader,
+      staticVertexLayout,
+      dynamicVertexLayout);
 }
 
 inline const flat::ShaderEffect *GetShaderEffect(const void *buf) {

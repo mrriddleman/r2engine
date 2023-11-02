@@ -6,7 +6,9 @@
       {
         assetName: 2710008893440464349,
         assetNameString: "default_skybox_shader_effect",
-        staticShader: 6031424017685759555
+        staticShader: 6031424017685759555,
+        dynamicShader: 0,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
       },
       {
         assetName: 14695981039346656837,

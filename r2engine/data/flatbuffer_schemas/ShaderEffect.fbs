@@ -3,9 +3,12 @@ namespace flat;
 file_identifier "seff";
 file_extension "seff";
 
-enum eShaderEffectNames:ulong
+enum eVertexLayoutType : uint16
 {
-	NONE = 0
+	VLT_NONE = 0, //for empties
+	VLT_DEFAULT_STATIC,
+	VLT_DEFAULT_DYNAMIC,
+	VLT_DEFAULT_DEBUG_LINE
 }
 
 table ShaderEffect
@@ -14,6 +17,8 @@ table ShaderEffect
 	assetNameString:string;
 	staticShader:ulong(hash:"fnv1a_64");
 	dynamicShader:ulong(hash:"fnv1a_64");
+	staticVertexLayout:eVertexLayoutType;
+	dynamicVertexLayout:eVertexLayoutType;
 }
 
 root_type ShaderEffect;

@@ -19,7 +19,9 @@
         assetName: 1677822248225226985,
         assetNameString: "direction_shadow_effect",
         staticShader: 13510344869207716212,
-        dynamicShader: 16072647257208596960
+        dynamicShader: 16072647257208596960,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

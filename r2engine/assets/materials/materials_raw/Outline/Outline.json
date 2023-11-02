@@ -7,7 +7,9 @@
         assetName: 15443175597002161561,
         assetNameString: "default_outline_effect",
         staticShader: 5332172149138756703,
-        dynamicShader: 9614133454144883520
+        dynamicShader: 9614133454144883520,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

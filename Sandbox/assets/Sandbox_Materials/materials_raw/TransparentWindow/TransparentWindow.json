@@ -12,7 +12,9 @@
         assetName: 8291330512872998603,
         assetNameString: "forward_transparent_shader_effect",
         staticShader: 12135062320484436070,
-        dynamicShader: 7039749134391479097
+        dynamicShader: 7039749134391479097,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

@@ -642,7 +642,9 @@ namespace r2::edit
 
 				if (ImGui::Button("Override Materials"))
 				{
-
+					//@TODO(Serge): implement
+					//				I think by default we should just copy in all of the default material names to our new overrides.
+					//				That's the simplest thing we can do keep everything working normally
 				}
 
 				ImGui::SameLine();
@@ -701,12 +703,16 @@ namespace r2::edit
 					ImGui::Text("Slot %u:", j); 
 					ImGui::SameLine();
 
-					ImGui::PushItemWidth(220.0f);
+					ImGui::PushItemWidth(230.0f);
 
 					if (ImGui::BeginCombo("##label materialslot", materialNameString.c_str()))
 					{
 						//@TODO(Serge): somehow we need to populate the combo with suitable materials
-
+						//				Maybe we need to use the first default material (GPUModelRef's version) to see
+						//				what shader effect it's using (based on the layer eg. WORLD, CHARACTER and TRANSPARENT) 
+						//				and query the asset lib (via MaterialHelpers) for all materials that can match? 
+						//				Matching here would mean it would have the same vertex layout for the shaders?
+						//				Is that something we need to include into our material data?
 
 						ImGui::EndCombo();
 					}

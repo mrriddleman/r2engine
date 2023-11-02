@@ -6,7 +6,9 @@
       {
         assetName: 7041032457694048807,
         assetNameString: "screen_composite_effect",
-        staticShader: 8713270253709140657
+        staticShader: 8713270253709140657,
+        dynamicShader: 0,
+        staticVertexLayout:"VLT_DEFAULT_STATIC"
       },
       {
         assetName: 14695981039346656837,

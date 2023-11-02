@@ -6,7 +6,9 @@
       {
         assetName: 5684985050102750810,
         assetNameString: "debug_model_shader_effect",
-        staticShader: 7633448586416586149
+        staticShader: 7633448586416586149,
+        dynamicShader: 0,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
       },
       {
         assetName: 14695981039346656837,
@@ -16,7 +18,9 @@
         assetName: 7375268703464826122,
         assetNameString: "depth_shader_effect",
         staticShader: 8833047848476087300,
-        dynamicShader: 13212531284513343367
+        dynamicShader: 13212531284513343367,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

@@ -550,7 +550,6 @@ namespace r2::asset::pln
 		flatbuffers::FlatBufferBuilder builder;
 		std::vector < flatbuffers::Offset< flat::Material >> flatMaterials;
 
-
 		//okay now we know that we have all of the material generated properly
 		//so now we need to make the manifests by reading in all of the material.mmat files in the binary directory
 		//we do that for each pack
@@ -590,7 +589,9 @@ namespace r2::asset::pln
 					shaderEffect->assetName(),
 					builder.CreateString(shaderEffect->assetNameString()),
 					shaderEffect->staticShader(),
-					shaderEffect->dynamicShader()));
+					shaderEffect->dynamicShader(),
+					shaderEffect->staticVertexLayout(),
+					shaderEffect->dynamicVertexLayout()));
 			}
 
 			auto shaderEffectPasses = flat::CreateShaderEffectPasses(builder, builder.CreateVector(flatShaderEffects), 0); //@NOTE(Serge): we should probably have some kind of defaults here

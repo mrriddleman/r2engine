@@ -7,7 +7,9 @@
         assetName: 9172174745494616966,
         assetNameString: "entity_color_effect",
         staticShader: 12911767889037223403,
-        dynamicShader: 4352147464338430816
+        dynamicShader: 4352147464338430816,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

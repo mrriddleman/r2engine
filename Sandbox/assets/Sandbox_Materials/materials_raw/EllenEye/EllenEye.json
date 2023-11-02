@@ -6,7 +6,9 @@
       {
         assetName: 7086617848070717557,
         assetNameString: "ellen_eye_shader_effect",
-        dynamicShader: 7608013471622948757
+        dynamicShader: 7608013471622948757,
+        staticVertexLayout:"VLT_NONE",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,
@@ -16,7 +18,9 @@
         assetName: 7375268703464826122,
         assetNameString: "depth_shader_effect",
         staticShader: 8833047848476087300,
-        dynamicShader: 13212531284513343367
+        dynamicShader: 13212531284513343367,
+        staticVertexLayout:"VLT_NONE",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
       },
       {
         assetName: 14695981039346656837,

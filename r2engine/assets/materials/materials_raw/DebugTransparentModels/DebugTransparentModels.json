@@ -11,7 +11,9 @@
       {
         assetName: 10521217792083982251,
         assetNameString: "debug_model_transparent_shader_effect",
-        staticShader: 15105139082617654025
+        staticShader: 15105139082617654025,
+        dynamicShader: 0,
+        staticVertexLayout:"VLT_DEFAULT_DEBUG_LINE",
       },
       {
         assetName: 14695981039346656837,
