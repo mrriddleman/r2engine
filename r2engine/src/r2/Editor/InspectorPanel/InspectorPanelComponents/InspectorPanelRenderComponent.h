@@ -6,8 +6,6 @@
 
 namespace r2::edit
 {
-	//void InspectorPanelRenderComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator);
-
 	class InspectorPanelRenderComponentDataSource : public InspectorPanelComponentDataSource
 	{
 	public:
@@ -27,6 +25,14 @@ namespace r2::edit
 
 		virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
 		virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances) override;
+
+	private:
+
+		void MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen);
+
+
+		bool mOpenMaterialsWindow;
+		r2::mat::MaterialName mMaterialToEdit;
 	};
 }
 

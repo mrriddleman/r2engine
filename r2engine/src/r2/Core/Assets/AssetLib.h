@@ -54,8 +54,6 @@ namespace r2::asset
         r2::mem::utils::MemBoundary mBoundary;
         r2::mem::utils::MemBoundary mAssetCacheBoundary;
 
-        r2::SHashMap<AssetCacheRecord>* mAssetCacheRecords;
-
         r2::SArray<ManifestAssetFile*>* mManifestFiles;
 
         FileList mGameFileList;
@@ -85,14 +83,23 @@ namespace r2::asset::lib
     void Shutdown(AssetLib* assetLib);
     void Update(AssetLib& assetLib);
     
+    //@TODO(Serge): get rid of these
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
     void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray);
-
     u32 GetManifestDataCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type);
 
-    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
+    void RegisterAndLoadManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
+
+    //not sure if needed?
     bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
+
+    //@TODO(Serge): get rid of this
     FileList GetFileList(const AssetLib& assetLib);
+
+
+    ManifestAssetFile* GetManifest(AssetLib& assetLib, u64 manifestAssetHandle);
+    void GetManifestFilesForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<ManifestAssetFile*>* manifests);
+    u32 GetManifestCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type);
 
 #ifdef R2_ASSET_PIPELINE
     void PathChangedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& changedPaths);

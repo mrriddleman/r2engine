@@ -1219,7 +1219,7 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
 		engineManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
 #endif
-        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile);
+        r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, engineManifestAssetFile);
 
         for (const std::string& manifestPath : appMaterialPacksManifests )
         {
@@ -1227,14 +1227,14 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
             nextManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
 #endif
-            r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
+            r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, nextManifestAssetFile);
         }
 
         r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(engineTexturePacksManifestPath);
 #ifdef R2_ASSET_PIPELINE
         engineTexturePacksManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::TexturePackHotReloadCommand::TexturePacksManifestHotReloaded);
 #endif
-        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineTexturePacksManifestAssetFile);
+        r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, engineTexturePacksManifestAssetFile);
 
         for (const std::string& manifestPath : appTexturePacksManifestPaths)
         {
@@ -1242,14 +1242,14 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
             appTexturePacksManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::TexturePackHotReloadCommand::TexturePacksManifestHotReloaded);
 #endif
-            r2::asset::lib::RegisterManifestFile(*mAssetLib, appTexturePacksManifestAssetFile);
+            r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, appTexturePacksManifestAssetFile);
         }
 
 		r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(soundDefinitionPath, r2::asset::SOUND_DEFINTION);
 #ifdef R2_ASSET_PIPELINE
         soundDefinitionFile->SetReloadFilePathCallback(r2::asset::pln::SoundHotReloadCommand::SoundManifestHotReloaded);
 #endif
-		r2::asset::lib::RegisterManifestFile(*mAssetLib, soundDefinitionFile);
+		r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, soundDefinitionFile);
     }
     
     void Engine::OnEvent(evt::Event& e)

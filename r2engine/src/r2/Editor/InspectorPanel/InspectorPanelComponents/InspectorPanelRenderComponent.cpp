@@ -489,12 +489,16 @@ namespace r2::edit
 
 	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource()
 		:InspectorPanelComponentDataSource("Render Component", 0, 0)
+		, mOpenMaterialsWindow(false)
+		, mMaterialToEdit{}
 	{
 
 	}
 
 	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
 		: InspectorPanelComponentDataSource("Render Component", coordinator->GetComponentType<ecs::RenderComponent>(), coordinator->GetComponentTypeHash<ecs::RenderComponent>())
+		, mOpenMaterialsWindow(false)
+		, mMaterialToEdit{}
 	{
 
 	}
@@ -534,11 +538,7 @@ namespace r2::edit
 				}
 			}
 
-
 			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
-
-			//@TODO(Serge): make this into a ImGui::Combo
-			//ImGui::Text("Model Name: %s", modelFileName.c_str());
 
 			std::vector<r2::asset::AssetFile*> rModelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
 
@@ -619,8 +619,7 @@ namespace r2::edit
 				ImGui::EndCombo();
 			}
 
-			static bool s_openMaterialsWindow = false;
-			static r2::mat::MaterialName s_materialToEdit;
+			
 
 			if (ImGui::CollapsingHeader("Materials"))
 			{
@@ -642,9 +641,6 @@ namespace r2::edit
 
 				if (ImGui::Button("Override Materials"))
 				{
-					//@TODO(Serge): implement
-					//				I think by default we should just copy in all of the default material names to our new overrides.
-					//				That's the simplest thing we can do keep everything working normally
 					renderComponent.optrMaterialOverrideNames = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::mat::MaterialName, modelRef->numMaterials);
 
 					for (u32 i = 0; i < modelRef->numMaterials; ++i)
@@ -742,8 +738,8 @@ namespace r2::edit
 					ImGui::SameLine();
 					if (ImGui::Button(ICON_IGFD_EDIT))
 					{
-						s_openMaterialsWindow = true;
-						s_materialToEdit = materialName;
+						mOpenMaterialsWindow = true;
+						mMaterialToEdit = materialName;
 					}
 
 					ImGui::PopID();
@@ -758,16 +754,9 @@ namespace r2::edit
 				ImGui::Unindent();
 			}
 
-			if (s_openMaterialsWindow)
+			if (mOpenMaterialsWindow)
 			{
-				ImGui::SetNextWindowSize(ImVec2(500, 500));
-
-				if (ImGui::Begin("Material Editor", &s_openMaterialsWindow))
-				{
-					//@TODO(Serge): implement
-
-					ImGui::End();
-				}
+				MaterialEditor(mMaterialToEdit, mOpenMaterialsWindow);
 			}
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));
@@ -1103,6 +1092,31 @@ namespace r2::edit
 
 	}
 
+	void InspectorPanelRenderComponentDataSource::MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen)
+	{
+		ImGui::SetNextWindowSize(ImVec2(500, 500));
+
+		if (ImGui::Begin("Material Editor", &windowOpen))
+		{
+			const flat::Material* flatMaterial = r2::mat::GetMaterialForMaterialName(materialName);
+
+			ImGui::Text("Material Name: ");
+
+			char materialNameCSTR[r2::fs::FILE_PATH_LENGTH];
+
+			strcpy(materialNameCSTR, flatMaterial->stringName()->str().c_str());
+			ImGui::SameLine();
+			if (ImGui::InputText("##label materialNameInput", materialNameCSTR, r2::fs::FILE_PATH_LENGTH))
+			{
+				
+			}
+
+
+
+
+			ImGui::End();
+		}
+	}
 }
 
 #endif

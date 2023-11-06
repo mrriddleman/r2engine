@@ -43,7 +43,6 @@ namespace r2::asset
 
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AssetLib), 16, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), 16, stackHeaderSize, boundsChecking);
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<AssetCacheRecord>::MemorySize((numGameManifests + numEngineManifests) * r2::SHashMap<u32>::LoadFactorMultiplier()), 16, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ManifestAssetFile*>::MemorySize(numGameManifests), 16, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ManifestAssetFile*>::MemorySize(numEngineManifests), 16, stackHeaderSize, boundsChecking);
 		memorySize += AssetCache::TotalMemoryNeeded(numGameManifests + numEngineManifests, cacheSize, 16);
@@ -95,10 +94,6 @@ namespace r2::asset::lib
         newAssetLib->mArena = stackArena;
         newAssetLib->mBoundary = boundary;
 
-        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numManifests * r2::SHashMap<u32>::LoadFactorMultiplier());
-
-        R2_CHECK(newAssetLib->mAssetCacheRecords != nullptr, "We couldn't create the AssetCacheRecords hashmap");
-
         newAssetLib->mManifestFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numManifests);
 
         newAssetLib->mGameFileList = MakeFileList(MAX_NUM_GAME_ASSET_FILES);
@@ -127,16 +122,19 @@ namespace r2::asset::lib
             return;
         }
 
-        r2::mem::StackArena* arena = assetLib->mArena;
-
-        auto iter = r2::shashmap::Begin(*assetLib->mAssetCacheRecords);
-
-        for (; iter != r2::shashmap::End(*assetLib->mAssetCacheRecords); ++iter)
+        u32 numManifests = r2::sarr::Size(*assetLib->mManifestFiles);
+        for (u32 i = 0; i < numManifests; ++i)
         {
-            assetLib->mAssetCache->ReturnAssetBuffer(iter->value);
-        }
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib->mManifestFiles, i);
+            manifestFile->UnloadManifest(assetLib->mAssetCache);
+            manifestFile->Shutdown();
 
-        r2::shashmap::Clear(*assetLib->mAssetCacheRecords);
+            FREE(manifestFile, *s_arenaPtr);
+        }
+        r2::sarr::Clear(*assetLib->mManifestFiles);
+        
+
+        r2::mem::StackArena* arena = assetLib->mArena;
 
         DestroyCache(assetLib->mAssetCache);
 
@@ -145,8 +143,6 @@ namespace r2::asset::lib
         assetLib->mGameFileList = nullptr;
 
         FREE(assetLib->mManifestFiles, *arena);
-
-        FREE(assetLib->mAssetCacheRecords, *arena);
 
         FREE(assetLib, *arena);
 
@@ -195,36 +191,12 @@ namespace r2::asset::lib
 
     const byte* GetManifestData(AssetLib& assetLib, ManifestAssetFile& manifestFile)
     {
-		AssetCacheRecord defaultRecord;
-
-		AssetCacheRecord resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), defaultRecord);
-
-		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
-		{
-			return resultRecord.GetAssetBuffer()->Data();
-		}
-
-		AssetHandle assetHandle = assetLib.mAssetCache->LoadAsset(Asset(manifestFile.GetManifestFileHandle(), manifestFile.GetAssetType()));
-
-		AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
-
-		r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), assetCacheRecord);
-
-		return assetCacheRecord.GetAssetBuffer()->Data();
+        return manifestFile.GetManifestData();
     }
 
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle)
     {
         ManifestAssetFile* foundManifestFile = nullptr;
-        
-        AssetCacheRecord defaultRecord;
-
-        AssetCacheRecord resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestAssetHandle, defaultRecord);
-
-        if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
-        {
-            return resultRecord.GetAssetBuffer()->Data();
-        }
 
         const u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
 
@@ -245,13 +217,7 @@ namespace r2::asset::lib
             return nullptr;
         }
 
-        AssetHandle assetHandle = assetLib.mAssetCache->LoadAsset(Asset(manifestAssetHandle, foundManifestFile->GetAssetType()));
-
-        AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
-
-        r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestAssetHandle, assetCacheRecord);
-
-        return assetCacheRecord.GetAssetBuffer()->Data();
+        return foundManifestFile->GetManifestData();
     }
 
     void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray)
@@ -287,18 +253,10 @@ namespace r2::asset::lib
         return count;
     }
 
-    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
+    void RegisterAndLoadManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
     {
         r2::sarr::Push(*assetLib.mManifestFiles, manifestFile);
-
-        FileList fileList = assetLib.mAssetCache->GetFileList();
-        r2::sarr::Push(*fileList, (AssetFile*)manifestFile);
-
-        if (manifestFile->NeedsManifestData())
-        {
-            const byte* manifestData = GetManifestData(assetLib, manifestFile->GetManifestFileHandle());
-            manifestFile->SetManifestData(manifestData);
-        }
+        manifestFile->LoadManifest(assetLib.mAssetCache);
     }
 
     void CloseAndFreeAllFilesInFileList(FileList fileList)
@@ -344,29 +302,64 @@ namespace r2::asset::lib
         return assetLib.mGameFileList;
     }
 
+    ManifestAssetFile* GetManifest(AssetLib& assetLib, u64 manifestAssetHandle)
+    {
+        u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+
+        for (u32 i = 0; i < numManifests; ++i)
+        {
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+
+            if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
+            {
+                return manifestFile;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void GetManifestFilesForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<ManifestAssetFile*>* manifests)
+    {
+		u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+
+        for (u32 i = 0; i < numManifests; ++i)
+        {
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+
+            if (manifestFile->GetAssetType() == type)
+            {
+                r2::sarr::Push(*manifests, manifestFile);
+            }
+        }
+    }
+
+    u32 GetManifestCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type)
+    {
+        u32 numManifestsForType = 0;
+
+		u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+
+		for (u32 i = 0; i < numManifests; ++i)
+		{
+			ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+
+			if (manifestFile->GetAssetType() == type)
+			{
+                ++numManifestsForType;
+			}
+		}
+
+        return numManifestsForType;
+    }
+
 #ifdef R2_ASSET_PIPELINE
 
     bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, HotReloadType type)
     {
 		bool hasReloaded = false;
-        AssetCacheRecord defaultRecord;
-		const AssetCacheRecord& resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), defaultRecord);
 
-        bool hadRecord = !AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord);
-
-        if (hadRecord)
-        {
-            assetLib.mAssetCache->ReturnAssetBuffer(resultRecord);
-
-            r2::shashmap::Remove(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle());
-        }
-
-		auto assetHandle = assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(manifestFile.FilePath(), manifestFile.GetAssetType()));
-
-        AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
-
-		r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), assetCacheRecord);
-        
+        manifestFile.Reload(assetLib.mAssetCache);
 
         std::vector<std::string> pathsToUse;
         pathsToUse.reserve(changedPaths.size());
@@ -379,7 +372,7 @@ namespace r2::asset::lib
             pathsToUse.push_back(sanitizedChangedPath);
         }
 
-        hasReloaded = manifestFile.ReloadFilePath(pathsToUse, manifestFile.FilePath(), assetCacheRecord.GetAssetBuffer()->Data(), type);
+        hasReloaded = manifestFile.ReloadFilePath(pathsToUse, type);
 
         return hasReloaded;
     }
