@@ -6,6 +6,7 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Model/Shader/Shader.h"
+#include "r2/Render/Model/Shader/ShaderEffect.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"

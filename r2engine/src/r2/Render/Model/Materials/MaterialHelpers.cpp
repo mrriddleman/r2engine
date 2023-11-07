@@ -54,10 +54,10 @@ namespace r2::mat
 		return material;
 	}
 
-	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType)
+	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType)
 	{
 		R2_CHECK(materialPack != nullptr, "This should never happen");
-		R2_CHECK(meshPass != draw::NUM_MESH_PASSES, "Should never happen!");
+		R2_CHECK(meshPass != flat::eMeshPass_NUM_SHADER_EFFECT_PASSES, "Should never happen!");
 
 		const flat::Material* material = GetMaterialForMaterialName(materialPack, materialName);
 
@@ -83,7 +83,7 @@ namespace r2::mat
 		return shaderEffect->dynamicShader();
 	}
 
-	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType)
+	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType)
 	{
 		const auto* material = GetMaterialForMaterialName(materialName);
 
@@ -141,9 +141,8 @@ namespace r2::mat
 		const auto* flatShaderEffectPasses = material->shaderEffectPasses()->shaderEffectPasses();
 		r2::draw::ShaderEffectPasses shaderEffectPasses;
 
-		for (u32 i = r2::draw::MP_FORWARD; i < r2::draw::NUM_MESH_PASSES; ++i)
+		for (u32 i = flat::eMeshPass_FORWARD; i < flat::eMeshPass_NUM_SHADER_EFFECT_PASSES; ++i)
 		{
-			r2::draw::eMeshPass meshPass = static_cast<r2::draw::eMeshPass>(i);
 			flat::eMeshPass flatMeshPass = static_cast<flat::eMeshPass>(i);
 
 			const flat::ShaderEffect* flatShaderEffect = flatShaderEffectPasses->Get(flatMeshPass);
@@ -152,7 +151,7 @@ namespace r2::mat
 			shaderEffect.staticShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->staticShader());
 			shaderEffect.dynamicShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->dynamicShader());
 
-			shaderEffectPasses.meshPasses[meshPass] = shaderEffect;
+			shaderEffectPasses.meshPasses[flatMeshPass] = shaderEffect;
 		}
 
 		return shaderEffectPasses;

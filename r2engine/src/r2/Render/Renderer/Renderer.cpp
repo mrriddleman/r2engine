@@ -20,6 +20,7 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Shader/ShaderSystem.h"
 
+
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 #include "r2/Utils/Hash.h"
@@ -3074,11 +3075,11 @@ namespace r2::draw::renderer
 
 				//Here we're just going to base it on which layer / mesh pass we care about
 				ShaderHandle shaderHandleToUse = r2::draw::InvalidShader;
-				eMeshPass meshPass = MP_FORWARD;
+				flat::eMeshPass meshPass = flat::eMeshPass_FORWARD;
 
 				if (drawState.layer == DL_TRANSPARENT)
 				{
-					meshPass = MP_TRANSPARENT;
+					meshPass = flat::eMeshPass_TRANSPARENT;
 				}
 				
 				shaderHandleToUse = modelRef->isAnimated ? shaderEffectPasses.meshPasses[meshPass].dynamicShaderHandle : shaderEffectPasses.meshPasses[meshPass].staticShaderHandle;
@@ -3458,7 +3459,7 @@ namespace r2::draw::renderer
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
 			finalBatchOffsets.isDynamic = false;
 
-			finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle = renderer.mFinalCompositeShaderHandle;
+			finalBatchOffsets.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle = renderer.mFinalCompositeShaderHandle;
 			
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 			subCommandsOffset += 1;
@@ -3546,10 +3547,10 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
 
-			clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle;
 			if (batchOffset.drawState.layer == DL_TRANSPARENT)
 			{
-				clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+				clearShaderHandle = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].staticShaderHandle;
 			} 
 		}
 
@@ -3622,10 +3623,10 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
 
-			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle;
 			if (batchOffset.drawState.layer == DL_TRANSPARENT)
 			{
-				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].staticShaderHandle;
 			}
 
 			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, shaderToUse);
@@ -3869,10 +3870,10 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*dynamicRenderBatchesOffsets, i);
 
-			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].dynamicShaderHandle;
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].dynamicShaderHandle;
 			if (batchOffset.drawState.layer == DL_TRANSPARENT)
 			{
-				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].dynamicShaderHandle;
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].dynamicShaderHandle;
 			}
 
 			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, shaderToUse);
@@ -4393,11 +4394,11 @@ namespace r2::draw::renderer
 		//BeginRenderPass<key::Basic>(renderer, RPT_BLOOM, clearGBufferOptions, *renderer.mCommandBucket, clearBloomKey, *renderer.mCommandArena);
 		//EndRenderPass<key::Basic>(renderer, RPT_BLOOM, *renderer.mCommandBucket);
 
-		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle);
+		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_FINAL_COMPOSITE, clearCompositeOptions, *renderer.mFinalBucket, finalBatchClearKey, *renderer.mCommandArena);
 
-		key::Basic finalBatchKey = key::GenerateBasicKey(0, 0, finalBatchOffsets.drawState.layer, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle);
+		key::Basic finalBatchKey = key::GenerateBasicKey(0, 0, finalBatchOffsets.drawState.layer, 0, 0, finalBatchOffsets.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle);
 
 		cmd::DrawBatch* finalDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, finalBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		finalDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -6543,7 +6544,7 @@ namespace r2::draw::renderer
 	void PopulateDebugRenderBatchesOffsets(
 		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData,
 		ShaderHandle shaderID,
-		eMeshPass meshPass,
+		flat::eMeshPass meshPass,
 		u32& subCommandsOffset,
 		r2::SArray<BatchRenderOffsets>* debugRenderBatchesOffsets,
 		r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* drawBatchSubCommands,
@@ -6678,10 +6679,10 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*debugBatchOffsets, i);
 
-			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_FORWARD].staticShaderHandle;
+			ShaderHandle shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_FORWARD].staticShaderHandle;
 			if (transparentBatch)
 			{
-				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[MP_TRANSPARENT].staticShaderHandle;
+				shaderToUse = batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].staticShaderHandle;
 			}
 
 			key::DebugKey key = key::GenerateDebugKey(shaderToUse, batchOffset.primitiveType, batchOffset.drawState.depthEnabled, 0, 0);//key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
@@ -6859,7 +6860,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, MP_FORWARD, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsRenderBatch.shaderHandle, flat::eMeshPass_FORWARD, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numLinesToDraw > 0)
@@ -6870,7 +6871,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, MP_FORWARD, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, flat::eMeshPass_FORWARD, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentModelsToDraw > 0)
@@ -6881,7 +6882,7 @@ namespace r2::draw::renderer
 
 			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, MP_TRANSPARENT, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, flat::eMeshPass_TRANSPARENT, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentLinesToDraw > 0)
@@ -6892,7 +6893,7 @@ namespace r2::draw::renderer
 	
 			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
-			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, MP_TRANSPARENT, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
+			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, flat::eMeshPass_TRANSPARENT, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 		
 

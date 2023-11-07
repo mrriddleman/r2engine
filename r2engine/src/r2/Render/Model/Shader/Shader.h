@@ -7,42 +7,10 @@
 #include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #endif
 
+#include "r2/Render/Model/Shader/ShaderTypes.h"
+
 namespace r2::draw
 {
-    enum eMeshPass : u16
-    {
-        MP_FORWARD = 0,
-        MP_TRANSPARENT,
-        MP_DEPTH,
-        MP_SHADOW_DIRECTIONAL,
-        MP_SHADOW_POINT,
-        MP_SHADOW_SPOTLIGHT,
-        //Maybe add more here in the future
-        NUM_MESH_PASSES
-    };
-
-    enum eShaderEffectType : u8
-    {
-        SET_STATIC = 0,
-        SET_DYNAMIC,
-        NUM_SHADER_EFFECT_TYPES
-    };
-
-    using ShaderHandle = u64;
-    using ShaderName = u64;
-    static const ShaderHandle InvalidShader = 0;
-
-    struct ShaderEffect
-    {
-        ShaderHandle staticShaderHandle = InvalidShader;
-        ShaderHandle dynamicShaderHandle = InvalidShader;
-    };
-
-    struct ShaderEffectPasses
-    {
-        ShaderEffect meshPasses[NUM_MESH_PASSES];
-    };
-
     struct Shader
     {
         //maybe have a hash here?

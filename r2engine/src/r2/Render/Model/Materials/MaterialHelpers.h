@@ -8,6 +8,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Render/Model/Shader/ShaderEffect_generated.h"
 #include "r2/Render/Model/Shader/ShaderEffectPasses_generated.h"
+#include "r2/Render/Model/Shader/ShaderEffect.h"
 
 namespace flat
 {
@@ -22,8 +23,8 @@ namespace r2::mat
 	const flat::Material* GetMaterialForMaterialName(const flat::MaterialPack* materialPack, u64 materialName);
 	const flat::Material* GetMaterialForMaterialName(MaterialName materialName);
 
-	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
-	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, r2::draw::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
+	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
+	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
 	r2::draw::ShaderEffectPasses GetShaderEffectPassesForMaterialName(MaterialName materialName);
 
 
