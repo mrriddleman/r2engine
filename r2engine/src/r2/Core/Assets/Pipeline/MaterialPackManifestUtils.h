@@ -3,6 +3,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include <string>
+#include "r2/Render/Model/Materials/Material.h"
 
 namespace flat
 {
@@ -21,6 +22,8 @@ namespace r2::asset::pln
 	bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
 	bool RegenerateMaterialPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
+
+	bool SaveMaterialsToMaterialPackManifestFile(const std::vector<r2::mat::Material>& materials, const std::string& binFilePath, const std::string& rawFilePath);
 
 	//@Temporary
 	//bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& ouptDir);

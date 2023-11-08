@@ -15,6 +15,7 @@
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/TexturePackManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -126,7 +127,7 @@ namespace r2::asset::lib
         for (u32 i = 0; i < numManifests; ++i)
         {
             ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib->mManifestFiles, i);
-            manifestFile->UnloadManifest(assetLib->mAssetCache);
+            manifestFile->UnloadManifest();
             manifestFile->Shutdown();
 
             FREE(manifestFile, *s_arenaPtr);
@@ -256,7 +257,7 @@ namespace r2::asset::lib
     void RegisterAndLoadManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
     {
         r2::sarr::Push(*assetLib.mManifestFiles, manifestFile);
-        manifestFile->LoadManifest(assetLib.mAssetCache);
+        manifestFile->LoadManifest();
     }
 
     void CloseAndFreeAllFilesInFileList(FileList fileList)
@@ -359,7 +360,7 @@ namespace r2::asset::lib
     {
 		bool hasReloaded = false;
 
-        manifestFile.Reload(assetLib.mAssetCache);
+        manifestFile.Reload();
 
         std::vector<std::string> pathsToUse;
         pathsToUse.reserve(changedPaths.size());
@@ -552,22 +553,30 @@ namespace r2::asset::lib
         return zipAssetFile;
     }
     
-    ManifestAssetFile* MakeManifestSingleAssetFile(const char* path, r2::asset::AssetType assetType)
+    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, r2::asset::AssetType assetType)
     {
         ManifestSingleAssetFile* manifestFile = ALLOC(ManifestSingleAssetFile, *s_arenaPtr);
 
-        bool result = manifestFile->Init(path, assetType);
-        R2_CHECK(result, "Failed to initialize the Manifest File");
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, assetType);
+        R2_CHECK(result, "Failed to initialize the ManifestSingleAssetFile");
         return manifestFile;
     }
 
-    ManifestAssetFile* MakeTexturePackManifestAssetFile(const char* path)
+    ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath)
     {
         TexturePackManifestAssetFile* manifestFile = ALLOC(TexturePackManifestAssetFile, *s_arenaPtr);
 
-		bool result = manifestFile->Init(path, r2::asset::TEXTURE_PACK_MANIFEST);
-		R2_CHECK(result, "Failed to initialize the Manifest File");
+		bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, r2::asset::TEXTURE_PACK_MANIFEST);
+		R2_CHECK(result, "Failed to initialize the TexturePackManifestAssetFile");
 		return manifestFile;
+    }
+
+    ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath)
+    {
+        MaterialManifestAssetFile* manifestFile = ALLOC(MaterialManifestAssetFile, *s_arenaPtr);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, r2::asset::MATERIAL_PACK_MANIFEST);
+        R2_CHECK(result, "Failed to initialize the MaterialManifestAssetFile");
+        return manifestFile;
     }
 
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, r2::asset::FileList files)

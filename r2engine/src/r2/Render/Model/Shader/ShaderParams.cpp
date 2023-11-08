@@ -9,6 +9,11 @@ namespace r2::draw
 {
 	void MakeShaderParams(const flat::ShaderParams* flatShaderParams, ShaderParams& shaderParams)
 	{
+		if (!flatShaderParams)
+		{
+			return;
+		}
+
 		const auto* flatULongParams = flatShaderParams->ulongParams();
 		flatbuffers::uoffset_t numULongParams = flatULongParams->size();
 		for (flatbuffers::uoffset_t i = 0; i < numULongParams; ++i)
@@ -84,7 +89,12 @@ namespace r2::draw
 			shaderStageParam.propertyType = flatShaderStageParam->propertyType();
 			shaderStageParam.shaderName = flatShaderStageParam->shader();
 			shaderStageParam.shaderStageName = flatShaderStageParam->shaderStageName();
-			shaderStageParam.value = flatShaderStageParam->value()->str();
+			
+			shaderStageParam.value = "";
+			if (flatShaderStageParam->value())
+			{
+				shaderStageParam.value = flatShaderStageParam->value()->str();
+			}
 
 			shaderParams.shaderStageParams.push_back(shaderStageParam);
 		}

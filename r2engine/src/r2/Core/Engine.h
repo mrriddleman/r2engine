@@ -252,7 +252,15 @@ namespace r2
             const std::vector<std::string>& appMaterialPacksManifests,
             const char* engineTexturePacksManifestPath,
             const std::vector<std::string>& appTexturePacksManifestPaths,
-            const char* soundDefinitionPath);
+            const char* soundDefinitionPath
+#ifdef R2_ASSET_PIPELINE
+            , const char* rawEnginMaterialsPath
+            , const std::vector<std::string>& rawAppMaterialPacksManifests
+			, const char* rawEngineTexturePacksManifestPath
+			, const std::vector<std::string>& rawAppTexturePacksManifestPaths
+			, const char* rawSoundDefinitionPath
+#endif
+        );
 
         void SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp);
 

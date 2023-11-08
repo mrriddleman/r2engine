@@ -7,6 +7,7 @@
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetBuffer.h"
+#include "r2/Core/Assets/AssetCache.h"
 
 namespace r2::asset
 {
@@ -19,10 +20,12 @@ namespace r2::asset
 	{
 	}
 
-	bool ManifestSingleAssetFile::Init(const char* path, r2::asset::AssetType assetType)
+	bool ManifestSingleAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, r2::asset::AssetType assetType)
 	{
-		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(path, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
+		mnoptrAssetCache = noptrAssetCache;
+		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
 		mAssetType = assetType;
+		r2::util::PathCpy(mRawPath, rawPath);
 
 		return mManifestAssetFile != nullptr;
 	}
@@ -64,40 +67,40 @@ namespace r2::asset
 		return mManifestAssetFile->FilePath();
 	}
 
-	bool ManifestSingleAssetFile::LoadManifest(AssetCache* assetCache)
+	bool ManifestSingleAssetFile::LoadManifest()
 	{
-		if (assetCache == nullptr)
+		if (mnoptrAssetCache == nullptr)
 		{
 			R2_CHECK(false, "Passed in nullptr for the AssetCache");
 			return false;
 		}
 
-		const r2::asset::AssetFile* foundAssetFile = assetCache->GetAssetFileForAssetHandle({ mManifestAssetFile->GetAssetHandle(0), assetCache->GetSlot() });
+		const r2::asset::AssetFile* foundAssetFile = mnoptrAssetCache->GetAssetFileForAssetHandle({ mManifestAssetFile->GetAssetHandle(0), mnoptrAssetCache->GetSlot() });
 
 		if (foundAssetFile != mManifestAssetFile)
 		{
 			//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
-			FileList fileList = assetCache->GetFileList();
+			FileList fileList = mnoptrAssetCache->GetFileList();
 			r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
 		}
 
-		mManifestAssetHandle = assetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
+		mManifestAssetHandle = mnoptrAssetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
 
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 
-		mManifestCacheRecord = assetCache->GetAssetBuffer(mManifestAssetHandle);
+		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
 
 		return !r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord);
 	}
 
-	bool ManifestSingleAssetFile::UnloadManifest(AssetCache* assetCache)
+	bool ManifestSingleAssetFile::UnloadManifest()
 	{
 		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
 			return true;
 		}
 
-		bool success = assetCache->ReturnAssetBuffer(mManifestCacheRecord);
+		bool success = mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
 		R2_CHECK(success, "Failed to return the asset cache record");
 
 		mManifestCacheRecord = {};
@@ -118,25 +121,25 @@ namespace r2::asset
 	}
 
 #ifdef R2_ASSET_PIPELINE
-	bool ManifestSingleAssetFile::SaveManifest() const
+	bool ManifestSingleAssetFile::SaveManifest()
 	{
 		TODO;
 		return false;
 	}
 
-	void ManifestSingleAssetFile::Reload(AssetCache* assetCache)
+	void ManifestSingleAssetFile::Reload()
 	{
 		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
-			assetCache->ReturnAssetBuffer(mManifestCacheRecord);
+			mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
 			mManifestCacheRecord = {};
 		}
 
-		mManifestAssetHandle = assetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
+		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
 		
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 
-		mManifestCacheRecord = assetCache->GetAssetBuffer(mManifestAssetHandle);
+		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
 
 		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
 	}

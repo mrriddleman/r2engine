@@ -13,14 +13,14 @@ namespace r2::asset
 	{
 	public:
 		virtual ~ManifestAssetFile() {}
-		virtual bool Init(const char* path, r2::asset::AssetType assetType) = 0;
+		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, r2::asset::AssetType assetType) = 0;
 		virtual void Shutdown() = 0;
 
 		virtual r2::asset::AssetType GetAssetType() const = 0;
 		virtual u64 GetManifestFileHandle() const = 0;
 		
-		virtual bool LoadManifest(AssetCache* assetCache) = 0;
-		virtual bool UnloadManifest(AssetCache* assetCache) = 0;
+		virtual bool LoadManifest() = 0;
+		virtual bool UnloadManifest() = 0;
 		virtual const byte* GetManifestData() const = 0;
 		virtual const char* FilePath() const = 0;
 		
@@ -35,17 +35,19 @@ namespace r2::asset
 			mReloadFilePathFunc = func;
 		}
 
-		virtual bool SaveManifest() const = 0;
-		virtual void Reload(AssetCache* assetCache) = 0;
+		virtual bool SaveManifest() = 0;
+		virtual void Reload() = 0;
 #endif
 	protected:
 #ifdef R2_ASSET_PIPELINE
 		ReloadFilePathFunc mReloadFilePathFunc;
 #endif
+		AssetCache* mnoptrAssetCache = nullptr;
 		AssetFile* mManifestAssetFile = nullptr;
 		AssetCacheRecord mManifestCacheRecord;
 		r2::asset::AssetType mAssetType;
 		r2::asset::AssetHandle mManifestAssetHandle;
+		char mRawPath[r2::fs::FILE_PATH_LENGTH];
 	};
 }
 #endif
