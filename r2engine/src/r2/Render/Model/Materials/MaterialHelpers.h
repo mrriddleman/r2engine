@@ -17,6 +17,10 @@ namespace flat
 	struct MaterialName;
 }
 
+namespace r2::asset {
+	class MaterialManifestAssetFile;
+}
+
 namespace r2::mat
 {
 

@@ -38,7 +38,7 @@ namespace r2::asset
 		virtual bool SaveManifest() override;
 		virtual void Reload() override;
 
-		std::vector<r2::mat::Material> GetMaterials() const;
+		std::vector<r2::mat::Material>& GetMaterials();
 #endif
 
 	private:

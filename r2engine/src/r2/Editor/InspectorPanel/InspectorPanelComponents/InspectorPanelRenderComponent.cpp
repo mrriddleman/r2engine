@@ -27,6 +27,9 @@
 //this is dumb but...
 #include "r2/Render/Animation/AnimationPlayer.h"
 
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
+#endif
 
 #include "imgui.h"
 
@@ -1094,28 +1097,84 @@ namespace r2::edit
 
 	void InspectorPanelRenderComponentDataSource::MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen)
 	{
+#ifdef R2_ASSET_PIPELINE
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, materialName.packName);
+
+		R2_CHECK(materialManifestFile != nullptr, "Should never be the case");
+
+		std::vector<r2::mat::Material>& materials = materialManifestFile->GetMaterials();
+
+		r2::mat::Material* foundMaterial = nullptr;
+		//find the material we care about
+		for (u32 i = 0; i < materials.size(); ++i)
+		{
+			if (materials[i].materialName == materialName)
+			{
+				foundMaterial = &materials[i];
+				break;
+			}
+		}
+
+		R2_CHECK(foundMaterial != nullptr, "Should always be the case");
+
+		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
+
 		ImGui::SetNextWindowSize(ImVec2(500, 500));
 
 		if (ImGui::Begin("Material Editor", &windowOpen))
 		{
-			const flat::Material* flatMaterial = r2::mat::GetMaterialForMaterialName(materialName);
-
 			ImGui::Text("Material Name: ");
 
 			char materialNameCSTR[r2::fs::FILE_PATH_LENGTH];
 
-			strcpy(materialNameCSTR, flatMaterial->stringName()->str().c_str());
+			strcpy(materialNameCSTR, foundMaterial->stringName.c_str());
+
 			ImGui::SameLine();
 			if (ImGui::InputText("##label materialNameInput", materialNameCSTR, r2::fs::FILE_PATH_LENGTH))
 			{
-				
+				//foundMaterial->stringName = materialNameCSTR;
+
+				//@TODO(Serge): figure out how the materialName will work now - might break if we change this
 			}
 
+			int transparencyType = foundMaterial->transparencyType;
 
+			ImGui::Text("Transparency:");
+			ImGui::RadioButton("Opaque", &transparencyType, flat::eTransparencyType_OPAQUE);
+			ImGui::RadioButton("Transparent", &transparencyType, flat::eTransparencyType_TRANSPARENT);
+
+			foundMaterial->transparencyType = static_cast<flat::eTransparencyType>(transparencyType);
+
+			auto& meshPasses = foundMaterial->shaderEffectPasses.meshPasses;
+
+
+			for (u32 i = flat::eMeshPass_FORWARD; i <= flat::eMeshPass_TRANSPARENT; ++i) //only doing the ones we support
+			{
+				ImGui::PushID(i);
+				auto& shaderEffect = meshPasses[i];
+
+				std::string shaderEffectTitle = std::string("Shader Effect: ") + s_meshPassStrings[i];
+
+				ImGui::Text(shaderEffectTitle.c_str());
+				ImGui::SameLine();
+				if (ImGui::BeginCombo("##label shaderName", shaderEffect.assetNameString.c_str()))
+				{
+					//@TODO(Serge): list all the shader effects we have - not sure how we're going to do that atm
+					ImGui::EndCombo();
+				}
+
+				ImGui::PopID();
+			}
+
+			//@TODO(Serge): implement shader params
 
 
 			ImGui::End();
 		}
+
+#endif
 	}
 }
 

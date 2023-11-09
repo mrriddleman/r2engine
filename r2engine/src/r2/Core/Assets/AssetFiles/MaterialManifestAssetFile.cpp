@@ -186,7 +186,7 @@ namespace r2::asset
 #endif
 	}
 
-	std::vector<r2::mat::Material> MaterialManifestAssetFile::GetMaterials() const
+	std::vector<r2::mat::Material>& MaterialManifestAssetFile::GetMaterials()
 	{
 		return mMaterials;
 	}
