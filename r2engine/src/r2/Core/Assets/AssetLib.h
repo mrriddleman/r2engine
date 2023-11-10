@@ -12,7 +12,6 @@
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Assets/AssetTypes.h"
-#include "r2/Core/Assets/AssetCacheRecord.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 
 #ifdef R2_ASSET_PIPELINE

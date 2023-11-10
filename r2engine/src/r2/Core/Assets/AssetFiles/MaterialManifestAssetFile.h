@@ -42,10 +42,13 @@ namespace r2::asset
 #endif
 
 	private:
+		
+		
 		const flat::MaterialPack* mMaterialPackManifest;
 
-#ifdef R2_ASSET_PIPELINE
 
+#ifdef R2_ASSET_PIPELINE
+		void ReloadManifestFile(bool fillVector);
 		void FillMaterialVector();
 
 		std::vector<r2::mat::Material> mMaterials;

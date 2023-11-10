@@ -34,6 +34,7 @@
 #include "imgui.h"
 
 #include "r2/ImGui/CustomFont.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace r2::edit
 {
@@ -1121,23 +1122,18 @@ namespace r2::edit
 
 		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
 
-		ImGui::SetNextWindowSize(ImVec2(500, 500));
+		ImGui::SetNextWindowContentSize(ImVec2(500, 700));
 
 		if (ImGui::Begin("Material Editor", &windowOpen))
 		{
-			ImGui::Text("Material Name: ");
+			//We can't change the material name after the fact right now since certain objects (Level files, models etc) hold on to
+			//their material names for later. Only when we make a new material can we modify the name
+			//we would somehow have to know everyone who has the material name and change theirs.
+			//Or we would have to change how MaterialName works in that everyone only have a reference to it - too much work for now
+			//The other way to solve it is generate a GUID for each material made (and pack probably) and use that as the reference - not the name itself (https://github.com/graeme-hill/crossguid)
+			std::string materialNameLabel = std::string("Material Name: ") + foundMaterial->stringName;
 
-			char materialNameCSTR[r2::fs::FILE_PATH_LENGTH];
-
-			strcpy(materialNameCSTR, foundMaterial->stringName.c_str());
-
-			ImGui::SameLine();
-			if (ImGui::InputText("##label materialNameInput", materialNameCSTR, r2::fs::FILE_PATH_LENGTH))
-			{
-				//foundMaterial->stringName = materialNameCSTR;
-
-				//@TODO(Serge): figure out how the materialName will work now - might break if we change this
-			}
+			ImGui::Text(materialNameLabel.c_str());
 
 			int transparencyType = foundMaterial->transparencyType;
 
@@ -1148,7 +1144,6 @@ namespace r2::edit
 			foundMaterial->transparencyType = static_cast<flat::eTransparencyType>(transparencyType);
 
 			auto& meshPasses = foundMaterial->shaderEffectPasses.meshPasses;
-
 
 			for (u32 i = flat::eMeshPass_FORWARD; i <= flat::eMeshPass_TRANSPARENT; ++i) //only doing the ones we support
 			{
@@ -1169,11 +1164,197 @@ namespace r2::edit
 			}
 
 			//@TODO(Serge): implement shader params
+			//for now just implement the ones we care about - float params, color params and texture params
 
+			static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
+
+			static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
+				flat::ShaderPropertyType_ROUGHNESS,
+				flat::ShaderPropertyType_METALLIC,
+				flat::ShaderPropertyType_REFLECTANCE,
+				flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+				flat::ShaderPropertyType_CLEAR_COAT,
+				flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+				flat::ShaderPropertyType_HEIGHT_SCALE,
+				flat::ShaderPropertyType_ANISOTROPY
+			};
+
+			static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
+				flat::ShaderPropertyType_ALBEDO,
+				flat::ShaderPropertyType_EMISSION,
+				flat::ShaderPropertyType_DETAIL
+			};
+
+			if (ImGui::CollapsingHeader("Float Shader Params"))
+			{
+				for (size_t i = 0; i < foundMaterial->shaderParams.floatParams.size(); ++i)
+				{
+					auto& floatParam = foundMaterial->shaderParams.floatParams.at(i);
+
+					const char* propertyType = s_shaderPropertyTypeStrings[floatParam.propertyType];
+
+					ImGui::Text("Property Type: %s", propertyType);
+					ImGui::SameLine();
+					if (ImGui::SmallButton("Remove"))
+					{
+
+					}
+
+					ImGui::Text("Value: ");
+					ImGui::SameLine();
+
+					std::string floatInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
+					ImGui::InputFloat(floatInputValueLabel.c_str(), &floatParam.value);
+				}
+
+				std::vector<flat::ShaderPropertyType> availableFloatProperties;
+
+				for (u32 i = 0; i < s_floatPropertyTypes.size(); ++i)
+				{
+					auto iter = std::find_if(foundMaterial->shaderParams.floatParams.begin(), foundMaterial->shaderParams.floatParams.end(), [i](const r2::draw::ShaderFloatParam& floatParam)
+						{
+							return floatParam.propertyType == s_floatPropertyTypes[i];
+						});
+
+					if (iter == foundMaterial->shaderParams.floatParams.end())
+					{
+						availableFloatProperties.push_back(s_floatPropertyTypes[i]);
+					}
+				}
+
+				flat::ShaderPropertyType floatPropertyTypeToAdd = flat::ShaderPropertyType_ALBEDO;
+
+				std::string availableFloatPropertyTypePreview = "";
+
+				if (availableFloatProperties.size() > 0)
+				{
+					floatPropertyTypeToAdd = availableFloatProperties[0];
+					availableFloatPropertyTypePreview = s_shaderPropertyTypeStrings[floatPropertyTypeToAdd];
+				}
+
+				if (ImGui::BeginCombo("##label availablefloatpropertyTypes", availableFloatPropertyTypePreview.c_str()))
+				{
+					for (size_t i = 0; i < availableFloatProperties.size(); ++i)
+					{
+						if (ImGui::Selectable(s_shaderPropertyTypeStrings[availableFloatProperties[i]], floatPropertyTypeToAdd == availableFloatProperties[i]))
+						{
+							floatPropertyTypeToAdd = availableFloatProperties[i];
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+
+				const bool disableAddNewFloatProperty = availableFloatProperties.empty() || floatPropertyTypeToAdd == flat::ShaderPropertyType_ALBEDO;
+				if (disableAddNewFloatProperty)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Float Property"))
+				{
+					r2::draw::ShaderFloatParam newFloatParam;
+					newFloatParam.propertyType = floatPropertyTypeToAdd;
+					newFloatParam.value = 0.0f;
+					foundMaterial->shaderParams.floatParams.push_back(newFloatParam);
+				}
+
+				if (disableAddNewFloatProperty)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+			}
+			
+			//Color Params
+			if (ImGui::CollapsingHeader("Color Shader Params"))
+			{
+				for (size_t i = 0; i < foundMaterial->shaderParams.colorParams.size(); ++i)
+				{
+					auto& colorParam = foundMaterial->shaderParams.colorParams.at(i);
+
+					const char* propertyType = s_shaderPropertyTypeStrings[colorParam.propertyType];
+
+					ImGui::Text("Property Type: %s", propertyType);
+					ImGui::SameLine();
+					if (ImGui::SmallButton("Remove"))
+					{
+
+					}
+
+					ImGui::Text("Value: ");
+					ImGui::SameLine();
+
+					std::string colorInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
+					
+					ImGui::ColorEdit4(colorInputValueLabel.c_str(), glm::value_ptr(colorParam.value));
+				}
+
+				std::vector<flat::ShaderPropertyType> availableColorProperties;
+
+				for (u32 i = 0; i < s_colorPropertyTypes.size(); ++i)
+				{
+					auto iter = std::find_if(foundMaterial->shaderParams.colorParams.begin(), foundMaterial->shaderParams.colorParams.end(), [i](const r2::draw::ShaderColorParam& colorParam)
+						{
+							return colorParam.propertyType == s_colorPropertyTypes[i];
+						});
+
+					if (iter == foundMaterial->shaderParams.colorParams.end())
+					{
+						availableColorProperties.push_back(s_colorPropertyTypes[i]);
+					}
+				}
+
+				flat::ShaderPropertyType colorPropertyTypeToAdd = flat::ShaderPropertyType_ROUGHNESS;
+
+				std::string availableColorPropertyTypePreview = "";
+
+				if (availableColorProperties.size() > 0)
+				{
+					colorPropertyTypeToAdd = availableColorProperties[0];
+					availableColorPropertyTypePreview = s_shaderPropertyTypeStrings[colorPropertyTypeToAdd];
+				}
+
+				if (ImGui::BeginCombo("##label availablefloatpropertyTypes", availableColorPropertyTypePreview.c_str()))
+				{
+					for (size_t i = 0; i < availableColorProperties.size(); ++i)
+					{
+						if (ImGui::Selectable(s_shaderPropertyTypeStrings[availableColorProperties[i]], colorPropertyTypeToAdd == availableColorProperties[i]))
+						{
+							colorPropertyTypeToAdd = availableColorProperties[i];
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+
+				const bool disableAddNewColorProperty = availableColorProperties.empty() || colorPropertyTypeToAdd == flat::ShaderPropertyType_ROUGHNESS;
+				if (disableAddNewColorProperty)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Float Property"))
+				{
+					r2::draw::ShaderColorParam newColorParam;
+					newColorParam.propertyType = colorPropertyTypeToAdd;
+					newColorParam.value = glm::vec4(0, 0, 0, 1);
+					foundMaterial->shaderParams.colorParams.push_back(newColorParam);
+				}
+
+				if (disableAddNewColorProperty)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+			}
 
 			ImGui::End();
 		}
-
 #endif
 	}
 }

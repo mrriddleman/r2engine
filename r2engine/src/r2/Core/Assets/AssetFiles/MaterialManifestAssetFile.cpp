@@ -140,30 +140,7 @@ namespace r2::asset
 		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), type);
 	}
 
-	bool MaterialManifestAssetFile::SaveManifest() 
-	{	
-		r2::asset::pln::SaveMaterialsToMaterialPackManifestFile(mMaterials, FilePath(), mRawPath);
-
-		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
-			mManifestCacheRecord = {};
-		}
-
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
-
-		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
-
-		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
-
-		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
-
-		mMaterialPackManifest = flat::GetMaterialPack(mManifestCacheRecord.GetAssetBuffer()->Data());
-
-		return mMaterialPackManifest != nullptr;
-	}
-
-	void MaterialManifestAssetFile::Reload()
+	void MaterialManifestAssetFile::ReloadManifestFile(bool fillVector)
 	{
 		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
@@ -181,9 +158,24 @@ namespace r2::asset
 
 		mMaterialPackManifest = flat::GetMaterialPack(mManifestCacheRecord.GetAssetBuffer()->Data());
 
-#ifdef R2_ASSET_PIPELINE
-		FillMaterialVector();
-#endif
+		if (fillVector)
+		{
+			FillMaterialVector();
+		}
+	}
+
+	bool MaterialManifestAssetFile::SaveManifest() 
+	{	
+		r2::asset::pln::SaveMaterialsToMaterialPackManifestFile(mMaterials, FilePath(), mRawPath);
+
+		ReloadManifestFile(false);
+
+		return mMaterialPackManifest != nullptr;
+	}
+
+	void MaterialManifestAssetFile::Reload()
+	{
+		ReloadManifestFile(true);
 	}
 
 	std::vector<r2::mat::Material>& MaterialManifestAssetFile::GetMaterials()
