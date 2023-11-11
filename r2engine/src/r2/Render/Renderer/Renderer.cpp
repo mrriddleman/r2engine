@@ -3394,14 +3394,11 @@ namespace r2::draw::renderer
 			{
 				//sort the subcommands here by camera depth
 
-				//@TODO(Serge): when we're doing transparency, we'll need to check the DrawCommandData if we're a transparency batch, then we need to use a different
-				//				sorting predicate ( s1.cameraDepth > s2.cameraDepth)
-
 				//non transparency - sort front to back
 				//@TODO(Serge): I'm not sure this does all of the requisite sorting - what about sorting between DrawCommandData?
-				std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
-					return s1.cameraDepth < s2.cameraDepth;
-				});
+				//std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
+				//	return s1.cameraDepth < s2.cameraDepth;
+				//});
 
 				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 

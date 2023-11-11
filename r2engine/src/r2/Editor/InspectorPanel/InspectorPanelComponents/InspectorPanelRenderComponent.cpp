@@ -1121,8 +1121,10 @@ namespace r2::edit
 		R2_CHECK(foundMaterial != nullptr, "Should always be the case");
 
 		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
+		static float CONTENT_WIDTH = 600;
+		static float CONTENT_HEIGHT = 1000;
 
-		ImGui::SetNextWindowContentSize(ImVec2(500, 700));
+		ImGui::SetNextWindowContentSize(ImVec2(CONTENT_WIDTH, CONTENT_HEIGHT));
 
 		if (ImGui::Begin("Material Editor", &windowOpen))
 		{
@@ -1154,11 +1156,14 @@ namespace r2::edit
 
 				ImGui::Text(shaderEffectTitle.c_str());
 				ImGui::SameLine();
+				ImGui::PushItemWidth(CONTENT_WIDTH/2.0f);
 				if (ImGui::BeginCombo("##label shaderName", shaderEffect.assetNameString.c_str()))
 				{
 					//@TODO(Serge): list all the shader effects we have - not sure how we're going to do that atm
 					ImGui::EndCombo();
 				}
+
+				ImGui::PopItemWidth();
 
 				ImGui::PopID();
 			}
@@ -1167,6 +1172,10 @@ namespace r2::edit
 			//for now just implement the ones we care about - float params, color params and texture params
 
 			static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
+			static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
+			static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
+			static const char* const* s_magTextureFilterStrings = flat::EnumNamesMagTextureFilter();
+			static const char* const* s_textureWrapModeStrings = flat::EnumNamesTextureWrapMode();
 
 			static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
 				flat::ShaderPropertyType_ROUGHNESS,
@@ -1185,7 +1194,30 @@ namespace r2::edit
 				flat::ShaderPropertyType_DETAIL
 			};
 
-			if (ImGui::CollapsingHeader("Float Shader Params"))
+			static const std::vector<flat::ShaderPropertyType> s_texturePropertyTypes = {
+				flat::ShaderPropertyType_ALBEDO,
+				flat::ShaderPropertyType_NORMAL,
+				flat::ShaderPropertyType_EMISSION,
+				flat::ShaderPropertyType_METALLIC,
+				flat::ShaderPropertyType_ROUGHNESS,
+				flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+				flat::ShaderPropertyType_HEIGHT,
+				flat::ShaderPropertyType_ANISOTROPY,
+				flat::ShaderPropertyType_DETAIL,
+				
+				flat::ShaderPropertyType_CLEAR_COAT,
+				flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+				flat::ShaderPropertyType_CLEAR_COAT_NORMAL
+
+				//@TODO(Serge): we have more property types but I don't think they are supported atm
+				//eg. SHEEN_COLOR, SHEEN_ROUGHNESS, BENT_NORMAL, ANISOTROPY_DIRECTION
+			};
+
+			static const std::vector<flat::ShaderPropertyType> s_boolPropertyTypes = {
+				flat::ShaderPropertyType_DOUBLE_SIDED
+			};
+
+			if (ImGui::CollapsingHeader("Float Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
 				for (size_t i = 0; i < foundMaterial->shaderParams.floatParams.size(); ++i)
 				{
@@ -1193,18 +1225,23 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[floatParam.propertyType];
 
-					ImGui::Text("Property Type: %s", propertyType);
-					ImGui::SameLine();
-					if (ImGui::SmallButton("Remove"))
+					if (ImGui::TreeNode(propertyType))
 					{
+						ImGui::Text("Property Type: %s", propertyType);
+						ImGui::SameLine();
+						if (ImGui::SmallButton("Remove"))
+						{
 
+						}
+
+						ImGui::Text("Value: ");
+						ImGui::SameLine();
+
+						std::string floatInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
+						ImGui::InputFloat(floatInputValueLabel.c_str(), &floatParam.value);
+
+						ImGui::TreePop();
 					}
-
-					ImGui::Text("Value: ");
-					ImGui::SameLine();
-
-					std::string floatInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
-					ImGui::InputFloat(floatInputValueLabel.c_str(), &floatParam.value);
 				}
 
 				std::vector<flat::ShaderPropertyType> availableFloatProperties;
@@ -1232,6 +1269,10 @@ namespace r2::edit
 					availableFloatPropertyTypePreview = s_shaderPropertyTypeStrings[floatPropertyTypeToAdd];
 				}
 
+				ImGui::Text("Add New Float Property: ");
+				ImGui::SameLine();
+
+				ImGui::PushItemWidth(CONTENT_WIDTH / 3.0f);
 				if (ImGui::BeginCombo("##label availablefloatpropertyTypes", availableFloatPropertyTypePreview.c_str()))
 				{
 					for (size_t i = 0; i < availableFloatProperties.size(); ++i)
@@ -1244,6 +1285,7 @@ namespace r2::edit
 
 					ImGui::EndCombo();
 				}
+				ImGui::PopItemWidth();
 
 				const bool disableAddNewFloatProperty = availableFloatProperties.empty() || floatPropertyTypeToAdd == flat::ShaderPropertyType_ALBEDO;
 				if (disableAddNewFloatProperty)
@@ -1269,7 +1311,7 @@ namespace r2::edit
 			}
 			
 			//Color Params
-			if (ImGui::CollapsingHeader("Color Shader Params"))
+			if (ImGui::CollapsingHeader("Color Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
 				for (size_t i = 0; i < foundMaterial->shaderParams.colorParams.size(); ++i)
 				{
@@ -1277,19 +1319,24 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[colorParam.propertyType];
 
-					ImGui::Text("Property Type: %s", propertyType);
-					ImGui::SameLine();
-					if (ImGui::SmallButton("Remove"))
+					if (ImGui::TreeNode(propertyType))
 					{
+						ImGui::Text("Property Type: %s", propertyType);
+						ImGui::SameLine();
+						if (ImGui::SmallButton("Remove"))
+						{
 
+						}
+
+						ImGui::Text("Value: ");
+						ImGui::SameLine();
+
+						std::string colorInputValueLabel = std::string("##label colorinputvalue") + std::string(propertyType);
+
+						ImGui::ColorEdit4(colorInputValueLabel.c_str(), glm::value_ptr(colorParam.value));
+
+						ImGui::TreePop();
 					}
-
-					ImGui::Text("Value: ");
-					ImGui::SameLine();
-
-					std::string colorInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
-					
-					ImGui::ColorEdit4(colorInputValueLabel.c_str(), glm::value_ptr(colorParam.value));
 				}
 
 				std::vector<flat::ShaderPropertyType> availableColorProperties;
@@ -1317,7 +1364,10 @@ namespace r2::edit
 					availableColorPropertyTypePreview = s_shaderPropertyTypeStrings[colorPropertyTypeToAdd];
 				}
 
-				if (ImGui::BeginCombo("##label availablefloatpropertyTypes", availableColorPropertyTypePreview.c_str()))
+				ImGui::Text("Add New Color Property: ");
+				ImGui::SameLine();
+				ImGui::PushItemWidth(CONTENT_WIDTH / 3.0f);
+				if (ImGui::BeginCombo("##label availablecolorpropertyTypes", availableColorPropertyTypePreview.c_str()))
 				{
 					for (size_t i = 0; i < availableColorProperties.size(); ++i)
 					{
@@ -1329,6 +1379,7 @@ namespace r2::edit
 
 					ImGui::EndCombo();
 				}
+				ImGui::PopItemWidth();
 
 				const bool disableAddNewColorProperty = availableColorProperties.empty() || colorPropertyTypeToAdd == flat::ShaderPropertyType_ROUGHNESS;
 				if (disableAddNewColorProperty)
@@ -1338,7 +1389,7 @@ namespace r2::edit
 				}
 
 				ImGui::SameLine();
-				if (ImGui::Button("Add Float Property"))
+				if (ImGui::Button("Add Color Property"))
 				{
 					r2::draw::ShaderColorParam newColorParam;
 					newColorParam.propertyType = colorPropertyTypeToAdd;
@@ -1352,6 +1403,316 @@ namespace r2::edit
 					ImGui::EndDisabled();
 				}
 			}
+
+			if (ImGui::CollapsingHeader("Texture Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
+			{
+				for (size_t i = 0; i < foundMaterial->shaderParams.textureParams.size(); ++i)
+				{
+					
+					const std::string I_STRING = std::to_string(i);
+
+					//@TODO(Serge): put in tree node
+					auto& textureParam = foundMaterial->shaderParams.textureParams.at(i);
+
+					const char* propertyType = s_shaderPropertyTypeStrings[textureParam.propertyType];
+
+					if (ImGui::TreeNode(propertyType))
+					{
+						ImGui::Text("Property Type: %s", propertyType);
+						ImGui::SameLine();
+						if (ImGui::SmallButton("Remove"))
+						{
+
+						}
+
+						ImGui::Text("Value: ");
+						ImGui::SameLine();
+
+						std::string textureInputValueLabel = std::string("##label textureinputvalue") + std::string(propertyType);
+
+						if (ImGui::BeginCombo(textureInputValueLabel.c_str(), "Texture Name here"))
+						{
+							//@TODO(Serge): how do we fill this?
+							ImGui::EndCombo();
+						}
+
+						//@NOTE(Serge): this should change with the texture you set above
+						std::string texturePackName = std::string("Texture Pack: ") + textureParam.texturePackNameString;
+						ImGui::Text(texturePackName.c_str());
+
+						ImGui::Text("Packing Type: ");
+						ImGui::SameLine();
+						std::string packingTypeLabel = std::string("##label packingType") + I_STRING;
+						if (ImGui::BeginCombo(packingTypeLabel.c_str(), s_texturePackingTypeStrings[textureParam.packingType]))
+						{
+							for (int pt = flat::ShaderPropertyPackingType_R; pt <= flat::ShaderPropertyPackingType_RGBA; pt++)
+							{
+								if (ImGui::Selectable(s_texturePackingTypeStrings[pt], pt == textureParam.packingType))
+								{
+									textureParam.packingType = static_cast<flat::ShaderPropertyPackingType>(pt);
+								}
+							}
+
+							ImGui::EndCombo();
+						}
+
+						//min filtering
+						ImGui::Text("Min Filter: ");
+						ImGui::SameLine();
+						std::string minFilterLabel = std::string("##label minfilter") + I_STRING;
+						if (ImGui::BeginCombo(minFilterLabel.c_str(), s_minTextureFilterStrings[textureParam.minFilter]))
+						{
+							for (int mf = flat::MinTextureFilter_LINEAR; mf <= flat::MinTextureFilter_LINEAR_MIPMAP_LINEAR; ++mf)
+							{
+								if (ImGui::Selectable(s_minTextureFilterStrings[mf], mf == textureParam.minFilter))
+								{
+									textureParam.minFilter = static_cast<flat::MinTextureFilter>(mf);
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::Text("Mag Filter: ");
+						ImGui::SameLine();
+						std::string magFilterLabel = std::string("##label magfilter") + I_STRING;
+						if (ImGui::BeginCombo(magFilterLabel.c_str(), s_magTextureFilterStrings[textureParam.magFilter]))
+						{
+							for (int mf = flat::MagTextureFilter_LINEAR; mf <= flat::MagTextureFilter_NEAREST; ++mf)
+							{
+								if (ImGui::Selectable(s_magTextureFilterStrings[mf], mf == textureParam.magFilter))
+								{
+									textureParam.magFilter = static_cast<flat::MagTextureFilter>(mf);
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::Text("Anisotropy: ");
+						ImGui::SameLine();
+						std::string anisotropyFilterLabel = std::string("##label anisotropyfiltering") + I_STRING;
+						if (ImGui::DragFloat(anisotropyFilterLabel.c_str(), &textureParam.anisotropicFiltering, 1.0, 0.0, 16.0)) //@TODO(Serge): replace 16 with the max amount for the system
+						{
+							//@TODO(Serge): Update the render material somehow
+						}
+
+						//wrap modes
+
+						ImGui::Text("Wrap S: ");
+						ImGui::SameLine();
+						std::string wrapSLabel = std::string("##label wrapS") + I_STRING;
+						if (ImGui::BeginCombo(wrapSLabel.c_str(), s_textureWrapModeStrings[textureParam.wrapS]))
+						{
+							for (int wm = flat::TextureWrapMode_REPEAT; wm <= flat::TextureWrapMode_MIRRORED_REPEAT; ++wm)
+							{
+								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapS))
+								{
+									textureParam.wrapS = static_cast<flat::TextureWrapMode>(wm);
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::Text("Wrap T: ");
+						ImGui::SameLine();
+						std::string wrapTLabel = std::string("##label wrapT") + I_STRING;
+						if (ImGui::BeginCombo(wrapTLabel.c_str(), s_textureWrapModeStrings[textureParam.wrapT]))
+						{
+							for (int wm = flat::TextureWrapMode_REPEAT; wm <= flat::TextureWrapMode_MIRRORED_REPEAT; ++wm)
+							{
+								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapT))
+								{
+									textureParam.wrapT = static_cast<flat::TextureWrapMode>(wm);
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::Text("Wrap R: ");
+						ImGui::SameLine();
+						std::string wrapRLabel = std::string("##label wrapR") + I_STRING;
+						if (ImGui::BeginCombo(wrapRLabel.c_str(), s_textureWrapModeStrings[textureParam.wrapR]))
+						{
+							for (int wm = flat::TextureWrapMode_REPEAT; wm <= flat::TextureWrapMode_MIRRORED_REPEAT; ++wm)
+							{
+								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapR))
+								{
+									textureParam.wrapR = static_cast<flat::TextureWrapMode>(wm);
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::TreePop();
+					}
+
+					
+				}
+
+
+				std::vector<flat::ShaderPropertyType> availableTextureProperties;
+
+				for (u32 i = 0; i < s_texturePropertyTypes.size(); ++i)
+				{
+					auto iter = std::find_if(foundMaterial->shaderParams.textureParams.begin(), foundMaterial->shaderParams.textureParams.end(), [i](const r2::draw::ShaderTextureParam& textureParam)
+						{
+							return textureParam.propertyType == s_texturePropertyTypes[i];
+						});
+
+					if (iter == foundMaterial->shaderParams.textureParams.end())
+					{
+						availableTextureProperties.push_back(s_texturePropertyTypes[i]);
+					}
+				}
+
+				flat::ShaderPropertyType texturePropertyTypeToAdd = flat::ShaderPropertyType_REFLECTANCE;
+
+				std::string availableTexturePropertyTypePreview = "";
+
+				if (availableTextureProperties.size() > 0)
+				{
+					texturePropertyTypeToAdd = availableTextureProperties[0];
+					availableTexturePropertyTypePreview = s_shaderPropertyTypeStrings[texturePropertyTypeToAdd];
+				}
+
+
+				ImGui::Text("Add New Texture Property: ");
+				ImGui::SameLine();
+				ImGui::PushItemWidth(CONTENT_WIDTH / 3.0f);
+				if (ImGui::BeginCombo("##label availabletexturepropertyTypes", availableTexturePropertyTypePreview.c_str()))
+				{
+					for (size_t i = 0; i < availableTextureProperties.size(); ++i)
+					{
+						if (ImGui::Selectable(s_shaderPropertyTypeStrings[availableTextureProperties[i]], texturePropertyTypeToAdd == availableTextureProperties[i]))
+						{
+							texturePropertyTypeToAdd = availableTextureProperties[i];
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+				ImGui::PopItemWidth();
+
+				const bool disableAddNewTextureProperty = availableTextureProperties.empty() || texturePropertyTypeToAdd == flat::ShaderPropertyType_REFLECTANCE;
+				if (disableAddNewTextureProperty)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Texture Property"))
+				{
+					r2::draw::ShaderTextureParam newTextureParam;
+					newTextureParam.propertyType = texturePropertyTypeToAdd;
+					newTextureParam.value = STRING_ID("");
+					newTextureParam.texturePackName = newTextureParam.value;
+					newTextureParam.texturePackNameString = "";
+					newTextureParam.packingType = flat::ShaderPropertyPackingType_RGBA;
+					newTextureParam.minFilter = flat::MinTextureFilter_LINEAR;
+					newTextureParam.magFilter = flat::MagTextureFilter_LINEAR;
+					newTextureParam.anisotropicFiltering = 0.0f;
+					newTextureParam.wrapS = flat::TextureWrapMode_REPEAT;
+					newTextureParam.wrapT = flat::TextureWrapMode_REPEAT;
+					newTextureParam.wrapR = flat::TextureWrapMode_REPEAT;
+
+					foundMaterial->shaderParams.textureParams.push_back(newTextureParam);
+				}
+
+				if (disableAddNewTextureProperty)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+			}
+
+			//add bool param for double sided
+			if (ImGui::CollapsingHeader("Bool Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
+			{
+				for (size_t i = 0; i < foundMaterial->shaderParams.boolParams.size(); ++i)
+				{
+					auto& boolParam = foundMaterial->shaderParams.boolParams.at(i);
+
+					const char* propertyType = s_shaderPropertyTypeStrings[boolParam.propertyType];
+
+					if (ImGui::TreeNode(propertyType))
+					{
+						ImGui::Text("Property Type: %s", propertyType);
+						ImGui::SameLine();
+						if (ImGui::SmallButton("Remove"))
+						{
+
+						}
+
+						ImGui::Checkbox(propertyType, &boolParam.value);
+						ImGui::TreePop();
+					}
+				}
+
+				std::vector<flat::ShaderPropertyType> availableBoolProperties;
+
+				for (u32 i = 0; i < s_boolPropertyTypes.size(); ++i)
+				{
+					auto iter = std::find_if(foundMaterial->shaderParams.boolParams.begin(), foundMaterial->shaderParams.boolParams.end(), [i](const r2::draw::ShaderBoolParam& boolParam)
+						{
+							return boolParam.propertyType == s_boolPropertyTypes[i];
+						});
+
+					if (iter == foundMaterial->shaderParams.boolParams.end())
+					{
+						availableBoolProperties.push_back(s_boolPropertyTypes[i]);
+					}
+				}
+
+				flat::ShaderPropertyType boolPropertyTypeToAdd = flat::ShaderPropertyType_ROUGHNESS;
+
+				std::string availableBoolPropertyTypePreview = "";
+
+				if (availableBoolProperties.size() > 0)
+				{
+					boolPropertyTypeToAdd = availableBoolProperties[0];
+					availableBoolPropertyTypePreview = s_shaderPropertyTypeStrings[boolPropertyTypeToAdd];
+				}
+
+				ImGui::Text("Add New Boolean Property: ");
+				ImGui::SameLine();
+				ImGui::PushItemWidth(CONTENT_WIDTH / 3.0f);
+				if (ImGui::BeginCombo("##label availableboolpropertyTypes", availableBoolPropertyTypePreview.c_str()))
+				{
+					for (size_t i = 0; i < availableBoolProperties.size(); ++i)
+					{
+						if (ImGui::Selectable(s_shaderPropertyTypeStrings[availableBoolProperties[i]], boolPropertyTypeToAdd == availableBoolProperties[i]))
+						{
+							boolPropertyTypeToAdd = availableBoolProperties[i];
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+				ImGui::PopItemWidth();
+
+				const bool disableAddNewBoolProperty = availableBoolProperties.empty() || boolPropertyTypeToAdd == flat::ShaderPropertyType_ROUGHNESS;
+				if (disableAddNewBoolProperty)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Boolean Property"))
+				{
+					r2::draw::ShaderBoolParam newBoolParam;
+					newBoolParam.propertyType = boolPropertyTypeToAdd;
+					newBoolParam.value = false;
+					foundMaterial->shaderParams.boolParams.push_back(newBoolParam);
+				}
+
+				if (disableAddNewBoolProperty)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+			}
+
 
 			ImGui::End();
 		}
