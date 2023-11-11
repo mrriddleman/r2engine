@@ -1099,6 +1099,9 @@ namespace r2::edit
 	void InspectorPanelRenderComponentDataSource::MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen)
 	{
 #ifdef R2_ASSET_PIPELINE
+
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
 		r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, materialName.packName);
@@ -1123,6 +1126,52 @@ namespace r2::edit
 		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
 		static float CONTENT_WIDTH = 600;
 		static float CONTENT_HEIGHT = 1000;
+
+		static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
+		static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
+		static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
+		static const char* const* s_magTextureFilterStrings = flat::EnumNamesMagTextureFilter();
+		static const char* const* s_textureWrapModeStrings = flat::EnumNamesTextureWrapMode();
+
+		static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
+			flat::ShaderPropertyType_ROUGHNESS,
+			flat::ShaderPropertyType_METALLIC,
+			flat::ShaderPropertyType_REFLECTANCE,
+			flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+			flat::ShaderPropertyType_CLEAR_COAT,
+			flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+			flat::ShaderPropertyType_HEIGHT_SCALE,
+			flat::ShaderPropertyType_ANISOTROPY
+		};
+
+		static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
+			flat::ShaderPropertyType_ALBEDO,
+			flat::ShaderPropertyType_EMISSION,
+			flat::ShaderPropertyType_DETAIL
+		};
+
+		static const std::vector<flat::ShaderPropertyType> s_texturePropertyTypes = {
+			flat::ShaderPropertyType_ALBEDO,
+			flat::ShaderPropertyType_NORMAL,
+			flat::ShaderPropertyType_EMISSION,
+			flat::ShaderPropertyType_METALLIC,
+			flat::ShaderPropertyType_ROUGHNESS,
+			flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+			flat::ShaderPropertyType_HEIGHT,
+			flat::ShaderPropertyType_ANISOTROPY,
+			flat::ShaderPropertyType_DETAIL,
+
+			flat::ShaderPropertyType_CLEAR_COAT,
+			flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+			flat::ShaderPropertyType_CLEAR_COAT_NORMAL
+
+			//@TODO(Serge): we have more property types but I don't think they are supported atm
+			//eg. SHEEN_COLOR, SHEEN_ROUGHNESS, BENT_NORMAL, ANISOTROPY_DIRECTION
+		};
+
+		static const std::vector<flat::ShaderPropertyType> s_boolPropertyTypes = {
+			flat::ShaderPropertyType_DOUBLE_SIDED
+		};
 
 		ImGui::SetNextWindowContentSize(ImVec2(CONTENT_WIDTH, CONTENT_HEIGHT));
 
@@ -1171,54 +1220,10 @@ namespace r2::edit
 			//@TODO(Serge): implement shader params
 			//for now just implement the ones we care about - float params, color params and texture params
 
-			static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
-			static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
-			static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
-			static const char* const* s_magTextureFilterStrings = flat::EnumNamesMagTextureFilter();
-			static const char* const* s_textureWrapModeStrings = flat::EnumNamesTextureWrapMode();
-
-			static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
-				flat::ShaderPropertyType_ROUGHNESS,
-				flat::ShaderPropertyType_METALLIC,
-				flat::ShaderPropertyType_REFLECTANCE,
-				flat::ShaderPropertyType_AMBIENT_OCCLUSION,
-				flat::ShaderPropertyType_CLEAR_COAT,
-				flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
-				flat::ShaderPropertyType_HEIGHT_SCALE,
-				flat::ShaderPropertyType_ANISOTROPY
-			};
-
-			static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
-				flat::ShaderPropertyType_ALBEDO,
-				flat::ShaderPropertyType_EMISSION,
-				flat::ShaderPropertyType_DETAIL
-			};
-
-			static const std::vector<flat::ShaderPropertyType> s_texturePropertyTypes = {
-				flat::ShaderPropertyType_ALBEDO,
-				flat::ShaderPropertyType_NORMAL,
-				flat::ShaderPropertyType_EMISSION,
-				flat::ShaderPropertyType_METALLIC,
-				flat::ShaderPropertyType_ROUGHNESS,
-				flat::ShaderPropertyType_AMBIENT_OCCLUSION,
-				flat::ShaderPropertyType_HEIGHT,
-				flat::ShaderPropertyType_ANISOTROPY,
-				flat::ShaderPropertyType_DETAIL,
-				
-				flat::ShaderPropertyType_CLEAR_COAT,
-				flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
-				flat::ShaderPropertyType_CLEAR_COAT_NORMAL
-
-				//@TODO(Serge): we have more property types but I don't think they are supported atm
-				//eg. SHEEN_COLOR, SHEEN_ROUGHNESS, BENT_NORMAL, ANISOTROPY_DIRECTION
-			};
-
-			static const std::vector<flat::ShaderPropertyType> s_boolPropertyTypes = {
-				flat::ShaderPropertyType_DOUBLE_SIDED
-			};
-
 			if (ImGui::CollapsingHeader("Float Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
+				int floatParamToRemove = -1;
+
 				for (size_t i = 0; i < foundMaterial->shaderParams.floatParams.size(); ++i)
 				{
 					auto& floatParam = foundMaterial->shaderParams.floatParams.at(i);
@@ -1231,7 +1236,9 @@ namespace r2::edit
 						ImGui::SameLine();
 						if (ImGui::SmallButton("Remove"))
 						{
-
+							floatParamToRemove = static_cast<int>(i);
+							ImGui::TreePop();
+							break;
 						}
 
 						ImGui::Text("Value: ");
@@ -1242,6 +1249,11 @@ namespace r2::edit
 
 						ImGui::TreePop();
 					}
+				}
+
+				if (floatParamToRemove != -1)
+				{
+					foundMaterial->shaderParams.floatParams.erase(foundMaterial->shaderParams.floatParams.begin() + floatParamToRemove);
 				}
 
 				std::vector<flat::ShaderPropertyType> availableFloatProperties;
@@ -1313,6 +1325,8 @@ namespace r2::edit
 			//Color Params
 			if (ImGui::CollapsingHeader("Color Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
+				int paramToRemove = -1;
+
 				for (size_t i = 0; i < foundMaterial->shaderParams.colorParams.size(); ++i)
 				{
 					auto& colorParam = foundMaterial->shaderParams.colorParams.at(i);
@@ -1325,7 +1339,9 @@ namespace r2::edit
 						ImGui::SameLine();
 						if (ImGui::SmallButton("Remove"))
 						{
-
+							paramToRemove = static_cast<int>(i);
+							ImGui::TreePop();
+							break;
 						}
 
 						ImGui::Text("Value: ");
@@ -1337,6 +1353,11 @@ namespace r2::edit
 
 						ImGui::TreePop();
 					}
+				}
+
+				if (paramToRemove != -1)
+				{
+					foundMaterial->shaderParams.colorParams.erase(foundMaterial->shaderParams.colorParams.begin() + paramToRemove);
 				}
 
 				std::vector<flat::ShaderPropertyType> availableColorProperties;
@@ -1406,12 +1427,14 @@ namespace r2::edit
 
 			if (ImGui::CollapsingHeader("Texture Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
+				int paramToRemove = -1;
+				char textureName[r2::fs::FILE_PATH_LENGTH];
+
 				for (size_t i = 0; i < foundMaterial->shaderParams.textureParams.size(); ++i)
 				{
 					
 					const std::string I_STRING = std::to_string(i);
 
-					//@TODO(Serge): put in tree node
 					auto& textureParam = foundMaterial->shaderParams.textureParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[textureParam.propertyType];
@@ -1422,7 +1445,9 @@ namespace r2::edit
 						ImGui::SameLine();
 						if (ImGui::SmallButton("Remove"))
 						{
-
+							paramToRemove = static_cast<int>(i);
+							ImGui::TreePop();
+							break;
 						}
 
 						ImGui::Text("Value: ");
@@ -1430,11 +1455,29 @@ namespace r2::edit
 
 						std::string textureInputValueLabel = std::string("##label textureinputvalue") + std::string(propertyType);
 
-						if (ImGui::BeginCombo(textureInputValueLabel.c_str(), "Texture Name here"))
+						//@NOTE(Serge): for now we don't want to list all our textures, just show what the texture is
+						//@TODO(Serge): be able to modify this later
+						r2::asset::AssetHandle textureAssetHandle = { textureParam.value, gameAssetManager.GetAssetCacheSlot() };
+						const r2::asset::AssetFile* assetFile = gameAssetManager.GetAssetFile(textureAssetHandle);
+						if (assetFile)
 						{
-							//@TODO(Serge): how do we fill this?
-							ImGui::EndCombo();
+							const char* textureAssetFilePath = assetFile->FilePath();
+
+							r2::fs::utils::CopyFileNameWithParentDirectories(textureAssetFilePath, textureName, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
 						}
+						else
+						{
+							r2::util::PathCpy(textureName, "");
+						}
+
+						ImGui::Text(textureName);
+
+						//if (ImGui::BeginCombo(textureInputValueLabel.c_str(), "Texture Name here"))
+						//{
+						//	
+						//	//@TODO(Serge): how do we fill this?
+						//	ImGui::EndCombo();
+						//}
 
 						//@NOTE(Serge): this should change with the texture you set above
 						std::string texturePackName = std::string("Texture Pack: ") + textureParam.texturePackNameString;
@@ -1544,10 +1587,12 @@ namespace r2::edit
 
 						ImGui::TreePop();
 					}
-
-					
 				}
 
+				if (paramToRemove != -1)
+				{
+					foundMaterial->shaderParams.textureParams.erase(foundMaterial->shaderParams.textureParams.begin() + paramToRemove);
+				}
 
 				std::vector<flat::ShaderPropertyType> availableTextureProperties;
 
@@ -1628,6 +1673,8 @@ namespace r2::edit
 			//add bool param for double sided
 			if (ImGui::CollapsingHeader("Bool Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
+				int paramToRemove = -1;
+
 				for (size_t i = 0; i < foundMaterial->shaderParams.boolParams.size(); ++i)
 				{
 					auto& boolParam = foundMaterial->shaderParams.boolParams.at(i);
@@ -1640,12 +1687,19 @@ namespace r2::edit
 						ImGui::SameLine();
 						if (ImGui::SmallButton("Remove"))
 						{
-
+							paramToRemove = static_cast<int>(i);
+							ImGui::TreePop();
+							break;
 						}
 
 						ImGui::Checkbox(propertyType, &boolParam.value);
 						ImGui::TreePop();
 					}
+				}
+
+				if (paramToRemove != -1)
+				{
+					foundMaterial->shaderParams.boolParams.erase(foundMaterial->shaderParams.boolParams.begin() + paramToRemove);
 				}
 
 				std::vector<flat::ShaderPropertyType> availableBoolProperties;
