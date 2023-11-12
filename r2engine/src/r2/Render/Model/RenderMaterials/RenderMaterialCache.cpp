@@ -669,6 +669,14 @@ namespace r2::draw::rmat
 			{
 				gpuRenderMaterial->albedo.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
 			}
+			if (colorParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_EMISSION)
+			{
+				gpuRenderMaterial->emission.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
+			}
+			if (colorParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_DETAIL)
+			{
+				gpuRenderMaterial->detail.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
+			}
 		}
 
 		for (flatbuffers::uoffset_t i = 0; i < shaderParams->floatParams()->size(); ++i)
@@ -713,6 +721,11 @@ namespace r2::draw::rmat
 			if (floatParam->propertyType() == flat::ShaderPropertyType_HEIGHT_SCALE)
 			{
 				gpuRenderMaterial->heightScale = floatParam->value();
+			}
+
+			if (floatParam->propertyType() == flat::ShaderPropertyType_EMISSION_STRENGTH)
+			{
+				gpuRenderMaterial->emissionStrength = floatParam->value();
 			}
 		}
 

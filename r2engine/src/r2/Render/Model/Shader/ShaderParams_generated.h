@@ -165,11 +165,12 @@ enum ShaderPropertyType {
   ShaderPropertyType_SHADER = 19,
   ShaderPropertyType_SHADER_DEFINE = 20,
   ShaderPropertyType_SHADER_MATERIAL_FUNCTION = 21,
+  ShaderPropertyType_EMISSION_STRENGTH = 22,
   ShaderPropertyType_MIN = ShaderPropertyType_ALBEDO,
-  ShaderPropertyType_MAX = ShaderPropertyType_SHADER_MATERIAL_FUNCTION
+  ShaderPropertyType_MAX = ShaderPropertyType_EMISSION_STRENGTH
 };
 
-inline const ShaderPropertyType (&EnumValuesShaderPropertyType())[22] {
+inline const ShaderPropertyType (&EnumValuesShaderPropertyType())[23] {
   static const ShaderPropertyType values[] = {
     ShaderPropertyType_ALBEDO,
     ShaderPropertyType_NORMAL,
@@ -192,13 +193,14 @@ inline const ShaderPropertyType (&EnumValuesShaderPropertyType())[22] {
     ShaderPropertyType_DOUBLE_SIDED,
     ShaderPropertyType_SHADER,
     ShaderPropertyType_SHADER_DEFINE,
-    ShaderPropertyType_SHADER_MATERIAL_FUNCTION
+    ShaderPropertyType_SHADER_MATERIAL_FUNCTION,
+    ShaderPropertyType_EMISSION_STRENGTH
   };
   return values;
 }
 
 inline const char * const *EnumNamesShaderPropertyType() {
-  static const char * const names[23] = {
+  static const char * const names[24] = {
     "ALBEDO",
     "NORMAL",
     "EMISSION",
@@ -221,13 +223,14 @@ inline const char * const *EnumNamesShaderPropertyType() {
     "SHADER",
     "SHADER_DEFINE",
     "SHADER_MATERIAL_FUNCTION",
+    "EMISSION_STRENGTH",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameShaderPropertyType(ShaderPropertyType e) {
-  if (flatbuffers::IsOutRange(e, ShaderPropertyType_ALBEDO, ShaderPropertyType_SHADER_MATERIAL_FUNCTION)) return "";
+  if (flatbuffers::IsOutRange(e, ShaderPropertyType_ALBEDO, ShaderPropertyType_EMISSION_STRENGTH)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesShaderPropertyType()[index];
 }

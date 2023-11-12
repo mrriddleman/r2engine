@@ -285,7 +285,7 @@ void DefaultWorldMaterialFunction(
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
 
 
 
@@ -369,7 +369,7 @@ void DefaultCharacterMaterialFunction(
 
 //	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
 
 	DefaultBRDFInputNoClearCoatNoAnisotropy(
 		baseColor,
@@ -445,7 +445,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
 
 	DefaultBRDFInputWithClearCoat(
 		baseColor,
@@ -523,7 +523,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	//float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
 
 
 	DefaultBRDFInputWithAnisotropy(
@@ -601,7 +601,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 //	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
 
 	DefaultBRDFInputWithAnisotropy(
 		baseColor,

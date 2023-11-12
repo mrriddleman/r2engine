@@ -28,7 +28,7 @@ struct Material
 	int 	doubleSided;
 	float 	heightScale;
 	float	reflectance;
-	int 	padding;
+	float 	emissionStrength;
 };
 
 layout (std430, binding = 1) buffer Materials

@@ -1141,7 +1141,9 @@ namespace r2::edit
 			flat::ShaderPropertyType_CLEAR_COAT,
 			flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
 			flat::ShaderPropertyType_HEIGHT_SCALE,
-			flat::ShaderPropertyType_ANISOTROPY
+			flat::ShaderPropertyType_ANISOTROPY,
+			flat::ShaderPropertyType_EMISSION_STRENGTH
+			
 		};
 
 		static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
@@ -1248,17 +1250,17 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[floatParam.propertyType];
 
+					std::string floatShaderParamsID = "floatshaderparam:" + std::to_string(i);
+					ImGui::PushID(floatShaderParamsID.c_str());
 					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
 					
 					ImGui::PushItemWidth(50);
 					ImGui::SameLine(size.x - 50);
-					ImGui::PushID(i);
+					
 					if (ImGui::SmallButton("Remove"))
 					{
 						paramToRemove = static_cast<int>(i);
-						ImGui::PopItemWidth();
-						ImGui::PopID();
-						break;
+						open = false;
 					}
 					ImGui::PopItemWidth();
 
@@ -1370,19 +1372,19 @@ namespace r2::edit
 					auto& colorParam = foundMaterial->shaderParams.colorParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[colorParam.propertyType];
-
+					std::string colorShaderParamsID = "colorshaderparam:" + std::to_string(i);
+					ImGui::PushID(colorShaderParamsID.c_str());
 
 					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
 
+					
 					ImGui::PushItemWidth(50);
 					ImGui::SameLine(size.x - 50);
-					ImGui::PushID(i);
+					
 					if (ImGui::SmallButton("Remove"))
 					{
 						paramToRemove = static_cast<int>(i);
-						ImGui::PopItemWidth();
-						ImGui::PopID();
-						break;
+						open = false;
 					}
 					ImGui::PopItemWidth();
 
@@ -1493,19 +1495,19 @@ namespace r2::edit
 					auto& textureParam = foundMaterial->shaderParams.textureParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[textureParam.propertyType];
-
+					std::string textureShaderParamsID = "textureshaderparam:" + I_STRING;
+					ImGui::PushID(textureShaderParamsID.c_str());
 
 					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
-
+					
+					
 					ImGui::PushItemWidth(50);
 					ImGui::SameLine(size.x - 50);
-					ImGui::PushID(i);
+					
 					if (ImGui::SmallButton("Remove"))
 					{
 						paramToRemove = static_cast<int>(i);
-						ImGui::PopItemWidth();
-						ImGui::PopID();
-						break;
+						open = false;
 					}
 					ImGui::PopItemWidth();
 
@@ -1757,17 +1759,17 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[boolParam.propertyType];
 
+					std::string boolShaderParamsID = "boolshaderparam:" + std::to_string(i);
+					ImGui::PushID(boolShaderParamsID.c_str());
 					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
-					ImGui::PushID(i);
+					
 					ImGui::PushItemWidth(50);
 					ImGui::SameLine(size.x - 50);
 
 					if (ImGui::SmallButton("Remove"))
 					{
 						paramToRemove = static_cast<int>(i);
-						ImGui::PopItemWidth();
-						ImGui::PopID();
-						break;
+						open = false;
 					}
 					
 					ImGui::PopItemWidth();

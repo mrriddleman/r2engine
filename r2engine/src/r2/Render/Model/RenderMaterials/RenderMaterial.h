@@ -32,7 +32,7 @@ namespace r2::draw
 		b32 doubleSided = false;
 		f32 heightScale = 0.0f;
 		f32 reflectance = 0.0f;
-		s32 padding = 0;
+		f32 emissionStrength = 0;
 	};
 	
 }

@@ -50,7 +50,8 @@ enum ShaderPropertyType: uint16
 	DOUBLE_SIDED,
 	SHADER,
 	SHADER_DEFINE,
-	SHADER_MATERIAL_FUNCTION
+	SHADER_MATERIAL_FUNCTION,
+	EMISSION_STRENGTH
 }
 
 enum ShaderPropertyPackingType : int8
