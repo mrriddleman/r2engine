@@ -1122,11 +1122,11 @@ namespace r2::edit
 		}
 
 		R2_CHECK(foundMaterial != nullptr, "Should always be the case");
-
-		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
+		
 		static float CONTENT_WIDTH = 600;
 		static float CONTENT_HEIGHT = 1000;
-
+		
+		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
 		static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
 		static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
 		static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
@@ -1187,10 +1187,13 @@ namespace r2::edit
 			//Or we would have to change how MaterialName works in that everyone only have a reference to it - too much work for now
 			//The other way to solve it is generate a GUID for each material made (and pack probably) and use that as the reference - not the name itself (https://github.com/graeme-hill/crossguid)
 			std::string materialNameLabel = std::string("Material Name: ") + foundMaterial->stringName;
+			ImVec2 size = ImGui::GetContentRegionAvail();
 
 			ImGui::Text(materialNameLabel.c_str());
 			ImGui::PushItemWidth(CONTENT_WIDTH / 3);
-			ImGui::SameLine();
+
+			ImGui::SameLine(size.x - (CONTENT_WIDTH / 3));
+
 			if (ImGui::Button("Save"))
 			{
 				materialManifestFile->SaveManifest();
@@ -1237,7 +1240,7 @@ namespace r2::edit
 			}
 
 			//@TODO(Serge): implement shader params
-			//for now just implement the ones we care about - float params, color params and texture params
+			//for now just implement the ones we care about - float params, color params, bool params and texture params
 
 			if (ImGui::CollapsingHeader("Float Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
