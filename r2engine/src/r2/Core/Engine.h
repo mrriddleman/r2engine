@@ -254,11 +254,18 @@ namespace r2
             const std::vector<std::string>& appTexturePacksManifestPaths,
             const char* soundDefinitionPath
 #ifdef R2_ASSET_PIPELINE
-            , const char* rawEnginMaterialsPath
+            , const char* rawEngineMaterialsPath
             , const std::vector<std::string>& rawAppMaterialPacksManifests
 			, const char* rawEngineTexturePacksManifestPath
 			, const std::vector<std::string>& rawAppTexturePacksManifestPaths
 			, const char* rawSoundDefinitionPath
+
+            , const char* rawEngineMaterialsWatchPath
+			, const std::vector<std::string>& rawAppMaterialWatchPaths
+			, const char* rawEngineTexturePacksWatchPath
+			, const std::vector<std::string>& rawAppTexturePacksWatchPaths
+			, const char* rawSoundDefinitionWatchPath
+
 #endif
         );
 

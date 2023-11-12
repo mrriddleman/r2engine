@@ -553,28 +553,28 @@ namespace r2::asset::lib
         return zipAssetFile;
     }
     
-    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, r2::asset::AssetType assetType)
+    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
     {
         ManifestSingleAssetFile* manifestFile = ALLOC(ManifestSingleAssetFile, *s_arenaPtr);
 
-        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, assetType);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, assetType);
         R2_CHECK(result, "Failed to initialize the ManifestSingleAssetFile");
         return manifestFile;
     }
 
-    ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath)
+    ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
     {
         TexturePackManifestAssetFile* manifestFile = ALLOC(TexturePackManifestAssetFile, *s_arenaPtr);
 
-		bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, r2::asset::TEXTURE_PACK_MANIFEST);
+		bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::TEXTURE_PACK_MANIFEST);
 		R2_CHECK(result, "Failed to initialize the TexturePackManifestAssetFile");
 		return manifestFile;
     }
 
-    ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath)
+    ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
     {
         MaterialManifestAssetFile* manifestFile = ALLOC(MaterialManifestAssetFile, *s_arenaPtr);
-        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, r2::asset::MATERIAL_PACK_MANIFEST);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::MATERIAL_PACK_MANIFEST);
         R2_CHECK(result, "Failed to initialize the MaterialManifestAssetFile");
         return manifestFile;
     }

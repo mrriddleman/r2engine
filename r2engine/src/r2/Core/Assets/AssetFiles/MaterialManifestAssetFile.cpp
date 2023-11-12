@@ -11,7 +11,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
-
+#include <filesystem>
 #endif
 
 
@@ -29,13 +29,13 @@ namespace r2::asset
 
 	}
 
-	bool MaterialManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, r2::asset::AssetType assetType)
+	bool MaterialManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
 	{
 		mnoptrAssetCache = noptrAssetCache;
 		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
 		mAssetType = assetType;
 		r2::util::PathCpy(mRawPath, rawPath);
-
+		r2::util::PathCpy(mWatchPath, watchPath);
 		return mManifestAssetFile != nullptr;
 	}
 

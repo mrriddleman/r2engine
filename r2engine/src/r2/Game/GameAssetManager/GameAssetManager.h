@@ -203,8 +203,11 @@ namespace r2
 		
 		bool UnloadTexturePack(u64 texturePackName);
 
-		bool GetTexturesForMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+		
+		bool GetTexturesForFlatMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 		bool GetTexturesForMaterialPack(const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+
+		
 
 		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);
 		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);

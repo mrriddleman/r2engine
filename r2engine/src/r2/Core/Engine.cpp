@@ -205,10 +205,11 @@ namespace r2
             std::vector<asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> generateMaterialPackFuncs;
 
            std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
+           std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
 			//Material pack command data
             {
 				//for the engine
-				std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
+				
 				std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
 
 			//	std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
@@ -289,9 +290,11 @@ namespace r2
             std::vector<std::string> textureOutputPaths;
             std::string engineRawTextureManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.json");
             //Texture pack command
+            
+            std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
             {
 				//for the engine
-				std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
+				
 				
 				std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
 
@@ -441,6 +444,12 @@ namespace r2
                 , engineRawTextureManifestPath.c_str()
                 , noptrApp->GetTexturePackManifestsRawPaths()
                 , noptrApp->GetRawSoundDefinitionsPath().c_str()
+
+                , engineMaterialPackDirRaw.c_str()
+                , noptrApp->GetMaterialPacksWatchPaths()
+                , engineTexturePackDir.c_str()
+                , noptrApp->GetTexturePacksWatchPaths()
+                , noptrApp->GetSoundDirectoryWatchPaths().at(0).c_str()
 #endif
             );
 
@@ -1224,20 +1233,26 @@ namespace r2
 		const std::vector<std::string>& appTexturePacksManifestPaths,
         const char* soundDefinitionPath
 #ifdef R2_ASSET_PIPELINE
-		, const char* rawEnginMaterialsPath
+		, const char* rawEngineMaterialsPath
 		, const std::vector<std::string>& rawAppMaterialPacksManifests
 		, const char* rawEngineTexturePacksManifestPath
 		, const std::vector<std::string>& rawAppTexturePacksManifestPaths
 		, const char* rawSoundDefinitionPath
+
+		, const char* rawEngineMaterialsWatchPath
+		, const std::vector<std::string>& rawAppMaterialWatchPaths
+		, const char* rawEngineTexturePacksWatchPath
+		, const std::vector<std::string>& rawAppTexturePacksWatchPaths
+		, const char* rawSoundDefinitionWatchPath
 #endif
     )
     {
 
         //@TODO(Serge): clean up this engine function - so bad!
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, rawEnginMaterialsPath);
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, rawEngineMaterialsPath, rawEngineMaterialsWatchPath);
 #else
-        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, "");
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, "", "");
 #endif
 
 #ifdef R2_ASSET_PIPELINE
@@ -1249,9 +1264,9 @@ namespace r2
         for (const std::string& manifestPath : appMaterialPacksManifests )
         {
 #ifdef R2_ASSET_PIPELINE
-            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, manifestPath.c_str(), rawAppMaterialPacksManifests[i].c_str());
+            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, manifestPath.c_str(), rawAppMaterialPacksManifests[i].c_str(), rawAppMaterialWatchPaths[i].c_str());
 #else
-            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, manifestPath.c_str(), "");
+            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, manifestPath.c_str(), "", "");
 #endif
 
 #ifdef R2_ASSET_PIPELINE
@@ -1264,9 +1279,9 @@ namespace r2
         i = 0;
 
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, engineTexturePacksManifestPath, rawEngineTexturePacksManifestPath);
+        r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, engineTexturePacksManifestPath, rawEngineTexturePacksManifestPath, rawEngineTexturePacksWatchPath);
 #else
-        r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, engineTexturePacksManifestPath, "");
+        r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, engineTexturePacksManifestPath, "", "");
 #endif
         
 #ifdef R2_ASSET_PIPELINE
@@ -1277,9 +1292,9 @@ namespace r2
         for (const std::string& manifestPath : appTexturePacksManifestPaths)
         {
 #ifdef R2_ASSET_PIPELINE
-            r2::asset::ManifestAssetFile* appTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, manifestPath.c_str(), rawAppTexturePacksManifestPaths[i].c_str());
+            r2::asset::ManifestAssetFile* appTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, manifestPath.c_str(), rawAppTexturePacksManifestPaths[i].c_str(), rawAppTexturePacksWatchPaths[i].c_str());
 #else
-            r2::asset::ManifestAssetFile* appTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, manifestPath.c_str(), "");
+            r2::asset::ManifestAssetFile* appTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(*mAssetLib, manifestPath.c_str(), "", "");
 #endif
 
 #ifdef R2_ASSET_PIPELINE
@@ -1290,9 +1305,9 @@ namespace r2
         }
 
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, rawSoundDefinitionPath, r2::asset::SOUND_DEFINTION);
+        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, rawSoundDefinitionPath, rawSoundDefinitionWatchPath, r2::asset::SOUND_DEFINTION);
 #else
-        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, "", r2::asset::SOUND_DEFINTION);
+        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, "", "", r2::asset::SOUND_DEFINTION);
 #endif
 
 #ifdef R2_ASSET_PIPELINE

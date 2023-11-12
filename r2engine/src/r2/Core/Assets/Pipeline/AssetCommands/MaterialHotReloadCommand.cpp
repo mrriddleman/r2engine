@@ -163,7 +163,7 @@ namespace r2::asset::pln
 
 			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
 			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
-			bool result = gameAssetManager.GetTexturesForMaterial(foundMaterial, textures, cubemaps);
+			bool result = gameAssetManager.GetTexturesForFlatMaterial(foundMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");
 
 			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;

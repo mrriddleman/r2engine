@@ -23,7 +23,7 @@ namespace r2::asset
 		TexturePackManifestAssetFile();
 		~TexturePackManifestAssetFile();
 
-		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, r2::asset::AssetType assetType) override;
+		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) override;
 		virtual r2::asset::AssetType GetAssetType() const override;
 		virtual void Shutdown() override;
 

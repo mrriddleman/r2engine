@@ -50,6 +50,7 @@ namespace r2::draw::rmat
 	RenderMaterialCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numMaterials, const char* areaName);
 	void Shutdown(RenderMaterialCache* cache);
 
+	//@TODO(Serge): remove the textures and cubemapTexture from here - we shouldn't even need to look it up from the GameAssetManager, we should just get the textures from the material itself
 	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload);
 	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialPack* materialPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures);
 

@@ -22,6 +22,7 @@ namespace r2::mat
 
 	void MakeMaterialFromFlatMaterial(u64 materialPackName, const flat::Material* flatMaterial, Material& outMaterial);
 
+	const flat::Material* MakeFlatMaterialFromMaterial(flatbuffers::FlatBufferBuilder& builder, const Material& material);
 }
 
 #endif

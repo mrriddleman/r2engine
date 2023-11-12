@@ -170,7 +170,7 @@ namespace r2::asset::pln
 
 			for (const flat::Material* material : materialsToReload)
 			{
-				bool result = gameAssetManager.GetTexturesForMaterial(material, textures, cubemaps);
+				bool result = gameAssetManager.GetTexturesForFlatMaterial(material, textures, cubemaps);
 				R2_CHECK(result, "Should never be false");
 
 				r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;

@@ -361,7 +361,7 @@ namespace r2
 		}
 	}
 
-	bool GameAssetManager::GetTexturesForMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	bool GameAssetManager::GetTexturesForFlatMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
 	{
 		//for this method specifically, we only want to get the specific textures of this material, no others from the packs
 		if (material == nullptr)

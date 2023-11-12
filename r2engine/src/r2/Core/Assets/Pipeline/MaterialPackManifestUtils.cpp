@@ -250,8 +250,6 @@ namespace r2::asset::pln
 		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binPath.parent_path().string(), materialPackManifestSchemaPath, jsonPath.string());
 
 		return generatedJSON && generatedBinary;
-
-		return false;
 	}
 	
 	//bool GenerateMaterialFromOldMaterialParamsPack(const flat::MaterialParams* const materialParamsData, const std::string& pathOfSource, const std::string& outputDir)

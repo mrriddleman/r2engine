@@ -116,9 +116,9 @@ namespace r2::asset::lib
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     ZipAssetFile* MakeZipAssetFile(const char* path);  
-    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, r2::asset::AssetType assetType);
-    ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath);
-    ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath);
+    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType);
+    ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
+    ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
 
     FileList MakeFileList(u64 capacity);
     

@@ -485,7 +485,7 @@ namespace r2
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
 				const flat::Material* material = r2::sarr::At(*materialsToLoad, i);
-				bool result = gameAssetManager.GetTexturesForMaterial(material, gameTextures, gameCubemaps);
+				bool result = gameAssetManager.GetTexturesForFlatMaterial(material, gameTextures, gameCubemaps);
 				R2_CHECK(result, "Should always work");
 
 				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;

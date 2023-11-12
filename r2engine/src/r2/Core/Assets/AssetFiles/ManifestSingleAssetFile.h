@@ -13,7 +13,7 @@ namespace r2::asset
 		ManifestSingleAssetFile();
 		~ManifestSingleAssetFile();
 
-		virtual bool Init(AssetCache* noptrAssetCache, const char* binpath, const char* rawPath, r2::asset::AssetType assetType) override;
+		virtual bool Init(AssetCache* noptrAssetCache, const char* binpath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) override;
 		virtual void Shutdown() override;
 
 		virtual r2::asset::AssetType GetAssetType() const override;

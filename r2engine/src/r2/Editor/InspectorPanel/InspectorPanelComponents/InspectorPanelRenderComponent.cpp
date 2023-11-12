@@ -1175,6 +1175,8 @@ namespace r2::edit
 
 		ImGui::SetNextWindowContentSize(ImVec2(CONTENT_WIDTH, CONTENT_HEIGHT));
 
+		bool hasMaterialChanged = false;
+
 		if (ImGui::Begin("Material Editor", &windowOpen))
 		{
 			//We can't change the material name after the fact right now since certain objects (Level files, models etc) hold on to
@@ -1185,12 +1187,27 @@ namespace r2::edit
 			std::string materialNameLabel = std::string("Material Name: ") + foundMaterial->stringName;
 
 			ImGui::Text(materialNameLabel.c_str());
+			ImGui::PushItemWidth(CONTENT_WIDTH / 3);
+			ImGui::SameLine();
+			if (ImGui::Button("Save"))
+			{
+				materialManifestFile->SaveManifest();
+			}
+
+			ImGui::PopItemWidth();
 
 			int transparencyType = foundMaterial->transparencyType;
 
 			ImGui::Text("Transparency:");
-			ImGui::RadioButton("Opaque", &transparencyType, flat::eTransparencyType_OPAQUE);
-			ImGui::RadioButton("Transparent", &transparencyType, flat::eTransparencyType_TRANSPARENT);
+
+			if (ImGui::RadioButton("Opaque", &transparencyType, flat::eTransparencyType_OPAQUE))
+			{
+				hasMaterialChanged = true;
+			}
+			if (ImGui::RadioButton("Transparent", &transparencyType, flat::eTransparencyType_TRANSPARENT))
+			{
+				hasMaterialChanged = true;
+			}
 
 			foundMaterial->transparencyType = static_cast<flat::eTransparencyType>(transparencyType);
 
@@ -1222,7 +1239,8 @@ namespace r2::edit
 
 			if (ImGui::CollapsingHeader("Float Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
-				int floatParamToRemove = -1;
+				int paramToRemove = -1;
+				ImVec2 size = ImGui::GetContentRegionAvail();
 
 				for (size_t i = 0; i < foundMaterial->shaderParams.floatParams.size(); ++i)
 				{
@@ -1230,30 +1248,47 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[floatParam.propertyType];
 
-					if (ImGui::TreeNode(propertyType))
+					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
+					
+					ImGui::PushItemWidth(50);
+					ImGui::SameLine(size.x - 50);
+					ImGui::PushID(i);
+					if (ImGui::SmallButton("Remove"))
+					{
+						paramToRemove = static_cast<int>(i);
+						ImGui::PopItemWidth();
+						ImGui::PopID();
+						break;
+					}
+					ImGui::PopItemWidth();
+
+					if (open)
 					{
 						ImGui::Text("Property Type: %s", propertyType);
 						ImGui::SameLine();
-						if (ImGui::SmallButton("Remove"))
-						{
-							floatParamToRemove = static_cast<int>(i);
-							ImGui::TreePop();
-							break;
-						}
+
 
 						ImGui::Text("Value: ");
 						ImGui::SameLine();
 
 						std::string floatInputValueLabel = std::string("##label floatinputvalue") + std::string(propertyType);
-						ImGui::InputFloat(floatInputValueLabel.c_str(), &floatParam.value);
+						if (ImGui::InputFloat(floatInputValueLabel.c_str(), &floatParam.value))
+						{
+							hasMaterialChanged = true;
+						}
 
 						ImGui::TreePop();
 					}
+						
+					ImGui::PopID();
+
+					
 				}
 
-				if (floatParamToRemove != -1)
+				if (paramToRemove != -1)
 				{
-					foundMaterial->shaderParams.floatParams.erase(foundMaterial->shaderParams.floatParams.begin() + floatParamToRemove);
+					foundMaterial->shaderParams.floatParams.erase(foundMaterial->shaderParams.floatParams.begin() + paramToRemove);
+					hasMaterialChanged = true;
 				}
 
 				std::vector<flat::ShaderPropertyType> availableFloatProperties;
@@ -1292,6 +1327,7 @@ namespace r2::edit
 						if (ImGui::Selectable(s_shaderPropertyTypeStrings[availableFloatProperties[i]], floatPropertyTypeToAdd == availableFloatProperties[i]))
 						{
 							floatPropertyTypeToAdd = availableFloatProperties[i];
+							
 						}
 					}
 
@@ -1313,6 +1349,7 @@ namespace r2::edit
 					newFloatParam.propertyType = floatPropertyTypeToAdd;
 					newFloatParam.value = 0.0f;
 					foundMaterial->shaderParams.floatParams.push_back(newFloatParam);
+					hasMaterialChanged = true;
 				}
 
 				if (disableAddNewFloatProperty)
@@ -1326,6 +1363,7 @@ namespace r2::edit
 			if (ImGui::CollapsingHeader("Color Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
 				int paramToRemove = -1;
+				auto size = ImGui::GetContentRegionAvail();
 
 				for (size_t i = 0; i < foundMaterial->shaderParams.colorParams.size(); ++i)
 				{
@@ -1333,31 +1371,46 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[colorParam.propertyType];
 
-					if (ImGui::TreeNode(propertyType))
+
+					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
+
+					ImGui::PushItemWidth(50);
+					ImGui::SameLine(size.x - 50);
+					ImGui::PushID(i);
+					if (ImGui::SmallButton("Remove"))
+					{
+						paramToRemove = static_cast<int>(i);
+						ImGui::PopItemWidth();
+						ImGui::PopID();
+						break;
+					}
+					ImGui::PopItemWidth();
+
+					if (open)
 					{
 						ImGui::Text("Property Type: %s", propertyType);
-						ImGui::SameLine();
-						if (ImGui::SmallButton("Remove"))
-						{
-							paramToRemove = static_cast<int>(i);
-							ImGui::TreePop();
-							break;
-						}
 
 						ImGui::Text("Value: ");
 						ImGui::SameLine();
 
 						std::string colorInputValueLabel = std::string("##label colorinputvalue") + std::string(propertyType);
 
-						ImGui::ColorEdit4(colorInputValueLabel.c_str(), glm::value_ptr(colorParam.value));
+						if (ImGui::ColorEdit4(colorInputValueLabel.c_str(), glm::value_ptr(colorParam.value)))
+						{
+							hasMaterialChanged = true;
+						}
 
 						ImGui::TreePop();
 					}
+
+					ImGui::PopID();
+						
 				}
 
 				if (paramToRemove != -1)
 				{
 					foundMaterial->shaderParams.colorParams.erase(foundMaterial->shaderParams.colorParams.begin() + paramToRemove);
+					hasMaterialChanged = true;
 				}
 
 				std::vector<flat::ShaderPropertyType> availableColorProperties;
@@ -1416,6 +1469,7 @@ namespace r2::edit
 					newColorParam.propertyType = colorPropertyTypeToAdd;
 					newColorParam.value = glm::vec4(0, 0, 0, 1);
 					foundMaterial->shaderParams.colorParams.push_back(newColorParam);
+					hasMaterialChanged = true;
 				}
 
 				if (disableAddNewColorProperty)
@@ -1429,6 +1483,7 @@ namespace r2::edit
 			{
 				int paramToRemove = -1;
 				char textureName[r2::fs::FILE_PATH_LENGTH];
+				ImVec2 size = ImGui::GetContentRegionAvail();
 
 				for (size_t i = 0; i < foundMaterial->shaderParams.textureParams.size(); ++i)
 				{
@@ -1439,16 +1494,24 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[textureParam.propertyType];
 
-					if (ImGui::TreeNode(propertyType))
+
+					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
+
+					ImGui::PushItemWidth(50);
+					ImGui::SameLine(size.x - 50);
+					ImGui::PushID(i);
+					if (ImGui::SmallButton("Remove"))
+					{
+						paramToRemove = static_cast<int>(i);
+						ImGui::PopItemWidth();
+						ImGui::PopID();
+						break;
+					}
+					ImGui::PopItemWidth();
+
+					if(open)
 					{
 						ImGui::Text("Property Type: %s", propertyType);
-						ImGui::SameLine();
-						if (ImGui::SmallButton("Remove"))
-						{
-							paramToRemove = static_cast<int>(i);
-							ImGui::TreePop();
-							break;
-						}
 
 						ImGui::Text("Value: ");
 						ImGui::SameLine();
@@ -1493,6 +1556,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_texturePackingTypeStrings[pt], pt == textureParam.packingType))
 								{
 									textureParam.packingType = static_cast<flat::ShaderPropertyPackingType>(pt);
+									hasMaterialChanged = true;
 								}
 							}
 
@@ -1510,6 +1574,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_minTextureFilterStrings[mf], mf == textureParam.minFilter))
 								{
 									textureParam.minFilter = static_cast<flat::MinTextureFilter>(mf);
+									hasMaterialChanged = true;
 								}
 							}
 							ImGui::EndCombo();
@@ -1525,6 +1590,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_magTextureFilterStrings[mf], mf == textureParam.magFilter))
 								{
 									textureParam.magFilter = static_cast<flat::MagTextureFilter>(mf);
+									hasMaterialChanged = true;
 								}
 							}
 							ImGui::EndCombo();
@@ -1536,6 +1602,7 @@ namespace r2::edit
 						if (ImGui::DragFloat(anisotropyFilterLabel.c_str(), &textureParam.anisotropicFiltering, 1.0, 0.0, 16.0)) //@TODO(Serge): replace 16 with the max amount for the system
 						{
 							//@TODO(Serge): Update the render material somehow
+							hasMaterialChanged = true;
 						}
 
 						//wrap modes
@@ -1550,6 +1617,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapS))
 								{
 									textureParam.wrapS = static_cast<flat::TextureWrapMode>(wm);
+									hasMaterialChanged = true;
 								}
 							}
 							ImGui::EndCombo();
@@ -1565,6 +1633,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapT))
 								{
 									textureParam.wrapT = static_cast<flat::TextureWrapMode>(wm);
+									hasMaterialChanged = true;
 								}
 							}
 							ImGui::EndCombo();
@@ -1580,6 +1649,7 @@ namespace r2::edit
 								if (ImGui::Selectable(s_textureWrapModeStrings[wm], wm == textureParam.wrapR))
 								{
 									textureParam.wrapR = static_cast<flat::TextureWrapMode>(wm);
+									hasMaterialChanged = true;
 								}
 							}
 							ImGui::EndCombo();
@@ -1587,11 +1657,15 @@ namespace r2::edit
 
 						ImGui::TreePop();
 					}
+
+					
+					ImGui::PopID();
 				}
 
 				if (paramToRemove != -1)
 				{
 					foundMaterial->shaderParams.textureParams.erase(foundMaterial->shaderParams.textureParams.begin() + paramToRemove);
+					hasMaterialChanged = true;
 				}
 
 				std::vector<flat::ShaderPropertyType> availableTextureProperties;
@@ -1661,6 +1735,7 @@ namespace r2::edit
 					newTextureParam.wrapR = flat::TextureWrapMode_REPEAT;
 
 					foundMaterial->shaderParams.textureParams.push_back(newTextureParam);
+					hasMaterialChanged = true;
 				}
 
 				if (disableAddNewTextureProperty)
@@ -1674,6 +1749,7 @@ namespace r2::edit
 			if (ImGui::CollapsingHeader("Bool Shader Params", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
 				int paramToRemove = -1;
+				ImVec2 size = ImGui::GetContentRegionAvail();
 
 				for (size_t i = 0; i < foundMaterial->shaderParams.boolParams.size(); ++i)
 				{
@@ -1681,25 +1757,39 @@ namespace r2::edit
 
 					const char* propertyType = s_shaderPropertyTypeStrings[boolParam.propertyType];
 
-					if (ImGui::TreeNode(propertyType))
+					bool open = ImGui::TreeNodeEx(propertyType, ImGuiTreeNodeFlags_AllowItemOverlap);
+					ImGui::PushID(i);
+					ImGui::PushItemWidth(50);
+					ImGui::SameLine(size.x - 50);
+
+					if (ImGui::SmallButton("Remove"))
+					{
+						paramToRemove = static_cast<int>(i);
+						ImGui::PopItemWidth();
+						ImGui::PopID();
+						break;
+					}
+					
+					ImGui::PopItemWidth();
+
+					if(open)
 					{
 						ImGui::Text("Property Type: %s", propertyType);
-						ImGui::SameLine();
-						if (ImGui::SmallButton("Remove"))
-						{
-							paramToRemove = static_cast<int>(i);
-							ImGui::TreePop();
-							break;
-						}
 
-						ImGui::Checkbox(propertyType, &boolParam.value);
+						if (ImGui::Checkbox(propertyType, &boolParam.value))
+						{
+							hasMaterialChanged = true;
+						}
 						ImGui::TreePop();
 					}
+
+					ImGui::PopID();
 				}
 
 				if (paramToRemove != -1)
 				{
 					foundMaterial->shaderParams.boolParams.erase(foundMaterial->shaderParams.boolParams.begin() + paramToRemove);
+					hasMaterialChanged = true;
 				}
 
 				std::vector<flat::ShaderPropertyType> availableBoolProperties;
@@ -1758,6 +1848,7 @@ namespace r2::edit
 					newBoolParam.propertyType = boolPropertyTypeToAdd;
 					newBoolParam.value = false;
 					foundMaterial->shaderParams.boolParams.push_back(newBoolParam);
+					hasMaterialChanged = true;
 				}
 
 				if (disableAddNewBoolProperty)
@@ -1768,8 +1859,50 @@ namespace r2::edit
 			}
 
 
+
 			ImGui::End();
 		}
+
+		if (hasMaterialChanged)
+		{
+			flatbuffers::FlatBufferBuilder builder;
+			const flat::Material* flatMaterial = r2::mat::MakeFlatMaterialFromMaterial(builder, *foundMaterial);
+
+			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
+			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
+
+			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+			R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
+
+			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialName.name);
+
+			bool result = gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
+			R2_CHECK(result, "This should always work");
+
+			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
+			r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
+
+			if (r2::sarr::Size(*textures) > 0)
+			{
+				texturesToUse = textures;
+			}
+
+			if (r2::sarr::Size(*cubemaps) > 0)
+			{
+				cubemapTextureToUse = &r2::sarr::At(*cubemaps, 0);
+			}
+
+			if (isLoaded)
+			{
+				gameAssetManager.LoadMaterialTextures(flatMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
+				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, flatMaterial, texturesToUse, cubemapTextureToUse, true);
+				R2_CHECK(result, "This should always work");
+			}
+
+			FREE(cubemaps, *MEM_ENG_SCRATCH_PTR);
+			FREE(textures, *MEM_ENG_SCRATCH_PTR);	
+		}
+
 #endif
 	}
 }

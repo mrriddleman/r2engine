@@ -13,7 +13,7 @@ namespace r2::asset
 	{
 	public:
 		virtual ~ManifestAssetFile() {}
-		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, r2::asset::AssetType assetType) = 0;
+		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) = 0;
 		virtual void Shutdown() = 0;
 
 		virtual r2::asset::AssetType GetAssetType() const = 0;
@@ -48,6 +48,7 @@ namespace r2::asset
 		r2::asset::AssetType mAssetType;
 		r2::asset::AssetHandle mManifestAssetHandle;
 		char mRawPath[r2::fs::FILE_PATH_LENGTH];
+		char mWatchPath[r2::fs::FILE_PATH_LENGTH];
 	};
 }
 #endif
