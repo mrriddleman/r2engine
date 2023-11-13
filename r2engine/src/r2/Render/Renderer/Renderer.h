@@ -163,6 +163,45 @@ namespace r2::draw
 
 	using RendererFlags = r2::Flags<u32, u32>;
 
+	struct ShaderMatrices
+	{
+		glm::mat4 projection;
+		glm::mat4 view;
+		glm::mat4 skyboxView;
+		glm::mat4 inverseProjection;
+		glm::mat4 inverseView;
+		glm::mat4 vpMatrix;
+		glm::mat4 prevProjection;
+		glm::mat4 prevView;
+		glm::mat4 prevVPMatrix;
+	};
+
+	struct ShaderVectors
+	{
+		glm::vec4 cameraPosTimeW;
+		glm::vec4 exposureNearFar;
+	//	glm::vec4 cascadePlanes; //depricated
+		glm::vec4 shadowMapSizes;
+		glm::vec4 fovAspectResXResY;
+		u64 frame;
+		glm::vec2 clusterScaleBias;
+		glm::uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+		glm::vec4 jitter;
+	};
+
+	struct SDSMShaderParams
+	{
+		glm::vec4 lightSpaceBorder;
+		glm::vec4 maxScale;
+		glm::vec4 projMultSplitScaleZMultLambda;
+		f32 dilationFactor;
+		u32 scatterTileDim;
+		u32 reduceTileDim;
+		u32 padding;
+		glm::vec4 splitScaleMultFadeFactor;
+		r2::draw::tex::TextureAddress blueNoiseTexture;
+	};
+
 	struct Renderer
 	{
 		RendererBackend mBackendType;
@@ -232,9 +271,8 @@ namespace r2::draw
 
 		//------------BEGIN Drawing Stuff--------------
 		Camera* mnoptrRenderCam = nullptr;
-		glm::mat4 prevProj = glm::mat4(1.0f);
-		glm::mat4 prevView = glm::mat4(1.0f);
-		glm::mat4 prevVP = glm::mat4(1.0f);
+		ShaderMatrices mShaderMatrices;
+		ShaderVectors mShaderVectors;
 
 
 		//@TODO(Serge): figure out a nicer way to store all this stuff
@@ -383,11 +421,17 @@ namespace r2::draw
 		RendererFlags mFlags;
 		//-------------END FLAGS-------------------
 
-		u64 mFrameCounter = 0;
+	//	u64 mFrameCounter = 0;
 
 		//------------BEGIN Cluster data-----------
-		glm::uvec4 mClusterTileSizes;
+//		glm::uvec4 mClusterTileSizes;
 		//------------END Cluster data-------------
+
+		//------------BEGIN SDSM Shader Data-------
+		SDSMShaderParams mSDSMShaderParams;
+		b32 mSDSMShaderParamsNeedUpdate = true;
+		//------------END SDSM Shader Data---------
+
 
 		//------------BEGIN SSR data---------------
 

@@ -402,28 +402,20 @@ namespace r2::draw::renderer
 	void SetDefaultTransparencyBlendState(BlendState& blendState);
 	void SetDefaultTransparentCompositeBlendState(BlendState& blendState);
 
-	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix);
-	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
-	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera);
-	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj);
+	void UpdateShaderMatrices(Renderer& renderer);
+	void UpdateShaderVectors(Renderer& renderer);
 
-	void UpdateInverseViewMatrix(Renderer& renderer, const glm::mat4& invView);
-	void UpdateViewProjectionMatrix(Renderer& renderer, const glm::mat4& vpMatrix);
-	void UpdatePreviousProjectionMatrix(Renderer& renderer);
-	void UpdatePreviousViewMatrix(Renderer& renderer);
-	void UpdatePreviousVPMatrix(Renderer& renderer);
-
-	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
-	void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
+	//void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
+	//void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
 	void UpdateCamera(Renderer& renderer, Camera& camera);
-	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
-	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
-	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
-	void UpdateFrameCounter(Renderer& renderer, u64 frame);
-	void UpdateClusterTileSizes(Renderer& renderer);
-	void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias);
-	void UpdateJitter(Renderer& renderer);
+	//void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
+	//void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
+	//void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
+	//void UpdateFrameCounter(Renderer& renderer, u64 frame);
+	//void UpdateClusterTileSizes(Renderer& renderer);
+	//void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias);
+	//void UpdateJitter(Renderer& renderer);
 
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
@@ -445,6 +437,8 @@ namespace r2::draw::renderer
 	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
 	void UpdateSDSMSplitScaleMultFadeFactor(Renderer& renderer, const glm::vec4& splitScaleMultFadeFactor);
 	void UpdateBlueNoiseTexture(Renderer& renderer);
+
+	void UpdateSDSMShaderParams(Renderer& renderer);
 
 	//Clusters
 	void ClearActiveClusters(Renderer& renderer);
@@ -694,6 +688,7 @@ namespace r2::draw::renderer
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data);
 	u64 AddZeroConstantBufferCommand(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex);
+	void AddFillConstantBufferCommandFull(Renderer& renderer, ConstantBufferHandle handle, const void* data, u64 size, u64 offset);
 
 	RenderTarget* GetRenderTarget(Renderer& renderer, RenderTargetSurface surface);
 	RenderPass* GetRenderPass(Renderer& renderer, RenderPassType renderPassType);
@@ -1044,6 +1039,11 @@ namespace r2::draw::renderer
 		newRenderer->mEntityColorShader[1] = shadersystem::FindShaderHandle(STRING_ID("DynamicEntityColor"));
 		CheckIfValidShader(*newRenderer, newRenderer->mEntityColorShader[1], "DynamicEntityColor");
 #endif
+
+
+
+
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1285,6 +1285,26 @@ namespace r2::draw::renderer
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
 
+
+		//Init the SDSM shader shadow data
+		{
+			glm::vec2 blurSizeLightSpace = glm::vec2(0.0f, 0.0f);
+			constexpr float maxFloat = std::numeric_limits<float>::max();
+			glm::vec3 maxPartitionScale = glm::vec3(maxFloat, maxFloat, maxFloat);
+			glm::vec4 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, 0.0f, 0.0f);
+
+			newRenderer->mSDSMShaderParams.lightSpaceBorder = partitionBorderLightSpace;
+			newRenderer->mSDSMShaderParams.maxScale = glm::vec4(maxPartitionScale, 0.0);
+			newRenderer->mSDSMShaderParams.projMultSplitScaleZMultLambda = glm::vec4(1.5, 1, 9, 1.2);
+			newRenderer->mSDSMShaderParams.dilationFactor = DILATION_FACTOR;
+			newRenderer->mSDSMShaderParams.scatterTileDim = SCATTER_TILE_DIM;
+			newRenderer->mSDSMShaderParams.reduceTileDim = REDUCE_TILE_DIM;
+			newRenderer->mSDSMShaderParams.padding = 0;
+			newRenderer->mSDSMShaderParams.splitScaleMultFadeFactor = glm::vec4(0.5, 2, 0, 0);
+			newRenderer->mSDSMShaderParams.blueNoiseTexture = newRenderer->mBlueNoiseRenderMaterialParams.albedo.texture;
+			newRenderer->mSDSMShaderParamsNeedUpdate = true;
+		}
+
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
 		UploadEngineModels(*newRenderer);
 
@@ -1301,13 +1321,18 @@ namespace r2::draw::renderer
 	{
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
 		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
-		UpdateFrameCounter(renderer, renderer.mFrameCounter);
+
+		renderer.mShaderVectors.jitter = glm::vec4(GetJitter(renderer, renderer.mShaderVectors.frame, false), GetJitter(renderer, renderer.mShaderVectors.frame - 1, false));
+
+		//UpdateFrameCounter(renderer, renderer.mFrameCounter);
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
 		{
 			float logFarOverNear = glm::log2(renderer.mnoptrRenderCam->farPlane / renderer.mnoptrRenderCam->nearPlane);
 			float logNear = glm::log2(renderer.mnoptrRenderCam->nearPlane);
-			UpdateClusterScaleBias(renderer, glm::vec2(renderer.mClusterTileSizes.z / logFarOverNear, -(renderer.mClusterTileSizes.z * logNear) / logFarOverNear));
-			UpdateClusterTileSizes(renderer);
+			renderer.mShaderVectors.clusterScaleBias = glm::vec2(renderer.mShaderVectors.clusterTileSizes.z / logFarOverNear, -(renderer.mShaderVectors.clusterTileSizes.z * logNear) / logFarOverNear);
+
+			//UpdateClusterScaleBias(renderer, glm::vec2(renderer.mClusterTileSizes.z / logFarOverNear, -(renderer.mClusterTileSizes.z * logNear) / logFarOverNear));
+			//UpdateClusterTileSizes(renderer);
 		}
 
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_ALL_SURFACES_UPLOAD))
@@ -1319,7 +1344,8 @@ namespace r2::draw::renderer
 			UploadSwappingSurfaces(renderer);
 		}
 
-		UpdateJitter(renderer);
+		UpdateShaderVectors(renderer);
+	//	UpdateJitter(renderer);
 
 		UpdateBloomDataIfNeeded(renderer);
 
@@ -1460,14 +1486,19 @@ namespace r2::draw::renderer
 		SwapRenderTargetsHistoryIfNecessary(renderer);
 
 		//remember the previous projection/view matrices
-		renderer.prevProj = renderer.mnoptrRenderCam->proj;
-		renderer.prevView = renderer.mnoptrRenderCam->view;
-		renderer.prevVP = renderer.mnoptrRenderCam->vp;
+
+		renderer.mShaderMatrices.prevProjection = renderer.mnoptrRenderCam->proj;
+		renderer.mShaderMatrices.prevView = renderer.mnoptrRenderCam->view;
+		renderer.mShaderMatrices.prevVPMatrix = renderer.mnoptrRenderCam->vp;
+
+		//renderer.prevProj = renderer.mnoptrRenderCam->proj;
+	//	renderer.prevView = renderer.mnoptrRenderCam->view;
+		//renderer.prevVP = renderer.mnoptrRenderCam->vp;
 
 		renderer.mSMAALastCameraFacingDirection = renderer.mnoptrRenderCam->facing;
 		renderer.mSMAALastCameraPosition = renderer.mnoptrRenderCam->position;
 
-		++renderer.mFrameCounter;
+		++renderer.mShaderVectors.frame;
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -1639,7 +1670,7 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Mat4, "projection"},
 			{r2::draw::ShaderDataType::Mat4, "view"},
 			{r2::draw::ShaderDataType::Mat4, "skyboxView"},
-			{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS},
+			//{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS},
 			{r2::draw::ShaderDataType::Mat4, "InverseProjection"},
 			{r2::draw::ShaderDataType::Mat4, "InverseView"},
 			{r2::draw::ShaderDataType::Mat4, "VPMatrix"},
@@ -1651,7 +1682,7 @@ namespace r2::draw::renderer
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
 			{r2::draw::ShaderDataType::Float4, "Exposure"},
-			{r2::draw::ShaderDataType::Float4, "CascadePlanes"},
+		//	{r2::draw::ShaderDataType::Float4, "CascadePlanes"},
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"},
 			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
 			{r2::draw::ShaderDataType::UInt64, "Frame"},
@@ -2380,7 +2411,7 @@ namespace r2::draw::renderer
 
 		clusterVolumes.layout.InitForClusterAABBs(
 			r2::draw::CB_FLAG_WRITE | CB_FLAG_MAP_COHERENT, 0,
-			r2::util::NextPowerOfTwo64Bit(renderer.mClusterTileSizes.x * renderer.mClusterTileSizes.y * renderer.mClusterTileSizes.z));
+			r2::util::NextPowerOfTwo64Bit(renderer.mShaderVectors.clusterTileSizes.x * renderer.mShaderVectors.clusterTileSizes.y * renderer.mShaderVectors.clusterTileSizes.z));
 
 		r2::sarr::Push(*renderer.mConstantLayouts, clusterVolumes);
 
@@ -2870,6 +2901,41 @@ namespace r2::draw::renderer
 		return renderer.mRenderMaterialCache;
 	}
 
+	void AddFillConstantBufferCommandFull(Renderer& renderer, ConstantBufferHandle handle, const void* data, u64 size, u64 offset)
+	{
+		r2::draw::key::Basic fillKey;
+		//@TODO(Serge): fix this or pass it in
+		fillKey.keyValue = 0;
+
+		ConstantBufferData* constBufferData = GetConstData(renderer, handle);
+
+		R2_CHECK(constBufferData != nullptr, "We couldn't find the constant buffer handle!");
+
+		u64 numConstantBufferHandles = r2::sarr::Size(*renderer.mConstantBufferHandles);
+		u64 constBufferIndex = 0;
+		bool found = false;
+		for (; constBufferIndex < numConstantBufferHandles; ++constBufferIndex)
+		{
+			if (handle == r2::sarr::At(*renderer.mConstantBufferHandles, constBufferIndex))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			R2_CHECK(false, "Couldn't find the constant buffer so we can upload the data");
+			return;
+		}
+
+		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*renderer.mConstantLayouts, constBufferIndex);
+		
+		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillConstantBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, size);
+
+		r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData->type, constBufferData->isPersistent, data, size, offset);
+	}
+
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
 	{
 		r2::draw::key::Basic fillKey;
@@ -2941,26 +3007,28 @@ namespace r2::draw::renderer
 
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem)
 	{
+
 		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mLightingConfigHandle);
 
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 0, &lightSystem.mSceneLighting.mPointLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 1, &lightSystem.mSceneLighting.mDirectionLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 2, &lightSystem.mSceneLighting.mSpotLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 3, &lightSystem.mSceneLighting.mSkyLight);
+		AddFillConstantBufferCommandFull(renderer, lightBufferHandle, &lightSystem.mSceneLighting, sizeof(lightSystem.mSceneLighting), 0);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 0, &lightSystem.mSceneLighting.mPointLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 1, &lightSystem.mSceneLighting.mDirectionLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 2, &lightSystem.mSceneLighting.mSpotLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 3, &lightSystem.mSceneLighting.mSkyLight);
 
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 4, &lightSystem.mSceneLighting.mNumPointLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 5, &lightSystem.mSceneLighting.mNumDirectionLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 6, &lightSystem.mSceneLighting.mNumSpotLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 7, &lightSystem.mSceneLighting.numPrefilteredRoughnessMips);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 8, &lightSystem.mSceneLighting.useSDSMShadows);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 4, &lightSystem.mSceneLighting.mNumPointLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 5, &lightSystem.mSceneLighting.mNumDirectionLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 6, &lightSystem.mSceneLighting.mNumSpotLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 7, &lightSystem.mSceneLighting.numPrefilteredRoughnessMips);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 8, &lightSystem.mSceneLighting.useSDSMShadows);
 
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.numShadowCastingDirectionLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.numShadowCastingPointLights);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.numShadowCastingSpotLights);
 
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 12, &lightSystem.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[0]);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 13, &lightSystem.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[0]);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 14, &lightSystem.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[0]);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 12, &lightSystem.mSceneLighting.mShadowCastingDirectionLights[0]);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 13, &lightSystem.mSceneLighting.mShadowCastingPointLights[0]);
+		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 14, &lightSystem.mSceneLighting.mShadowCastingSpotLights[0]);
 	}
 
 	template<class ARENA, typename T>
@@ -3143,9 +3211,9 @@ namespace r2::draw::renderer
 		const s32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
 		const s32 numPointLights = renderer.mLightSystem->mSceneLighting.mNumPointLights;
 
-		const auto numShadowCastingDirectionLights = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
-		const auto numShadowCastingPointLights = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
-		const auto numShadowCastingSpotLights = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
+		const auto numShadowCastingDirectionLights = renderer.mLightSystem->mSceneLighting.numShadowCastingDirectionLights;
+		const auto numShadowCastingPointLights = renderer.mLightSystem->mSceneLighting.numShadowCastingPointLights;
+		const auto numShadowCastingSpotLights = renderer.mLightSystem->mSceneLighting.numShadowCastingSpotLights;
 
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
 
@@ -3484,9 +3552,9 @@ namespace r2::draw::renderer
 			key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 0, renderer.mCreateClusterComputeShader);
 			
 			cmd::DispatchCompute* createClusterTilesCMD = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, clusterKey, 0);
-			createClusterTilesCMD->numGroupsX = renderer.mClusterTileSizes.x;
-			createClusterTilesCMD->numGroupsY = renderer.mClusterTileSizes.y;
-			createClusterTilesCMD->numGroupsZ = renderer.mClusterTileSizes.z;
+			createClusterTilesCMD->numGroupsX = renderer.mShaderVectors.clusterTileSizes.x;
+			createClusterTilesCMD->numGroupsY = renderer.mShaderVectors.clusterTileSizes.y;
+			createClusterTilesCMD->numGroupsZ = renderer.mShaderVectors.clusterTileSizes.z;
 		}
 
 		//PostRenderBucket commands
@@ -4749,194 +4817,93 @@ namespace r2::draw::renderer
 
 	//void UpdateRenderTargetsIfNecessary(Renderer& renderer)
 	//{
-	//	for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+	//	for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)Up
 	//	{
 	//		rt::UpdateRenderTargetIfNecessary(renderer.mRenderTargets[i]);
 	//	}
 	//}
 
-	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix)
+	void UpdateShaderMatrices(Renderer& renderer)
 	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			0,
-			glm::value_ptr(perspectiveMatrix));
-
+		ConstantBufferHandle vpMatricesBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mVPMatricesConfigHandle);
+		AddFillConstantBufferCommandFull(renderer, vpMatricesBufferHandle, &renderer.mShaderMatrices, sizeof(renderer.mShaderMatrices), 0);
 	}
 
-	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix)
+	void UpdateShaderVectors(Renderer& renderer)
 	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			1,
-			glm::value_ptr(viewMatrix));
-
-		
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			2,
-			glm::value_ptr(glm::mat4(glm::mat3(viewMatrix))));
+		ConstantBufferHandle vectorsBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mVectorsConfigHandle);
+		AddFillConstantBufferCommandFull(renderer, vectorsBufferHandle, &renderer.mShaderVectors, sizeof(renderer.mShaderVectors), 0);
 	}
 
-	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		 
-	//	for (int i = 0; i < cam::NUM_FRUSTUM_SPLITS; ++i)
-		{
-			AddFillConstantBufferCommandForData(
-				renderer,
-				r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-				3 ,
-				glm::value_ptr(camera.frustumProjections[0]));
-		}
-	}
+	//void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
+	//	glm::vec4 cameraPosTimeW = glm::vec4(camPosition, CENG.GetTicks() / 1000.0f);
 
+	//	AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		0, glm::value_ptr(cameraPosTimeW));
+	//}
 
-	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//void UpdateExposure(Renderer& renderer, float exposure, float near, float far)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			4,
-			glm::value_ptr(invProj));
-	}
+	//	glm::vec4 exposureVec = glm::vec4(exposure, near, far, 0);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		1, glm::value_ptr(exposureVec));
+	//}
 
-	void UpdateInverseViewMatrix(Renderer& renderer, const glm::mat4& invView)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		2, glm::value_ptr(cascades));
+	//}
 
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			5,
-			glm::value_ptr(invView));
-	}
+	//void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspectResXResY)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		4, glm::value_ptr(fovAspectResXResY));
+	//}
 
-	void UpdateViewProjectionMatrix(Renderer& renderer, const glm::mat4& vpMatrix)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//void UpdateFrameCounter(Renderer& renderer, u64 frame)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		5, &frame);
+	//}
 
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			6,
-			glm::value_ptr(vpMatrix));
+	//void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		6, glm::value_ptr(clusterScaleBias)); 
+	//}
 
-	}
+	//void UpdateClusterTileSizes(Renderer& renderer)
+	//{
+	//	//const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//	//	7, glm::value_ptr(renderer.mClusterTileSizes)); 
+	//}
 
-	void UpdatePreviousProjectionMatrix(Renderer& renderer)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//void UpdateJitter(Renderer& renderer)
+	//{
+	//	//glm::vec4 jitter = glm::vec4(GetJitter(renderer, renderer.mFrameCounter, false), GetJitter(renderer, renderer.mFrameCounter - 1, false));
 
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			7,
-			glm::value_ptr(renderer.prevProj));
-	}
+	//	//const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//	//	8, glm::value_ptr(jitter));
+	//}
 
-	void UpdatePreviousViewMatrix(Renderer& renderer)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			8,
-			glm::value_ptr(renderer.prevView));
-	}
-
-	void UpdatePreviousVPMatrix(Renderer& renderer)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		AddFillConstantBufferCommandForData(
-			renderer,
-			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
-			9,
-			glm::value_ptr(renderer.prevVP));
-	}
-
-	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		glm::vec4 cameraPosTimeW = glm::vec4(camPosition, CENG.GetTicks() / 1000.0f);
-
-		AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			0, glm::value_ptr(cameraPosTimeW));
-	}
-
-	void UpdateExposure(Renderer& renderer, float exposure, float near, float far)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-		glm::vec4 exposureVec = glm::vec4(exposure, near, far, 0);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			1, glm::value_ptr(exposureVec));
-	}
-
-	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			2, glm::value_ptr(cascades));
-	}
-
-	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspectResXResY)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			4, glm::value_ptr(fovAspectResXResY));
-	}
-
-	void UpdateFrameCounter(Renderer& renderer, u64 frame)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			5, &frame);
-	}
-
-	void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			6, glm::value_ptr(clusterScaleBias)); 
-	}
-
-	void UpdateClusterTileSizes(Renderer& renderer)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			7, glm::value_ptr(renderer.mClusterTileSizes)); 
-	}
-
-	void UpdateJitter(Renderer& renderer)
-	{
-		glm::vec4 jitter = glm::vec4(GetJitter(renderer, renderer.mFrameCounter, false), GetJitter(renderer, renderer.mFrameCounter - 1, false));
-
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			8, glm::value_ptr(jitter));
-	}
-
-	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			3, glm::value_ptr(shadowMapSizes));
-	}
+	//void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
+	//{
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+	//		3, glm::value_ptr(shadowMapSizes));
+	//}
 
 	void ClearShadowData(Renderer& renderer)
 	{
@@ -4980,9 +4947,9 @@ namespace r2::draw::renderer
 		R2_CHECK(pointlightShadowRenderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
 		R2_CHECK(pointlightShadowRenderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.numShadowCastingDirectionLights; ++i)
 		{
-			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights[i];
 			const DirectionLight& light = renderer.mLightSystem->mSceneLighting.mDirectionLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
 
@@ -4994,9 +4961,9 @@ namespace r2::draw::renderer
 			}
 		}
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.numShadowCastingSpotLights; ++i)
 		{
-			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights[i];
 
 			const SpotLight& light = renderer.mLightSystem->mSceneLighting.mSpotLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
@@ -5010,9 +4977,9 @@ namespace r2::draw::renderer
 			
 		}
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.numShadowCastingPointLights; ++i)
 		{
-			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights[i];
 
 			const PointLight& light = renderer.mLightSystem->mSceneLighting.mPointLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
@@ -5214,6 +5181,13 @@ namespace r2::draw::renderer
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 8, &blueNoiseMaterialParams.albedo.texture);
+	}
+
+	void UpdateSDSMShaderParams(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandFull(renderer, sdsmConstantBufferHandle, &renderer.mSDSMShaderParams, sizeof(renderer.mSDSMShaderParams), 0);
 	}
 
 	void ClearActiveClusters(Renderer& renderer)
@@ -5743,7 +5717,7 @@ namespace r2::draw::renderer
 			}
 		}
 		
-		glm::ivec4 subsampleIndices = SMAASubSampleIndices(renderer, (renderer.mFrameCounter % 2));
+		glm::ivec4 subsampleIndices = SMAASubSampleIndices(renderer, (renderer.mShaderVectors.frame % 2));
 
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
@@ -6013,7 +5987,7 @@ namespace r2::draw::renderer
 		if (renderer.mOutputMerger == OUTPUT_SMAA_T2X ||
 			renderer.mOutputMerger == OUTPUT_SMAA_X1)
 		{
-			u64 frameIndex = (renderer.mFrameCounter % 2);
+			u64 frameIndex = (renderer.mShaderVectors.frame % 2);
 
 			glm::vec2 smaaCameraJitter = SMAAGetJitter(renderer, frameIndex);
 			glm::vec2 jitter = glm::vec2( smaaCameraJitter.x / static_cast<float>(renderer.mCompositeSize.width), smaaCameraJitter.y / static_cast<float>(renderer.mCompositeSize.height));
@@ -6025,24 +5999,39 @@ namespace r2::draw::renderer
 			cam::SetCameraJitter(camera, glm::vec2(0));
 		}
 
-		UpdatePerspectiveMatrix(renderer, camera.proj);
-		UpdateInverseProjectionMatrix(renderer, camera.invProj);
+		renderer.mShaderMatrices.projection = camera.proj;
+		renderer.mShaderMatrices.view = camera.view;
+		renderer.mShaderMatrices.skyboxView = glm::mat4(glm::mat3(camera.view));
+		renderer.mShaderMatrices.inverseProjection = camera.invProj;
+		renderer.mShaderMatrices.inverseView = camera.invView;
+		renderer.mShaderMatrices.vpMatrix = camera.vp;
+		
+		UpdateShaderMatrices(renderer);
 
-		UpdateInverseViewMatrix(renderer, camera.invView);
-		UpdateViewProjectionMatrix(renderer, camera.vp);
-		UpdatePreviousProjectionMatrix(renderer);
-		UpdatePreviousViewMatrix(renderer);
-		UpdatePreviousVPMatrix(renderer);
+		//UpdatePerspectiveMatrix(renderer, camera.proj);
+		//UpdateInverseProjectionMatrix(renderer, camera.invProj);
 
-		UpdateViewMatrix(renderer, camera.view);
-		UpdateCameraPosition(renderer, camera.position);
-		UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
+		//UpdateInverseViewMatrix(renderer, camera.invView);
+		//UpdateViewProjectionMatrix(renderer, camera.vp);
+		//UpdatePreviousProjectionMatrix(renderer);
+		//UpdatePreviousViewMatrix(renderer);
+		//UpdatePreviousVPMatrix(renderer);
+
+		//UpdateViewMatrix(renderer, camera.view);
+
+		renderer.mShaderVectors.cameraPosTimeW = glm::vec4(camera.position, CENG.GetTicks() / 1000.0f);
+		renderer.mShaderVectors.exposureNearFar = glm::vec4(camera.exposure, camera.nearPlane, camera.farPlane, 0);
+		//UpdateCameraPosition(renderer, camera.position);
+		//UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
 
 		R2_CHECK(cam::NUM_FRUSTUM_SPLITS == 4, "Change to not be a vec4 if cam::NUM_FRUSTUM_SPLITS is >");
 
-		UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
+		renderer.mShaderVectors.shadowMapSizes = glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
+		renderer.mShaderVectors.fovAspectResXResY = glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height);
 
-		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
+		//UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
+
+		//UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
 
 		
 	}
@@ -7215,8 +7204,8 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
-		DebugRenderBatch& debugTransparentLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
+		static DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
+		static DebugRenderBatch& debugTransparentLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
 
 		DebugRenderBatch* debugRenderBatchToUse = &debugLinesRenderBatch;
 		if (color.a < 1.0f)
@@ -7927,7 +7916,7 @@ namespace r2::draw::renderer
 #ifdef R2_EDITOR
 			CreateEditorPickingSurface(renderer, resolutionX, resolutionY);
 #endif
-			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
+			renderer.mShaderVectors.clusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
 			
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_ALL_SURFACES_UPLOAD);
@@ -8892,9 +8881,13 @@ namespace r2::draw::renderer
 		R2_CHECK(cameraPtr != nullptr, "We should always pass in a valid camera");
 		renderer.mnoptrRenderCam = cameraPtr;
 
-		renderer.prevProj = renderer.mnoptrRenderCam->proj;
-		renderer.prevView = renderer.mnoptrRenderCam->view;
-		renderer.prevVP = renderer.mnoptrRenderCam->vp;
+		renderer.mShaderMatrices.prevProjection = renderer.mnoptrRenderCam->proj;
+		renderer.mShaderMatrices.prevView = renderer.mnoptrRenderCam->view;
+		renderer.mShaderMatrices.prevVPMatrix = renderer.mnoptrRenderCam->vp;
+
+		//renderer.prevProj = renderer.mnoptrRenderCam->proj;
+		//renderer.prevView = renderer.mnoptrRenderCam->view;
+		//renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
 	Camera* GetRenderCamera(Renderer& renderer)
@@ -9097,30 +9090,12 @@ namespace r2::draw::renderer
 
 			ClearShadowData(renderer);
 
-			glm::mat4 dirLightProj = glm::ortho(-lightProjRadius.x, lightProjRadius.x, -lightProjRadius.y, lightProjRadius.y, -lightProjRadius.z, lightProjRadius.z);
 			//Update SDSM shadow constants
+			if(renderer.mSDSMShaderParamsNeedUpdate)
 			{
-				glm::vec2 blurSizeLightSpace = glm::vec2(0.0f, 0.0f);
-				const float maxFloat = std::numeric_limits<float>::max();
-				glm::vec3 maxPartitionScale = glm::vec3(maxFloat, maxFloat, maxFloat);
+				renderer.mSDSMShaderParamsNeedUpdate = false;
+				UpdateSDSMShaderParams(renderer);
 
-				glm::vec4 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, 0.0f, 0.0f);
-
-				UpdateSDSMLightSpaceBorder(renderer, partitionBorderLightSpace);
-				UpdateSDSMMaxScale(renderer, glm::vec4(maxPartitionScale, 0.0));
-				UpdateSDSMProjMultSplitScaleZMultLambda(renderer, 1.5, 1, 9, 1.2);
-				UpdateSDSMDialationFactor(renderer, DILATION_FACTOR);
-				UpdateSDSMReduceTileDim(renderer, REDUCE_TILE_DIM);
-				UpdateSDSMScatterTileDim(renderer, SCATTER_TILE_DIM);
-				UpdateSDSMSplitScaleMultFadeFactor(renderer, glm::vec4(0.5, 2, 0, 0));
-
-				static bool shouldUpdateBlueNoise = true;
-
-				if (shouldUpdateBlueNoise)
-				{
-					UpdateBlueNoiseTexture(renderer);
-					shouldUpdateBlueNoise = false;
-				}
 			}
 
 			if (renderer.mFlags.IsSet(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH))
@@ -9129,7 +9104,7 @@ namespace r2::draw::renderer
 			}
 
 
-			const u32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
+			const u32 numDirectionLights = renderer.mLightSystem->mSceneLighting.numShadowCastingDirectionLights;
 
 			//Dispatch the compute shaders for SDSM shadows
 			if (numDirectionLights > 0)
@@ -9169,7 +9144,7 @@ namespace r2::draw::renderer
 				
 			}
 
-			const u32 numSpotLights = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
+			const u32 numSpotLights = renderer.mLightSystem->mSceneLighting.numShadowCastingSpotLights;
 
 			if (numSpotLights > 0)
 			{
@@ -9184,7 +9159,7 @@ namespace r2::draw::renderer
 				spotLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 			}
 
-			const u32 numPointLights = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
+			const u32 numPointLights = renderer.mLightSystem->mSceneLighting.numShadowCastingPointLights;
 
 			if (numPointLights > 0)
 			{

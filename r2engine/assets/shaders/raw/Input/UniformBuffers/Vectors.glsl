@@ -7,7 +7,7 @@ layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
     vec4 exposureNearFar;
-    vec4 cascadePlanes; //depricated
+   // vec4 cascadePlanes; //depricated
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
     uint64_t frame;

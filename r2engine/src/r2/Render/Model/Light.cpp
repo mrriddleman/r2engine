@@ -172,39 +172,39 @@ namespace r2::draw::lightsys
 
 		if (numDirLightsToUpdate > 0)
 		{
-			system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights = 0;
+			system.mSceneLighting.numShadowCastingDirectionLights = 0;
 			for (s32 i = 0; i < system.mSceneLighting.mNumDirectionLights; ++i)
 			{
 				if (system.mSceneLighting.mDirectionLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
 				{
-					system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights] = i;
-					++system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
+					system.mSceneLighting.mShadowCastingDirectionLights[system.mSceneLighting.numShadowCastingDirectionLights] = i;
+					++system.mSceneLighting.numShadowCastingDirectionLights;
 				}
 			}
 		}
 
 		if (numPointLightsToUpdate > 0)
 		{
-			system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights = 0;
+			system.mSceneLighting.numShadowCastingPointLights = 0;
 			for (s32 i = 0; i < system.mSceneLighting.mNumPointLights; ++i)
 			{
 				if (system.mSceneLighting.mPointLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
 				{
-					system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights] = i;
-					++system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
+					system.mSceneLighting.mShadowCastingPointLights[system.mSceneLighting.numShadowCastingPointLights] = i;
+					++system.mSceneLighting.numShadowCastingPointLights;
 				}
 			}
 		}
 
 		if (numSpotLightsToUpdate > 0)
 		{
-			system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights = 0;
+			system.mSceneLighting.numShadowCastingSpotLights = 0;
 			for (s32 i = 0; i < system.mSceneLighting.mNumSpotLights; ++i)
 			{
 				if (system.mSceneLighting.mSpotLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
 				{
-					system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights] = i;
-					++system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
+					system.mSceneLighting.mShadowCastingSpotLights[system.mSceneLighting.numShadowCastingSpotLights] = i;
+					++system.mSceneLighting.numShadowCastingSpotLights;
 				}
 			}
 		}
@@ -255,10 +255,10 @@ namespace r2::draw::lightsys
 
 		r2::shashmap::Set(*system.mMetaData.mPointLightMap, newPointLightHandle.handle, pointLightIndex);
 
-		R2_CHECK(system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting point lights", light::MAX_NUM_SHADOW_MAP_PAGES);
-		if (pointLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
+		R2_CHECK(system.mSceneLighting.numShadowCastingPointLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting point lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+		if (pointLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.numShadowCastingPointLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
 		{
-			system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights++] = pointLightIndex;
+			system.mSceneLighting.mShadowCastingPointLights[system.mSceneLighting.numShadowCastingPointLights++] = pointLightIndex;
 		}
 		
 		SetShouldUpdatePointLight(system, pointLightIndex);
@@ -293,9 +293,9 @@ namespace r2::draw::lightsys
 		{
 			s32 shadowIndex = -1;
 
-			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights; ++i)
+			for (u32 i = 0; i < system.mSceneLighting.numShadowCastingPointLights; ++i)
 			{
-				if (system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[i] == lightIndex)
+				if (system.mSceneLighting.mShadowCastingPointLights[i] == lightIndex)
 				{
 					shadowIndex = i;
 					break;
@@ -304,14 +304,14 @@ namespace r2::draw::lightsys
 
 			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
 			
-			if (shadowIndex != (system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights - 1))
+			if (shadowIndex != (system.mSceneLighting.numShadowCastingPointLights - 1))
 			{
-				auto lastPointLightIndex = system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights - 1];
+				auto lastPointLightIndex = system.mSceneLighting.mShadowCastingPointLights[system.mSceneLighting.numShadowCastingPointLights - 1];
 			
-				system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[shadowIndex] = lastPointLightIndex;
+				system.mSceneLighting.mShadowCastingPointLights[shadowIndex] = lastPointLightIndex;
 			}
 
-			system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights--;
+			system.mSceneLighting.numShadowCastingPointLights--;
 		}
 
 		r2::shashmap::Set(*system.mMetaData.mPointLightMap, lightHandle.handle, defaultIndex);
@@ -380,11 +380,11 @@ namespace r2::draw::lightsys
 
 		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, newDirectionalLightHandle.handle, lightIndex);
 
-		R2_CHECK(system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting direction lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+		R2_CHECK(system.mSceneLighting.numShadowCastingDirectionLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting direction lights", light::MAX_NUM_SHADOW_MAP_PAGES);
 		
-		if (dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
+		if (dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.numShadowCastingDirectionLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
 		{
-			system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights++] = lightIndex;
+			system.mSceneLighting.mShadowCastingDirectionLights[system.mSceneLighting.numShadowCastingDirectionLights++] = lightIndex;
 		}
 
 		SetShouldUpdateDirectionLight(system, lightIndex);
@@ -419,9 +419,9 @@ namespace r2::draw::lightsys
 		{
 			s32 shadowIndex = -1;
 
-			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights; ++i)
+			for (u32 i = 0; i < system.mSceneLighting.numShadowCastingDirectionLights; ++i)
 			{
-				if (system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[i] == lightIndex)
+				if (system.mSceneLighting.mShadowCastingDirectionLights[i] == lightIndex)
 				{
 					shadowIndex = i;
 					break;
@@ -430,14 +430,14 @@ namespace r2::draw::lightsys
 
 			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
 
-			if (shadowIndex != (system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights - 1))
+			if (shadowIndex != (system.mSceneLighting.numShadowCastingDirectionLights - 1))
 			{
-				auto lastDirLightIndex = system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights - 1];
+				auto lastDirLightIndex = system.mSceneLighting.mShadowCastingDirectionLights[system.mSceneLighting.numShadowCastingDirectionLights - 1];
 
-				system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[shadowIndex] = lastDirLightIndex;
+				system.mSceneLighting.mShadowCastingDirectionLights[shadowIndex] = lastDirLightIndex;
 			}
 
-			system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights--;
+			system.mSceneLighting.numShadowCastingDirectionLights--;
 		}
 
 		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, lightHandle.handle, defaultIndex);
@@ -511,11 +511,11 @@ namespace r2::draw::lightsys
 
 		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, newSpotLightHandle.handle, lightIndex);
 
-		R2_CHECK(system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting spot lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+		R2_CHECK(system.mSceneLighting.numShadowCastingSpotLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting spot lights", light::MAX_NUM_SHADOW_MAP_PAGES);
 
-		if (spotLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights + 1<= light::MAX_NUM_SHADOW_MAP_PAGES)
+		if (spotLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.numShadowCastingSpotLights + 1<= light::MAX_NUM_SHADOW_MAP_PAGES)
 		{
-			system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights++] = lightIndex;
+			system.mSceneLighting.mShadowCastingSpotLights[system.mSceneLighting.numShadowCastingSpotLights++] = lightIndex;
 		}
 
 		SetShouldUpdateSpotLight(system, lightIndex);
@@ -550,9 +550,9 @@ namespace r2::draw::lightsys
 		{
 			s32 shadowIndex = -1;
 
-			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights; ++i)
+			for (u32 i = 0; i < system.mSceneLighting.numShadowCastingSpotLights; ++i)
 			{
-				if (system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[i] == lightIndex)
+				if (system.mSceneLighting.mShadowCastingSpotLights[i] == lightIndex)
 				{
 					shadowIndex = i;
 					break;
@@ -561,14 +561,14 @@ namespace r2::draw::lightsys
 
 			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
 
-			if (shadowIndex != (system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights - 1))
+			if (shadowIndex != (system.mSceneLighting.numShadowCastingSpotLights - 1))
 			{
-				auto lastSpotLightIndex = system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights - 1];
+				auto lastSpotLightIndex = system.mSceneLighting.mShadowCastingSpotLights[system.mSceneLighting.numShadowCastingSpotLights - 1];
 
-				system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[shadowIndex] = lastSpotLightIndex;
+				system.mSceneLighting.mShadowCastingSpotLights[shadowIndex] = lastSpotLightIndex;
 			}
 
-			system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights--;
+			system.mSceneLighting.numShadowCastingSpotLights--;
 		}
 
 		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, lightHandle.handle, defaultIndex);

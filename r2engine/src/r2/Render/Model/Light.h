@@ -106,17 +106,10 @@ namespace r2::draw
 
 	//@NOTE: right now this is the same format as the shaders. If we change the shader layout, we have to change this
 
-
-	struct ShadowCastingLights
-	{
-		s64 shadowCastingLightIndexes[light::MAX_NUM_SHADOW_MAP_PAGES];
-		s32 numShadowCastingLights;
-	};
-
 	struct SceneLighting
 	{
-		PointLight mPointLights[light::MAX_NUM_DIRECTIONAL_LIGHTS];
-		DirectionLight mDirectionLights[light::MAX_NUM_POINT_LIGHTS];
+		PointLight mPointLights[light::MAX_NUM_POINT_LIGHTS];
+		DirectionLight mDirectionLights[light::MAX_NUM_DIRECTIONAL_LIGHTS];
 		SpotLight mSpotLights[light::MAX_NUM_SPOT_LIGHTS];
 		SkyLight mSkyLight;
 
@@ -126,9 +119,13 @@ namespace r2::draw
 		s32 numPrefilteredRoughnessMips = 0;
 		s32 useSDSMShadows = 0;
 
-		ShadowCastingLights mShadowCastingDirectionLights;
-		ShadowCastingLights mShadowCastingPointLights;
-		ShadowCastingLights mShadowCastingSpotLights;
+		s32 numShadowCastingDirectionLights;
+		s32 numShadowCastingPointLights;
+		s32 numShadowCastingSpotLights;
+
+		s64 mShadowCastingDirectionLights[light::MAX_NUM_SHADOW_MAP_PAGES];
+		s64 mShadowCastingPointLights[light::MAX_NUM_SHADOW_MAP_PAGES];
+		s64 mShadowCastingSpotLights[light::MAX_NUM_SHADOW_MAP_PAGES];
 	};
 
 	struct SceneLightMetaData

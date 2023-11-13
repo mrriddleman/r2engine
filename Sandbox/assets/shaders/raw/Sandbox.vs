@@ -16,7 +16,6 @@ layout (std140, binding = 0) uniform Matrices
     mat4 projection;
     mat4 view;
     mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 inverseProjection;
     mat4 inverseView;
 	mat4 vpMatrix;
@@ -34,7 +33,6 @@ layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
     vec4 exposureNearFar;
-    vec4 cascadePlanes;
     vec4 shadowMapSizes;
 	vec4 fovAspectResXResY;
     uint64_t frame;
