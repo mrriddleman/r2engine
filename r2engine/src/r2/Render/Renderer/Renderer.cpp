@@ -405,17 +405,8 @@ namespace r2::draw::renderer
 	void UpdateShaderMatrices(Renderer& renderer);
 	void UpdateShaderVectors(Renderer& renderer);
 
-	//void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
-	//void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
 	void UpdateCamera(Renderer& renderer, Camera& camera);
-	//void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
-	//void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
-	//void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
-	//void UpdateFrameCounter(Renderer& renderer, u64 frame);
-	//void UpdateClusterTileSizes(Renderer& renderer);
-	//void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias);
-	//void UpdateJitter(Renderer& renderer);
 
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
@@ -428,15 +419,6 @@ namespace r2::draw::renderer
 	void RemoveShadowMapPagesForPointLight(Renderer& renderer, const PointLight& pointLight);
 	void AssignShadowMapPagesForDirectionLight(Renderer& renderer, const DirectionLight& directionLight);
 	void RemoveShadowMapPagesForDirectionLight(Renderer& renderer, const DirectionLight& directionLight);
-
-	void UpdateSDSMLightSpaceBorder(Renderer& renderer, const glm::vec4& lightSpaceBorder);
-	void UpdateSDSMMaxScale(Renderer& renderer, const glm::vec4& maxScale);
-	void UpdateSDSMProjMultSplitScaleZMultLambda(Renderer& renderer, float projMult, float splitScale, float zMult, float lambda);
-	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor);
-	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim);
-	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
-	void UpdateSDSMSplitScaleMultFadeFactor(Renderer& renderer, const glm::vec4& splitScaleMultFadeFactor);
-	void UpdateBlueNoiseTexture(Renderer& renderer);
 
 	void UpdateSDSMShaderParams(Renderer& renderer);
 
@@ -1670,7 +1652,6 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Mat4, "projection"},
 			{r2::draw::ShaderDataType::Mat4, "view"},
 			{r2::draw::ShaderDataType::Mat4, "skyboxView"},
-			//{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS},
 			{r2::draw::ShaderDataType::Mat4, "InverseProjection"},
 			{r2::draw::ShaderDataType::Mat4, "InverseView"},
 			{r2::draw::ShaderDataType::Mat4, "VPMatrix"},
@@ -1682,7 +1663,6 @@ namespace r2::draw::renderer
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
 			{r2::draw::ShaderDataType::Float4, "Exposure"},
-		//	{r2::draw::ShaderDataType::Float4, "CascadePlanes"},
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"},
 			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
 			{r2::draw::ShaderDataType::UInt64, "Frame"},
@@ -4835,76 +4815,6 @@ namespace r2::draw::renderer
 		AddFillConstantBufferCommandFull(renderer, vectorsBufferHandle, &renderer.mShaderVectors, sizeof(renderer.mShaderVectors), 0);
 	}
 
-	//void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-	//	glm::vec4 cameraPosTimeW = glm::vec4(camPosition, CENG.GetTicks() / 1000.0f);
-
-	//	AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		0, glm::value_ptr(cameraPosTimeW));
-	//}
-
-	//void UpdateExposure(Renderer& renderer, float exposure, float near, float far)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-
-	//	glm::vec4 exposureVec = glm::vec4(exposure, near, far, 0);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		1, glm::value_ptr(exposureVec));
-	//}
-
-	//void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		2, glm::value_ptr(cascades));
-	//}
-
-	//void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspectResXResY)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		4, glm::value_ptr(fovAspectResXResY));
-	//}
-
-	//void UpdateFrameCounter(Renderer& renderer, u64 frame)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		5, &frame);
-	//}
-
-	//void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		6, glm::value_ptr(clusterScaleBias)); 
-	//}
-
-	//void UpdateClusterTileSizes(Renderer& renderer)
-	//{
-	//	//const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//	//	7, glm::value_ptr(renderer.mClusterTileSizes)); 
-	//}
-
-	//void UpdateJitter(Renderer& renderer)
-	//{
-	//	//glm::vec4 jitter = glm::vec4(GetJitter(renderer, renderer.mFrameCounter, false), GetJitter(renderer, renderer.mFrameCounter - 1, false));
-
-	//	//const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//	//	8, glm::value_ptr(jitter));
-	//}
-
-	//void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
-	//{
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-	//		3, glm::value_ptr(shadowMapSizes));
-	//}
-
 	void ClearShadowData(Renderer& renderer)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -5121,66 +5031,6 @@ namespace r2::draw::renderer
 		renderer.mLightSystem->mShadowMapPages.mDirectionLightShadowMapPages[directionLight.lightProperties.lightID] = -1;
 
 		renderer.mFlags.Set(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH);
-	}
-
-	void UpdateSDSMLightSpaceBorder(Renderer& renderer, const glm::vec4& lightSpaceBorder)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 0, glm::value_ptr(lightSpaceBorder));
-	}
-
-	void UpdateSDSMMaxScale(Renderer& renderer, const glm::vec4& maxScale)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 1, glm::value_ptr(maxScale));
-	}
-
-	void UpdateSDSMProjMultSplitScaleZMultLambda(Renderer& renderer, float projMult, float splitScale, float zMult, float lambda)
-	{
-		glm::vec4 data(projMult, splitScale, zMult, lambda);
-
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 2, glm::value_ptr(data));
-	}
-
-	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 3, &dialationFactor);
-	}
-
-	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 4, &scatterTileDim);
-	}
-
-	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 5, &reduceTileDim);
-	}
-
-	void UpdateSDSMSplitScaleMultFadeFactor(Renderer& renderer, const glm::vec4& splitScaleMultFadeFactor)
-	{
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 7, glm::value_ptr(splitScaleMultFadeFactor));
-	}
-
-	void UpdateBlueNoiseTexture(Renderer& renderer)
-	{
-		auto blueNoiseMaterialParams = GetBlueNoise64TextureMaterialParam(renderer);
-		
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 8, &blueNoiseMaterialParams.albedo.texture);
 	}
 
 	void UpdateSDSMShaderParams(Renderer& renderer)
