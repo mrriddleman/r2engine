@@ -5051,7 +5051,7 @@ namespace r2::draw::renderer
 	//	r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 1);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 2);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 3);
-		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 4);
+	//	r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 4);
 	
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, dispatchComputeConstantBufferHandle, 0);
 	}

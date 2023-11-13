@@ -76,7 +76,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
  // }
 	
 
-	return vec4(mix( gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), gbufferSurfaceColor.a);
+	return vec4(mix(gbufferSurfaceColor.rgb + Saturate(ssrSurfaceColor.rgb), bloomColor, bloomFilterRadiusIntensity.z) , gbufferSurfaceColor.a);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)
