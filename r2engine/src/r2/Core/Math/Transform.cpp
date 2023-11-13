@@ -17,21 +17,89 @@ namespace r2::math
 		return r;
 	}
 
+	inline glm::vec3 Cross(const glm::vec3& v1, const glm::vec3& v2)
+	{
+		glm::vec3 r;
+
+		r.x = v1.y * v2.z - v1.z * v2.y;
+		r.y = v1.z * v2.x - v1.x * v2.z;
+		r.z = v1.x * v2.y - v1.y * v2.x;
+
+		return r;
+	}
+
+	inline void Cross(const glm::vec3& v1, const glm::vec3& v2, glm::vec3& r)
+	{
+		r.x = v1.y * v2.z - v1.z * v2.y;
+		r.y = v1.z * v2.x - v1.x * v2.z;
+		r.z = v1.x * v2.y - v1.y * v2.x;
+	}
+
 	inline glm::vec3 QuatMult(const glm::quat& q, const glm::vec3& v)
 	{
 		glm::vec3 qv = { q.x, q.y, q.z };
+		glm::vec3 t = {};
+		Cross(qv, v, t);
 
-		return qv * 2.0f * glm::dot(qv, v) + v * (q.w * q.w - glm::dot(qv, qv)) + glm::cross(qv, v) * 2.0f * q.w;
+		t.x *= 2.f;
+		t.y *= 2.f;
+		t.z *= 2.f;
+		
+		glm::vec3 r = {};
+		Cross(qv, t, r);
+
+		t.x *= q.w;
+		t.y *= q.w;
+		t.z *= q.w;
+
+		t.x += r.x + v.x;
+		t.y += r.y + v.y;
+		t.z += r.z + v.z;
+
+		return t;
+	}
+
+	void Combine(const Transform& a, const Transform& b, Transform& out)
+	{
+		out.scale.x = a.scale.x * b.scale.x;
+		out.scale.y = a.scale.y * b.scale.y;
+		out.scale.z = a.scale.z * b.scale.z;
+
+		out.rotation = QuatMult(b.rotation, a.rotation);
+
+		glm::vec3 temp = b.position;
+
+		temp.x *= a.scale.x;
+		temp.y *= a.scale.y;
+		temp.z *= a.scale.z;
+
+		out.position = QuatMult(a.rotation, temp);
+
+		out.position.x += a.position.x;
+		out.position.y += a.position.y;
+		out.position.z += a.position.z;
 	}
 
 	Transform Combine(const Transform& a, const Transform& b) {
 		Transform out;
 
-		out.scale = a.scale * b.scale;
+		out.scale.x = a.scale.x * b.scale.x;
+		out.scale.y = a.scale.y * b.scale.y;
+		out.scale.z = a.scale.z * b.scale.z;
+
 		out.rotation = QuatMult(b.rotation, a.rotation);
 
-		out.position = a.rotation * ( a.scale * b.position);
-		out.position = a.position + out.position;
+		glm::vec3 temp = b.position;
+
+		temp.x *= a.scale.x;
+		temp.y *= a.scale.y;
+		temp.z *= a.scale.z;
+
+		out.position = a.rotation * temp;
+		
+		out.position.x += a.position.x;
+		out.position.y += a.position.y;
+		out.position.z += a.position.z;
 
 		return out;
 	}
@@ -77,13 +145,21 @@ namespace r2::math
 
 	glm::mat4 ToMatrix(const Transform& t)
 	{
-		glm::vec3 x = t.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
-		glm::vec3 y = t.rotation * glm::vec3(0.0f, 1.0f, 0.0f);
-		glm::vec3 z = t.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+		glm::vec3 x = QuatMult(t.rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::vec3 y = QuatMult(t.rotation, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec3 z = QuatMult(t.rotation, glm::vec3(0.0f, 0.0f, 1.0f));
 
-		x = x * t.scale.x;
-		y = y * t.scale.y;
-		z = z * t.scale.z;
+		x.x *= t.scale.x;
+		x.y *= t.scale.x;
+		x.z *= t.scale.x;
+
+		y.x *= t.scale.y;
+		y.y *= t.scale.y;
+		y.z *= t.scale.y;
+
+		z.x *= t.scale.z;
+		z.y *= t.scale.z;
+		z.z *= t.scale.z;
 
 		glm::vec3 p = t.position;
 

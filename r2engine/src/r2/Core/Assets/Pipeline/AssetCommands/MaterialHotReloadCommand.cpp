@@ -14,7 +14,6 @@
 
 namespace
 {
-	//const std::string MPRM_EXT = ".mprm";
 	const std::string MTRL_EXT = ".mtrl";
 }
 

@@ -6761,10 +6761,10 @@ namespace r2::draw::renderer
 	{
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
 
-		const DebugRenderBatch& debugModelsRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-		const DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
-		const DebugRenderBatch& debugModelsTransparentRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
-		const DebugRenderBatch& debugLinesTransparentBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
+		static const DebugRenderBatch& debugModelsRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		static const DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
+		static const DebugRenderBatch& debugModelsTransparentRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_TRANSPARENT);
+		static const DebugRenderBatch& debugLinesTransparentBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES_TRANSPARENT);
 
 		ConstantBufferHandle debugModelsSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugModelsRenderBatch.subCommandsConstantConfigHandle);
 		ConstantBufferHandle debugLinesSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugLinesRenderBatch.subCommandsConstantConfigHandle);

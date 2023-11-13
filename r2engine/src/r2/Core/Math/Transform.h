@@ -15,6 +15,8 @@ namespace r2::math
 		glm::quat rotation = glm::quat(1, 0, 0, 0);
 	};
 
+	void Combine(const Transform& a, const Transform& b, Transform& r);
+
 	Transform Combine(const Transform& a, const Transform& b);
 	Transform Inverse(const Transform& t);
 	Transform Mix(const Transform& a, const Transform& b, float t);

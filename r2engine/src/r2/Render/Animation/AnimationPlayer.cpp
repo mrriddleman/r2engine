@@ -294,7 +294,9 @@ namespace
                 //get the parent's global transform and combine with yours
                 //@Optimization
                 //@TODO(Serge): slow
-                r2::sarr::At(*tempGlobalTransforms, j) = r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform);
+                r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform, r2::sarr::At(*tempGlobalTransforms, j));
+
+//                 = r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform);
             }
 
 			s32 theDefault = -1;

@@ -41,7 +41,12 @@ namespace r2::math
     
     glm::quat Lerp(const glm::quat& q1, const glm::quat& q2, float t)
     {
-        return glm::lerp(q1, q2, t);
+        return glm::quat(
+            lerp(q1.w, q2.w, t),
+            lerp(q1.x, q2.x, t),
+            lerp(q1.y, q2.y, t),
+            lerp(q1.z, q2.z, t)
+        );//glm::lerp(q1, q2, t);
     }
 
     glm::quat Interpolate(const glm::quat& q1, const glm::quat& q2, float t)

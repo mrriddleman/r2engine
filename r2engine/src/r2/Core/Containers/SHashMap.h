@@ -158,7 +158,7 @@ namespace r2
             fr.data_prev = END_OF_LIST;
             fr.data_i = END_OF_LIST;
             
-            u64 size = r2::sarr::Size(*h.mHash);
+            u64 size = h.mHash->mSize;//r2::sarr::Size(*h.mHash);
             if (size == 0)
             {
                 R2_CHECK(false, "");
