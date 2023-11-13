@@ -621,9 +621,13 @@ namespace r2
         }
         
 #ifdef R2_IMGUI
-        mImGuiLayer->Begin();
-        mLayerStack.ImGuiRender(mImGuiLayer->GetDockingSpace());
-        mImGuiLayer->End();
+        if (mEditorLayer->IsEnabled())
+        {
+			mImGuiLayer->Begin();
+			mLayerStack.ImGuiRender(mImGuiLayer->GetDockingSpace());
+			mImGuiLayer->End();
+        }
+
 #endif
     }
     

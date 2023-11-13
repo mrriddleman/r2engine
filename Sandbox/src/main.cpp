@@ -607,7 +607,7 @@ public:
 			}*/
 
 
-			/*for (int i = 0; i < 50; ++i)
+			for (int i = 0; i < 50; ++i)
 			{
 				r2::draw::PointLight pointLight;
 
@@ -629,7 +629,7 @@ public:
 				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
 
 				r2::draw::renderer::AddPointLight(pointLight);
-			}*/
+			}
 
         }
 

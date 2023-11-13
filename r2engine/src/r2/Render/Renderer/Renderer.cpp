@@ -5048,7 +5048,7 @@ namespace r2::draw::renderer
 		auto dispatchComputeConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mDispatchComputeConfigHandle);
 
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 0);
-		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 1);
+	//	r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 1);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 2);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 3);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 4);
