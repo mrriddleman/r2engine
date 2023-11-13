@@ -61,8 +61,8 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
  
 
-	vec3 editorPickingCoord = vec3(uv.r, uv.g, editorPickingSurface.page);
-	uvec2 editorPickingColor = texture(usampler2DArray(editorPickingSurface.container), editorPickingCoord).rg;
+	//vec3 editorPickingCoord = vec3(uv.r, uv.g, editorPickingSurface.page);
+	//uvec2 editorPickingColor = texture(usampler2DArray(editorPickingSurface.container), editorPickingCoord).rg;
 
 //return editorPickingColor;
 	 //if(editorPickingColor.r == 0)

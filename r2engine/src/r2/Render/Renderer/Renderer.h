@@ -129,6 +129,21 @@ namespace r2::draw
 		glm::mat4 modelMatrix;
 	};
 
+	struct BatchRenderOffsets
+	{
+		//@TODO(Serge): Should this be the forward pass' shader? or should this be ShaderEffectPasses?
+		ShaderEffectPasses shaderEffectPasses;
+		PrimitiveType primitiveType;
+		cmd::DrawState drawState;
+		u32 subCommandsOffset = 0;
+		u32 numSubCommands = 0;
+		u32 cameraDepth;
+		u32 depthFunction;
+		b32 isDynamic = false;
+		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
+
+	};
+
 	struct DebugRenderBatch
 	{
 		DebugDrawType debugDrawType;
@@ -146,6 +161,8 @@ namespace r2::draw
 		r2::SArray<DebugVertex>* vertices = nullptr;
 		r2::SArray<DrawFlags>* drawFlags = nullptr;
 		r2::SArray<u32>* numInstances = nullptr;
+
+
 
 		static u64 MemorySize(u32 maxDraws, bool hasDebugLines, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
@@ -523,6 +540,16 @@ namespace r2::draw
 		r2::mem::StackArena* mDebugCommandArena = nullptr;
 
 		r2::SArray<DebugRenderBatch>* mDebugRenderBatches = nullptr;
+
+
+		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
+
+		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = nullptr;
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = nullptr;
+
 #endif
 		//------------END Debug Stuff--------------
 

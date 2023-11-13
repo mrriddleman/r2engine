@@ -287,13 +287,15 @@ namespace r2::draw
 		{
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(maxDraws), alignment, headerSize, boundsChecking);
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugVertex>::MemorySize(maxDraws) * 2, alignment, headerSize, boundsChecking); //*2 because we need double the memory for debug vertices
+			
 		}
 		else
 		{
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugModelType>::MemorySize(maxDraws), alignment, headerSize, boundsChecking);
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<math::Transform>::MemorySize(maxDraws), alignment, headerSize, boundsChecking);
-		}
 
+		}
+		
 		return totalBytes;
 	}
 #endif
@@ -839,11 +841,16 @@ namespace r2::draw::renderer
 			{
 				debugRenderBatch.matTransforms = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				debugRenderBatch.vertices = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DRAWS * 2);
+
+
 			}
 			else if (debugRenderBatch.debugDrawType == DDT_MODELS || debugRenderBatch.debugDrawType == DDT_MODELS_TRANSPARENT)
 			{
 				debugRenderBatch.transforms = MAKE_SARRAY(*rendererArena, math::Transform, MAX_NUM_DRAWS);
 				debugRenderBatch.debugModelTypesToDraw = MAKE_SARRAY(*rendererArena, DebugModelType, MAX_NUM_DRAWS);
+
+				//@TODO(Serge): These sizes may be off - remeasure
+
 			}
 			else
 			{
@@ -851,7 +858,14 @@ namespace r2::draw::renderer
 			}
 
 			r2::sarr::Push(*newRenderer->mDebugRenderBatches, debugRenderBatch);
-		}
+		}	
+
+		newRenderer->linesBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUM_DRAWS);
+		newRenderer->transparentLinesBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUM_DRAWS);
+		newRenderer->linesDrawBatchSubCommands = MAKE_SARRAY(*rendererArena, cmd::DrawDebugBatchSubCommand, MAX_NUM_DRAWS);
+		newRenderer->modelBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+		newRenderer->transparentModelBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+		newRenderer->modelDrawBatchSubCommands = MAKE_SARRAY(*rendererArena, cmd::DrawBatchSubCommand, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
 #endif
 
 		//@TODO(Serge): use backendType?
@@ -1494,6 +1508,13 @@ namespace r2::draw::renderer
 		r2::mem::LinearArena* arena = renderer->mSubAreaArena;
 
 #ifdef R2_DEBUG
+
+		FREE(renderer->modelDrawBatchSubCommands, *arena);
+		FREE(renderer->transparentModelBatchRenderOffsets, *arena);
+		FREE(renderer->modelBatchRenderOffsets, *arena);
+		FREE(renderer->linesDrawBatchSubCommands, *arena);
+		FREE(renderer->transparentLinesBatchRenderOffsets, *arena);
+		FREE(renderer->linesBatchRenderOffsets, *arena);
 
 		for (s32 i = NUM_DEBUG_DRAW_TYPES - 1; i >= 0; --i)
 		{
@@ -2532,6 +2553,13 @@ namespace r2::draw::renderer
 			+ r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking)
 			+ r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY 
 			+ r2::mem::utils::GetMaxMemoryForAllocation(DEBUG_COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking)
+
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawDebugBatchSubCommand>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)
 #endif
 			; //end of sizes
 
@@ -3055,20 +3083,7 @@ namespace r2::draw::renderer
 		r2::SArray<CameraDepth>* cameraDepths = nullptr;
 	};
 
-	struct BatchRenderOffsets
-	{
-		//@TODO(Serge): Should this be the forward pass' shader? or should this be ShaderEffectPasses?
-		ShaderEffectPasses shaderEffectPasses;
-		PrimitiveType primitiveType;
-		cmd::DrawState drawState;
-		u32 subCommandsOffset = 0;
-		u32 numSubCommands = 0;
-		u32 cameraDepth;
-		u32 depthFunction;
-		b32 isDynamic = false;
-		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
-		
-	};
+
 
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
@@ -6310,6 +6325,7 @@ namespace r2::draw::renderer
 				r2::sarr::Push(*debugRenderConstants, constants);
 			}
 
+			//@TODO(Serge): generate the keys at DebugBatch creation time
 			key::DebugKey debugKey = key::GenerateDebugKey(shaderID, flags.IsSet(eDrawFlags::FILL_MODEL) ? PrimitiveType::TRIANGLES : PrimitiveType::LINES, flags.IsSet(eDrawFlags::DEPTH_TEST), 0, 0);//@TODO(Serge): last two params unused - needed for transparency
 
 			DebugDrawCommandData* defaultDebugDrawCommandData = nullptr;
@@ -6670,29 +6686,26 @@ namespace r2::draw::renderer
 		u32 modelSubCommandOffset = 0;
 		u32 lineSubCommandOffset = 0;
 
-		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = nullptr;
-		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
-		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
-		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
+		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = renderer.modelBatchRenderOffsets;
+		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = renderer.transparentModelBatchRenderOffsets;
+		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = renderer.linesBatchRenderOffsets;
+		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = renderer.transparentLinesBatchRenderOffsets;
 
-		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = nullptr;
-		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = nullptr;
+		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = renderer.modelDrawBatchSubCommands;
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = renderer.linesDrawBatchSubCommands;
 
-		if (numModelsToDraw + numTransparentModelsToDraw > 0)
-		{
-			modelDrawBatchSubCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numModelsToDraw + numTransparentModelsToDraw);
-		}
-		
-		if (numLinesToDraw + numTransparentLinesToDraw > 0)
-		{
-			linesDrawBatchSubCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawDebugBatchSubCommand, numLinesToDraw + numTransparentLinesToDraw);
-		}
+
+		r2::sarr::Clear(*modelBatchRenderOffsets);
+		r2::sarr::Clear(*transparentModelBatchRenderOffsets);
+		r2::sarr::Clear(*linesBatchRenderOffsets);
+		r2::sarr::Clear(*transparentLinesBatchRenderOffsets);
+		r2::sarr::Clear(*modelDrawBatchSubCommands);
+		r2::sarr::Clear(*linesDrawBatchSubCommands);
+
 
 		if (numModelsToDraw > 0)
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
-
-			modelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numModelsToDraw);
 
 			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, debugRenderConstants, debugDrawCommandData);
 
@@ -6703,8 +6716,6 @@ namespace r2::draw::renderer
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
 
-			linesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numLinesToDraw);
-
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesRenderBatch.shaderHandle, flat::eMeshPass_FORWARD, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
@@ -6714,7 +6725,6 @@ namespace r2::draw::renderer
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
 
-			transparentModelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentModelsToDraw);
 
 			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, debugRenderConstants, debugDrawCommandData);
 
@@ -6725,8 +6735,6 @@ namespace r2::draw::renderer
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
 
-			transparentLinesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numTransparentLinesToDraw);
-	
 			CreateDebugSubCommands(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, debugRenderConstants, debugDrawCommandData);
 
 			PopulateDebugRenderBatchesOffsets(debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, flat::eMeshPass_TRANSPARENT, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
