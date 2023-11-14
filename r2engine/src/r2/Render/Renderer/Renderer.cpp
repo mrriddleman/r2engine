@@ -833,13 +833,15 @@ namespace r2::draw::renderer
 			debugRenderBatch.shaderHandle = r2::draw::InvalidShader;
 			
 			
-			debugRenderBatch.colors = MAKE_SARRAY(*rendererArena, glm::vec4, MAX_NUM_DRAWS);
+		//	debugRenderBatch.colors = MAKE_SARRAY(*rendererArena, glm::vec4, MAX_NUM_DRAWS);
+			debugRenderBatch.debugRenderConstants = MAKE_SARRAY(*rendererArena, DebugRenderConstants, MAX_NUM_DRAWS);
+
 			debugRenderBatch.drawFlags = MAKE_SARRAY(*rendererArena, DrawFlags, MAX_NUM_DRAWS);
 			debugRenderBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
 
 			if (debugRenderBatch.debugDrawType == DDT_LINES || debugRenderBatch.debugDrawType == DDT_LINES_TRANSPARENT)
 			{
-				debugRenderBatch.matTransforms = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
+			//	debugRenderBatch.matTransforms = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				debugRenderBatch.vertices = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DRAWS * 2);
 
 				debugRenderBatch.debugDrawCommandData[0].debugLineDrawBatchCommands = MAKE_SARRAY(*rendererArena, cmd::DrawDebugBatchSubCommand, MAX_NUM_DRAWS);
@@ -855,7 +857,7 @@ namespace r2::draw::renderer
 			}
 			else if (debugRenderBatch.debugDrawType == DDT_MODELS || debugRenderBatch.debugDrawType == DDT_MODELS_TRANSPARENT)
 			{
-				debugRenderBatch.transforms = MAKE_SARRAY(*rendererArena, math::Transform, MAX_NUM_DRAWS);
+				//debugRenderBatch.transforms = MAKE_SARRAY(*rendererArena, math::Transform, MAX_NUM_DRAWS);
 				debugRenderBatch.debugModelTypesToDraw = MAKE_SARRAY(*rendererArena, DebugModelType, MAX_NUM_DRAWS);
 
 				debugRenderBatch.debugDrawCommandData[0].debugModelDrawBatchCommands = MAKE_SARRAY(*rendererArena, cmd::DrawBatchSubCommand, MAX_NUM_DRAWS);
@@ -1545,7 +1547,7 @@ namespace r2::draw::renderer
 				FREE(debugRenderBatch.debugDrawCommandData[1].debugLineDrawBatchCommands, *arena);
 
 				FREE(debugRenderBatch.vertices, *arena);
-				FREE(debugRenderBatch.matTransforms, *arena);
+			//	FREE(debugRenderBatch.matTransforms, *arena);
 			}
 			else if ((DebugDrawType)i == DDT_MODELS || (DebugDrawType)i == DDT_MODELS_TRANSPARENT)
 			{
@@ -1553,7 +1555,7 @@ namespace r2::draw::renderer
 				FREE(debugRenderBatch.debugDrawCommandData[1].debugModelDrawBatchCommands, *arena);
 
 				FREE(debugRenderBatch.debugModelTypesToDraw, *arena);
-				FREE(debugRenderBatch.transforms, *arena);
+			//	FREE(debugRenderBatch.transforms, *arena);
 			}
 			else
 			{
@@ -1562,8 +1564,8 @@ namespace r2::draw::renderer
 
 			FREE(debugRenderBatch.numInstances, *arena);
 			FREE(debugRenderBatch.drawFlags, *arena);
-			FREE(debugRenderBatch.colors, *arena);
-			
+			//FREE(debugRenderBatch.colors, *arena);
+			FREE(debugRenderBatch.debugRenderConstants, *arena);
 		}
 
 		FREE(renderer->mDebugRenderBatches, *arena);
@@ -6275,7 +6277,7 @@ namespace r2::draw::renderer
 
 #ifdef R2_DEBUG
 
-	void CreateDebugSubCommands(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset, r2::SArray<DebugRenderConstants>* debugRenderConstants)
+	void CreateDebugSubCommands(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset)
 	{
 		//@NOTE: this isn't at all thread safe! 
 		if (renderer.mDebugCommandBucket == nullptr)
@@ -6284,18 +6286,11 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(debugRenderBatch.transforms != nullptr, "Transforms haven't been created!");
-
 		R2_CHECK(debugRenderBatch.drawFlags != nullptr, "We don't have any draw flags!");
 
-		R2_CHECK(debugRenderBatch.colors != nullptr, "We don't have any colors!");
-
-
-		R2_CHECK(r2::sarr::Size(*debugRenderBatch.transforms) == r2::sarr::Size(*debugRenderBatch.colors) &&
-			r2::sarr::Size(*debugRenderBatch.numInstances) == r2::sarr::Size(*debugRenderBatch.debugModelTypesToDraw) &&
+		R2_CHECK(r2::sarr::Size(*debugRenderBatch.numInstances) == r2::sarr::Size(*debugRenderBatch.debugModelTypesToDraw) &&
 			r2::sarr::Size(*debugRenderBatch.debugModelTypesToDraw) == r2::sarr::Size(*debugRenderBatch.drawFlags),
 			"These should all be equal");
-
 
 		R2_CHECK(debugRenderBatch.shaderHandle != InvalidShader, "This can't be invalid!");
 
@@ -6310,41 +6305,12 @@ namespace r2::draw::renderer
 
 			DebugModelType modelType = r2::sarr::At(*debugRenderBatch.debugModelTypesToDraw, i);
 
-			for (u32 j = 0; j < numInstances; ++j)
-			{
-				glm::mat4 transform = math::ToMatrix(r2::sarr::At(*debugRenderBatch.transforms, debugConstantsOffset + j));
-
-				DebugRenderConstants constants;
-				constants.color = r2::sarr::At(*debugRenderBatch.colors, debugConstantsOffset + j);
-				constants.modelMatrix = transform;
-
-				r2::sarr::Push(*debugRenderConstants, constants);
-			}
-
-			//@TODO(Serge): generate the keys at DebugBatch creation time
-		//	key::DebugKey debugKey = key::GenerateDebugKey(shaderID, flags.IsSet(eDrawFlags::FILL_MODEL) ? PrimitiveType::TRIANGLES : PrimitiveType::LINES, flags.IsSet(eDrawFlags::DEPTH_TEST), 0, 0);//@TODO(Serge): last two params unused - needed for transparency
-
-//			DebugDrawCommandData* defaultDebugDrawCommandData = nullptr;
 			b32 depth = !flags.IsSet(eDrawFlags::DEPTH_TEST);
 
-			const DebugDrawCommandData* debugDrawCommandData = &debugRenderBatch.debugDrawCommandData[depth];//r2::shashmap::Get(*debugModelDrawCommandData, debugKey.keyValue, defaultDebugDrawCommandData);
-
-			//if (debugDrawCommandData == defaultDebugDrawCommandData)
-			//{
-			//	debugDrawCommandData = ALLOC(DebugDrawCommandData, *renderer.mPreRenderStackArena);
-
-			//	debugDrawCommandData->debugModelDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numDebugObjectsToDraw); //@NOTE(Serge): overestimate
-
-			//	debugDrawCommandData->shaderID = shaderID;
-			//	
-			//	debugDrawCommandData->depthEnabled = flags.IsSet(eDrawFlags::DEPTH_TEST);
-			//	debugDrawCommandData->primitiveType = flags.IsSet(eDrawFlags::FILL_MODEL) ? PrimitiveType::TRIANGLES : PrimitiveType::LINES;
-
-			//	r2::shashmap::Set(*debugModelDrawCommandData, debugKey.keyValue, debugDrawCommandData);
-			//}
+			const DebugDrawCommandData* debugDrawCommandData = &debugRenderBatch.debugDrawCommandData[depth];
 
 			const vb::GPUModelRef* modelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
-			//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
+			
 			const auto numMeshRefs = r2::sarr::Size(*modelRef->meshEntries);
 			for (u64 j = 0; j < numMeshRefs; ++j)
 			{
@@ -6353,10 +6319,10 @@ namespace r2::draw::renderer
 				const vb::MeshEntry& meshEntry = r2::sarr::At(*modelRef->meshEntries, j);
 
 				subCommand.baseInstance = debugConstantsOffset + instanceOffset;
-				subCommand.baseVertex = meshEntry.gpuVertexEntry.start;//r2::sarr::At(*modelRef.mMeshRefs, j).baseVertex;
-				subCommand.firstIndex = meshEntry.gpuIndexEntry.start;//r2::sarr::At(*modelRef.mMeshRefs, j).baseIndex;
+				subCommand.baseVertex = meshEntry.gpuVertexEntry.start;
+				subCommand.firstIndex = meshEntry.gpuIndexEntry.start;
 				subCommand.instanceCount = numInstances;
-				subCommand.count = meshEntry.gpuIndexEntry.size;//r2::sarr::At(*modelRef.mMeshRefs, j).numIndices;
+				subCommand.count = meshEntry.gpuIndexEntry.size;
 
 				r2::sarr::Push(*debugDrawCommandData->debugModelDrawBatchCommands, subCommand);
 			}
@@ -6365,7 +6331,7 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void CreateDebugSubCommandsForLines(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset, r2::SArray<DebugRenderConstants>* debugRenderConstants)
+	void CreateDebugSubCommandsForLines(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, u32 numDebugObjectsToDraw, u32 instanceOffset)
 	{
 		if (renderer.mDebugCommandBucket == nullptr)
 		{
@@ -6373,14 +6339,11 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(debugRenderBatch.transforms != nullptr || debugRenderBatch.matTransforms != nullptr, "Transforms haven't been created!");
+		R2_CHECK(debugRenderBatch.debugRenderConstants != nullptr, "Transforms haven't been created!");
 
 		R2_CHECK(debugRenderBatch.drawFlags != nullptr, "We don't have any draw flags!");
 
-		R2_CHECK(debugRenderBatch.colors != nullptr, "We don't have any colors!");
-
-		R2_CHECK(r2::sarr::Size(*debugRenderBatch.matTransforms) == r2::sarr::Size(*debugRenderBatch.drawFlags) &&
-			r2::sarr::Size(*debugRenderBatch.drawFlags) == r2::sarr::Size(*debugRenderBatch.colors) &&
+		R2_CHECK(r2::sarr::Size(*debugRenderBatch.debugRenderConstants) == r2::sarr::Size(*debugRenderBatch.drawFlags) &&
 			r2::sarr::Size(*debugRenderBatch.vertices) / 2 == r2::sarr::Size(*debugRenderBatch.drawFlags),
 			"These should all be equal");
 		
@@ -6388,46 +6351,15 @@ namespace r2::draw::renderer
 
 		ShaderHandle shaderID = debugRenderBatch.shaderHandle;
 
-		u64 debugConstantsOffset = 0;
-
 		for (u64 i = 0; i < numDebugObjectsToDraw; ++i)
 		{
 			const DrawFlags& flags = r2::sarr::At(*debugRenderBatch.drawFlags, i);
-			u32 numInstances = r2::sarr::At(*debugRenderBatch.numInstances, i);
 
 			DebugModelType modelType = DEBUG_LINE;
 
-			for (u32 j = 0; j < numInstances; ++j)
-			{
-				DebugRenderConstants constants;
-				constants.color = r2::sarr::At(*debugRenderBatch.colors, debugConstantsOffset + j);
-				constants.modelMatrix = r2::sarr::At(*debugRenderBatch.matTransforms, debugConstantsOffset + j);
-
-				r2::sarr::Push(*debugRenderConstants, constants);
-			}
-
-			//@TODO(Serge): generate the keys at DebugBatch creation time
-			//key::DebugKey debugKey = key::GenerateDebugKey(shaderID, PrimitiveType::LINES, flags.IsSet(eDrawFlags::DEPTH_TEST), 0, 0);//@TODO(Serge): last two params unused - needed for transparency
-
-			//DebugDrawCommandData* defaultDebugDrawCommandData = nullptr;
-
 			b32 depth = !flags.IsSet(eDrawFlags::DEPTH_TEST);
 
-			const DebugDrawCommandData* debugDrawCommandData = &debugRenderBatch.debugDrawCommandData[depth];//r2::shashmap::Get(*debugModelDrawCommandData, debugKey.keyValue, defaultDebugDrawCommandData);
-
-			/*if (debugDrawCommandData == defaultDebugDrawCommandData)
-			{
-				debugDrawCommandData = ALLOC(DebugDrawCommandData, *renderer.mPreRenderStackArena);
-
-				debugDrawCommandData->debugLineDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawDebugBatchSubCommand, numDebugObjectsToDraw);
-
-				debugDrawCommandData->shaderID = shaderID;
-
-				debugDrawCommandData->depthEnabled = flags.IsSet(eDrawFlags::DEPTH_TEST);
-				debugDrawCommandData->primitiveType =  PrimitiveType::LINES;
-
-				r2::shashmap::Set(*debugModelDrawCommandData, debugKey.keyValue, debugDrawCommandData);
-			}*/
+			const DebugDrawCommandData* debugDrawCommandData = &debugRenderBatch.debugDrawCommandData[depth];
 
 			//it is a line
 			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
@@ -6438,8 +6370,6 @@ namespace r2::draw::renderer
 			subCommand.firstVertex = i * 2;
 
 			r2::sarr::Push(*debugDrawCommandData->debugLineDrawBatchCommands, subCommand);
-
-			debugConstantsOffset += numInstances;
 		}
 	}
 
@@ -6728,12 +6658,10 @@ namespace r2::draw::renderer
 		const u64 totalObjectsToDraw = numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw + numTransparentLinesToDraw;
 
 		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
-		//r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData = nullptr;
 
 		if (totalObjectsToDraw > 0)
 		{
 			debugRenderConstants = MAKE_SARRAY(*renderer.mPreRenderStackArena, DebugRenderConstants, totalObjectsToDraw);
-			//debugDrawCommandData = MAKE_SHASHMAP(*renderer.mPreRenderStackArena, DebugDrawCommandData*, (totalObjectsToDraw)*r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
 		}
 		else
 		{
@@ -6762,36 +6690,36 @@ namespace r2::draw::renderer
 
 		if (numModelsToDraw > 0)
 		{
-			//r2::shashmap::Clear(*debugDrawCommandData);
+			r2::sarr::Append(*debugRenderConstants, *debugModelsRenderBatch.debugRenderConstants);
 
-			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, debugRenderConstants);// , debugDrawCommandData);
+			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0);
 
 			PopulateDebugRenderBatchesOffsets(debugModelsRenderBatch.debugDrawCommandData, debugModelsRenderBatch.shaderHandle, flat::eMeshPass_FORWARD, modelSubCommandOffset, modelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numLinesToDraw > 0)
 		{
-			//r2::shashmap::Clear(*debugDrawCommandData);
+			r2::sarr::Append(*debugRenderConstants, *debugLinesRenderBatch.debugRenderConstants);
 
-			CreateDebugSubCommandsForLines(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw, debugRenderConstants);// , debugDrawCommandData);
+			CreateDebugSubCommandsForLines(renderer, debugLinesRenderBatch, numLinesToDraw, numModelInstancesToDraw);
 
 			PopulateDebugRenderBatchesOffsets(debugLinesRenderBatch.debugDrawCommandData, debugLinesRenderBatch.shaderHandle, flat::eMeshPass_FORWARD, lineSubCommandOffset, linesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentModelsToDraw > 0)
 		{
-		//	r2::shashmap::Clear(*debugDrawCommandData);
+			r2::sarr::Append(*debugRenderConstants, *debugModelsTransparentRenderBatch.debugRenderConstants);
 
-			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw, debugRenderConstants);// , debugDrawCommandData);
+			CreateDebugSubCommands(renderer, debugModelsTransparentRenderBatch, numTransparentModelsToDraw, numModelInstancesToDraw + numLinesToDraw);
 
 			PopulateDebugRenderBatchesOffsets(debugModelsTransparentRenderBatch.debugDrawCommandData, debugModelsTransparentRenderBatch.shaderHandle, flat::eMeshPass_TRANSPARENT, modelSubCommandOffset, transparentModelBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
 
 		if (numTransparentLinesToDraw > 0)
 		{
-			//r2::shashmap::Clear(*debugDrawCommandData);
+			r2::sarr::Append(*debugRenderConstants, *debugLinesTransparentBatch.debugRenderConstants);
 
-			CreateDebugSubCommandsForLines(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw, debugRenderConstants);// , debugDrawCommandData);
+			CreateDebugSubCommandsForLines(renderer, debugLinesTransparentBatch, numTransparentLinesToDraw, numModelInstancesToDraw + numLinesToDraw + numTransparentModelInstancesToDraw);
 
 			PopulateDebugRenderBatchesOffsets(debugLinesTransparentBatch.debugDrawCommandData, debugLinesTransparentBatch.shaderHandle, flat::eMeshPass_TRANSPARENT, lineSubCommandOffset, transparentLinesBatchRenderOffsets, modelDrawBatchSubCommands, linesDrawBatchSubCommands);
 		}
@@ -6901,13 +6829,13 @@ namespace r2::draw::renderer
 			DebugRenderBatch& batch = r2::sarr::At(*renderer.mDebugRenderBatches, i);
 
 			
-			r2::sarr::Clear(*batch.colors);
+			r2::sarr::Clear(*batch.debugRenderConstants);
 			r2::sarr::Clear(*batch.drawFlags);
 			r2::sarr::Clear(*batch.numInstances);
 			
 			if (batch.debugDrawType == DDT_LINES || batch.debugDrawType == DDT_LINES_TRANSPARENT)
 			{ 
-				r2::sarr::Clear(*batch.matTransforms);
+				//r2::sarr::Clear(*batch.matTransforms);
 				r2::sarr::Clear(*batch.vertices);
 
 				r2::sarr::Clear(*batch.debugDrawCommandData[0].debugLineDrawBatchCommands);
@@ -6916,7 +6844,7 @@ namespace r2::draw::renderer
 			}
 			else if (batch.debugDrawType == DDT_MODELS || batch.debugDrawType == DDT_MODELS_TRANSPARENT)
 			{
-				r2::sarr::Clear(*batch.transforms);
+			//	r2::sarr::Clear(*batch.transforms);
 				r2::sarr::Clear(*batch.debugModelTypesToDraw);
 
 				r2::sarr::Clear(*batch.debugDrawCommandData[0].debugModelDrawBatchCommands);
@@ -7144,11 +7072,14 @@ namespace r2::draw::renderer
 		DrawFlags flags;
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
-		r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+		DebugRenderConstants constants;
+		constants.color = color;
+		constants.modelMatrix = modelMat;
+
+		r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
 		r2::sarr::Push(*debugRenderBatchToUse->drawFlags, flags);
 		r2::sarr::Push(*debugRenderBatchToUse->vertices, v1);
 		r2::sarr::Push(*debugRenderBatchToUse->vertices, v2);
-		r2::sarr::Push(*debugRenderBatchToUse->matTransforms, modelMat);
 		r2::sarr::Push(*debugRenderBatchToUse->numInstances, 1u);
 	}
 
@@ -7253,8 +7184,13 @@ namespace r2::draw::renderer
 
 			t.rotation = glm::angleAxis(angleBetween, axis);
 
-			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
-			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+			DebugRenderConstants constants;
+			constants.color = color;
+			constants.modelMatrix = r2::math::ToMatrix(t);
+			r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
+
+			//r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+			//r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
@@ -7326,8 +7262,13 @@ namespace r2::draw::renderer
 			t.position = center;
 			t.scale = glm::vec3(radius);
 
-			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
-			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+			DebugRenderConstants constants;
+			constants.color = color;
+			constants.modelMatrix = math::ToMatrix(t);
+			r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
+
+//			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+	//		r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
@@ -7399,8 +7340,13 @@ namespace r2::draw::renderer
 			t.position = center;
 			t.scale = glm::vec3(scale);
 
-			r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
-			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+			DebugRenderConstants constants;
+			constants.color = color;
+			constants.modelMatrix = math::ToMatrix(t);
+			r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
+
+			//r2::sarr::Push(*debugRenderBatchToUse->transforms, t);
+			//r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		DrawFlags flags;
@@ -7510,8 +7456,14 @@ namespace r2::draw::renderer
 			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
 			transformToDraw.position += basePosition;
 
-			r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
-			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+			DebugRenderConstants constants;
+			constants.color = color;
+			constants.modelMatrix = math::ToMatrix(transformToDraw);
+
+			r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
+
+	//		r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
+		//	r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		if (numOpaqueInstances > 0)
@@ -7617,8 +7569,14 @@ namespace r2::draw::renderer
 			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
 			transformToDraw.position += basePosition;
 
-			r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
-			r2::sarr::Push(*debugRenderBatchToUse->colors, color);
+			DebugRenderConstants constants;
+			constants.color = color;
+			constants.modelMatrix = math::ToMatrix(transformToDraw);
+
+			r2::sarr::Push(*debugRenderBatchToUse->debugRenderConstants, constants);
+
+		//	r2::sarr::Push(*debugRenderBatchToUse->transforms, transformToDraw);
+		//	r2::sarr::Push(*debugRenderBatchToUse->colors, color);
 		}
 
 		if (numOpaqueInstances > 0)

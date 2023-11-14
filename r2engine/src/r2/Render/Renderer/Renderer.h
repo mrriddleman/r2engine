@@ -165,9 +165,13 @@ namespace r2::draw
 		ConstantBufferHandle renderDebugConstantsConfigHandle = InvalidConstantConfigHandle;
 
 		r2::SArray<DebugModelType>* debugModelTypesToDraw = nullptr;
-		r2::SArray<math::Transform>* transforms = nullptr; //this is for the models - @TODO(Serge): maybe should just convert the transforms in the draw func, but might be more efficient to just do it a big loop so that's what we're doing for now
-		r2::SArray<glm::mat4>* matTransforms = nullptr; //this is for the lines
-		r2::SArray<glm::vec4>* colors = nullptr;
+		
+		//r2::SArray<math::Transform>* transforms = nullptr; //this is for the models - @TODO(Serge): maybe should just convert the transforms in the draw func, but might be more efficient to just do it a big loop so that's what we're doing for now
+		//r2::SArray<glm::mat4>* matTransforms = nullptr; //this is for the lines
+		//r2::SArray<glm::vec4>* colors = nullptr;
+
+		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
+
 		r2::SArray<DebugVertex>* vertices = nullptr;
 		r2::SArray<DrawFlags>* drawFlags = nullptr;
 		r2::SArray<u32>* numInstances = nullptr;
