@@ -144,6 +144,16 @@ namespace r2::draw
 
 	};
 
+	struct DebugDrawCommandData
+	{
+		ShaderHandle shaderID = InvalidShader;
+		PrimitiveType primitiveType = PrimitiveType::LINES;
+		b32 depthEnabled = false;
+
+		r2::SArray<cmd::DrawBatchSubCommand>* debugModelDrawBatchCommands = nullptr;
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* debugLineDrawBatchCommands = nullptr;
+	};
+
 	struct DebugRenderBatch
 	{
 		DebugDrawType debugDrawType;
@@ -162,7 +172,7 @@ namespace r2::draw
 		r2::SArray<DrawFlags>* drawFlags = nullptr;
 		r2::SArray<u32>* numInstances = nullptr;
 
-
+		DebugDrawCommandData debugDrawCommandData[2]; //0 - depth, 1 - no depth
 
 		static u64 MemorySize(u32 maxDraws, bool hasDebugLines, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
@@ -549,7 +559,7 @@ namespace r2::draw
 
 		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = nullptr;
 		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = nullptr;
-
+		r2::SArray<DebugVertex>* mDebugVertices = nullptr;
 #endif
 		//------------END Debug Stuff--------------
 

@@ -607,29 +607,29 @@ public:
 			}*/
 
 
-			for (int i = 0; i < 50; ++i)
-			{
-				r2::draw::PointLight pointLight;
+			//for (int i = 0; i < 50; ++i)
+			//{
+			//	r2::draw::PointLight pointLight;
 
-				auto zPos = (int)randomizer.RandomNum(1, 10);
-				auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
-				auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+			//	auto zPos = (int)randomizer.RandomNum(1, 10);
+			//	auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
+			//	auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
 
-				auto r = randomizer.RandomNum(0, 255);
-				auto g = randomizer.RandomNum(0, 255);
-				auto b = randomizer.RandomNum(0, 255);
+			//	auto r = randomizer.RandomNum(0, 255);
+			//	auto g = randomizer.RandomNum(0, 255);
+			//	auto b = randomizer.RandomNum(0, 255);
 
-				pointLight.position = glm::vec4(xPos, yPos, zPos, 1.0);
+			//	pointLight.position = glm::vec4(xPos, yPos, zPos, 1.0);
 
-				pointLight.lightProperties.color = glm::vec4((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+			//	pointLight.lightProperties.color = glm::vec4((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
 
-				pointLight.lightProperties.intensity = 100.0;
-				pointLight.lightProperties.fallOff = 0.1;
+			//	pointLight.lightProperties.intensity = 100.0;
+			//	pointLight.lightProperties.fallOff = 0.1;
 
-				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
+			//	pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
 
-				r2::draw::renderer::AddPointLight(pointLight);
-			}
+			//	r2::draw::renderer::AddPointLight(pointLight);
+			//}
 
         }
 
