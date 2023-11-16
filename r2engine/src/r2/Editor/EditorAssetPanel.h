@@ -3,6 +3,7 @@
 #define __EDITOR_ASSET_PANEL_H__
 
 #include "r2/Editor/EditorWidget.h"
+#include <filesystem>
 
 namespace r2::edit
 {
@@ -17,6 +18,20 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 	private:
+
+
+		void FileSystemPanel();
+		void AssetsBrowserPanel();
+		void ShowDirectoryInFileSystemPanel(const std::filesystem::path& directory, bool& wasActivated);
+
+
+		std::filesystem::path mEngineRawDirectory;
+		std::filesystem::path mEngineBinDirectory;
+		std::filesystem::path mAppRawDirectory;
+		std::filesystem::path mAppBinDirectory;
+
+
+		std::filesystem::path mCurrentDirectory;
 	};
 }
 
