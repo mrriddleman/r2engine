@@ -25,6 +25,8 @@ namespace r2::edit
 		void ShowDirectoryInFileSystemPanel(const std::filesystem::path& directory, bool& wasActivated);
 
 
+		void ShowContextMenuForPath(const std::filesystem::path& path);
+
 		std::filesystem::path mEngineRawDirectory;
 		std::filesystem::path mEngineBinDirectory;
 		std::filesystem::path mAppRawDirectory;

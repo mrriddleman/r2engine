@@ -99,6 +99,18 @@ namespace r2::edit
 
 			ImGui::BeginChild("Asset Preview", ImVec2(0, 0), true);
 
+			if (mCurrentDirectory != "")
+			{
+				if (ImGui::BeginPopupContextWindow("Asset Preview", ImGuiPopupFlags_MouseButtonRight))
+				{
+					ShowContextMenuForPath(mCurrentDirectory);
+
+					ImGui::EndPopup();
+				}
+				if (ImGui::IsWindowHovered())
+					ImGui::SetTooltip("Right-click to open popup");
+			}
+
 			if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
 			{
 				if (mCurrentDirectory != std::filesystem::path(mCurrentBaseDirectory))
@@ -121,7 +133,7 @@ namespace r2::edit
 			ImGui::End();
 		}
 
-//		ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 	}
 
 	void AssetPanel::FileSystemPanel()
@@ -181,9 +193,6 @@ namespace r2::edit
 
 		if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
 		{
-
-			
-
 			ImGui::Columns(columnCount, 0, false);
 
 			for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
@@ -195,6 +204,15 @@ namespace r2::edit
 				unsigned int icon = directoryEntry.is_directory() ? mEditorFolderImage : mEditorFileImage;
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 				ImGui::ImageButton((ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+				if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+				{
+					ShowContextMenuForPath(directoryEntry.path());
+
+					ImGui::EndPopup();
+				}
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Right-click to open popup");
 
 				//if (ImGui::BeginDragDropSource())
 				//{
@@ -252,6 +270,11 @@ namespace r2::edit
 				wasActivated = true;
 			}
 		}
+	}
+
+	void AssetPanel::ShowContextMenuForPath(const std::filesystem::path& path)
+	{
+		ImGui::Text("%s", path.string().c_str());
 	}
 }
 
