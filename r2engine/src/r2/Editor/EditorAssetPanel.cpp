@@ -237,8 +237,6 @@ namespace r2::edit
 			}
 
 			ImGui::Columns(1);
-
-			//ImGui::Text(mCurrentDirectory.string().c_str());
 		}
 	}
 
@@ -275,6 +273,11 @@ namespace r2::edit
 	void AssetPanel::ShowContextMenuForPath(const std::filesystem::path& path)
 	{
 		ImGui::Text("%s", path.string().c_str());
+
+		//@TODO(Serge): we need to figure out based on the path which folder we're in. If it's a directory
+		//				then set the menu to be the proper menu for that directory type.
+		//				If it's a specific kind of file, then we set the menu to be the proper menu for that file type.
+
 	}
 }
 
