@@ -21,7 +21,7 @@ namespace r2::edit
 
 
 		void FileSystemPanel();
-		void AssetsBrowserPanel();
+		void AssetsBrowserPanel(int contentWidth);
 		void ShowDirectoryInFileSystemPanel(const std::filesystem::path& directory, bool& wasActivated);
 
 
@@ -32,6 +32,15 @@ namespace r2::edit
 
 
 		std::filesystem::path mCurrentDirectory;
+		std::filesystem::path mCurrentBaseDirectory;
+
+		s32 mEditorFolderImageWidth;
+		s32 mEditorFolderImageHeight;
+		u32 mEditorFolderImage;
+
+		s32 mEditorFileImageWidth;
+		s32 mEditorFileImageHeight;
+		u32 mEditorFileImage;
 	};
 }
 

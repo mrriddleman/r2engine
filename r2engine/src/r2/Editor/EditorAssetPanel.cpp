@@ -4,11 +4,18 @@
 #include "r2/Editor/EditorAssetPanel.h"
 #include "imgui.h"
 #include "r2/Core/File/PathUtils.h"
-
+#include "r2/Render/Backends/SDL_OpenGL/ImGuiImageHelpers.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 namespace r2::edit
 {
+
+
+
 	AssetPanel::AssetPanel()
+		: mEditorFolderImageWidth(0)
+		, mEditorFolderImageHeight(0)
+		, mEditorFolderImage(0)
 	{
 
 	}
@@ -33,6 +40,16 @@ namespace r2::edit
 		mAppBinDirectory = filePath;
 
 		mCurrentDirectory = "";
+		mCurrentBaseDirectory = "";
+
+		std::filesystem::path editorFolderPath = std::filesystem::path(R2_ENGINE_ASSET_PATH) / "editor";
+
+		mEditorFolderImage = CreateTextureFromFile((editorFolderPath / "DirectoryIcon.png").string(), mEditorFolderImageWidth, mEditorFolderImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
+		IM_ASSERT(mEditorFolderImage != 0);
+
+		mEditorFileImage = CreateTextureFromFile((editorFolderPath / "FileIcon.png").string(), mEditorFileImageWidth, mEditorFileImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
+		IM_ASSERT(mEditorFileImage != 0);
+
 	}
 
 	void AssetPanel::Shutdown()
@@ -81,10 +98,23 @@ namespace r2::edit
 			ImGui::SameLine();
 
 			ImGui::BeginChild("Asset Preview", ImVec2(0, 0), true);
+
+			if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
+			{
+				if (mCurrentDirectory != std::filesystem::path(mCurrentBaseDirectory))
+				{
+					if (ImGui::Button("<-"))
+					{
+						mCurrentDirectory = mCurrentDirectory.parent_path();
+					}
+				}
+				ImGui::SameLine();
+			}
+
 			ImGui::Text("Assets Browser");
 			ImGui::Separator();
 			ImGui::Separator();
-			AssetsBrowserPanel();
+			AssetsBrowserPanel(ImGui::GetContentRegionAvail().x - w);
 			ImGui::EndChild();
 
 			ImGui::PopStyleVar();
@@ -102,29 +132,95 @@ namespace r2::edit
 		if (ImGui::CollapsingHeader("Engine Assets Raw"))
 		{
 			ShowDirectoryInFileSystemPanel(mEngineRawDirectory, wasActivated);
+			if (wasActivated)
+			{
+				mCurrentBaseDirectory = mEngineRawDirectory;
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Game Assets Raw"))
 		{
 			ShowDirectoryInFileSystemPanel(mAppRawDirectory, wasActivated);
+			if (wasActivated)
+			{
+				mCurrentBaseDirectory = mAppRawDirectory;
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Engine Assets Bin"))
 		{
 			ShowDirectoryInFileSystemPanel(mEngineBinDirectory, wasActivated);
+
+			if (wasActivated)
+			{
+				mCurrentBaseDirectory = mEngineBinDirectory;
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Game Assets Bin"))
 		{
 			ShowDirectoryInFileSystemPanel(mAppBinDirectory, wasActivated);
+
+			if (wasActivated)
+			{
+				mCurrentBaseDirectory = mAppBinDirectory;
+			}
 		}
 	}
 
-	void AssetPanel::AssetsBrowserPanel()
+	void AssetPanel::AssetsBrowserPanel(int contentWidth)
 	{
-		if (mCurrentDirectory != "")
+		static float padding = 16.0f;
+		static float thumbnailSize = 128.0f;
+		float cellSize = thumbnailSize + padding;
+
+		float panelWidth = contentWidth;
+		int columnCount = (int)(panelWidth / cellSize);
+		if (columnCount < 1)
+			columnCount = 1;
+
+		if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
 		{
-			ImGui::Text(mCurrentDirectory.string().c_str());
+
+			
+
+			ImGui::Columns(columnCount, 0, false);
+
+			for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
+			{
+				const auto& path = directoryEntry.path();
+				std::string filenameString = path.filename().string();
+
+				ImGui::PushID(filenameString.c_str());
+				unsigned int icon = directoryEntry.is_directory() ? mEditorFolderImage : mEditorFileImage;
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+				ImGui::ImageButton((ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+				//if (ImGui::BeginDragDropSource())
+				//{
+				//	std::filesystem::path relativePath(path);
+				//	const wchar_t* itemPath = relativePath.c_str();
+				//	ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t));
+				//	ImGui::EndDragDropSource();
+				//}
+
+				ImGui::PopStyleColor();
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+				{
+					if (directoryEntry.is_directory())
+						mCurrentDirectory /= path.filename();
+
+				}
+				ImGui::TextWrapped(filenameString.c_str());
+
+				ImGui::NextColumn();
+
+				ImGui::PopID();
+			}
+
+			ImGui::Columns(1);
+
+			//ImGui::Text(mCurrentDirectory.string().c_str());
 		}
 	}
 
