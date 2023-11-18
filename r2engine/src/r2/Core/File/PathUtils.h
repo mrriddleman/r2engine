@@ -21,7 +21,10 @@ namespace r2::fs::utils
         SHADERS_MANIFEST,
         MODELS,
         ANIMATIONS,
-        LEVELS
+        LEVELS_RAW,
+        LEVELS_BIN,
+        MATERIALS_RAW,
+        MATERIALS_BIN
     };
     
 #ifdef R2_PLATFORM_WINDOWS

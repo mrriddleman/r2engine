@@ -108,7 +108,12 @@ namespace r2
         return soundDefitionPath;
     }
     
-    std::string Application::GetShaderManifestsPath() const
+	void Application::GetSubPathForDirectory(r2::fs::utils::Directory directory, char* subpath) const
+	{
+
+	}
+
+	std::string Application::GetShaderManifestsPath() const
     {
         std::string shaderManifestsPath = "";
         return shaderManifestsPath;

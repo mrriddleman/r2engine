@@ -1439,64 +1439,6 @@ public:
 
 		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)sponzaFile);
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.ranm", modelFilePath);
-		r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)idleAnimFile);
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.ranm", modelFilePath);
-		r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)invertIdleAnimFile);
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.ranm", modelFilePath);
-		r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)attackAnimFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonIdleAnimFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* skeletonWalkAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonWalkAnimFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/run.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* skeletonRoarAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonRoarAnimFile);
-
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* ellenIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenIdleAnimFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenRunForward.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* ellenRunForwardAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenRunForwardAnimFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenSpawn.ranm", modelFilePath);
-
-		r2::asset::RawAssetFile* ellenSpawnAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenSpawnAnimFile);
-
 
 		return true;
     }
@@ -1606,6 +1548,52 @@ public:
         return ResolveCategoryPath;
     }
 
+    virtual void GetSubPathForDirectory(r2::fs::utils::Directory directory, char* subpath) const override
+    {
+		switch (directory)
+		{
+		case r2::fs::utils::ROOT:
+			r2::util::PathCpy(subpath, "");
+			break;
+		case r2::fs::utils::SOUND_DEFINITIONS:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Sounds/sound_definitions");
+			break;
+		case r2::fs::utils::SOUNDS:
+			r2::util::PathCpy(subpath, "assets/Sandbox_Sounds/sounds");
+			break;
+		case r2::fs::utils::TEXTURES:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Textures/packs");
+			break;
+		case r2::fs::utils::SHADERS_BIN:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Shaders");
+			break;
+		case r2::fs::utils::SHADERS_RAW:
+			r2::util::PathCpy(subpath, "assets/shaders/raw");
+			break;
+		case r2::fs::utils::SHADERS_MANIFEST:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Shaders/manifests");
+			break;
+		case r2::fs::utils::MODELS:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Models");
+			break;
+		case r2::fs::utils::ANIMATIONS:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Animations");
+			break;
+		case r2::fs::utils::LEVELS_BIN:
+			r2::util::PathCpy(subpath, "assets_bin/Sandbox_Levels");
+			break;
+        case r2::fs::utils::MATERIALS_RAW:
+            r2::util::PathCpy(subpath, "assets_bin/Sandbox_Materials");
+            break;
+        case r2::fs::utils::MATERIALS_BIN:
+			r2::util::PathCpy(subpath, "assets/Sandbox_Materials");
+			break;
+		default:
+            r2::util::PathCpy(subpath, "");
+			break;
+		}
+    }
+
     void PrintResolution() const
     {
         printf("Resolution is %d by %d\n", g_resolutions[mResolution].width, g_resolutions[mResolution].height);
@@ -1700,9 +1688,15 @@ namespace
             case r2::fs::utils::ANIMATIONS:
                 r2::util::PathCpy(subpath, "assets_bin/Sandbox_Animations");
                 break;
-            case r2::fs::utils::LEVELS:
+            case r2::fs::utils::LEVELS_BIN:
                 r2::util::PathCpy(subpath, "assets_bin/Sandbox_Levels");
                 break;
+			case r2::fs::utils::MATERIALS_RAW:
+				r2::util::PathCpy(subpath, "assets_bin/Sandbox_Materials");
+				break;
+			case r2::fs::utils::MATERIALS_BIN:
+				r2::util::PathCpy(subpath, "assets/Sandbox_Materials");
+				break;
             default:
                 result = false;
                 break;

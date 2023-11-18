@@ -13,11 +13,9 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Render/Renderer/RendererTypes.h"
-
-
 #include "r2/Game/ECS/Entity.h"
+#include "r2/Core/File/PathUtils.h"
 
-//#include <memory>
 #include <string>
 
 #ifdef R2_ASSET_PIPELINE
@@ -90,6 +88,7 @@ namespace r2
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
         virtual std::string GetSoundDefinitionPath() const;
+        virtual void GetSubPathForDirectory(r2::fs::utils::Directory directory, char* subpath) const;
         
         virtual std::string GetShaderManifestsPath() const;
         virtual std::vector<std::string> GetTexturePackManifestsBinaryPaths() const;

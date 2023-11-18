@@ -25,7 +25,19 @@ namespace r2::edit
 		void ShowDirectoryInFileSystemPanel(const std::filesystem::path& directory, bool& wasActivated);
 
 
-		void ShowContextMenuForPath(const std::filesystem::path& path);
+		bool ShowContextMenuForPath(const std::filesystem::path& path, bool wasButtonItem);
+
+		void MaterialsDirectoryContexMenu(const std::filesystem::path& path);
+		void LevelsDirectoryContexMenu(const std::filesystem::path& path);
+		void TexturePackDirectoryContexMenu(const std::filesystem::path& path);
+
+		void MaterialBinContextMenu(const std::filesystem::path& path);
+		void ModelBinContextMenu(const std::filesystem::path& path);
+		void SoundBankContextMenu(const std::filesystem::path& path);
+
+		void MaterialRawContextMenu(const std::filesystem::path& path);
+		void ModelRawContextMenu(const std::filesystem::path& path);
+
 
 		std::filesystem::path mEngineRawDirectory;
 		std::filesystem::path mEngineBinDirectory;

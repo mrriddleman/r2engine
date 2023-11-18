@@ -2,15 +2,35 @@
 #if defined R2_EDITOR && defined R2_IMGUI
 
 #include "r2/Editor/EditorAssetPanel.h"
-#include "imgui.h"
+
+#include "assetlib/RModel_generated.h"
+#include "r2/Audio/SoundDefinition_generated.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Backends/SDL_OpenGL/ImGuiImageHelpers.h"
+#include "r2/Render/Model/Materials/Material_generated.h"
 #include "r2/Render/Model/Textures/Texture.h"
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+
+#include "r2/Game/Level/LevelData_generated.h"
+
+#include "imgui.h"
+#include <algorithm>
+#include <string>
+#include <cctype>
 
 namespace r2::edit
 {
 
-
+	/// Try to find in the Haystack the Needle - ignore case
+	bool FindStringIC(const std::string& strHaystack, const std::string& strNeedle)
+	{
+		auto it = std::search(
+			strHaystack.begin(), strHaystack.end(),
+			strNeedle.begin(), strNeedle.end(),
+			[](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+		);
+		return (it != strHaystack.end());
+	}
 
 	AssetPanel::AssetPanel()
 		: mEditorFolderImageWidth(0)
@@ -103,12 +123,13 @@ namespace r2::edit
 			{
 				if (ImGui::BeginPopupContextWindow("Asset Preview", ImGuiPopupFlags_MouseButtonRight))
 				{
-					ShowContextMenuForPath(mCurrentDirectory);
+					if (!ShowContextMenuForPath(mCurrentDirectory, false))
+						ImGui::CloseCurrentPopup();
 
 					ImGui::EndPopup();
 				}
-				if (ImGui::IsWindowHovered())
-					ImGui::SetTooltip("Right-click to open popup");
+				//if (ImGui::IsWindowHovered())
+				//	ImGui::SetTooltip("Right-click to open popup");
 			}
 
 			if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
@@ -207,12 +228,13 @@ namespace r2::edit
 
 				if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
 				{
-					ShowContextMenuForPath(directoryEntry.path());
+					if (!ShowContextMenuForPath(directoryEntry.path(), true))
+						ImGui::CloseCurrentPopup();
 
 					ImGui::EndPopup();
 				}
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("Right-click to open popup");
+				//if (ImGui::IsItemHovered())
+				//	ImGui::SetTooltip("Right-click to open popup");
 
 				//if (ImGui::BeginDragDropSource())
 				//{
@@ -270,15 +292,197 @@ namespace r2::edit
 		}
 	}
 
-	void AssetPanel::ShowContextMenuForPath(const std::filesystem::path& path)
+	bool AssetPanel::ShowContextMenuForPath(const std::filesystem::path& path, bool wasButtonItem)
 	{
-		ImGui::Text("%s", path.string().c_str());
+		std::filesystem::path relativePath = path.lexically_relative(mCurrentBaseDirectory).string().c_str();
+
+		if (relativePath == "")
+		{
+			return false;
+		}
+
+		static auto MATERIAL_BIN_EXT = std::string(".") + flat::MaterialExtension();
+		static auto LEVEL_BIN_EXT = std::string(".") + flat::LevelDataExtension();
+		static auto SOUND_DEFINITION_BIN_EXT = std::string(".") + flat::SoundDefinitionsExtension();
+		static auto SOUND_BANK_EXT = ".bank";
+		static auto RMODEL_BIN_EXT = std::string(".") + flat::RModelExtension();
+		static auto MODEL_BIN_EXT = ".modl"; //@TODO(Serge): get rid of this
+		static auto TEXTURE_PACK_MANIFEST_BIN_EXT = std::string(".") + flat::TexturePacksManifestExtension();
+		static auto JSON_EXT = ".json";
+
+		std::string relativePathString = relativePath.string();
+
+		if (std::filesystem::is_directory(path))
+		{
+			if (FindStringIC(relativePathString, "material"))
+			{
+				MaterialsDirectoryContexMenu(path);
+				return true;
+			}
+			else if (FindStringIC(relativePathString, "level"))
+			{
+				LevelsDirectoryContexMenu(path);
+				return true;
+			}
+			else if (FindStringIC(relativePathString, "texture") && wasButtonItem)
+			{
+				TexturePackDirectoryContexMenu(path);
+				return true;
+			}
+		}
+		else
+		{
+			//specific file
+			if (FindStringIC(relativePathString, "material"))
+			{
+				//check the extension
+				//if it's a .mtrl then the options should be import to level
+				//else then... I dunno
+				if (relativePath.extension().string() == MATERIAL_BIN_EXT)
+				{
+					MaterialBinContextMenu(path);
+					return true;
+				}
+				else if(relativePath.extension().string() == JSON_EXT)
+				{
+					MaterialRawContextMenu(path);
+					return true;
+				}
+
+			}
+			else if (FindStringIC(relativePathString, "model"))
+			{
+				if (relativePath.extension().string() == RMODEL_BIN_EXT)
+				{
+					ModelBinContextMenu(path);
+					return true;
+				}
+				else //@TODO(Serge): we should check for proper extensions that we support (when we do lol). I'm thinking we should only really support gltf files
+				{
+					ModelRawContextMenu(path);
+					return true;
+				}
+			}
+			else if (FindStringIC(relativePathString, "sound"))
+			{
+				if (relativePath.extension().string() == SOUND_BANK_EXT)
+				{
+					SoundBankContextMenu(path);
+					return true;
+				}
+			}
+		}
+
 
 		//@TODO(Serge): we need to figure out based on the path which folder we're in. If it's a directory
 		//				then set the menu to be the proper menu for that directory type.
 		//				If it's a specific kind of file, then we set the menu to be the proper menu for that file type.
 
+
+		return false;
+
 	}
+
+	void ContextMenuTitle(const std::string& title)
+	{
+		ImGui::Text(title.c_str());
+		ImGui::Separator();
+		ImGui::Separator();
+		ImGui::Separator();
+		ImGui::NewLine();
+	}
+
+	void AssetPanel::MaterialsDirectoryContexMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Materials");
+
+		if (ImGui::Selectable("Make Material", false))
+		{
+			printf("@TODO(Serge): Make a material\n");
+		}
+
+		if (ImGui::Selectable("Make new Directory", false))
+		{
+			printf("@TODO(Serge): Make a new Directory\n");
+		}
+	}
+
+	void AssetPanel::LevelsDirectoryContexMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Levels");
+
+		if (ImGui::Selectable("Make New Level", false))
+		{
+			printf("@TODO(Serge): Make a Level\n");
+		}
+
+		if (ImGui::Selectable("Make new Directory", false))
+		{
+			printf("@TODO(Serge): Make a new Directory\n");
+		}
+	}
+
+	void AssetPanel::TexturePackDirectoryContexMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Texture Pack");
+
+		if (ImGui::Selectable("Build Texture Pack", false))
+		{
+			printf("@TODO(Serge): Build texture Pack\n");
+		}
+	}
+
+	void AssetPanel::MaterialBinContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Material");
+
+		if (ImGui::Selectable("Import To Level"))
+		{
+			printf("@TODO(Serge): Import to Current Level\n");
+		}
+	}
+
+	void AssetPanel::ModelBinContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Model");
+
+		if (ImGui::Selectable("Import To Level"))
+		{
+			printf("@TODO(Serge): Import to Current Level\n");
+		}
+	}
+
+	void AssetPanel::SoundBankContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Sound Bank");
+
+		if (ImGui::Selectable("Import To Level"))
+		{
+			printf("@TODO(Serge): Import to Current Level\n");
+		}
+	}
+
+	void AssetPanel::ModelRawContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Model");
+
+		if (ImGui::Selectable("Build & Import To Level"))
+		{
+			printf("@TODO(Serge): Import to Current Level\n");
+		}
+	}
+
+	void AssetPanel::MaterialRawContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Material");
+
+		if (ImGui::Selectable("Build & Import to Level"))
+		{
+			printf("@TODO(Serge): Import to Current Level\n");
+		}
+
+	}
+
 }
 
 #endif
