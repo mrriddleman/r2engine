@@ -4,6 +4,11 @@
 
 #include "r2/Editor/EditorWidget.h"
 
+namespace r2
+{
+	class Level;
+}
+
 namespace r2::edit
 {
 	class LevelAssetPanel : public EditorWidget
@@ -17,6 +22,17 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 	private:
+		void ShowLevelFiles(r2::Level& level, bool& wasActivated);
+		using LevelAssetBrowseFunc = std::function<void(r2::Level& level, float thumbnailSize)>;
+
+		LevelAssetBrowseFunc mBrowseFunction;
+		u32 mFileIcon;
+		u32 mFolderIcon;
+
+		void ShowLevelMaterials(r2::Level& level, float thumbnailSize);
+		void ShowLevelModels(r2::Level& level, float thumbnailSize);
+		void ShowLevelSounds(r2::Level& level, float thumbnailSize);
+
 
 	};
 }

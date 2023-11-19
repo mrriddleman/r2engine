@@ -6,12 +6,12 @@
 #include "assetlib/RModel_generated.h"
 #include "r2/Audio/SoundDefinition_generated.h"
 #include "r2/Core/File/PathUtils.h"
-#include "r2/Render/Backends/SDL_OpenGL/ImGuiImageHelpers.h"
-#include "r2/Render/Model/Materials/Material_generated.h"
-#include "r2/Render/Model/Textures/Texture.h"
-#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 
+#include "r2/Render/Model/Materials/Material_generated.h"
+
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/Level/LevelData_generated.h"
+#include "r2/Editor/Editor.h"
 
 #include "imgui.h"
 #include <algorithm>
@@ -33,9 +33,7 @@ namespace r2::edit
 	}
 
 	AssetPanel::AssetPanel()
-		: mEditorFolderImageWidth(0)
-		, mEditorFolderImageHeight(0)
-		, mEditorFolderImage(0)
+
 	{
 
 	}
@@ -62,13 +60,7 @@ namespace r2::edit
 		mCurrentDirectory = "";
 		mCurrentBaseDirectory = "";
 
-		std::filesystem::path editorFolderPath = std::filesystem::path(R2_ENGINE_ASSET_PATH) / "editor";
 
-		mEditorFolderImage = CreateTextureFromFile((editorFolderPath / "DirectoryIcon.png").string(), mEditorFolderImageWidth, mEditorFolderImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
-		IM_ASSERT(mEditorFolderImage != 0);
-
-		mEditorFileImage = CreateTextureFromFile((editorFolderPath / "FileIcon.png").string(), mEditorFileImageWidth, mEditorFileImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
-		IM_ASSERT(mEditorFileImage != 0);
 
 	}
 
@@ -93,9 +85,6 @@ namespace r2::edit
 
 		ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, 450), ImGuiCond_FirstUseEver);
 
-		static const int NUM_COLUMNS = 2;
-		static float w = 300.0f;
-
 		bool open = true;
 
 		if (!ImGui::Begin("Assets", &open))
@@ -104,10 +93,12 @@ namespace r2::edit
 			return;
 		}
 
+		static const int NUM_COLUMNS = 2;
+		static float w = 300.0f;
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
 		ImGui::BeginChild("Asset FileSystem", ImVec2(w, 0), true);
-		ImGui::Text("FileSystem");
+		ImGui::Text("File System");
 		ImGui::Separator();
 		ImGui::Separator();
 		FileSystemPanel();
@@ -216,6 +207,9 @@ namespace r2::edit
 		if (columnCount < 1)
 			columnCount = 1;
 
+		u32 fileIcon = mnoptrEditor->GetEditorFileImage();
+		u32 folderIcon = mnoptrEditor->GetEditorFolderImage();
+
 		if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
 		{
 			ImGui::Columns(columnCount, 0, false);
@@ -226,7 +220,7 @@ namespace r2::edit
 				std::string filenameString = path.filename().string();
 
 				ImGui::PushID(filenameString.c_str());
-				unsigned int icon = directoryEntry.is_directory() ? mEditorFolderImage : mEditorFileImage;
+				unsigned int icon = directoryEntry.is_directory() ? folderIcon : fileIcon;
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 				ImGui::ImageButton((ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
 
@@ -313,6 +307,9 @@ namespace r2::edit
 		static auto MODEL_BIN_EXT = ".modl"; //@TODO(Serge): get rid of this
 		static auto TEXTURE_PACK_MANIFEST_BIN_EXT = std::string(".") + flat::TexturePacksManifestExtension();
 		static auto JSON_EXT = ".json";
+
+
+
 
 		std::string relativePathString = relativePath.string();
 

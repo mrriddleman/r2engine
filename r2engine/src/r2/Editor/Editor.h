@@ -63,6 +63,9 @@ namespace r2
 		ecs::SceneGraph& GetSceneGraph();
 		ecs::ECSCoordinator* GetECSCoordinator();
 
+		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
+		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
+
 	private:
 
 		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
@@ -73,6 +76,14 @@ namespace r2
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;
 		std::vector<std::unique_ptr<edit::EditorAction>> mRedoStack;
+
+		s32 mEditorFolderImageWidth;
+		s32 mEditorFolderImageHeight;
+		u32 mEditorFolderImage;
+
+		s32 mEditorFileImageWidth;
+		s32 mEditorFileImageHeight;
+		u32 mEditorFileImage;
 	};
 }
 

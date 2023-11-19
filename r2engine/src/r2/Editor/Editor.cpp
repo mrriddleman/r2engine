@@ -24,6 +24,8 @@
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 
+#include "r2/Render/Backends/SDL_OpenGL/ImGuiImageHelpers.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 
 #ifdef R2_DEBUG
@@ -49,6 +51,9 @@ namespace r2
 {
 	Editor::Editor()
 		:mCurrentEditorLevel(nullptr)
+		, mEditorFolderImageWidth(0)
+		, mEditorFolderImageHeight(0)
+		, mEditorFolderImage(0)
 	{
 		
 	}
@@ -71,6 +76,14 @@ namespace r2
 		std::unique_ptr<edit::ScenePanel> scenePanel = std::make_unique<edit::ScenePanel>();
 		mEditorWidgets.push_back(std::move(scenePanel));
 
+
+		std::filesystem::path editorFolderPath = std::filesystem::path(R2_ENGINE_ASSET_PATH) / "editor";
+
+		mEditorFolderImage = edit::CreateTextureFromFile((editorFolderPath / "DirectoryIcon.png").string(), mEditorFolderImageWidth, mEditorFolderImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
+		IM_ASSERT(mEditorFolderImage != 0);
+
+		mEditorFileImage = edit::CreateTextureFromFile((editorFolderPath / "FileIcon.png").string(), mEditorFileImageWidth, mEditorFileImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
+		IM_ASSERT(mEditorFileImage != 0);
 
 
 		//now init all of the widgets
