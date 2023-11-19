@@ -33,6 +33,20 @@ namespace r2::edit
 		void ShowLevelModels(r2::Level& level, float thumbnailSize);
 		void ShowLevelSounds(r2::Level& level, float thumbnailSize);
 
+		enum eLevelAssetContextMenuType
+		{
+			LACT_MATERIAL = 0,
+			LACT_MODEL,
+			LACT_SOUND
+		};
+
+		struct LevelAssetContextMenuData
+		{
+			eLevelAssetContextMenuType type;
+			const void* data;
+		};
+
+		bool ShowLevelAssetContextMenu(r2::Level& level, const LevelAssetContextMenuData& contextMenuData);
 
 	};
 }

@@ -263,6 +263,19 @@ namespace r2::edit
 			
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::ImageButton((ImTextureID)mFileIcon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+			if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+			{
+				LevelAssetContextMenuData data;
+				data.type = LACT_MATERIAL;
+				data.data = &nextMaterialName;
+
+				if (!ShowLevelAssetContextMenu(level, data))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::EndPopup();
+			}
+
 			ImGui::PopStyleColor();
 
 			ImGui::TextWrapped(fileNameString);
@@ -294,6 +307,19 @@ namespace r2::edit
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::ImageButton((ImTextureID)mFileIcon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+			if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+			{
+				LevelAssetContextMenuData data;
+				data.type = LACT_MODEL;
+				data.data = &assetHandle;
+
+				if (!ShowLevelAssetContextMenu(level, data))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::EndPopup();
+			}
+
 			ImGui::PopStyleColor();
 
 			ImGui::TextWrapped(fileNameString);
@@ -310,12 +336,26 @@ namespace r2::edit
 
 		for (u32 i = 0; i < r2::sarr::Size(*soundAssets); ++i)
 		{
-			const char* fileNameString = r2::audio::GetSoundBankNameFromAssetName(r2::sarr::At(*soundAssets, i));
+			auto soundAsset = r2::sarr::At(*soundAssets, i);
+			const char* fileNameString = r2::audio::GetSoundBankNameFromAssetName(soundAsset);
 
 			ImGui::PushID(fileNameString);
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::ImageButton((ImTextureID)mFileIcon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+			if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+			{
+				LevelAssetContextMenuData data;
+				data.type = LACT_SOUND;
+				data.data = &soundAsset;
+
+				if (!ShowLevelAssetContextMenu(level, data))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::EndPopup();
+			}
+
 			ImGui::PopStyleColor();
 
 			ImGui::TextWrapped(fileNameString);
@@ -325,6 +365,63 @@ namespace r2::edit
 			ImGui::PopID();
 		}
 
+	}
+
+	void LevelContextMenuTitle(const std::string& title)
+	{
+		ImGui::Text(title.c_str());
+		ImGui::Separator();
+		ImGui::Separator();
+		ImGui::Separator();
+		ImGui::NewLine();
+	}
+
+	bool LevelAssetPanel::ShowLevelAssetContextMenu(r2::Level& level, const LevelAssetContextMenuData& contextMenuData)
+	{
+		switch (contextMenuData.type)
+		{
+		case LACT_MATERIAL:
+		{
+			LevelContextMenuTitle("Level Material");
+
+			if (ImGui::Selectable("Remove From Level", false))
+			{
+				printf("@TODO(Serge): Remove From Level\n");
+			}
+			return true;
+		}
+		break;
+		case LACT_MODEL:
+		{
+			LevelContextMenuTitle("Level Model");
+
+			if (ImGui::Selectable("Remove From Level", false))
+			{
+				printf("@TODO(Serge): Remove From Level\n");
+			}
+
+			return true;
+		}
+		break;
+		case LACT_SOUND:
+		{
+			LevelContextMenuTitle("Level Sound");
+
+			if (ImGui::Selectable("Remove From Level", false))
+			{
+				printf("@TODO(Serge): Remove From Level\n");
+			}
+
+			return true;
+		}
+		break;
+		default:
+			R2_CHECK(false, "Unsupported Level Asset Context Menu Type!");
+			
+			break;
+		}
+
+		return false;
 	}
 
 }
