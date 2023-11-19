@@ -54,7 +54,7 @@ namespace r2
 		void ReloadLevel();
 
 		const Level& GetEditorLevelConst() const;
-		Level& GetEditorLevelRef() ;
+		Level& GetEditorLevelRef();
 
 		void PostNewAction(std::unique_ptr<edit::EditorAction> action);
 		void PostEditorEvent(r2::evt::EditorEvent& e);

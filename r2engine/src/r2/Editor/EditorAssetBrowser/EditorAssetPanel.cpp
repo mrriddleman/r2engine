@@ -1,7 +1,7 @@
 #include "r2pch.h"
 #if defined R2_EDITOR && defined R2_IMGUI
 
-#include "r2/Editor/EditorAssetPanel.h"
+#include "r2/Editor/EditorAssetBrowser/EditorAssetPanel.h"
 
 #include "assetlib/RModel_generated.h"
 #include "r2/Audio/SoundDefinition_generated.h"
@@ -98,63 +98,67 @@ namespace r2::edit
 
 		bool open = true;
 
-		if (ImGui::Begin("AssetPanel", &open))
+		if (!ImGui::Begin("Assets", &open))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-
-			ImGui::BeginChild("Asset FileSystem", ImVec2(w, 0), true);
-			ImGui::Text("FileSystem");
-			ImGui::Separator();
-			ImGui::Separator();
-			FileSystemPanel();
-			ImGui::EndChild();
-
-			ImGui::SameLine();
-			ImGui::InvisibleButton("vsplitter", ImVec2(10.0f, ImGui::GetContentRegionAvail().y));
-			if (ImGui::IsItemActive())
-			{
-				w += ImGui::GetIO().MouseDelta.x;
-			}
-			ImGui::SameLine();
-
-			ImGui::BeginChild("Asset Preview", ImVec2(0, 0), true);
-
-			if (mCurrentDirectory != "")
-			{
-				if (ImGui::BeginPopupContextWindow("Asset Preview", ImGuiPopupFlags_MouseButtonRight))
-				{
-					if (!ShowContextMenuForPath(mCurrentDirectory, false))
-						ImGui::CloseCurrentPopup();
-
-					ImGui::EndPopup();
-				}
-				//if (ImGui::IsWindowHovered())
-				//	ImGui::SetTooltip("Right-click to open popup");
-			}
-
-			if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
-			{
-				if (mCurrentDirectory != std::filesystem::path(mCurrentBaseDirectory))
-				{
-					if (ImGui::Button("<-"))
-					{
-						mCurrentDirectory = mCurrentDirectory.parent_path();
-					}
-				}
-				ImGui::SameLine();
-			}
-
-			ImGui::Text("Assets Browser");
-			ImGui::Separator();
-			ImGui::Separator();
-			AssetsBrowserPanel(ImGui::GetContentRegionAvail().x - w);
-			ImGui::EndChild();
-
-			ImGui::PopStyleVar();
 			ImGui::End();
+			return;
 		}
 
-		ImGui::ShowDemoWindow();
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+		ImGui::BeginChild("Asset FileSystem", ImVec2(w, 0), true);
+		ImGui::Text("FileSystem");
+		ImGui::Separator();
+		ImGui::Separator();
+		FileSystemPanel();
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+		ImGui::InvisibleButton("vsplitter", ImVec2(10.0f, ImGui::GetContentRegionAvail().y));
+		if (ImGui::IsItemActive())
+		{
+			w += ImGui::GetIO().MouseDelta.x;
+		}
+		ImGui::SameLine();
+
+		ImGui::BeginChild("Asset Preview", ImVec2(0, 0), true);
+
+		if (mCurrentDirectory != "")
+		{
+			if (ImGui::BeginPopupContextWindow("Asset Preview", ImGuiPopupFlags_MouseButtonRight))
+			{
+				if (!ShowContextMenuForPath(mCurrentDirectory, false))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::EndPopup();
+			}
+			//if (ImGui::IsWindowHovered())
+			//	ImGui::SetTooltip("Right-click to open popup");
+		}
+
+		if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
+		{
+			if (mCurrentDirectory != std::filesystem::path(mCurrentBaseDirectory))
+			{
+				if (ImGui::Button("<-"))
+				{
+					mCurrentDirectory = mCurrentDirectory.parent_path();
+				}
+			}
+			ImGui::SameLine();
+		}
+
+		ImGui::Text("Assets Browser");
+		ImGui::Separator();
+		ImGui::Separator();
+		AssetsBrowserPanel(ImGui::GetContentRegionAvail().x - w);
+		ImGui::EndChild();
+
+		ImGui::PopStyleVar();
+		ImGui::End();
+		
+
+//		ImGui::ShowDemoWindow();
 	}
 
 	void AssetPanel::FileSystemPanel()
