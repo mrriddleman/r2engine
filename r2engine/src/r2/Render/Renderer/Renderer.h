@@ -32,6 +32,14 @@ namespace r2::draw
 		float saturation = 1.0f;
 		float gamma = 1.0f / 2.2f;
 		float filmGrainStrength = 0.05f;
+
+		float mColorGradingHalfColX = 0.0f;
+		float mColorGradingHalfColY = 0.0f;
+		float mNumColorGradingSwatches = 1.0f;
+		tex::TextureAddress mColorGradingLUT;
+		
+
+		f32 mColorGradingContribution = 0.0f;
 	};
 
 	struct MaterialBatch
@@ -524,13 +532,8 @@ namespace r2::draw
 
 		ColorCorrection mColorCorrectionData;
 		b32 mColorCorrectionNeedsUpdate = true;
-
 		b32 mColorGradingEnabled = false;
-		tex::TextureAddress mColorGradingLUT;
-		float mNumColorGradingSwatches = 1.0f;
-		float mColorGradingHalfColX = 0.0f;
-		float mColorGradingHalfColY = 0.0f;
-		f32 mColorGradingContribution = 0.0f;
+
 		//--------END COLOR CORRECTION Data------------
 
 

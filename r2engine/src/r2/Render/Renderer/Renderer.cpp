@@ -1833,21 +1833,39 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "smaa_cameraMovementWeight"}
 		});
 
-		renderer.mColorCorrectionConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
-			{r2::draw::ShaderDataType::Float, "cc_constrast"},
-			{r2::draw::ShaderDataType::Float, "cc_brightness"},
-			{r2::draw::ShaderDataType::Float, "cc_saturation"},
-			{r2::draw::ShaderDataType::Float, "cc_gamma"},
+		//renderer.mColorCorrectionConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+		//	{r2::draw::ShaderDataType::Float, "cc_constrast"},
+		//	{r2::draw::ShaderDataType::Float, "cc_brightness"},
+		//	{r2::draw::ShaderDataType::Float, "cc_saturation"},
+		//	{r2::draw::ShaderDataType::Float, "cc_gamma"},
 
-			{r2::draw::ShaderDataType::Float, "cc_filmGrainStrength"},
-			{r2::draw::ShaderDataType::Float, "cg_halfColX"},
-			{r2::draw::ShaderDataType::Float, "cg_halfColY"},
-			{r2::draw::ShaderDataType::Float, "cg_numColors"},
+		//	{r2::draw::ShaderDataType::Float, "cc_filmGrainStrength"},
+		//	{r2::draw::ShaderDataType::Float, "cg_halfColX"},
+		//	{r2::draw::ShaderDataType::Float, "cg_halfColY"},
+		//	{r2::draw::ShaderDataType::Float, "cg_numColors"},
 
-			{r2::draw::ShaderDataType::Struct, "cg_LUTTexture"},
+		//	{r2::draw::ShaderDataType::Struct, "cg_LUTTexture"},
 
-			{r2::draw::ShaderDataType::Float, "cg_contribution"}
-		});
+		//	{r2::draw::ShaderDataType::Float, "cg_contribution"}
+		//});
+
+		r2::draw::ConstantBufferLayoutConfiguration colorCorrectionParams
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		colorCorrectionParams.layout.InitForColorCorrection();
+
+		r2::sarr::Push(*renderer.mConstantLayouts, colorCorrectionParams);
+
+		renderer.mColorCorrectionConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
 
@@ -8771,11 +8789,13 @@ namespace r2::draw::renderer
 
 	void SetColorGradingLUT(Renderer& renderer, const tex::TextureAddress& lut, f32 halfColX, f32 halfColY, f32 numSwatches)
 	{
-		renderer.mColorGradingLUT = lut;
-		renderer.mNumColorGradingSwatches = numSwatches;
+		renderer.mColorCorrectionData.mColorGradingLUT = lut;
+		renderer.mColorCorrectionData.mNumColorGradingSwatches = numSwatches;
+		
+		renderer.mColorCorrectionData.mColorGradingHalfColX = halfColX;
+		renderer.mColorCorrectionData.mColorGradingHalfColY = halfColY;
+		
 		renderer.mColorCorrectionNeedsUpdate = true;
-		renderer.mColorGradingHalfColX = halfColX;
-		renderer.mColorGradingHalfColY = halfColY;
 	}
 
 	void EnableColorGrading(Renderer& renderer, bool isEnabled)
@@ -8786,7 +8806,7 @@ namespace r2::draw::renderer
 
 	void SetColorGradingContribution(Renderer& renderer, float contribution)
 	{
-		renderer.mColorGradingContribution = glm::clamp(contribution, 0.0f, 1.0f);
+		renderer.mColorCorrectionData.mColorGradingContribution = glm::clamp(contribution, 0.0f, 1.0f);
 		
 		renderer.mColorCorrectionNeedsUpdate = true;
 	}
@@ -8798,24 +8818,49 @@ namespace r2::draw::renderer
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 			auto colorCorrectionConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mColorCorrectionConfigHandle);
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 0, &renderer.mColorCorrectionData.contrast);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 1, &renderer.mColorCorrectionData.brightness);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 4, &renderer.mColorCorrectionData.filmGrainStrength);
+			ColorCorrection colorCorrection = renderer.mColorCorrectionData;
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 5, &renderer.mColorGradingHalfColX);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 6, &renderer.mColorGradingHalfColY);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 7, &renderer.mNumColorGradingSwatches);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 8, &renderer.mColorGradingLUT);
-
-			float contribution = renderer.mColorGradingContribution;
-			if (!renderer.mColorGradingEnabled)
+			if (renderer.mColorGradingEnabled)
 			{
-				contribution = 0.0f;
+				colorCorrection.mColorGradingContribution = 0.0f;
 			}
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 9, &contribution);
+			AddFillConstantBufferCommandFull(renderer, colorCorrectionConstantBufferHandle, &renderer.mColorCorrectionData, sizeof(renderer.mColorCorrectionData), 0);
+
+			/*
+					float contrast = 1.0f;
+		float brightness = 0.0f;
+		float saturation = 1.0f;
+		float gamma = 1.0f / 2.2f;
+		float filmGrainStrength = 0.05f;
+
+
+		tex::TextureAddress mColorGradingLUT;
+		float mNumColorGradingSwatches = 1.0f;
+		float mColorGradingHalfColX = 0.0f;
+		float mColorGradingHalfColY = 0.0f;
+		f32 mColorGradingContribution = 0.0f;
+			
+			*/
+
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 0, &renderer.mColorCorrectionData.contrast);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 1, &renderer.mColorCorrectionData.brightness);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 4, &renderer.mColorCorrectionData.filmGrainStrength);
+
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 5, &renderer.mColorCorrectionData.mColorGradingHalfColX);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 6, &renderer.mColorCorrectionData.mColorGradingHalfColY);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 7, &renderer.mColorCorrectionData.mNumColorGradingSwatches);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 8, &renderer.mColorCorrectionData.mColorGradingLUT);
+
+			//float contribution = renderer.mColorCorrectionData.mColorGradingContribution;
+			//if (!renderer.mColorCorrectionData.mColorGradingEnabled)
+			//{
+			//	contribution = 0.0f;
+			//}
+
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 9, &contribution);
 
 			renderer.mColorCorrectionNeedsUpdate = false;
 		}
