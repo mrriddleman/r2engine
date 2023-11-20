@@ -244,6 +244,14 @@ namespace r2::draw
 		float mSSRMaxDistance;
 	};
 
+	struct BloomShaderParams
+	{
+		float mBloomThreshold;
+		float mBloomKnee;
+		float mBloomIntensity;
+		float mBloomFilterSize;
+	};
+
 	struct Renderer
 	{
 		RendererBackend mBackendType;
@@ -483,10 +491,8 @@ namespace r2::draw
 		//------------END SSR data-----------------
 
 		//------------BEGIN Bloom data-----------------
-		float mBloomThreshold = 1.0f;
-		float mBloomKnee = 0.1f;
-		float mBloomIntensity = 0.05f;
-		float mBloomFilterSize = 0.005f;
+		BloomShaderParams mBloomParams;
+		bool mBloomParamsNeedsUpdate = true;
 		//--------------END Bloom data-----------------
 
 		//-------------BEGIN FXAA Data-----------------

@@ -1353,7 +1353,13 @@ namespace r2::draw::renderer
 			newRenderer->mSSRNeedsUpdate = true;
 		}
 
-
+		//Set default bloom params
+		{
+			newRenderer->mBloomParams.mBloomThreshold = 1.0f;
+			newRenderer->mBloomParams.mBloomKnee = 0.1f;
+			newRenderer->mBloomParams.mBloomIntensity = 0.05f;
+			newRenderer->mBloomParams.mBloomFilterSize = 0.005f;
+		}
 
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
 		UploadEngineModels(*newRenderer);
@@ -5432,7 +5438,8 @@ namespace r2::draw::renderer
 
 			cmd::FillConstantBuffer* fillFilterCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, fillResolutionCMD, config.layout.GetElements().at(2).size);
 
-			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomFilterSize, renderer.mBloomFilterSize, renderer.mBloomIntensity, 0);
+			//Why are we doing this?
+			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomParams.mBloomFilterSize, renderer.mBloomParams.mBloomFilterSize, renderer.mBloomParams.mBloomIntensity, 0);
 
 			cmd::FillConstantBufferCommand(fillFilterCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomFilterRadius), config.layout.GetElements().at(2).size, config.layout.GetElements().at(2).offset);
 
@@ -5490,20 +5497,17 @@ namespace r2::draw::renderer
 
 	void UpdateBloomDataIfNeeded(Renderer& renderer)
 	{
-		//@Temporary
-		static bool needsUpdate = true;
-
-		if (needsUpdate)
+		if (renderer.mBloomParamsNeedsUpdate)
 		{
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
 			auto bloomConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mBloomConfigHandle);
 
-			glm::vec4 bloomFilterData = glm::vec4(renderer.mBloomThreshold, renderer.mBloomThreshold - renderer.mBloomKnee, 2.0f * renderer.mBloomKnee, 0.25f / (renderer.mBloomKnee + 0.00001f));
+			glm::vec4 bloomFilterData = glm::vec4(renderer.mBloomParams.mBloomThreshold, renderer.mBloomParams.mBloomThreshold - renderer.mBloomParams.mBloomKnee, 2.0f * renderer.mBloomParams.mBloomKnee, 0.25f / (renderer.mBloomParams.mBloomKnee + 0.00001f));
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, bloomConstantBufferHandle, 0, glm::value_ptr(bloomFilterData));
 		
-			needsUpdate = false;
+			renderer.mBloomParamsNeedsUpdate = false;
 		}
 	}
 
