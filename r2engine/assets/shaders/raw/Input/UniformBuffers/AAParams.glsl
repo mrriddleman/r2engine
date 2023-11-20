@@ -5,7 +5,7 @@
 
 layout (std140, binding=6) uniform AAParams
 {
-	Tex2DAddress inputTexture;
+	//Tex2DAddress inputTexture;
 	float fxaa_lumaThreshold;
 	float fxaa_lumaMulReduce;
 	float fxaa_lumaMinReduce;

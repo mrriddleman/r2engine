@@ -7934,7 +7934,7 @@ namespace r2::draw::renderer
 
 		//this is not correct - we shouldn't be uploading the texture to use here - we should use the surfaces instead
 		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
-		renderer.mAAParams.mColorTexture = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+	//	renderer.mAAParams.mColorTexture = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 		renderer.mAAParams.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
 		renderer.mFXAANeedsUpdate = true;
 

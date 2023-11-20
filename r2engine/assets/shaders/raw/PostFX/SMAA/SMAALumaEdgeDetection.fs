@@ -5,6 +5,7 @@
 layout (location = 0) out vec4 FragColor;
 
 #include "Input/UniformBuffers/AAParams.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
 
 in VS_OUT
 {
@@ -19,9 +20,9 @@ void main()
 
 	// Calculate lumas:
     vec3 weights 	= vec3(0.2126, 0.7152, 0.0722);
-    float L 		= dot(SampleTexture(inputTexture, fs_in.texCoords.xy,  ivec2(0)), weights);
-    float Lleft 	= dot(SampleTexture(inputTexture, fs_in.offsets[0].xy, ivec2(0)), weights);
-    float Ltop  	= dot(SampleTexture(inputTexture, fs_in.offsets[0].zw, ivec2(0)), weights);
+    float L 		= dot(SampleTexture(compositeSurface, fs_in.texCoords.xy,  ivec2(0)), weights);
+    float Lleft 	= dot(SampleTexture(compositeSurface, fs_in.offsets[0].xy, ivec2(0)), weights);
+    float Ltop  	= dot(SampleTexture(compositeSurface, fs_in.offsets[0].zw, ivec2(0)), weights);
 
     // We do the usual threshold:
     vec4 delta;
@@ -33,8 +34,8 @@ void main()
         discard;
 
     // Calculate right and bottom deltas:
-    float Lright 	= dot(SampleTexture(inputTexture, fs_in.offsets[1].xy, ivec2(0)), weights);
-    float Lbottom  	= dot(SampleTexture(inputTexture, fs_in.offsets[1].zw, ivec2(0)), weights);
+    float Lright 	= dot(SampleTexture(compositeSurface, fs_in.offsets[1].xy, ivec2(0)), weights);
+    float Lbottom  	= dot(SampleTexture(compositeSurface, fs_in.offsets[1].zw, ivec2(0)), weights);
     delta.zw = abs(L - vec2(Lright, Lbottom));
 
     // Calculate the maximum delta in the direct neighborhood:
@@ -42,8 +43,8 @@ void main()
     maxDelta = max(maxDelta.xx, maxDelta.yy);
 
     // Calculate left-left and top-top deltas:
-    float Lleftleft = dot(SampleTexture(inputTexture, fs_in.offsets[2].xy, ivec2(0)), weights);
-    float Ltoptop 	= dot(SampleTexture(inputTexture, fs_in.offsets[2].zw, ivec2(0)), weights);
+    float Lleftleft = dot(SampleTexture(compositeSurface, fs_in.offsets[2].xy, ivec2(0)), weights);
+    float Ltoptop 	= dot(SampleTexture(compositeSurface, fs_in.offsets[2].zw, ivec2(0)), weights);
     delta.zw = abs(vec2(Lleft, Ltop) - vec2(Lleftleft, Ltoptop));
 
     // Calculate the final maximum delta:
