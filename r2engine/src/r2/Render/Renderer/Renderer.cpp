@@ -447,6 +447,7 @@ namespace r2::draw::renderer
 	void SMAAxT2SOutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass);
 	void UpdateSMAADataIfNeeded(Renderer& renderer);
 	glm::vec2 SMAAGetJitter(const Renderer& renderer, u64 frameIndex);
+	glm::ivec4 SMAASubSampleIndices(const Renderer& renderer, u64 frameIndex);
 
 	//NON AA
 	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
@@ -1361,6 +1362,38 @@ namespace r2::draw::renderer
 			newRenderer->mBloomParams.mBloomFilterSize = 0.005f;
 		}
 
+		{
+			if (newRenderer->mSMAAAreaTexture.container == nullptr)
+			{
+				tex::TextureFormat textureFormat;
+				textureFormat.width = AREATEX_WIDTH;
+				textureFormat.height = AREATEX_HEIGHT;
+				textureFormat.mipLevels = 1;
+				textureFormat.internalformat = tex::COLOR_FORMAT_R8G8_UNORM;
+
+				newRenderer->mSMAAAreaTexture = tex::CreateTexture(textureFormat, 1, false);
+
+				tex::TexSubImage2D(newRenderer->mSMAAAreaTexture, 0, 0, 0, textureFormat, areaTexBytes);
+
+				newRenderer->mAAParams.mSMAAAreaTexture = texsys::GetTextureAddress(newRenderer->mSMAAAreaTexture);
+			}
+
+			if (newRenderer->mSMAASearchTexture.container == nullptr)
+			{
+				tex::TextureFormat textureFormat;
+				textureFormat.width = SEARCHTEX_WIDTH;
+				textureFormat.height = SEARCHTEX_HEIGHT;
+				textureFormat.mipLevels = 1;
+				textureFormat.internalformat = tex::COLOR_FORMAT_R8_UNORM;
+
+				newRenderer->mSMAASearchTexture = tex::CreateTexture(textureFormat, 1, false);
+
+				tex::TexSubImage2D(newRenderer->mSMAASearchTexture, 0, 0, 0, textureFormat, searchTexBytes);
+
+				newRenderer->mAAParams.mSMAASearchTexture = texsys::GetTextureAddress(newRenderer->mSMAASearchTexture);
+			}
+		}
+
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
 		UploadEngineModels(*newRenderer);
 
@@ -1412,6 +1445,34 @@ namespace r2::draw::renderer
 		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1 ||
 			renderer.mOutputMerger == OUTPUT_SMAA_T2X)
 		{
+
+			float smaaCameraWeight = 1.0f;
+
+			//@HACK(Serge): Stupid BS needed to make sure that the Temporal resolve doesn't ghost weirdly when camera moves backwards or faces a different direction
+			//Maybe there's an actual way to fix this but I'm not sure since if we move backwards or turn the camera, we don't have enough info to fill the buffer correctly...
+			//Maybe motion blur could fix this?
+			{
+				float dotResult = glm::dot(renderer.mSMAALastCameraFacingDirection, renderer.mnoptrRenderCam->facing);
+				glm::vec3 diff = renderer.mnoptrRenderCam->position - renderer.mSMAALastCameraPosition;
+				if (diff != glm::vec3(0))
+				{
+					diff = glm::normalize(diff);
+				}
+				float dotResult2 = glm::dot(diff, renderer.mnoptrRenderCam->facing);
+				if (!math::NearEq(dotResult, 1.0f) ||
+					(diff != glm::vec3(0) && !math::NearEq(dotResult2, 1.0f)))
+				{
+					//if camera moved around then turn off the temporal resolve
+					smaaCameraWeight = 0.0f;
+				}
+			}
+
+
+			renderer.mAAParams.mSMAASampleIndices = SMAASubSampleIndices(renderer, (renderer.mShaderVectors.frame % 2));
+			renderer.mAAParams.mSMAACameraMovementWeight = smaaCameraWeight;
+
+			renderer.mSMAANeedsUpdate = true;
+
 			UpdateSMAADataIfNeeded(renderer);
 		}
 		
@@ -1688,7 +1749,7 @@ namespace r2::draw::renderer
 
 		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
 
-		if (renderer->mOutputMerger == OUTPUT_SMAA_X1 || renderer->mOutputMerger == OUTPUT_SMAA_T2X)
+		//if (renderer->mOutputMerger == OUTPUT_SMAA_X1 || renderer->mOutputMerger == OUTPUT_SMAA_T2X)
 		{
 			r2::draw::tex::UnloadFromGPU(renderer->mSMAAAreaTexture);
 			r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
@@ -1816,7 +1877,27 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "bloomTextureMipLevel"}
 		});
 
-		renderer.mAAConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+
+
+		r2::draw::ConstantBufferLayoutConfiguration aaParams
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		aaParams.layout.InitForAntiAliasing();
+
+		r2::sarr::Push(*renderer.mConstantLayouts, aaParams);
+
+		renderer.mAAConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+
+
+		/*renderer.mAAConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Struct, "inputTexture"},
 			{r2::draw::ShaderDataType::Float, "fxaa_lumaThreshold"},
 			{r2::draw::ShaderDataType::Float, "fxaa_lumaMulReduce"},
@@ -1831,7 +1912,7 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Int, "smaa_cornerRounding"},
 			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"},
 			{r2::draw::ShaderDataType::Float, "smaa_cameraMovementWeight"}
-		});
+		});*/
 
 		//renderer.mColorCorrectionConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
 		//	{r2::draw::ShaderDataType::Float, "cc_constrast"},
@@ -5572,14 +5653,14 @@ namespace r2::draw::renderer
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 			auto fxaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
 
-			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+			AddFillConstantBufferCommandFull(renderer, fxaaConstantBufferHandle, &renderer.mAAParams, sizeof(renderer.mAAParams), 0);
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 1, &renderer.mFXAALumaThreshold);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 2, &renderer.mFXAALumaMulReduce);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 3, &renderer.mFXAALumaMinReduce);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAMaxSpan);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAATexelStep);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 0, &renderer.mFXAAParams.mColorTexture);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 1, &renderer.mFXAAParams.mFXAALumaThreshold);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 2, &renderer.mFXAAParams.mFXAALumaMulReduce);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 3, &renderer.mFXAAParams.mFXAALumaMinReduce);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAParams.mFXAAMaxSpan);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAAParams.mFXAATexelStep);
 		}
 	}
 
@@ -5592,42 +5673,21 @@ namespace r2::draw::renderer
 		{
 			renderer.mSMAANeedsUpdate = false;
 
-			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
 
-			if (renderer.mSMAAAreaTexture.container == nullptr)
-			{
-				tex::TextureFormat textureFormat;
-				textureFormat.width = AREATEX_WIDTH;
-				textureFormat.height = AREATEX_HEIGHT;
-				textureFormat.mipLevels = 1;
-				textureFormat.internalformat = tex::COLOR_FORMAT_R8G8_UNORM;
+			AddFillConstantBufferCommandFull(renderer, smaaConstantBufferHandle, &renderer.mAAParams, sizeof(renderer.mAAParams), 0);
 
-				renderer.mSMAAAreaTexture = tex::CreateTexture(textureFormat, 1, false);
+			//const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
 
-				tex::TexSubImage2D(renderer.mSMAAAreaTexture, 0, 0, 0, textureFormat, areaTexBytes);
-			}
+			//
 
-			if (renderer.mSMAASearchTexture.container == nullptr)
-			{
-				tex::TextureFormat textureFormat;
-				textureFormat.width = SEARCHTEX_WIDTH;
-				textureFormat.height = SEARCHTEX_HEIGHT;
-				textureFormat.mipLevels = 1;
-				textureFormat.internalformat = tex::COLOR_FORMAT_R8_UNORM;
-
-				renderer.mSMAASearchTexture = tex::CreateTexture(textureFormat, 1, false);
-
-				tex::TexSubImage2D(renderer.mSMAASearchTexture, 0, 0, 0, textureFormat, searchTexBytes);
-			}
-
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAMaxSearchSteps);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 11, &renderer.mSMAACornerRounding);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 12, &renderer.mSMAAMaxSearchStepsDiag);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAMaxSearchSteps);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
+			////r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 11, &renderer.mSMAACornerRounding);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 12, &renderer.mSMAAMaxSearchStepsDiag);
 		}
 	}
 
@@ -5670,34 +5730,15 @@ namespace r2::draw::renderer
 		clearOptions.shouldClear = true;
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
 
-		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-		auto smaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
+	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+	//	auto smaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
 
-		float smaaCameraWeight = 1.0f;
-		
-		//@HACK(Serge): Stupid BS needed to make sure that the Temporal resolve doesn't ghost weirdly when camera moves backwards or faces a different direction
-		//Maybe there's an actual way to fix this but I'm not sure since if we move backwards or turn the camera, we don't have enough info to fill the buffer correctly...
-		//Maybe motion blur could fix this?
-		{
-			float dotResult = glm::dot(renderer.mSMAALastCameraFacingDirection, renderer.mnoptrRenderCam->facing);
-			glm::vec3 diff = renderer.mnoptrRenderCam->position - renderer.mSMAALastCameraPosition;
-			if (diff != glm::vec3(0))
-			{
-				diff = glm::normalize(diff);
-			}
-			float dotResult2 = glm::dot(diff, renderer.mnoptrRenderCam->facing);
-			if (!math::NearEq(dotResult, 1.0f) ||
-				(diff != glm::vec3(0) && !math::NearEq(dotResult2, 1.0f)))
-			{
-				//if camera moved around then turn off the temporal resolve
-				smaaCameraWeight = 0.0f;
-			}
-		}
-		
-		glm::ivec4 subsampleIndices = SMAASubSampleIndices(renderer, (renderer.mShaderVectors.frame % 2));
 
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
+
+		//glm::ivec4 subsampleIndices = 
+
+		//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
+		//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
 
 		constexpr u32 numberOfStages = 4;
 
@@ -7891,8 +7932,13 @@ namespace r2::draw::renderer
 		renderer.mCompositeSize.width = windowWidth;
 		renderer.mCompositeSize.height = windowHeight;
 
-		renderer.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
+		//this is not correct - we shouldn't be uploading the texture to use here - we should use the surfaces instead
+		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+		renderer.mAAParams.mColorTexture = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+		renderer.mAAParams.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
 		renderer.mFXAANeedsUpdate = true;
+
+
 		renderer.mSMAANeedsUpdate = true;
 	}
 	

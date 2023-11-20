@@ -194,7 +194,7 @@ namespace r2::draw
         void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
         void InitForSSR();
         void InitForColorCorrection();
-
+        void InitForAntiAliasing();
         void InitForShadowData();
         void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
         void InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size);

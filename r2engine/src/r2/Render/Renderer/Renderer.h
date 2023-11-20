@@ -260,6 +260,27 @@ namespace r2::draw
 		float mBloomFilterSize;
 	};
 
+	struct AAShaderParams
+	{
+		tex::TextureAddress mColorTexture;
+		float mFXAALumaThreshold = 0.5f;
+		float mFXAALumaMulReduce = 1.0f / 8.0f;
+		float mFXAALumaMinReduce = 1.0f / 128.0f;
+		float mFXAAMaxSpan = 8.0f;
+		glm::vec2 mFXAATexelStep;
+
+
+		float mSMAAThreshold = 0.05f;
+		int mSMAAMaxSearchSteps = 32;
+		tex::TextureAddress mSMAAAreaTexture;
+		tex::TextureAddress mSMAASearchTexture;
+		glm::ivec4 mSMAASampleIndices;
+		int mSMAACornerRounding = 25;
+		int mSMAAMaxSearchStepsDiag = 16;
+		float mSMAACameraMovementWeight;
+
+	};
+
 	struct Renderer
 	{
 		RendererBackend mBackendType;
@@ -504,25 +525,38 @@ namespace r2::draw
 		//--------------END Bloom data-----------------
 
 		//-------------BEGIN FXAA Data-----------------
+		AAShaderParams mAAParams;
 		b32 mFXAANeedsUpdate = true;
-		float mFXAALumaThreshold = 0.5f;
-		float mFXAALumaMulReduce = 1.0f / 8.0f;
-		float mFXAALumaMinReduce = 1.0f / 128.0f;
-		float mFXAAMaxSpan = 8.0f;
-		glm::vec2 mFXAATexelStep;
+		//float mFXAALumaThreshold = 0.5f;
+		//float mFXAALumaMulReduce = 1.0f / 8.0f;
+		//float mFXAALumaMinReduce = 1.0f / 128.0f;
+		//float mFXAAMaxSpan = 8.0f;
+		//glm::vec2 mFXAATexelStep;
 		
 		//--------------END FXAA Data------------------
 
 
 		//--------------BEGIN SMAA Data----------------
 		b32 mSMAANeedsUpdate = true;
-		float mSMAAThreshold = 0.05f;
-		int mSMAAMaxSearchSteps = 32;
+
+		/*
+			{r2::draw::ShaderDataType::Float, "smaa_lumaThreshold"},
+			{r2::draw::ShaderDataType::Int, "smaa_maxSearchSteps"},
+			{r2::draw::ShaderDataType::Struct, "smaUpda_areaTexture"},
+			{r2::draw::ShaderDataType::Struct, "smaa_searchTexture"},
+			{r2::draw::ShaderDataType::Int4, "smaa_subSampleIndices"},
+			{r2::draw::ShaderDataType::Int, "smaa_cornerRounding"},
+			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"},
+			{r2::draw::ShaderDataType::Float, "smaa_cameraMovementWeight"}
+		*/
+
+		//float mSMAAThreshold = 0.05f;
+		//int mSMAAMaxSearchSteps = 32;
 		tex::TextureHandle mSMAAAreaTexture;
 		tex::TextureHandle mSMAASearchTexture;
 		
-		int mSMAACornerRounding = 25;
-		int mSMAAMaxSearchStepsDiag = 16;
+		//int mSMAACornerRounding = 25;
+		//int mSMAAMaxSearchStepsDiag = 16;
 		glm::vec3 mSMAALastCameraFacingDirection;
 		glm::vec3 mSMAALastCameraPosition;
 		//--------------END SMAA Data------------------
