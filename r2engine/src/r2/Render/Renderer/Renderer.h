@@ -227,6 +227,23 @@ namespace r2::draw
 		r2::draw::tex::TextureAddress blueNoiseTexture;
 	};
 
+	struct SSRShaderParams
+	{
+		float mSSRStride;
+		float mSSRThickness;
+		int mSSRRayMarchIterations;
+		float mSSRStrideZCutoff;
+
+		tex::TextureAddress mSSRDitherTexture;
+		float mSSRDitherTilingFactor;
+		s32 mSSRRoughnessMips;
+		s32 mSSRConeTracingSteps;
+		float mSSRMaxFadeDistance;
+		float mSSRFadeScreenStart;
+		float mSSRFadeScreenEnd;
+		float mSSRMaxDistance;
+	};
+
 	struct Renderer
 	{
 		RendererBackend mBackendType;
@@ -268,6 +285,8 @@ namespace r2::draw
 		r2::draw::RenderMaterialParams mBlueNoiseRenderMaterialParams;
 		r2::draw::tex::Texture mMissingTexture;
 		r2::draw::tex::Texture mBlueNoiseTexture;
+
+		tex::TextureHandle mSSRDitherTexture;
 
 		vb::VertexBufferLayoutHandle mStaticVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mAnimVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
@@ -459,24 +478,7 @@ namespace r2::draw
 
 
 		//------------BEGIN SSR data---------------
-
-		float mSSRStride = 10.0f;
-		float mSSRThickness = 0.01f;
-		int mSSRRayMarchIterations = 96;
-		float mSSRStrideZCutoff = 36.0f;
-		float mSSRMaxDistance = 10.0f;
-		tex::TextureHandle mSSRDitherTexture;
-		float mSSRDitherTilingFactor = 7.0f;
-		s32 mSSRRoughnessMips = 0;
-		s32 mSSRConeTracingSteps = 7;
-		float mSSRMaxFadeDistance = 10;
-		float mSSRFadeScreenStart = 0.1;
-		float mSSRFadeScreenEnd = 0.9;
-
-		//float mSSRStrideZCutoff = 50.0f;
-		//float mSSRStride = 2.0f;
-		//float mSSRMaxDistance = 15.0f;
-
+		SSRShaderParams mSSRParams;
 		bool mSSRNeedsUpdate = true;
 		//------------END SSR data-----------------
 

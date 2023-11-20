@@ -13,7 +13,7 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Renderer/RenderTarget.h"
-
+#include "r2/Render/Renderer/Renderer.h"
 
 /*
 
@@ -936,6 +936,24 @@ namespace r2::draw
 
 		mBufferMult = 1;
     }
+
+	void  ConstantBufferLayout::InitForSSR()
+	{
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = 1;
+		mElements[0].elementSize = sizeof(r2::draw::SSRShaderParams);
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Small;
+		mFlags = 0;
+		mCreateFlags = 0;
+
+		mBufferMult = 1;
+	}
 
     void ConstantBufferLayout::InitForSurfaces(const rt::RenderTargetParams rtParams[])
     {

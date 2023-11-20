@@ -1321,6 +1321,40 @@ namespace r2::draw::renderer
 			newRenderer->mSDSMShaderParamsNeedUpdate = true;
 		}
 
+		//Init the SSRParams
+		{
+
+			tex::TextureFormat textureFormat;
+			textureFormat.width = 4;
+			textureFormat.height = 4;
+			textureFormat.mipLevels = 1;
+			textureFormat.internalformat = tex::COLOR_FORMAT_R8;
+
+			newRenderer->mSSRDitherTexture = tex::CreateTexture(textureFormat, 1, false);
+			u8 textureData[] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
+
+			tex::TexSubImage2D(newRenderer->mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
+
+			newRenderer->mSSRParams.mSSRDitherTexture = texsys::GetTextureAddress(newRenderer->mSSRDitherTexture);
+
+			newRenderer->mSSRParams.mSSRStride = 10.0f;
+			newRenderer->mSSRParams.mSSRThickness = 0.01f;
+			newRenderer->mSSRParams.mSSRRayMarchIterations = 96;
+			newRenderer->mSSRParams.mSSRStrideZCutoff = 36.0f;
+			newRenderer->mSSRParams.mSSRMaxDistance = 10.0f;
+			
+			newRenderer->mSSRParams.mSSRDitherTilingFactor = 7.0f;
+			newRenderer->mSSRParams.mSSRRoughnessMips = 0;
+			newRenderer->mSSRParams.mSSRConeTracingSteps = 7;
+			newRenderer->mSSRParams.mSSRMaxFadeDistance = 10;
+			newRenderer->mSSRParams.mSSRFadeScreenStart = 0.1;
+			newRenderer->mSSRParams.mSSRFadeScreenEnd = 0.9;
+
+			newRenderer->mSSRNeedsUpdate = true;
+		}
+
+
+
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
 		UploadEngineModels(*newRenderer);
 
@@ -1733,20 +1767,39 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Struct, "BlueNoiseTexture"}
 		});
 
-		renderer.mSSRConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
-			{r2::draw::ShaderDataType::Float, "ssr_stride"},
-			{r2::draw::ShaderDataType::Float, "ssr_ssThickness"},
-			{r2::draw::ShaderDataType::Int, "ssr_rayMarchIterations"},
-			{r2::draw::ShaderDataType::Float, "ssr_strideZCutoff"},
-			{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
-			{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
-			{r2::draw::ShaderDataType::Int, "ssr_roughnessMips"},
-			{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"},
-			{r2::draw::ShaderDataType::Float, "ssr_maxFadeDistance"},
-			{r2::draw::ShaderDataType::Float, "ssr_fadeStart"},
-			{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"},
-			{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
-		});
+
+		r2::draw::ConstantBufferLayoutConfiguration ssrParams
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		ssrParams.layout.InitForSSR();
+
+		r2::sarr::Push(*renderer.mConstantLayouts, ssrParams);
+
+		renderer.mSSRConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+		
+
+		//renderer.mSSRConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+		//	{r2::draw::ShaderDataType::Float, "ssr_stride"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_ssThickness"},
+		//	{r2::draw::ShaderDataType::Int, "ssr_rayMarchIterations"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_strideZCutoff"},
+		//	{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
+		//	{r2::draw::ShaderDataType::Int, "ssr_roughnessMips"},
+		//	{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_maxFadeDistance"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_fadeStart"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"},
+		//	{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
+		//});
 
 		renderer.mBloomConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "bloom_Filter"},
@@ -5157,35 +5210,40 @@ namespace r2::draw::renderer
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 			auto ssrConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSSRConfigHandle);
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 0, &renderer.mSSRStride);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 1, &renderer.mSSRThickness);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 2, &renderer.mSSRRayMarchIterations);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRStrideZCutoff);
+			AddFillConstantBufferCommandFull(renderer, ssrConstantBufferHandle, &renderer.mSSRParams, sizeof(renderer.mSSRParams), 0);
 
-			if (renderer.mSSRDitherTexture.container == nullptr)
-			{
-				tex::TextureFormat textureFormat;
-				textureFormat.width = 4;
-				textureFormat.height = 4;
-				textureFormat.mipLevels = 1;
-				textureFormat.internalformat = tex::COLOR_FORMAT_R8;
+			/*
 
-				renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1, false);
-				u8 textureData[] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
+			*/
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 0, &renderer.mSSRStride);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 1, &renderer.mSSRThickness);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 2, &renderer.mSSRRayMarchIterations);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRStrideZCutoff);
 
-				tex::TexSubImage2D(renderer.mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
-			}
+			//if (renderer.mSSRDitherTexture.container == nullptr)
+			//{
+			//	tex::TextureFormat textureFormat;
+			//	textureFormat.width = 4;
+			//	textureFormat.height = 4;
+			//	textureFormat.mipLevels = 1;
+			//	textureFormat.internalformat = tex::COLOR_FORMAT_R8;
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 4, &tex::GetTextureAddress(renderer.mSSRDitherTexture));
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 6, &renderer.mSSRRoughnessMips);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 7, &renderer.mSSRConeTracingSteps);
+			//	renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1, false);
+			//	u8 textureData[] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
+			//	tex::TexSubImage2D(renderer.mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
+			//}
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 11, &renderer.mSSRMaxDistance);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 4, &tex::GetTextureAddress(renderer.mSSRDitherTexture));
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 6, &renderer.mSSRRoughnessMips);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 7, &renderer.mSSRConeTracingSteps);
+
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
+
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 11, &renderer.mSSRMaxDistance);
 		}
 	}
 
@@ -7754,8 +7812,13 @@ namespace r2::draw::renderer
 			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
 			const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
 
-			renderer.mSSRRoughnessMips = tex::MaxMipsForSparseTextureSize(gbufferTexture);
-			renderer.mSSRNeedsUpdate = true;
+			auto ssrRoughnessMips = tex::MaxMipsForSparseTextureSize(gbufferTexture);
+
+			//if (renderer.mSSRParams.mSSRRoughnessMips != ssrRoughnessMips)
+			{
+				renderer.mSSRParams.mSSRRoughnessMips = ssrRoughnessMips;
+				renderer.mSSRNeedsUpdate = true;
+			}
 
 			rt::TextureAttachmentFormat convolvedGBufferFormat = {};
 			convolvedGBufferFormat.type = rt::COLOR;
@@ -7764,7 +7827,7 @@ namespace r2::draw::renderer
 			convolvedGBufferFormat.filter = tex::FILTER_LINEAR;
 			convolvedGBufferFormat.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
 			convolvedGBufferFormat.numLayers = 1;
-			convolvedGBufferFormat.numMipLevels = renderer.mSSRRoughnessMips;
+			convolvedGBufferFormat.numMipLevels = ssrRoughnessMips;
 			convolvedGBufferFormat.hasAlpha = false;
 			convolvedGBufferFormat.isHDR = true;
 			convolvedGBufferFormat.usesLayeredRenderering = false;

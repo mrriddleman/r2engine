@@ -192,6 +192,7 @@ namespace r2::draw
         void InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands);
         void InitForSurfaces(const rt::RenderTargetParams rtParams[]);
         void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
+        void InitForSSR();
 
         void InitForShadowData();
         void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
