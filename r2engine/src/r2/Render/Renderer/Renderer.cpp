@@ -3209,24 +3209,6 @@ namespace r2::draw::renderer
 		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mLightingConfigHandle);
 
 		AddFillConstantBufferCommandFull(renderer, lightBufferHandle, &lightSystem.mSceneLighting, sizeof(lightSystem.mSceneLighting), 0);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 0, &lightSystem.mSceneLighting.mPointLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 1, &lightSystem.mSceneLighting.mDirectionLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 2, &lightSystem.mSceneLighting.mSpotLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 3, &lightSystem.mSceneLighting.mSkyLight);
-
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 4, &lightSystem.mSceneLighting.mNumPointLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 5, &lightSystem.mSceneLighting.mNumDirectionLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 6, &lightSystem.mSceneLighting.mNumSpotLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 7, &lightSystem.mSceneLighting.numPrefilteredRoughnessMips);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 8, &lightSystem.mSceneLighting.useSDSMShadows);
-
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.numShadowCastingDirectionLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.numShadowCastingPointLights);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.numShadowCastingSpotLights);
-
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 12, &lightSystem.mSceneLighting.mShadowCastingDirectionLights[0]);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 13, &lightSystem.mSceneLighting.mShadowCastingPointLights[0]);
-		//AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 14, &lightSystem.mSceneLighting.mShadowCastingSpotLights[0]);
 	}
 
 	template<class ARENA, typename T>
@@ -5316,39 +5298,6 @@ namespace r2::draw::renderer
 			auto ssrConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSSRConfigHandle);
 
 			AddFillConstantBufferCommandFull(renderer, ssrConstantBufferHandle, &renderer.mSSRParams, sizeof(renderer.mSSRParams), 0);
-
-			/*
-
-			*/
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 0, &renderer.mSSRStride);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 1, &renderer.mSSRThickness);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 2, &renderer.mSSRRayMarchIterations);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRStrideZCutoff);
-
-			//if (renderer.mSSRDitherTexture.container == nullptr)
-			//{
-			//	tex::TextureFormat textureFormat;
-			//	textureFormat.width = 4;
-			//	textureFormat.height = 4;
-			//	textureFormat.mipLevels = 1;
-			//	textureFormat.internalformat = tex::COLOR_FORMAT_R8;
-
-			//	renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1, false);
-			//	u8 textureData[] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
-
-			//	tex::TexSubImage2D(renderer.mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
-			//}
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 4, &tex::GetTextureAddress(renderer.mSSRDitherTexture));
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 6, &renderer.mSSRRoughnessMips);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 7, &renderer.mSSRConeTracingSteps);
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 11, &renderer.mSSRMaxDistance);
 		}
 	}
 
@@ -5654,13 +5603,6 @@ namespace r2::draw::renderer
 			auto fxaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
 
 			AddFillConstantBufferCommandFull(renderer, fxaaConstantBufferHandle, &renderer.mAAParams, sizeof(renderer.mAAParams), 0);
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 0, &renderer.mFXAAParams.mColorTexture);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 1, &renderer.mFXAAParams.mFXAALumaThreshold);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 2, &renderer.mFXAAParams.mFXAALumaMulReduce);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 3, &renderer.mFXAAParams.mFXAALumaMinReduce);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAParams.mFXAAMaxSpan);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAAParams.mFXAATexelStep);
 		}
 	}
 
@@ -5672,22 +5614,7 @@ namespace r2::draw::renderer
 		if (renderer.mSMAANeedsUpdate)
 		{
 			renderer.mSMAANeedsUpdate = false;
-
-
 			AddFillConstantBufferCommandFull(renderer, smaaConstantBufferHandle, &renderer.mAAParams, sizeof(renderer.mAAParams), 0);
-
-			//const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
-
-			//
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAMaxSearchSteps);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
-			////r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 11, &renderer.mSMAACornerRounding);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 12, &renderer.mSMAAMaxSearchStepsDiag);
 		}
 	}
 
@@ -5729,16 +5656,6 @@ namespace r2::draw::renderer
 		ClearSurfaceOptions clearOptions;
 		clearOptions.shouldClear = true;
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
-
-	//	const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-	//	auto smaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
-
-
-
-		//glm::ivec4 subsampleIndices = 
-
-		//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
-		//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
 
 		constexpr u32 numberOfStages = 4;
 
@@ -6026,32 +5943,13 @@ namespace r2::draw::renderer
 		
 		UpdateShaderMatrices(renderer);
 
-		//UpdatePerspectiveMatrix(renderer, camera.proj);
-		//UpdateInverseProjectionMatrix(renderer, camera.invProj);
-
-		//UpdateInverseViewMatrix(renderer, camera.invView);
-		//UpdateViewProjectionMatrix(renderer, camera.vp);
-		//UpdatePreviousProjectionMatrix(renderer);
-		//UpdatePreviousViewMatrix(renderer);
-		//UpdatePreviousVPMatrix(renderer);
-
-		//UpdateViewMatrix(renderer, camera.view);
-
 		renderer.mShaderVectors.cameraPosTimeW = glm::vec4(camera.position, CENG.GetTicks() / 1000.0f);
 		renderer.mShaderVectors.exposureNearFar = glm::vec4(camera.exposure, camera.nearPlane, camera.farPlane, 0);
-		//UpdateCameraPosition(renderer, camera.position);
-		//UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
 
 		R2_CHECK(cam::NUM_FRUSTUM_SPLITS == 4, "Change to not be a vec4 if cam::NUM_FRUSTUM_SPLITS is >");
 
 		renderer.mShaderVectors.shadowMapSizes = glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 		renderer.mShaderVectors.fovAspectResXResY = glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height);
-
-		//UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
-
-		//UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
-
-		
 	}
 
 	void DrawModel(
@@ -7932,9 +7830,6 @@ namespace r2::draw::renderer
 		renderer.mCompositeSize.width = windowWidth;
 		renderer.mCompositeSize.height = windowHeight;
 
-		//this is not correct - we shouldn't be uploading the texture to use here - we should use the surfaces instead
-		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
-	//	renderer.mAAParams.mColorTexture = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 		renderer.mAAParams.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
 		renderer.mFXAANeedsUpdate = true;
 
@@ -8873,41 +8768,6 @@ namespace r2::draw::renderer
 
 			AddFillConstantBufferCommandFull(renderer, colorCorrectionConstantBufferHandle, &renderer.mColorCorrectionData, sizeof(renderer.mColorCorrectionData), 0);
 
-			/*
-					float contrast = 1.0f;
-		float brightness = 0.0f;
-		float saturation = 1.0f;
-		float gamma = 1.0f / 2.2f;
-		float filmGrainStrength = 0.05f;
-
-
-		tex::TextureAddress mColorGradingLUT;
-		float mNumColorGradingSwatches = 1.0f;
-		float mColorGradingHalfColX = 0.0f;
-		float mColorGradingHalfColY = 0.0f;
-		f32 mColorGradingContribution = 0.0f;
-			
-			*/
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 0, &renderer.mColorCorrectionData.contrast);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 1, &renderer.mColorCorrectionData.brightness);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 4, &renderer.mColorCorrectionData.filmGrainStrength);
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 5, &renderer.mColorCorrectionData.mColorGradingHalfColX);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 6, &renderer.mColorCorrectionData.mColorGradingHalfColY);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 7, &renderer.mColorCorrectionData.mNumColorGradingSwatches);
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 8, &renderer.mColorCorrectionData.mColorGradingLUT);
-
-			//float contribution = renderer.mColorCorrectionData.mColorGradingContribution;
-			//if (!renderer.mColorCorrectionData.mColorGradingEnabled)
-			//{
-			//	contribution = 0.0f;
-			//}
-
-			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 9, &contribution);
-
 			renderer.mColorCorrectionNeedsUpdate = false;
 		}
 	}
@@ -8921,10 +8781,6 @@ namespace r2::draw::renderer
 		renderer.mShaderMatrices.prevProjection = renderer.mnoptrRenderCam->proj;
 		renderer.mShaderMatrices.prevView = renderer.mnoptrRenderCam->view;
 		renderer.mShaderMatrices.prevVPMatrix = renderer.mnoptrRenderCam->vp;
-
-		//renderer.prevProj = renderer.mnoptrRenderCam->proj;
-		//renderer.prevView = renderer.mnoptrRenderCam->view;
-		//renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
 	Camera* GetRenderCamera(Renderer& renderer)
