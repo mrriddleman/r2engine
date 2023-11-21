@@ -72,7 +72,7 @@ namespace
     
     void CheckFMODResult(FMOD_RESULT result)
     {
-        if (result != FMOD_OK && result != FMOD_ERR_INVALID_HANDLE)
+        if (result != FMOD_OK && result != FMOD_ERR_INVALID_HANDLE )
         {
             R2_CHECK(result == FMOD_OK, "We had an error in FMOD: %i", result);
         }
@@ -546,7 +546,11 @@ namespace r2::audio
 			char bankPath[r2::fs::FILE_PATH_LENGTH];
             BuildBankFilePathFromFMODPath(nextBankPath, bankPath, r2::fs::FILE_PATH_LENGTH);
 
-            if (retrieved && strcmp(bankPath, path) == 0)
+            char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+
+            r2::fs::utils::SanitizeSubPath(path, sanitizedPath);
+
+            if (retrieved && strcmp(bankPath, sanitizedPath) == 0)
             {
                 return static_cast<BankHandle>(i);
             }

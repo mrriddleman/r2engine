@@ -337,9 +337,11 @@ namespace r2::edit
 		for (u32 i = 0; i < r2::sarr::Size(*soundAssets); ++i)
 		{
 			auto soundAsset = r2::sarr::At(*soundAssets, i);
-			const char* fileNameString = r2::audio::GetSoundBankNameFromAssetName(soundAsset);
+			std::string soundFileStemStr = r2::audio::GetSoundBankNameFromAssetName(soundAsset);
+			
 
-			ImGui::PushID(fileNameString);
+
+			ImGui::PushID(soundFileStemStr.c_str());
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::ImageButton((ImTextureID)mFileIcon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
@@ -358,7 +360,7 @@ namespace r2::edit
 
 			ImGui::PopStyleColor();
 
-			ImGui::TextWrapped(fileNameString);
+			ImGui::TextWrapped(soundFileStemStr.c_str());
 
 			ImGui::NextColumn();
 

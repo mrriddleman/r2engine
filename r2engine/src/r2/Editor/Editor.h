@@ -72,6 +72,7 @@ namespace r2
 
 
 		void OpenCreateNewLevelModal();
+		void AddSoundBankToLevel(u64 soundBankAssetName);
 
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
@@ -79,7 +80,7 @@ namespace r2
 	private:
 
 		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
-		void AddSoundBankToLevel(u64 soundBankAssetName);
+		
 
 		Level* mCurrentEditorLevel;
 

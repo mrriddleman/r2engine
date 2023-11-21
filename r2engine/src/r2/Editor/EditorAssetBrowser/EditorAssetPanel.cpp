@@ -13,6 +13,8 @@
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Editor/Editor.h"
 
+#include "r2/Audio/AudioEngine.h"
+#include "r2/Core/Assets/AssetTypes.h"
 #include "imgui.h"
 #include <algorithm>
 #include <string>
@@ -405,6 +407,8 @@ namespace r2::edit
 		if (ImGui::Selectable("Make Material", false))
 		{
 			printf("@TODO(Serge): Make a material\n");
+
+
 		}
 
 		if (ImGui::Selectable("Make new Directory", false))
@@ -464,7 +468,9 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Import To Level"))
 		{
-			printf("@TODO(Serge): Import to Current Level\n");
+			r2::audio::AudioEngine audioEngine;
+			audioEngine.LoadBank(path.string().c_str(), 0);
+			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND));
 		}
 	}
 
@@ -474,7 +480,6 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Open Level"))
 		{
-		//	printf("@TODO(Serge): Open level: %s\n", path.string().c_str());
 			mnoptrEditor->LoadLevel(path.string());
 		}
 	}

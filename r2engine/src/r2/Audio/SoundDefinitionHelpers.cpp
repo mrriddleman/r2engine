@@ -6,14 +6,15 @@
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
+#include "R2/Core/Assets/Asset.h"
 
 namespace r2::audio
 {
 	const char* GetSoundBankNameFromAssetName(u64 soundBankAssetName)
 	{
-		if (soundBankAssetName == 0)
+		if (soundBankAssetName == r2::asset::Asset::MakeAssetFromFilePath("Master.bank", r2::asset::SOUND).HashID())
 		{
-			return "";
+			return "Master.bank";
 		}
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
