@@ -17,19 +17,26 @@ namespace r2::edit
 		virtual void OnEvent(evt::Event& e) override;
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
+
+		void OpenCreateNewLevelWindow();
+		
+		
+
 	private:
 
-		void LoadLevel(const std::string& filePath);
+		
 		void UnloadLevel();
 
 		void SaveLevelToRecents(const std::string& filePath);
 
 		void LoadRecentsFile();
 		void SaveRecentsFile();
+		
+		void ShowCreateNewLevelModal();
 
 		std::string mGroupName;
 		std::string mLevelName;
-		
+		bool mShowCreateNewLevelModal;
 		std::deque<std::string> mLastLevelPathsOpened;
 
 	};

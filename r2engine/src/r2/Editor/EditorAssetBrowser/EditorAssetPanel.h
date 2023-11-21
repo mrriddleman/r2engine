@@ -34,6 +34,7 @@ namespace r2::edit
 		void MaterialBinContextMenu(const std::filesystem::path& path);
 		void ModelBinContextMenu(const std::filesystem::path& path);
 		void SoundBankContextMenu(const std::filesystem::path& path);
+		void LevelBinContextMenu(const std::filesystem::path& path);
 
 		void MaterialRawContextMenu(const std::filesystem::path& path);
 		void ModelRawContextMenu(const std::filesystem::path& path);

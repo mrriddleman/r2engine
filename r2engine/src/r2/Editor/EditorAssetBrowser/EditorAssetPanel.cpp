@@ -308,9 +308,6 @@ namespace r2::edit
 		static auto TEXTURE_PACK_MANIFEST_BIN_EXT = std::string(".") + flat::TexturePacksManifestExtension();
 		static auto JSON_EXT = ".json";
 
-
-
-
 		std::string relativePathString = relativePath.string();
 
 		if (std::filesystem::is_directory(path))
@@ -372,6 +369,14 @@ namespace r2::edit
 					return true;
 				}
 			}
+			else if (FindStringIC(relativePathString, "level"))
+			{
+				if (relativePath.extension().string() == LEVEL_BIN_EXT)
+				{
+					LevelBinContextMenu(path);
+					return true;
+				}
+			}
 		}
 
 
@@ -414,7 +419,7 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Make New Level", false))
 		{
-			printf("@TODO(Serge): Make a Level\n");
+			mnoptrEditor->OpenCreateNewLevelModal();
 		}
 
 		if (ImGui::Selectable("Make new Directory", false))
@@ -460,6 +465,17 @@ namespace r2::edit
 		if (ImGui::Selectable("Import To Level"))
 		{
 			printf("@TODO(Serge): Import to Current Level\n");
+		}
+	}
+
+	void AssetPanel::LevelBinContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Level");
+
+		if (ImGui::Selectable("Open Level"))
+		{
+		//	printf("@TODO(Serge): Open level: %s\n", path.string().c_str());
+			mnoptrEditor->LoadLevel(path.string());
 		}
 	}
 

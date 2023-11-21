@@ -21,9 +21,13 @@ namespace r2::evt
 	class EditorLevelLoadedEvent : public EditorLevelEvent
 	{
 	public:
-		EditorLevelLoadedEvent(const LevelName& level);
+		EditorLevelLoadedEvent(const LevelName& level, const std::string& filePathName);
 		std::string ToString() const override;
+		const std::string& GetFilePath() const { return mFilePathName; }
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_LOADED)
+
+	private:
+		std::string mFilePathName;
 	};
 
 	class EditorLevelWillUnLoadEvent : public EditorLevelEvent

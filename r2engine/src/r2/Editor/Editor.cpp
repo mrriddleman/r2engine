@@ -54,6 +54,7 @@ namespace r2
 		, mEditorFolderImageWidth(0)
 		, mEditorFolderImageHeight(0)
 		, mEditorFolderImage(0)
+		, mMainMenuBar(nullptr)
 	{
 		
 	}
@@ -63,6 +64,9 @@ namespace r2
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
 		mEditorWidgets.push_back(std::move(mainMenuBar));
+		mMainMenuBar = static_cast<edit::MainMenuBar*>( mEditorWidgets.back().get() );
+
+		R2_CHECK(mMainMenuBar != nullptr, "Should never happen");
 
 		std::unique_ptr<edit::InspectorPanel> inspectorPanel = std::make_unique<edit::InspectorPanel>();
 		mEditorWidgets.push_back(std::move(inspectorPanel));
@@ -216,7 +220,7 @@ namespace r2
 
 		mCurrentEditorLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
 
-		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName());
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName(), filePathName);
 
 		PostEditorEvent(e);
 	}
@@ -242,7 +246,11 @@ namespace r2
 		levelURI.replace_extension(".rlvl");
 
 		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelName.c_str(), groupName.c_str(), r2::asset::GetAssetNameForFilePath(levelURI.string().c_str(), r2::asset::LEVEL));
-		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName());
+
+		
+		//r2::fs::utils::BuildPathFromCategory(fs::utils::LEVELS_BIN, levelURI.string().c_str(), );
+
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName(), "");
 
 		PostEditorEvent(e);
 
@@ -535,6 +543,14 @@ namespace r2
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()
 	{
 		return MENG.GetECSWorld().GetECSCoordinator();
+	}
+
+	void Editor::OpenCreateNewLevelModal()
+	{
+		if (mMainMenuBar)
+		{
+			mMainMenuBar->OpenCreateNewLevelWindow();
+		}
 	}
 
 	void Editor::AddModelToLevel(u64 modelHandle, const r2::draw::Model& model)

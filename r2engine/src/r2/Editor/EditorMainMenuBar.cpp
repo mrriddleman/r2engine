@@ -11,10 +11,12 @@
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Game/Level/LevelManager.h"
+#include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 
 namespace r2::edit 
 {
 	MainMenuBar::MainMenuBar()
+		:mShowCreateNewLevelModal(false)
 	{
 
 	}
@@ -36,7 +38,16 @@ namespace r2::edit
 
 	void MainMenuBar::OnEvent(evt::Event& e)
 	{
+		r2::evt::EventDispatcher dispatcher(e);
 
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e) {
+			if (e.GetFilePath() != "")
+			{
+				SaveLevelToRecents(e.GetFilePath());
+			}
+
+			return e.ShouldConsume();
+			});
 	}
 
 	void MainMenuBar::Update()
@@ -51,16 +62,14 @@ namespace r2::edit
 
 		ImGui::SetNextWindowPos(ImVec2((float)vPos0.x, (float)vPos0.y), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2((float)vWindowSize.x, (float)vWindowSize.y), ImGuiCond_Always);
-		bool showNewLevelPopup = false;
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("New Level"))
 				{
-					showNewLevelPopup = true;
-					mGroupName = "NewGroup";
-					mLevelName = "NewLevel";
+					OpenCreateNewLevelWindow();
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
@@ -80,7 +89,8 @@ namespace r2::edit
 
 						if (ImGui::MenuItem(relPath.string().c_str()))
 						{
-							LoadLevel(mLastLevelPathsOpened[i]);
+							mnoptrEditor->LoadLevel(mLastLevelPathsOpened[i]);
+							//OpenLevel(mLastLevelPathsOpened[i]);
 							break;
 						}
 					}
@@ -163,52 +173,18 @@ namespace r2::edit
 			ImGui::EndMainMenuBar();
 		}
 
-		if (showNewLevelPopup)
+		if (mShowCreateNewLevelModal)
 		{
 			ImGui::OpenPopup("New Level");
-			ImGui::SetNextWindowSize(ImVec2(400, 100));
 
+			ImGui::SetNextWindowSize(ImVec2(400, 100));
 			const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
 			auto vec2 = ImVec2(main_viewport->WorkPos.x + (main_viewport->WorkSize.x / 2.0f) - (200), main_viewport->WorkPos.y + (main_viewport->WorkSize.y / 2.0f) - (50));
 			ImGui::SetNextWindowPos(vec2, ImGuiCond_None);
+			mShowCreateNewLevelModal = false;
 		}
 
-		if (ImGui::BeginPopupModal("New Level"))
-		{
-			//do the new level setup here
-
-			ImGui::Text("Level Name: ");
-			ImGui::SameLine(0.0f, 20.0f);
-			char levelName[1000];
-			strncpy(levelName, mLevelName.c_str(), 1000);
-			ImGui::InputText("##hidelabel0", levelName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
-			
-			mLevelName = levelName;
-
-			ImGui::Text("Group Name: ");
-			ImGui::SameLine(0.0f, 20.0f);
-			char groupName[1000];
-			strncpy(groupName, mGroupName.c_str(), 1000);
-			ImGui::InputText("##hidelabel1", groupName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
-
-			mGroupName = groupName;
-
-			if (ImGui::Button("Cancel"))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine(0.0f, 100.0f);
-
-			ImGui::SameLine(ImGui::GetWindowWidth() - 80);
-
-			if (ImGui::Button("Create"))
-			{
-				mnoptrEditor->CreateNewLevel(groupName, levelName);
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
+		ShowCreateNewLevelModal();
 		
 		ImVec2 maxSize = ImVec2((float)1200, (float)800);  // The full display area
 		ImVec2 minSize = ImVec2((float)1200 * 0.5, (float)800 * 0.5);  // Half the display area
@@ -220,7 +196,8 @@ namespace r2::edit
 			{
 				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				LoadLevel(filePathName);
+				mnoptrEditor->LoadLevel(filePathName);
+			//	OpenLevel(filePathName);
 			}
 
 			// close
@@ -265,6 +242,53 @@ namespace r2::edit
 			ImGuiFileDialog::Instance()->Close();
 		}
 
+	}
+
+	void MainMenuBar::OpenCreateNewLevelWindow()
+	{
+		mShowCreateNewLevelModal = true;
+		mGroupName = "NewGroup";
+		mLevelName = "NewLevel";
+	}
+
+	void MainMenuBar::ShowCreateNewLevelModal()
+	{
+		if (ImGui::BeginPopupModal("New Level"))
+		{
+			//do the new level setup here
+
+			ImGui::Text("Level Name: ");
+			ImGui::SameLine(0.0f, 20.0f);
+			char levelName[1000];
+			strncpy(levelName, mLevelName.c_str(), 1000);
+			ImGui::InputText("##hidelabel0", levelName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
+
+			mLevelName = levelName;
+
+			ImGui::Text("Group Name: ");
+			ImGui::SameLine(0.0f, 20.0f);
+			char groupName[1000];
+			strncpy(groupName, mGroupName.c_str(), 1000);
+			ImGui::InputText("##hidelabel1", groupName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
+
+			mGroupName = groupName;
+
+			if (ImGui::Button("Cancel"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine(0.0f, 100.0f);
+
+			ImGui::SameLine(ImGui::GetWindowWidth() - 80);
+
+			if (ImGui::Button("Create"))
+			{
+				mnoptrEditor->CreateNewLevel(groupName, levelName);
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 
 	void MainMenuBar::SaveLevelToRecents(const std::string& filePathName)
@@ -320,13 +344,6 @@ namespace r2::edit
 		}
 
 		fs.close();
-	}
-
-	void MainMenuBar::LoadLevel(const std::string& filePathName)
-	{
-		// action
-		mnoptrEditor->LoadLevel(filePathName);
-		SaveLevelToRecents(filePathName);
 	}
 
 	void MainMenuBar::UnloadLevel()

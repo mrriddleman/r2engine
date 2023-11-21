@@ -15,8 +15,9 @@ namespace r2::evt
 	{
 	}
 
-	EditorLevelLoadedEvent::EditorLevelLoadedEvent(const LevelName& level)
+	EditorLevelLoadedEvent::EditorLevelLoadedEvent(const LevelName& level, const std::string& filePathName)
 		:EditorLevelEvent(level, false)
+		,mFilePathName(filePathName)
 	{
 	}
 

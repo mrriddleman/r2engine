@@ -29,6 +29,11 @@ namespace r2::draw
 	struct Model;
 }
 
+namespace r2::edit
+{
+	class MainMenuBar;
+}
+
 namespace r2
 {
 	
@@ -48,6 +53,8 @@ namespace r2
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
+
+		//@TODO(Serge): this is a bit tangled 
 		void LoadLevel(const std::string& filePathName);
 		void UnloadCurrentLevel();
 		void CreateNewLevel(const std::string& groupName, const std::string& levelName);
@@ -63,6 +70,9 @@ namespace r2
 		ecs::SceneGraph& GetSceneGraph();
 		ecs::ECSCoordinator* GetECSCoordinator();
 
+
+		void OpenCreateNewLevelModal();
+
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
 
@@ -76,6 +86,7 @@ namespace r2
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;
 		std::vector<std::unique_ptr<edit::EditorAction>> mRedoStack;
+		edit::MainMenuBar* mMainMenuBar;
 
 		s32 mEditorFolderImageWidth;
 		s32 mEditorFolderImageHeight;
