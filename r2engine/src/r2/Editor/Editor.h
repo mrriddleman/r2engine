@@ -34,6 +34,11 @@ namespace r2::edit
 	class MainMenuBar;
 }
 
+namespace r2::mat
+{
+	struct MaterialName;
+}
+
 namespace r2
 {
 	
@@ -73,6 +78,7 @@ namespace r2
 
 		void OpenCreateNewLevelModal();
 		void AddSoundBankToLevel(u64 soundBankAssetName);
+		void AddMaterialToLevel(const r2::mat::MaterialName& materialName);
 
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }

@@ -49,7 +49,8 @@ namespace r2::edit
 		std::filesystem::path mCurrentDirectory;
 		std::filesystem::path mCurrentBaseDirectory;
 
-
+		bool mMaterialEditorWindowOpen;
+		
 	};
 }
 

@@ -18,12 +18,64 @@
 
 namespace r2::edit
 {
+	static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
+	static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
+	static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
+	static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
+	static const char* const* s_magTextureFilterStrings = flat::EnumNamesMagTextureFilter();
+	static const char* const* s_textureWrapModeStrings = flat::EnumNamesTextureWrapMode();
 
-	void MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen)
+	static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
+		flat::ShaderPropertyType_ROUGHNESS,
+		flat::ShaderPropertyType_METALLIC,
+		flat::ShaderPropertyType_REFLECTANCE,
+		flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+		flat::ShaderPropertyType_CLEAR_COAT,
+		flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+		flat::ShaderPropertyType_HEIGHT_SCALE,
+		flat::ShaderPropertyType_ANISOTROPY,
+		flat::ShaderPropertyType_EMISSION_STRENGTH
+
+	};
+
+	static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
+		flat::ShaderPropertyType_ALBEDO,
+		flat::ShaderPropertyType_EMISSION,
+		flat::ShaderPropertyType_DETAIL
+	};
+
+	static const std::vector<flat::ShaderPropertyType> s_texturePropertyTypes = {
+		flat::ShaderPropertyType_ALBEDO,
+		flat::ShaderPropertyType_NORMAL,
+		flat::ShaderPropertyType_EMISSION,
+		flat::ShaderPropertyType_METALLIC,
+		flat::ShaderPropertyType_ROUGHNESS,
+		flat::ShaderPropertyType_AMBIENT_OCCLUSION,
+		flat::ShaderPropertyType_HEIGHT,
+		flat::ShaderPropertyType_ANISOTROPY,
+		flat::ShaderPropertyType_DETAIL,
+
+		flat::ShaderPropertyType_CLEAR_COAT,
+		flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
+		flat::ShaderPropertyType_CLEAR_COAT_NORMAL
+
+		//@TODO(Serge): we have more property types but I don't think they are supported atm
+		//eg. SHEEN_COLOR, SHEEN_ROUGHNESS, BENT_NORMAL, ANISOTROPY_DIRECTION
+	};
+
+	static const std::vector<flat::ShaderPropertyType> s_boolPropertyTypes = {
+		flat::ShaderPropertyType_DOUBLE_SIDED
+	};
+
+
+#ifdef R2_ASSET_PIPELINE
+	void EditMaterial(r2::mat::Material& material, bool& windowOpen);
+#endif
+
+
+	void EditExistingMaterial(const r2::mat::MaterialName& materialName, bool& windowOpen)
 	{
 #ifdef R2_ASSET_PIPELINE
-
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
@@ -46,57 +98,38 @@ namespace r2::edit
 
 		R2_CHECK(foundMaterial != nullptr, "Should always be the case");
 
+		EditMaterial(*foundMaterial, windowOpen);
+#endif
+	}
+
+#ifdef R2_ASSET_PIPELINE
+
+	void CreateNewMaterial(bool& windowOpen)
+	{
+		r2::mat::Material material;
+		material.materialName.name = 0;
+		material.materialName.packName = 0;
+		material.stringName = "";
+		material.transparencyType = flat::eTransparencyType_OPAQUE;
+		material.shaderParams.boolParams.clear();
+		material.shaderParams.colorParams.clear();
+		material.shaderParams.floatParams.clear();
+		material.shaderParams.shaderStageParams.clear();
+		material.shaderParams.stringParams.clear();
+		material.shaderParams.textureParams.clear();
+		material.shaderParams.ulongParams.clear();
+
+		EditMaterial(material, windowOpen);
+
+	}
+
+	void EditMaterial(r2::mat::Material& material, bool& windowOpen)
+	{
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
 		static float CONTENT_WIDTH = 600;
 		static float CONTENT_HEIGHT = 1000;
-
-		static std::string s_meshPassStrings[] = { "FORWARD", "TRANSPARENT" };
-		static const char* const* s_shaderPropertyTypeStrings = flat::EnumNamesShaderPropertyType();
-		static const char* const* s_texturePackingTypeStrings = flat::EnumNamesShaderPropertyPackingType();
-		static const char* const* s_minTextureFilterStrings = flat::EnumNamesMinTextureFilter();
-		static const char* const* s_magTextureFilterStrings = flat::EnumNamesMagTextureFilter();
-		static const char* const* s_textureWrapModeStrings = flat::EnumNamesTextureWrapMode();
-
-		static const std::vector<flat::ShaderPropertyType> s_floatPropertyTypes = {
-			flat::ShaderPropertyType_ROUGHNESS,
-			flat::ShaderPropertyType_METALLIC,
-			flat::ShaderPropertyType_REFLECTANCE,
-			flat::ShaderPropertyType_AMBIENT_OCCLUSION,
-			flat::ShaderPropertyType_CLEAR_COAT,
-			flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
-			flat::ShaderPropertyType_HEIGHT_SCALE,
-			flat::ShaderPropertyType_ANISOTROPY,
-			flat::ShaderPropertyType_EMISSION_STRENGTH
-
-		};
-
-		static const std::vector<flat::ShaderPropertyType> s_colorPropertyTypes = {
-			flat::ShaderPropertyType_ALBEDO,
-			flat::ShaderPropertyType_EMISSION,
-			flat::ShaderPropertyType_DETAIL
-		};
-
-		static const std::vector<flat::ShaderPropertyType> s_texturePropertyTypes = {
-			flat::ShaderPropertyType_ALBEDO,
-			flat::ShaderPropertyType_NORMAL,
-			flat::ShaderPropertyType_EMISSION,
-			flat::ShaderPropertyType_METALLIC,
-			flat::ShaderPropertyType_ROUGHNESS,
-			flat::ShaderPropertyType_AMBIENT_OCCLUSION,
-			flat::ShaderPropertyType_HEIGHT,
-			flat::ShaderPropertyType_ANISOTROPY,
-			flat::ShaderPropertyType_DETAIL,
-
-			flat::ShaderPropertyType_CLEAR_COAT,
-			flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS,
-			flat::ShaderPropertyType_CLEAR_COAT_NORMAL
-
-			//@TODO(Serge): we have more property types but I don't think they are supported atm
-			//eg. SHEEN_COLOR, SHEEN_ROUGHNESS, BENT_NORMAL, ANISOTROPY_DIRECTION
-		};
-
-		static const std::vector<flat::ShaderPropertyType> s_boolPropertyTypes = {
-			flat::ShaderPropertyType_DOUBLE_SIDED
-		};
 
 		ImGui::SetNextWindowContentSize(ImVec2(CONTENT_WIDTH, CONTENT_HEIGHT));
 
@@ -109,22 +142,32 @@ namespace r2::edit
 			//we would somehow have to know everyone who has the material name and change theirs.
 			//Or we would have to change how MaterialName works in that everyone only have a reference to it - too much work for now
 			//The other way to solve it is generate a GUID for each material made (and pack probably) and use that as the reference - not the name itself (https://github.com/graeme-hill/crossguid)
-			std::string materialNameLabel = std::string("Material Name: ") + foundMaterial->stringName;
+			
+			
+			std::string materialNameLabel = std::string("Material Name: ") + material.stringName;
 			ImVec2 size = ImGui::GetContentRegionAvail();
 
 			ImGui::Text(materialNameLabel.c_str());
-			ImGui::PushItemWidth(CONTENT_WIDTH / 3);
+			
+			r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, material.materialName.packName);
 
-			ImGui::SameLine(size.x - (CONTENT_WIDTH / 3));
-
-			if (ImGui::Button("Save"))
+			if (materialManifestFile)
 			{
-				materialManifestFile->SaveManifest();
+				ImGui::PushItemWidth(CONTENT_WIDTH / 3);
+
+				ImGui::SameLine(size.x - (CONTENT_WIDTH / 3));
+
+				if (ImGui::Button("Save"))
+				{
+					materialManifestFile->SaveManifest();
+				}
+
+				ImGui::PopItemWidth();
 			}
 
-			ImGui::PopItemWidth();
+			
 
-			int transparencyType = foundMaterial->transparencyType;
+			int transparencyType = material.transparencyType;
 
 			ImGui::Text("Transparency:");
 
@@ -137,9 +180,9 @@ namespace r2::edit
 				hasMaterialChanged = true;
 			}
 
-			foundMaterial->transparencyType = static_cast<flat::eTransparencyType>(transparencyType);
+			material.transparencyType = static_cast<flat::eTransparencyType>(transparencyType);
 
-			auto& meshPasses = foundMaterial->shaderEffectPasses.meshPasses;
+			auto& meshPasses = material.shaderEffectPasses.meshPasses;
 
 			for (u32 i = flat::eMeshPass_FORWARD; i <= flat::eMeshPass_TRANSPARENT; ++i) //only doing the ones we support
 			{
@@ -170,9 +213,9 @@ namespace r2::edit
 				int paramToRemove = -1;
 				ImVec2 size = ImGui::GetContentRegionAvail();
 
-				for (size_t i = 0; i < foundMaterial->shaderParams.floatParams.size(); ++i)
+				for (size_t i = 0; i < material.shaderParams.floatParams.size(); ++i)
 				{
-					auto& floatParam = foundMaterial->shaderParams.floatParams.at(i);
+					auto& floatParam = material.shaderParams.floatParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[floatParam.propertyType];
 
@@ -215,7 +258,7 @@ namespace r2::edit
 
 				if (paramToRemove != -1)
 				{
-					foundMaterial->shaderParams.floatParams.erase(foundMaterial->shaderParams.floatParams.begin() + paramToRemove);
+					material.shaderParams.floatParams.erase(material.shaderParams.floatParams.begin() + paramToRemove);
 					hasMaterialChanged = true;
 				}
 
@@ -223,12 +266,12 @@ namespace r2::edit
 
 				for (u32 i = 0; i < s_floatPropertyTypes.size(); ++i)
 				{
-					auto iter = std::find_if(foundMaterial->shaderParams.floatParams.begin(), foundMaterial->shaderParams.floatParams.end(), [i](const r2::draw::ShaderFloatParam& floatParam)
+					auto iter = std::find_if(material.shaderParams.floatParams.begin(), material.shaderParams.floatParams.end(), [i](const r2::draw::ShaderFloatParam& floatParam)
 						{
 							return floatParam.propertyType == s_floatPropertyTypes[i];
 						});
 
-					if (iter == foundMaterial->shaderParams.floatParams.end())
+					if (iter == material.shaderParams.floatParams.end())
 					{
 						availableFloatProperties.push_back(s_floatPropertyTypes[i]);
 					}
@@ -276,7 +319,7 @@ namespace r2::edit
 					r2::draw::ShaderFloatParam newFloatParam;
 					newFloatParam.propertyType = floatPropertyTypeToAdd;
 					newFloatParam.value = 0.0f;
-					foundMaterial->shaderParams.floatParams.push_back(newFloatParam);
+					material.shaderParams.floatParams.push_back(newFloatParam);
 					hasMaterialChanged = true;
 				}
 
@@ -293,9 +336,9 @@ namespace r2::edit
 				int paramToRemove = -1;
 				auto size = ImGui::GetContentRegionAvail();
 
-				for (size_t i = 0; i < foundMaterial->shaderParams.colorParams.size(); ++i)
+				for (size_t i = 0; i < material.shaderParams.colorParams.size(); ++i)
 				{
-					auto& colorParam = foundMaterial->shaderParams.colorParams.at(i);
+					auto& colorParam = material.shaderParams.colorParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[colorParam.propertyType];
 					std::string colorShaderParamsID = "colorshaderparam:" + std::to_string(i);
@@ -337,7 +380,7 @@ namespace r2::edit
 
 				if (paramToRemove != -1)
 				{
-					foundMaterial->shaderParams.colorParams.erase(foundMaterial->shaderParams.colorParams.begin() + paramToRemove);
+					material.shaderParams.colorParams.erase(material.shaderParams.colorParams.begin() + paramToRemove);
 					hasMaterialChanged = true;
 				}
 
@@ -345,12 +388,12 @@ namespace r2::edit
 
 				for (u32 i = 0; i < s_colorPropertyTypes.size(); ++i)
 				{
-					auto iter = std::find_if(foundMaterial->shaderParams.colorParams.begin(), foundMaterial->shaderParams.colorParams.end(), [i](const r2::draw::ShaderColorParam& colorParam)
+					auto iter = std::find_if(material.shaderParams.colorParams.begin(), material.shaderParams.colorParams.end(), [i](const r2::draw::ShaderColorParam& colorParam)
 						{
 							return colorParam.propertyType == s_colorPropertyTypes[i];
 						});
 
-					if (iter == foundMaterial->shaderParams.colorParams.end())
+					if (iter == material.shaderParams.colorParams.end())
 					{
 						availableColorProperties.push_back(s_colorPropertyTypes[i]);
 					}
@@ -396,7 +439,7 @@ namespace r2::edit
 					r2::draw::ShaderColorParam newColorParam;
 					newColorParam.propertyType = colorPropertyTypeToAdd;
 					newColorParam.value = glm::vec4(0, 0, 0, 1);
-					foundMaterial->shaderParams.colorParams.push_back(newColorParam);
+					material.shaderParams.colorParams.push_back(newColorParam);
 					hasMaterialChanged = true;
 				}
 
@@ -413,12 +456,12 @@ namespace r2::edit
 				char textureName[r2::fs::FILE_PATH_LENGTH];
 				ImVec2 size = ImGui::GetContentRegionAvail();
 
-				for (size_t i = 0; i < foundMaterial->shaderParams.textureParams.size(); ++i)
+				for (size_t i = 0; i < material.shaderParams.textureParams.size(); ++i)
 				{
 
 					const std::string I_STRING = std::to_string(i);
 
-					auto& textureParam = foundMaterial->shaderParams.textureParams.at(i);
+					auto& textureParam = material.shaderParams.textureParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[textureParam.propertyType];
 					std::string textureShaderParamsID = "textureshaderparam:" + I_STRING;
@@ -592,7 +635,7 @@ namespace r2::edit
 
 				if (paramToRemove != -1)
 				{
-					foundMaterial->shaderParams.textureParams.erase(foundMaterial->shaderParams.textureParams.begin() + paramToRemove);
+					material.shaderParams.textureParams.erase(material.shaderParams.textureParams.begin() + paramToRemove);
 					hasMaterialChanged = true;
 				}
 
@@ -600,12 +643,12 @@ namespace r2::edit
 
 				for (u32 i = 0; i < s_texturePropertyTypes.size(); ++i)
 				{
-					auto iter = std::find_if(foundMaterial->shaderParams.textureParams.begin(), foundMaterial->shaderParams.textureParams.end(), [i](const r2::draw::ShaderTextureParam& textureParam)
+					auto iter = std::find_if(material.shaderParams.textureParams.begin(), material.shaderParams.textureParams.end(), [i](const r2::draw::ShaderTextureParam& textureParam)
 						{
 							return textureParam.propertyType == s_texturePropertyTypes[i];
 						});
 
-					if (iter == foundMaterial->shaderParams.textureParams.end())
+					if (iter == material.shaderParams.textureParams.end())
 					{
 						availableTextureProperties.push_back(s_texturePropertyTypes[i]);
 					}
@@ -662,7 +705,7 @@ namespace r2::edit
 					newTextureParam.wrapT = flat::TextureWrapMode_REPEAT;
 					newTextureParam.wrapR = flat::TextureWrapMode_REPEAT;
 
-					foundMaterial->shaderParams.textureParams.push_back(newTextureParam);
+					material.shaderParams.textureParams.push_back(newTextureParam);
 					hasMaterialChanged = true;
 				}
 
@@ -679,9 +722,9 @@ namespace r2::edit
 				int paramToRemove = -1;
 				ImVec2 size = ImGui::GetContentRegionAvail();
 
-				for (size_t i = 0; i < foundMaterial->shaderParams.boolParams.size(); ++i)
+				for (size_t i = 0; i < material.shaderParams.boolParams.size(); ++i)
 				{
-					auto& boolParam = foundMaterial->shaderParams.boolParams.at(i);
+					auto& boolParam = material.shaderParams.boolParams.at(i);
 
 					const char* propertyType = s_shaderPropertyTypeStrings[boolParam.propertyType];
 
@@ -716,7 +759,7 @@ namespace r2::edit
 
 				if (paramToRemove != -1)
 				{
-					foundMaterial->shaderParams.boolParams.erase(foundMaterial->shaderParams.boolParams.begin() + paramToRemove);
+					material.shaderParams.boolParams.erase(material.shaderParams.boolParams.begin() + paramToRemove);
 					hasMaterialChanged = true;
 				}
 
@@ -724,12 +767,12 @@ namespace r2::edit
 
 				for (u32 i = 0; i < s_boolPropertyTypes.size(); ++i)
 				{
-					auto iter = std::find_if(foundMaterial->shaderParams.boolParams.begin(), foundMaterial->shaderParams.boolParams.end(), [i](const r2::draw::ShaderBoolParam& boolParam)
+					auto iter = std::find_if(material.shaderParams.boolParams.begin(), material.shaderParams.boolParams.end(), [i](const r2::draw::ShaderBoolParam& boolParam)
 						{
 							return boolParam.propertyType == s_boolPropertyTypes[i];
 						});
 
-					if (iter == foundMaterial->shaderParams.boolParams.end())
+					if (iter == material.shaderParams.boolParams.end())
 					{
 						availableBoolProperties.push_back(s_boolPropertyTypes[i]);
 					}
@@ -775,7 +818,7 @@ namespace r2::edit
 					r2::draw::ShaderBoolParam newBoolParam;
 					newBoolParam.propertyType = boolPropertyTypeToAdd;
 					newBoolParam.value = false;
-					foundMaterial->shaderParams.boolParams.push_back(newBoolParam);
+					material.shaderParams.boolParams.push_back(newBoolParam);
 					hasMaterialChanged = true;
 				}
 
@@ -794,7 +837,7 @@ namespace r2::edit
 		if (hasMaterialChanged)
 		{
 			flatbuffers::FlatBufferBuilder builder;
-			const flat::Material* flatMaterial = r2::mat::MakeFlatMaterialFromMaterial(builder, *foundMaterial);
+			const flat::Material* flatMaterial = r2::mat::MakeFlatMaterialFromMaterial(builder, material);
 
 			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
 			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
@@ -802,7 +845,7 @@ namespace r2::edit
 			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 			R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
 
-			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialName.name);
+			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName.name);
 
 			bool result = gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");
@@ -830,10 +873,8 @@ namespace r2::edit
 			FREE(cubemaps, *MEM_ENG_SCRATCH_PTR);
 			FREE(textures, *MEM_ENG_SCRATCH_PTR);
 		}
-
-#endif
 	}
-
+#endif
 }
 
 #endif

@@ -763,7 +763,7 @@ namespace r2::edit
 
 			if (mOpenMaterialsWindow)
 			{
-				MaterialEditor(mMaterialToEdit, mOpenMaterialsWindow);
+				EditExistingMaterial(mMaterialToEdit, mOpenMaterialsWindow);
 			}
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));

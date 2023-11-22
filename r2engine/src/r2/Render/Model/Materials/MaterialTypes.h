@@ -30,6 +30,11 @@ namespace r2::mat
 		{
 			return packName < materialName.packName || (name < materialName.name&& packName == materialName.packName);
 		}
+
+		bool IsInavlid() const
+		{
+			return name == 0 || packName == 0;
+		}
 	};
 }
 

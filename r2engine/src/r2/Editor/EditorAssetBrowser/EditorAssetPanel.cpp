@@ -8,10 +8,11 @@
 #include "r2/Core/File/PathUtils.h"
 
 #include "r2/Render/Model/Materials/Material_generated.h"
-
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Editor/Editor.h"
+#include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
 
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Core/Assets/AssetTypes.h"
@@ -35,6 +36,7 @@ namespace r2::edit
 	}
 
 	AssetPanel::AssetPanel()
+		:mMaterialEditorWindowOpen(false)
 
 	{
 
@@ -150,8 +152,10 @@ namespace r2::edit
 		ImGui::PopStyleVar();
 		ImGui::End();
 		
-
-//		ImGui::ShowDemoWindow();
+		if (mMaterialEditorWindowOpen)
+		{
+			CreateNewMaterial(mMaterialEditorWindowOpen);
+		}
 	}
 
 	void AssetPanel::FileSystemPanel()
@@ -343,7 +347,7 @@ namespace r2::edit
 					MaterialBinContextMenu(path);
 					return true;
 				}
-				else if(relativePath.extension().string() == JSON_EXT)
+				else if (relativePath.extension().string() == JSON_EXT)
 				{
 					MaterialRawContextMenu(path);
 					return true;
@@ -406,9 +410,7 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Make Material", false))
 		{
-			printf("@TODO(Serge): Make a material\n");
-
-
+			mMaterialEditorWindowOpen = true;
 		}
 
 		if (ImGui::Selectable("Make new Directory", false))
@@ -448,7 +450,11 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Import To Level"))
 		{
-			printf("@TODO(Serge): Import to Current Level\n");
+			r2::mat::MaterialName materialName = r2::mat::GetMaterialNameForPath(path.stem().string());
+
+			R2_CHECK(!materialName.IsInavlid(), "Should never happen");
+
+			mnoptrEditor->AddMaterialToLevel(materialName);
 		}
 	}
 
@@ -458,6 +464,8 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Import To Level"))
 		{
+
+
 			printf("@TODO(Serge): Import to Current Level\n");
 		}
 	}
@@ -468,8 +476,12 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Import To Level"))
 		{
+
+			//@TODO(Serge): should the level/editor do this?
 			r2::audio::AudioEngine audioEngine;
 			audioEngine.LoadBank(path.string().c_str(), 0);
+
+
 			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND));
 		}
 	}
@@ -500,7 +512,12 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Build & Import to Level"))
 		{
-			printf("@TODO(Serge): Import to Current Level\n");
+			//Technically, if the material exists, it should have already been built (I THINK!)
+			r2::mat::MaterialName materialName = r2::mat::GetMaterialNameForPath(path.stem().string());
+
+			R2_CHECK(!materialName.IsInavlid(), "Should never happen");
+
+			mnoptrEditor->AddMaterialToLevel(materialName);
 		}
 
 	}

@@ -35,7 +35,7 @@ namespace r2::mat
 
 	const flat::Material* GetMaterialForMaterialName(MaterialName materialName)
 	{
-		if (materialName.name == 0 || materialName.packName == 0)
+		if (materialName.IsInavlid())
 		{
 			return nullptr;
 		}
@@ -347,6 +347,49 @@ namespace r2::mat
 		FREE(manifests, *MEM_ENG_SCRATCH_PTR);
 
 		return materialsToReturn;
+	}
+
+	MaterialName GetMaterialNameForPath(const std::string& path)
+	{
+		//@TODO(Serge): the materials don't seem to follow the same asset name rules as everything else!
+
+		auto materialAssetName = STRING_ID(path.c_str());//r2::asset::GetAssetNameForFilePath(path.c_str(), r2::asset::MATERIAL);
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		u32 numManifests = r2::asset::lib::GetManifestDataCountForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		R2_CHECK(numManifests > 0, "Should always have at least 1 manifest for materials");
+
+		r2::SArray<const byte*>* manifests = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, numManifests);
+
+		r2::asset::lib::GetManifestDataForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST, manifests);
+		
+		MaterialName result = {};
+
+		for (u32 i = 0; i < numManifests; ++i)
+		{
+			const byte* manifestData = r2::sarr::At(*manifests, i);
+
+			R2_CHECK(manifestData != nullptr, "");
+
+			const flat::MaterialPack* materialParamsPack = flat::GetMaterialPack(manifestData);
+
+			const auto* pack = materialParamsPack->pack();
+			
+			for (u32 j = 0; j < pack->size(); ++j)
+			{
+				if (pack->Get(j)->assetName() == materialAssetName)
+				{
+					result={ materialAssetName, materialParamsPack->assetName() };
+					break;
+				}
+			}
+		}
+
+		FREE(manifests, *MEM_ENG_SCRATCH_PTR);
+
+		return result;
 	}
 
 #endif

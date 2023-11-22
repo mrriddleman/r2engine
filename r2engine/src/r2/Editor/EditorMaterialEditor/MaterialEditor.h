@@ -5,11 +5,17 @@
 namespace r2::mat
 {
 	struct MaterialName;
+#ifdef R2_ASSET_PIPELINE
+	struct Material;
+#endif
 }
 
 namespace r2::edit
 {
-	void MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen);
+	void EditExistingMaterial(const r2::mat::MaterialName& materialName, bool& windowOpen);
+#ifdef R2_ASSET_PIPELINE
+	void CreateNewMaterial( bool& windowOpen);
+#endif
 }
 
 #endif
