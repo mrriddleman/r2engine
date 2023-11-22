@@ -28,7 +28,7 @@ namespace r2::edit
 
 	private:
 
-		void MaterialEditor(const r2::mat::MaterialName& materialName, bool& windowOpen);
+		
 
 
 		bool mOpenMaterialsWindow;
