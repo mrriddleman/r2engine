@@ -1,6 +1,7 @@
 #include "r2pch.h"
 
-#ifdef R2_EDITOR
+#if defined( R2_EDITOR ) && defined(R2_IMGUI)
+
 
 #include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"

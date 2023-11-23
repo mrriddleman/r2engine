@@ -50,7 +50,8 @@ namespace r2::edit
 		std::filesystem::path mCurrentBaseDirectory;
 
 		bool mMaterialEditorWindowOpen;
-		
+		bool mTexturePackWindowOpen;
+		std::filesystem::path mTexturePackPanelDirectory;
 	};
 }
 

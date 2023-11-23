@@ -13,6 +13,7 @@
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
+#include "r2/Editor/EditorTexturePackPanel/TexturePackPanel.h"
 
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Core/Assets/AssetTypes.h"
@@ -37,6 +38,8 @@ namespace r2::edit
 
 	AssetPanel::AssetPanel()
 		:mMaterialEditorWindowOpen(false)
+		,mTexturePackWindowOpen(false)
+		, mTexturePackPanelDirectory("")
 
 	{
 
@@ -156,6 +159,12 @@ namespace r2::edit
 		{
 			CreateNewMaterial(mMaterialEditorWindowOpen);
 		}
+		
+		if (mTexturePackWindowOpen)
+		{
+			TexturePackPanel(mTexturePackWindowOpen, mTexturePackPanelDirectory);
+		}
+
 	}
 
 	void AssetPanel::FileSystemPanel()
@@ -383,6 +392,8 @@ namespace r2::edit
 					return true;
 				}
 			}
+
+
 		}
 
 
@@ -434,13 +445,15 @@ namespace r2::edit
 		}
 	}
 
+
 	void AssetPanel::TexturePackDirectoryContexMenu(const std::filesystem::path& path)
 	{
 		ContextMenuTitle("Texture Pack");
 
 		if (ImGui::Selectable("Build Texture Pack", false))
 		{
-			printf("@TODO(Serge): Build texture Pack\n");
+			mTexturePackWindowOpen = true;
+			mTexturePackPanelDirectory = path;
 		}
 	}
 
@@ -464,7 +477,7 @@ namespace r2::edit
 
 		if (ImGui::Selectable("Import To Level"))
 		{
-
+			
 
 			printf("@TODO(Serge): Import to Current Level\n");
 		}
