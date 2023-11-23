@@ -455,6 +455,7 @@ namespace r2::edit
 			mTexturePackWindowOpen = true;
 			mTexturePackPanelDirectory = path;
 		}
+		//@TODO(Serge): delete when we can actually do that correctly
 	}
 
 	void AssetPanel::MaterialBinContextMenu(const std::filesystem::path& path)
