@@ -185,6 +185,25 @@ namespace r2::draw::texche
 			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, packManifestIndex);
 		}
 		
+		auto iter = r2::shashmap::Begin(*texturePacksCache.mLoadedTexturePacks);
+
+		for (; iter != r2::shashmap::End(*texturePacksCache.mLoadedTexturePacks); ++iter)
+		{
+			s32 manifestIndex = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, iter->value.packName, invalidIndex);
+
+			if (manifestIndex == packManifestIndex)
+			{
+				for (u32 i = 0; i < manifest->texturePacks()->size(); ++i)
+				{
+					if (manifest->texturePacks()->Get(i)->packName() == iter->value.packName)
+					{
+						iter->value.metaData = manifest->texturePacks()->Get(i)->metaData();
+						break;
+					}
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -468,7 +487,7 @@ namespace r2::draw::texche
 			
 			LoadedTexturePack& resultTexturePack = r2::shashmap::Get(*texturePacksCache.mLoadedTexturePacks, texturePackName, defaultLoadedTexturePack);
 
-			if (resultTexturePack.packName == defaultLoadedTexturePack.packName)
+			if (resultTexturePack.packName == defaultLoadedTexturePack.packName )
 			{
 				//we don't have it loaded so nothing to do!
 				return true;

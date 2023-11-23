@@ -142,9 +142,13 @@ namespace r2::asset::pln
 				//one we figure that out, we can either reload the pack, unload it or load it
 				//then we can reload the rendermaterials
 
-				if (type != DELETED)
+				if (type == CHANGED)
 				{
 					gameAssetManager.ReloadTexturePack(texturePackNameFromPath);
+				}
+				else if (type == ADDED)
+				{
+					
 				}
 				else
 				{

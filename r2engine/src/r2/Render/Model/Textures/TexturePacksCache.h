@@ -23,6 +23,7 @@ namespace r2::draw
 {
 	struct LoadedTexturePack
 	{
+
 		u64 packName = 0;
 		const flat::TexturePackMetaData* metaData = nullptr;
 		r2::SArray<r2::draw::tex::Texture>* textures = nullptr;
