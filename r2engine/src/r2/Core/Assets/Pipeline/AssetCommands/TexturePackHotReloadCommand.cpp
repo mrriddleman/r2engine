@@ -309,12 +309,16 @@ namespace r2::asset::pln
 	{
 		std::string nameOfPack = "";
 
+		if (std::filesystem::path(changedPath).filename() == "meta.json")
+		{
+			return;
+		}
+
 		s64 index = FindPathIndex(changedPath, nameOfPack);
 
 		std::filesystem::path outputPath;
 
 		ConvertImage(changedPath, index, outputPath);
-
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
@@ -334,7 +338,7 @@ namespace r2::asset::pln
 
 		for (const auto& packItem : std::filesystem::directory_iterator(packPath))
 		{
-			if (!packItem.is_directory() && packItem.file_size() > 0 && packItem.path().stem().string() == "meta")
+			if (!packItem.is_directory() && packItem.file_size() > 0 && packItem.path().filename().string() == "meta.json")
 			{
 				hasMetaFile = true;
 			}

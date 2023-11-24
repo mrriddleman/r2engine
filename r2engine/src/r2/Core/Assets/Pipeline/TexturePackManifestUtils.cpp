@@ -3,7 +3,7 @@
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 #include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
-#include "r2/Render/Model/Textures/TexturePackMetaData_generated.h"
+
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/File/PathUtils.h"
@@ -942,6 +942,83 @@ namespace r2::asset::pln::tex
 		delete[] manifestFileData;
 		return texturesInPack;
 	}
+
+
+	void MakeTexturePackMetaFileFromFlat(const flat::TexturePackMetaData* texturePackMetaData, TexturePackMetaFile& metaFile)
+	{
+		metaFile.type = texturePackMetaData->type();
+		metaFile.desiredMipLevels = texturePackMetaData->desiredMipLevels();
+		metaFile.filter = texturePackMetaData->mipMapFilter();
+
+		for (flatbuffers::uoffset_t i = 0; i < texturePackMetaData->mipLevels()->size(); ++i)
+		{
+			r2::asset::pln::tex::TexturePackMetaFileMipLevel mipLevel;
+
+			auto flatMipLevel = texturePackMetaData->mipLevels()->Get(i);
+
+			mipLevel.level = flatMipLevel->level();
+
+			for (flatbuffers::uoffset_t j = 0; j < flatMipLevel->sides()->size(); ++j)
+			{
+				auto flatNextSide = flatMipLevel->sides()->Get(j);
+
+				mipLevel.sides.push_back({ flatNextSide->textureName()->str(), flatNextSide->side() });
+			}
+
+			metaFile.mipLevels.push_back(mipLevel); 
+		}
+	}
+
+	bool GenerateTexturePackMetaJSONFile(const std::filesystem::path& outputDir, const TexturePackMetaFile& metaFile)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		std::vector<flatbuffers::Offset<flat::MipLevel>> mipLevels;
+
+		for (u32 i = 0; i < metaFile.mipLevels.size(); ++i)
+		{
+			std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sideEntries;
+
+			for (u32 j = 0; j < metaFile.mipLevels[i].sides.size(); ++j)
+			{
+				sideEntries.push_back( flat::CreateCubemapSideEntry(builder, builder.CreateString(metaFile.mipLevels[i].sides[j].textureName), metaFile.mipLevels[i].sides[j].cubemapSide) );
+			}
+
+			mipLevels.push_back( flat::CreateMipLevel(builder, metaFile.mipLevels[i].level, builder.CreateVector(sideEntries)) );
+		}
+
+
+		//add the texture packs to the manifest
+		auto manifest = flat::CreateTexturePackMetaData(builder, metaFile.type, builder.CreateVector(mipLevels), metaFile.desiredMipLevels, metaFile.filter);
+
+		//generate the manifest
+		builder.Finish(manifest);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		std::filesystem::path binaryPath = outputDir / "meta.bin";
+
+		utils::WriteFile(binaryPath.string(), (char*)buf, size);
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char texturePacksManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), texturePacksManifestSchemaPath, TEXTURE_PACK_META_DATA_NAME_FBS.c_str());
+
+		std::filesystem::path jsonPath = outputDir / "meta.json";
+
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(outputDir.string(), texturePacksManifestSchemaPath, binaryPath.string());
+
+		if (std::filesystem::exists(binaryPath))
+		{
+			std::filesystem::remove(binaryPath);
+		}
+	
+		return generatedJSON;
+	}
+
 }
 
 

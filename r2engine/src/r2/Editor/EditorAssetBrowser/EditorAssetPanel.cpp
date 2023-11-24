@@ -450,7 +450,16 @@ namespace r2::edit
 	{
 		ContextMenuTitle("Texture Pack");
 
-		if (ImGui::Selectable("Build Texture Pack", false))
+		//first check to see if we have a meta.json file
+		std::filesystem::path metaJSONPath = path / "meta.json";
+
+		std::string selectableTitle = "Build Texture Pack";
+		if (std::filesystem::exists(metaJSONPath))
+		{
+			selectableTitle = "Edit Texture Pack";
+		}
+
+		if (ImGui::Selectable(selectableTitle.c_str(), false))
 		{
 			mTexturePackWindowOpen = true;
 			mTexturePackPanelDirectory = path;
