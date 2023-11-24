@@ -8,7 +8,7 @@
 
 #include "flatbuffers/idl.h"
 #include "flatbuffers/util.h"
-
+#include <ctype.h>
 
 #include "imgui.h"
 namespace r2::edit
@@ -17,7 +17,7 @@ namespace r2::edit
 	static const char* const* s_MipMapFilterTypeNames = flat::EnumNamesMipMapFilter();
 	static const char* const* s_CubeMapTypeNames = flat::EnumNamesCubemapSide();
 
-	void TexturePackPanel(bool& windowOpen, const std::filesystem::path& path)
+	void TexturePackPanel(bool& windowOpen, const std::filesystem::path& path, r2::asset::pln::tex::TexturePackMetaFile& metaFile)
 	{
 		const u32 CONTENT_WIDTH = 500;
 		const u32 CONTENT_HEIGHT = 600;
@@ -27,12 +27,6 @@ namespace r2::edit
 
 		std::filesystem::path metaJSONPath = path / "meta.json";
 		bool metaJSONExists = std::filesystem::exists(metaJSONPath);
-
-		asset::pln::tex::TexturePackMetaFile metaFile;
-		//@TODO(Serge): set default values
-		metaFile.type = flat::TextureType_TEXTURE;
-		metaFile.desiredMipLevels = 1;
-		metaFile.filter = flat::MipMapFilter_BOX;
 
 		if (metaJSONExists)
 		{
@@ -60,6 +54,94 @@ namespace r2::edit
 			//now fill the metaFile
 			r2::asset::pln::tex::MakeTexturePackMetaFileFromFlat(texturePackMetaData, metaFile);
 		}
+		
+		//look through the albedo directory (if it exists) and see if we have files
+		if(metaFile.mipLevels.empty() && !metaJSONExists)
+		{
+			static std::vector<std::string> cubemapSideNames = { "_right", "_left", "_top", "_bottom", "_front", "_back" };
+			static std::unordered_map<std::string, flat::CubemapSide> cubemapSideMap = { 
+				{"_right", flat::CubemapSide_RIGHT},
+				{"_left", flat::CubemapSide_LEFT}, 
+				{"_top", flat::CubemapSide_TOP},
+				{"_bottom", flat::CubemapSide_BOTTOM},
+				{"_front", flat::CubemapSide_FRONT},
+				{"_back", flat::CubemapSide_BACK},
+
+			};
+			std::filesystem::path albedoDir = path / "albedo";
+			if (std::filesystem::exists(albedoDir))
+			{
+				for (auto& directoryEntry : std::filesystem::directory_iterator(albedoDir))
+				{
+					bool isCubemapSide = false;
+					u32 level = 0;
+					flat::CubemapSide cubemapSide;
+					std::string directoryEntryString = directoryEntry.path().filename().string();
+					for (u32 i = 0; i < cubemapSideNames.size(); ++i)
+					{
+						size_t position = directoryEntryString.find(cubemapSideNames[i]);
+						if (position != std::string::npos && directoryEntryString[position+cubemapSideNames[i].size()] == '.')
+						{
+							isCubemapSide = true;
+							//this is a cubemap side
+							cubemapSide = cubemapSideMap[cubemapSideNames[i]];
+							//@TODO(Serge): figure out the mip level
+							for (s32 j = position; j >= 0; --j)
+							{
+								if (std::isdigit(directoryEntryString[j]))
+								{
+									level = static_cast<u32>(directoryEntryString[j]);
+									break;
+								}
+							}
+							break;
+						}
+					}
+
+					//
+					if (isCubemapSide)
+					{
+						std::filesystem::path textureName = directoryEntryString;
+						textureName.replace_extension(".rtex");
+
+						r2::asset::pln::tex::TexturePackMetaFileMipLevel* mipLevel = nullptr;
+						//find the mip level
+						for (u32 i = 0; i < metaFile.mipLevels.size(); ++i)
+						{
+							if (metaFile.mipLevels[i].level == level)
+							{
+								mipLevel = &metaFile.mipLevels[i];
+								break;
+							}
+						}
+
+						if (mipLevel == nullptr)
+						{
+							metaFile.mipLevels.push_back(
+								{ 
+									level, 
+									{
+										{"", flat::CubemapSide_RIGHT},
+										{"", flat::CubemapSide_LEFT},
+										{"", flat::CubemapSide_TOP},
+										{"", flat::CubemapSide_BOTTOM},
+										{"", flat::CubemapSide_FRONT},
+										{"", flat::CubemapSide_BACK}
+									}
+								}
+							);
+
+							mipLevel = &metaFile.mipLevels.back();
+						}
+
+						R2_CHECK(mipLevel != nullptr, "Should never happen");
+
+						mipLevel->sides[cubemapSide].textureName = textureName.string();
+					}
+				}
+			}
+		}
+
 
 		if (ImGui::Begin("Texture Pack Import Editor", &windowOpen))
 		{

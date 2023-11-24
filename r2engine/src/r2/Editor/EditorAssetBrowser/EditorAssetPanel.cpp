@@ -66,9 +66,6 @@ namespace r2::edit
 
 		mCurrentDirectory = "";
 		mCurrentBaseDirectory = "";
-
-
-
 	}
 
 	void AssetPanel::Shutdown()
@@ -162,7 +159,7 @@ namespace r2::edit
 		
 		if (mTexturePackWindowOpen)
 		{
-			TexturePackPanel(mTexturePackWindowOpen, mTexturePackPanelDirectory);
+			TexturePackPanel(mTexturePackWindowOpen, mTexturePackPanelDirectory, mMetaFile);
 		}
 
 	}
@@ -465,6 +462,13 @@ namespace r2::edit
 		{
 			mTexturePackWindowOpen = true;
 			mTexturePackPanelDirectory = path;
+
+
+			mMetaFile.type = flat::TextureType_TEXTURE;
+			mMetaFile.desiredMipLevels = 1;
+			mMetaFile.filter = flat::MipMapFilter_BOX;
+			mMetaFile.mipLevels.clear();
+		
 		}
 		//@TODO(Serge): delete when we can actually do that correctly
 	}

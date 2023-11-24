@@ -5,9 +5,14 @@
 
 #include <filesystem>
 
+namespace r2::asset::pln::tex
+{
+	struct TexturePackMetaFile;
+}
+
 namespace r2::edit
 {
-	void TexturePackPanel(bool& windowOpen, const std::filesystem::path& path);
+	void TexturePackPanel(bool& windowOpen, const std::filesystem::path& path, asset::pln::tex::TexturePackMetaFile& metaFile);
 }
 
 #endif

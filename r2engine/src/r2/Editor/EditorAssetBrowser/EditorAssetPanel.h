@@ -4,6 +4,7 @@
 
 #include "r2/Editor/EditorWidget.h"
 #include <filesystem>
+#include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 
 namespace r2::edit
 {
@@ -52,6 +53,11 @@ namespace r2::edit
 		bool mMaterialEditorWindowOpen;
 		bool mTexturePackWindowOpen;
 		std::filesystem::path mTexturePackPanelDirectory;
+
+		asset::pln::tex::TexturePackMetaFile mMetaFile;
+
+
+	
 	};
 }
 
