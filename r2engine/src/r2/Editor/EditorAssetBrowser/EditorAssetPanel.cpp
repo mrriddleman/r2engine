@@ -228,7 +228,7 @@ namespace r2::edit
 		if (mCurrentDirectory != "" && mCurrentBaseDirectory != "")
 		{
 			ImGui::Columns(columnCount, 0, false);
-
+			
 			for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
 			{
 				const auto& path = directoryEntry.path();
@@ -277,6 +277,7 @@ namespace r2::edit
 
 	void AssetPanel::ShowDirectoryInFileSystemPanel(const std::filesystem::path& directory, bool& wasActivated)
 	{
+		ImGui::PushID(directory.string().c_str());
 		for (auto& directoryEntry : std::filesystem::directory_iterator(directory))
 		{
 			if (!directoryEntry.is_directory())
@@ -303,6 +304,7 @@ namespace r2::edit
 				wasActivated = true;
 			}
 		}
+		ImGui::PopID();
 	}
 
 	bool AssetPanel::ShowContextMenuForPath(const std::filesystem::path& path, bool wasButtonItem)

@@ -61,7 +61,7 @@ namespace r2::edit
 			r2::asset::pln::tex::MakeTexturePackMetaFileFromFlat(texturePackMetaData, metaFile);
 		}
 
-		if (ImGui::Begin("Texture Pack Editor", &windowOpen))
+		if (ImGui::Begin("Texture Pack Import Editor", &windowOpen))
 		{
 			ImGui::Text("Pack Name: %s", path.stem().string().c_str());
 			ImGui::SameLine();
