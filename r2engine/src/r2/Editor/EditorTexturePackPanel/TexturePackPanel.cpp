@@ -90,8 +90,19 @@ namespace r2::edit
 							{
 								if (std::isdigit(directoryEntryString[j]))
 								{
-									level = static_cast<u32>(directoryEntryString[j]);
-									break;
+									int end = j;
+									for (s32 k = j - 1; k >= 0; --k)
+									{
+										if (!std::isdigit(directoryEntryString[k]))
+										{
+											end = k + 1;
+											break;
+										}
+									}
+
+									std::string levelStr = directoryEntryString.substr(end, j - end + 1);
+									
+									level = std::atoi(levelStr.c_str());
 								}
 							}
 							break;
