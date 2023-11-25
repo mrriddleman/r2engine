@@ -390,74 +390,7 @@ namespace r2::asset::pln
 			return;
 
 		//load the manifest and check to see if we have the texture pack already
-		bool hasTexturePackInManifest = r2::asset::pln::tex::HasTexturePackInManifestFile(mManifestBinaryFilePaths[index], nameOfPack);
-
-		bool hasFileAlready = false;
-		if (hasTexturePackInManifest)
-		{
-			//TODO(Serge): newPath should be the .rtex file
-
-			std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(newPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
-
-			hasFileAlready = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, outputFilePath.string());
-		}
-
-		if (hasFileAlready)
-		{
-			return;
-		}
-
-		//Generate the .rtex files
-		if (!hasTexturePackInManifest)
-		{
-			std::filesystem::path inputPackPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
-			std::filesystem::path outputDir = pln::tex::GetOutputFilePath(inputPackPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
-
-			if (!std::filesystem::exists(outputDir))
-			{
-				std::filesystem::create_directories(outputDir);
-			}
-
-			int result = pln::assetconvert::RunConverter(inputPackPath.string(), outputDir.string());
-
-			if (result != 0)
-			{
-				R2_CHECK(false, "Converter failed!");
-			}
-		}
-		else
-		{
-			std::filesystem::path outputFilePath;
-			bool result = ConvertImage(newPath, index, outputFilePath);
-
-			R2_CHECK(result, "Couldn't convert: %s\n", newPath.c_str());
-		}
-
-		//We need to regenerate the manifest file
-		RegenerateTexturePackManifestFile(index);
-
-
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-		if (!hasTexturePackInManifest)
-		{
-			std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
-
-			//std::vector<std::vector<std::string>> pathsInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
-
-			
-			
-
-			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { packPath.string() });
-
-			//r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index], packPath.string(), pathsInTexturePack);
-		}
-		else
-		{
-
-			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { newPath });
-			//r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index], newPath);
-		}
+		AddNewTexturePack(index, nameOfPack, newPath);
 	}
 
 	void TexturePackHotReloadCommand::TextureRemovedRequest(const std::string& removedPathStr)
@@ -566,6 +499,91 @@ namespace r2::asset::pln
 			}
 		}
 	}
+
+	void TexturePackHotReloadCommand::HandleAssetBuildRequest(const AssetBuildRequest& request)
+	{
+		for (u32 i = 0; i < request.paths.size(); ++i)
+		{
+			std::string nameOfPack = "";
+			s64 index = FindPathIndex(request.paths[i].string(), nameOfPack);
+
+			bool result = HasMetaFileAndAtleast1File(mTexturePacksWatchDirectories[index], nameOfPack);
+
+			if (!result)
+				return;
+
+			if (request.reloadType == ADDED)
+			{
+				AddNewTexturePack(index, nameOfPack, nameOfPack);
+			}
+			else if (request.reloadType == CHANGED)
+			{
+				//@TODO(Serge): implement
+			}
+		}
+	}
+
+	void TexturePackHotReloadCommand::AddNewTexturePack(s64 index, const std::string& nameOfPack, const std::string& newPath)
+	{
+		bool hasTexturePackInManifest = r2::asset::pln::tex::HasTexturePackInManifestFile(mManifestBinaryFilePaths[index], nameOfPack);
+
+		bool hasFileAlready = false;
+		if (hasTexturePackInManifest)
+		{
+			//TODO(Serge): newPath should be the .rtex file
+
+			std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(newPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+			hasFileAlready = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, outputFilePath.string());
+		}
+
+		if (hasFileAlready)
+		{
+			return;
+		}
+
+		//Generate the .rtex files
+		if (!hasTexturePackInManifest)
+		{
+			std::filesystem::path inputPackPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+			std::filesystem::path outputDir = pln::tex::GetOutputFilePath(inputPackPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+			if (!std::filesystem::exists(outputDir))
+			{
+				std::filesystem::create_directories(outputDir);
+			}
+
+			int result = pln::assetconvert::RunConverter(inputPackPath.string(), outputDir.string());
+
+			if (result != 0)
+			{
+				R2_CHECK(false, "Converter failed!");
+			}
+		}
+		else
+		{
+			std::filesystem::path outputFilePath;
+			bool result = ConvertImage(newPath, index, outputFilePath);
+
+			R2_CHECK(result, "Couldn't convert: %s\n", newPath.c_str());
+		}
+
+		//We need to regenerate the manifest file
+		RegenerateTexturePackManifestFile(index);
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		if (!hasTexturePackInManifest)
+		{
+			std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { packPath.string() });
+		}
+		else
+		{
+			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { newPath });
+		}
+	}
+
 }
 
 #endif

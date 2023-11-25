@@ -27,12 +27,15 @@ namespace r2::asset::pln
 		
 		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_TEXTURE_ASSET; }
 
-
+		virtual void HandleAssetBuildRequest(const AssetBuildRequest& request) override;
 	private:
 
 		void GenerateTexturePackManifestsIfNeeded();
 		void TextureChangedRequest(const std::string& changedPath);
 		void TextureAddedRequest(const std::string& newPath);
+
+		void AddNewTexturePack(s64 index, const std::string& nameOfPack, const std::string& newPath);
+
 		void TextureRemovedRequest(const std::string& removedPath);
 
 		s64 FindPathIndex(const std::string& newPath, std::string& nameOfPack);

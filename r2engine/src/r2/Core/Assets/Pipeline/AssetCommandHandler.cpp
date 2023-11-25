@@ -78,7 +78,7 @@ namespace r2::asset::pln
 
 	void AssetCommandHandler::RequestAssetBuild(const AssetBuildRequest& request)
 	{
-		printf("Request to build: %s\n", request.paths[0].string().c_str());
+		mAssetsBuildRequestQueue.Push(request);
 	}
 
 	void AssetCommandHandler::ThreadProc()
@@ -91,6 +91,19 @@ namespace r2::asset::pln
 			{
 				if(!cmd->ShouldRunOnMainThread())
 					cmd->Update();
+			}
+
+			AssetBuildRequest nextRequest;
+			while (mAssetsBuildRequestQueue.TryPop(nextRequest))
+			{
+				for (auto& cmd : mAssetCommands)
+				{
+					if (cmd->GetAssetHotReloadCommandType() == nextRequest.commandType)
+					{
+						cmd->HandleAssetBuildRequest(nextRequest);
+						break;
+					}
+				}
 			}
 		}
 	}

@@ -27,6 +27,8 @@ namespace r2::asset::pln
 		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const = 0;
 		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const = 0;
 
+		virtual void HandleAssetBuildRequest(const AssetBuildRequest& request) {}
+
 	protected:
 		std::vector<FileWatcher> mFileWatchers;
 	};
