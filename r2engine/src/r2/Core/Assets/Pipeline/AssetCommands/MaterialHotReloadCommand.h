@@ -26,9 +26,9 @@ namespace r2::asset::pln
 		void AddFindMaterialPackManifestFunctions(const std::vector<FindMaterialPackManifestFileFunc>& findFuncs);
 		void AddGenerateMaterialPackManifestsFromDirectoriesFunctions(std::vector<GenerateMaterialPackManifestFromDirectoriesFunc> genFuncs);
 
-		static bool MaterialManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type);
+		static bool MaterialManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type);
 
-
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_MATERIAL_ASSET; }
 	private:
 
 		void GenerateMaterialPackManifestsIfNeeded();

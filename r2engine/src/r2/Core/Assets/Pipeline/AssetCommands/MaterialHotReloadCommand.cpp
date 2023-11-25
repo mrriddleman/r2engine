@@ -111,7 +111,7 @@ namespace r2::asset::pln
 		}
 	}
 
-	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
+	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type)
 	{
 		//first find the material if it exists
 		//if it doesn't then it probably was removed so unload it

@@ -23,7 +23,7 @@ namespace r2::asset::pln
 		void AddManifestFilePaths(const std::vector<std::string>& manifestFilePaths);
 
 		void AddInternalShaderPassesBuildDescription(const std::string& rawManifestPath, const std::string& binManifestPath, InternalShaderPassesBuildFunc func);
-
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_SHADER_ASSET; }
 	private:
 
 		struct InternalShaderPassesBuildData

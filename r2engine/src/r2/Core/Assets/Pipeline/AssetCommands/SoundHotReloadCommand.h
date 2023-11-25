@@ -22,8 +22,8 @@ namespace r2::asset::pln
 		void SetSoundDefinitionBinFilePath(const std::string& soundDefinitionFilePath);
 		void SetSoundDefinitionRawFilePath(const std::string& soundDefinitionRawFilePath);
 
-		static bool SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type);
-
+		static bool SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type);
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_SOUND_ASSET; }
 	private:
 		void LoadSoundDefinitions();
 		void SoundDefinitionsChanged(const std::string& changedPath);

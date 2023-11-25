@@ -22,7 +22,11 @@ namespace r2::asset::pln
 		void AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories);
 
 
-		static bool TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type);
+		static bool TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type);
+
+		
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_TEXTURE_ASSET; }
+
 
 	private:
 
@@ -43,6 +47,9 @@ namespace r2::asset::pln
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mTexturePacksWatchDirectories;
 		std::vector<std::string> mTexturePacksBinaryOutputDirectories;
+
+
+		
 	};
 }
 

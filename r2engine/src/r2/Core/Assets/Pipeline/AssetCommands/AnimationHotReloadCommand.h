@@ -22,6 +22,8 @@ namespace r2::asset::pln
 
 		void AddBinaryAnimationDirectories(const std::vector<std::string>& binaryAnimationDirectories);
 		void AddRawAnimationDirectories(const std::vector<std::string>& rawAnimationDirectories);
+
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_ANIMATION_ASSET; }
 	private:
 		static std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir);
 		void GenerateRANMFilesIfNeeded();

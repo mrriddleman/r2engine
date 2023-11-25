@@ -33,7 +33,7 @@ namespace r2::asset
 
     struct ManifestReloadEntry
     {
-        HotReloadType hotReloadType;
+        pln::HotReloadType hotReloadType;
         std::filesystem::path manifestPath;
         std::vector<std::string> changedPaths;
     };

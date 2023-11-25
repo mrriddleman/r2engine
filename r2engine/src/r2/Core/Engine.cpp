@@ -904,8 +904,14 @@ namespace r2
     {
         return *mAssetLib;
     }
+#ifdef R2_ASSET_PIPELINE
+	r2::asset::pln::AssetCommandHandler& Engine::GetAssetCommandHandler()
+	{
+        return mAssetCommandHandler;
+	}
+#endif
 
-    void Engine::WindowResizedEvent(u32 width, u32 height)
+	void Engine::WindowResizedEvent(u32 width, u32 height)
     {
         auto appResolution = GetApplication().GetAppResolution();
 

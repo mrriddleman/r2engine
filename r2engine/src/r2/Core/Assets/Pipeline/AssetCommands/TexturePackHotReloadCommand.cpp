@@ -64,7 +64,7 @@ namespace r2::asset::pln
 		mTexturePacksBinaryOutputDirectories.insert(mTexturePacksBinaryOutputDirectories.end(), outputDirectories.begin(), outputDirectories.end());
 	}
 
-	bool TexturePackHotReloadCommand::TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
+	bool TexturePackHotReloadCommand::TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type)
 	{
 		R2_CHECK(manifestData != nullptr, "Should never happen");
 		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(manifestData);

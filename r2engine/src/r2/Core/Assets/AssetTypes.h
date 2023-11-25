@@ -29,12 +29,7 @@ namespace r2::asset
 
 	using FileHandle = s64;
 
-	enum HotReloadType : u32
-	{
-		CHANGED = 0,
-		ADDED,
-		DELETED
-	};
+
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);

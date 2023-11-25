@@ -112,6 +112,10 @@ namespace r2
         r2::ecs::ECSWorld& GetECSWorld();
         r2::asset::AssetLib& GetAssetLib() const;
 
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::pln::AssetCommandHandler& GetAssetCommandHandler();
+#endif
+
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
         friend class SDL2Platform;

@@ -85,7 +85,7 @@ namespace r2::asset::pln
 		mSoundDefinitionRawFilePath = soundDefinitionRawFilePath;
 	}
 
-	bool SoundHotReloadCommand::SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
+	bool SoundHotReloadCommand::SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType type)
 	{
 		r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions(paths);
 		return true;

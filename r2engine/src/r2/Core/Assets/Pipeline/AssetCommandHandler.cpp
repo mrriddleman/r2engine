@@ -76,6 +76,11 @@ namespace r2::asset::pln
 		mAssetWatcherThread.join();
 	}
 
+	void AssetCommandHandler::RequestAssetBuild(const AssetBuildRequest& request)
+	{
+		printf("Request to build: %s\n", request.paths[0].string().c_str());
+	}
+
 	void AssetCommandHandler::ThreadProc()
 	{
 		while (!mEnd)

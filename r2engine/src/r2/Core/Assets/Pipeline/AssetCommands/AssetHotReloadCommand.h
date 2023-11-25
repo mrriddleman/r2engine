@@ -4,6 +4,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include "r2/Core/Assets/Pipeline/FileWatcher.h"
+#include "r2/Core/Assets/Pipeline/AssetCommandTypes.h"
 
 namespace r2::asset::pln
 {
@@ -24,6 +25,7 @@ namespace r2::asset::pln
 		virtual void Shutdown() = 0;
 		virtual bool ShouldRunOnMainThread() = 0;
 		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const = 0;
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const = 0;
 
 	protected:
 		std::vector<FileWatcher> mFileWatchers;

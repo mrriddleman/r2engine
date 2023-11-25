@@ -23,6 +23,8 @@ namespace r2::asset::pln
 		void AddBinaryModelDirectories(const std::vector<std::string>& binaryModelDirectories);
 		void AddRawModelDirectories(const std::vector<std::string>& rawModelDirectories);
 		void AddMaterialManifestPaths(const std::vector<std::string>& materialManifestPaths);
+
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_MODEL_ASSET; }
 	private:
 		void GenerateRMDLFilesIfNeeded();
 		static std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir);

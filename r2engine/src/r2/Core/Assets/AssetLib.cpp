@@ -65,7 +65,7 @@ namespace r2::asset::lib
     std::vector<AssetFilesBuiltListener> s_listeners;
 
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& paths, HotReloadType type);
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& paths, pln::HotReloadType type);
 
 #endif
     
@@ -356,7 +356,7 @@ namespace r2::asset::lib
 
 #ifdef R2_ASSET_PIPELINE
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, HotReloadType type)
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, pln::HotReloadType type)
     {
 		bool hasReloaded = false;
 
@@ -381,7 +381,7 @@ namespace r2::asset::lib
     void PathChangedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathChanged)
     {
         ManifestReloadEntry newEntry;
-        newEntry.hotReloadType = CHANGED;
+        newEntry.hotReloadType = pln::CHANGED;
         newEntry.manifestPath = manifestFilePath;
         newEntry.changedPaths = filePathChanged;
 
@@ -391,7 +391,7 @@ namespace r2::asset::lib
     void PathAddedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathAdded)
     {
 		ManifestReloadEntry newEntry;
-		newEntry.hotReloadType = ADDED;
+		newEntry.hotReloadType = pln::ADDED;
 		newEntry.manifestPath = manifestFilePath;
 		newEntry.changedPaths = filePathAdded;
 
@@ -401,7 +401,7 @@ namespace r2::asset::lib
     void PathRemovedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathRemoved)
     {
 		ManifestReloadEntry newEntry;
-		newEntry.hotReloadType = DELETED;
+		newEntry.hotReloadType = pln::DELETED;
 		newEntry.manifestPath = manifestFilePath;
 		newEntry.changedPaths = filePathRemoved;
 

@@ -4,7 +4,9 @@
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/Assets/AssetCacheRecord.h"
-
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/AssetCommandTypes.h"
+#endif
 namespace r2::asset
 {
 	class AssetCache;
@@ -28,8 +30,8 @@ namespace r2::asset
 		virtual bool AddAllFilePaths(FileList files) = 0;
 
 #ifdef R2_ASSET_PIPELINE
-		virtual bool ReloadFilePath(const std::vector<std::string>& paths, HotReloadType hotreloadType) = 0;
-		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const std::string& manifestFilePath, const byte* manifestData, HotReloadType hotreloadType)>;
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType) = 0;
+		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const std::string& manifestFilePath, const byte* manifestData, pln::HotReloadType hotreloadType)>;
 		void SetReloadFilePathCallback(ReloadFilePathFunc func)
 		{
 			mReloadFilePathFunc = func;

@@ -22,7 +22,7 @@ namespace r2::asset::pln
 		void SetAssetManifestsPath(const std::string& assetManifestPath);
 		void SetAssetTempPath(const std::string& assetTempPath);
 		void AddWatchPaths(const std::vector<std::string>& watchPaths);
-
+		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_GAME_ASSET; }
 	private:
 		void ReloadManifests();
 		void BuildManifests();

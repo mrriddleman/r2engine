@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include "r2/Core/Assets/Pipeline/AssetCommands/AssetHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 
 namespace r2::asset::pln
 {
@@ -25,6 +26,8 @@ namespace r2::asset::pln
 
 		void Shutdown();
 
+		void RequestAssetBuild(const AssetBuildRequest& request);
+
 	private:
 		void ThreadProc();
 		void MakeGameBinaryAssetFolders() const;
@@ -35,6 +38,8 @@ namespace r2::asset::pln
 		Milliseconds mDelay;
 		std::thread mAssetWatcherThread;
 		std::atomic_bool mEnd;
+
+		r2::asset::pln::AssetThreadSafeQueue<AssetBuildRequest> mAssetsBuildRequestQueue;
 	};
 }
 

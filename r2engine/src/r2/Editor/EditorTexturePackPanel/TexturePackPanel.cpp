@@ -11,6 +11,12 @@
 #include <ctype.h>
 
 #include "imgui.h"
+
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Platform/Platform.h"
+
+#endif
+
 namespace r2::edit
 {
 	static const char* const* s_TextureTypeNames = flat::EnumNamesTextureType();
@@ -161,11 +167,17 @@ namespace r2::edit
 
 			if (ImGui::Button("Build"))
 			{
+#ifdef R2_ASSET_PIPELINE
 				r2::asset::pln::tex::GenerateTexturePackMetaJSONFile(path, metaFile);
-				if (metaJSONExists)
-				{
-					//@TODO(Serge): build it again
-				}
+				
+				r2::asset::pln::AssetBuildRequest request;
+				request.commandType = asset::pln::AHRCT_TEXTURE_ASSET;
+				request.paths.push_back(path);
+				request.reloadType = metaJSONExists? asset::pln::CHANGED : asset::pln::ADDED;
+
+				r2::asset::pln::AssetCommandHandler& assetCommandHandler = MENG.GetAssetCommandHandler();
+				assetCommandHandler.RequestAssetBuild(request);
+#endif
 			}
 
 			//right now we don't want the ability to modify this if it exists already - more for future proofing

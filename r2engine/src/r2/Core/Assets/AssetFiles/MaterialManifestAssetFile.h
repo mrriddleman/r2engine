@@ -33,7 +33,7 @@ namespace r2::asset
 		virtual bool AddAllFilePaths(FileList files) override;
 		virtual u64 GetManifestFileHandle() const override;
 #ifdef R2_ASSET_PIPELINE
-		virtual bool ReloadFilePath(const std::vector<std::string>& paths, r2::asset::HotReloadType type) override;
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type) override;
 
 		virtual bool SaveManifest() override;
 		virtual void Reload() override;
