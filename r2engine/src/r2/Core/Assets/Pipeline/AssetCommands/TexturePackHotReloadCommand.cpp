@@ -504,8 +504,10 @@ namespace r2::asset::pln
 	{
 		for (u32 i = 0; i < request.paths.size(); ++i)
 		{
+
+			std::string newPath = request.paths[i].string();
 			std::string nameOfPack = "";
-			s64 index = FindPathIndex(request.paths[i].string(), nameOfPack);
+			s64 index = FindPathIndex(newPath, nameOfPack);
 
 			bool result = HasMetaFileAndAtleast1File(mTexturePacksWatchDirectories[index], nameOfPack);
 
@@ -514,11 +516,17 @@ namespace r2::asset::pln
 
 			if (request.reloadType == ADDED)
 			{
-				AddNewTexturePack(index, nameOfPack, nameOfPack);
+				AddNewTexturePack(index, nameOfPack, newPath);
 			}
 			else if (request.reloadType == CHANGED)
 			{
-				//@TODO(Serge): implement
+				//@TODO(Serge): implement - I THINK what we do is delete what we have (ie the pack) then regen it?
+				std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(newPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+				if (std::filesystem::remove_all(outputFilePath))
+				{
+					AddNewTexturePack(index, nameOfPack, newPath);
+				}
 			}
 		}
 	}
@@ -543,7 +551,7 @@ namespace r2::asset::pln
 		}
 
 		//Generate the .rtex files
-		if (!hasTexturePackInManifest)
+		if (!hasTexturePackInManifest || std::filesystem::is_directory(newPath))
 		{
 			std::filesystem::path inputPackPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
 			std::filesystem::path outputDir = pln::tex::GetOutputFilePath(inputPackPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
