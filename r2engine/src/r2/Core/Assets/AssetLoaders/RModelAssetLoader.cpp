@@ -80,6 +80,7 @@ namespace r2::asset
 
 	u64 RModelAssetLoader::GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
+		
 		MemoryAssetFile memoryAssetFile{(void*) rawBuffer, size };
 
 		r2::assets::assetlib::load_binaryfile(filePath, memoryAssetFile);

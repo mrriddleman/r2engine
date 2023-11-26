@@ -240,6 +240,7 @@ namespace r2::draw::texsys
 			const void* imageData = gameAssetManager.GetAssetDataConst<void>(cubemap.mips[0].sides[0].textureAssetHandle);
 			u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[0].sides[0].textureAssetHandle);
 
+			//@TODO(Serge): This is weird the gameAssetManager should have resolved the memory asset file stuff already and we just need to upload the data with the format
 			r2::asset::MemoryAssetFile memoryAssetFile{ imageData, dataSize };
 
 			r2::assets::assetlib::load_binaryfile("", memoryAssetFile);

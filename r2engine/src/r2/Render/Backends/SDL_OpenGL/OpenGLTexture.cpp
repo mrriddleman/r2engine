@@ -353,6 +353,7 @@ namespace r2::draw::tex
 
 	TextureHandle UploadToGPU(const void* imageData, u64 size, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
+		//@TODO(Serge): NO! This shouldn't be here! We should just pass in a Texture Type that has all of this
 		r2::asset::MemoryAssetFile memoryAssetFile(imageData, size);
 
 		r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
@@ -419,6 +420,7 @@ namespace r2::draw::tex
 	{
 		std::vector<char> data;
 
+		//@TODO(Serge): NO! This shouldn't be here! We should just pass in a Texture Type that has all of this
 		r2::asset::MemoryAssetFile memoryAssetFile{ imageData, size };
 
 		r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
