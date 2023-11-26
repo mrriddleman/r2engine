@@ -22,6 +22,8 @@ flatcPath = os.path.realpath(thisFilePath + "/..") + "/vendor/flatbuffers/bin/" 
 dataPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
 fbsCodeOutputMap = {
 "AssetManifest.fbs": "/r2/Core/Assets/Pipeline/",
+"AssetName.fbs": "/r2/Core/Assets/",
+"AssetRef.fbs": "/r2/Core/Assets/",
 "SoundDefinition.fbs": "/r2/Audio/",
 "ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/",
 "Utils.fbs": "/r2/Utils/",
@@ -56,6 +58,8 @@ fbsCodeOutputMap = {
 
 extraParams = {
 "AssetManifest.fbs": "",
+"AssetName.fbs": "",
+"AssetRef.fbs": "",
 "SoundDefinition.fbs": "",
 "ShaderManifest.fbs": "",
 "Utils.fbs": "",

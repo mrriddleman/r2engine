@@ -1,0 +1,14 @@
+include "AssetName.fbs";
+
+namespace flat;
+
+file_identifier "rarf";
+file_extension "rarf";
+
+table AssetRef
+{
+	assetName:AssetName;
+	path:string;
+}
+
+root_type AssetRef;
