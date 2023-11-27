@@ -11,6 +11,19 @@ namespace r2::asset
 	const u64 INVALID_ASSET_HANDLE = 0;
 	const s64 INVALID_ASSET_CACHE = -1;
 
+
+
+	struct AssetName
+	{
+		//UUID uuid;
+		u64 hashID;
+#ifdef R2_ASSET_PIPELINE
+		std::string assetNameString;
+#endif
+
+		bool operator==(const AssetName& otherAssetName) const;
+	};
+
 	struct AssetHandle
 	{
 		u64 handle = INVALID_ASSET_HANDLE;

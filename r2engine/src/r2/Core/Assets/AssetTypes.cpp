@@ -18,4 +18,14 @@ namespace r2::asset
 		return AreAssetHandlesEqual(*this, assetHandle);
 	}
 
+	bool AssetName::operator==(const AssetName& otherAssetName) const
+	{
+		return hashID == otherAssetName.hashID
+			//@TODO(Serge): add UUID
+#ifdef R2_ASSET_PIPELINE
+			&& assetNameString == otherAssetName.assetNameString
+#endif
+			;
+	}
+
 }

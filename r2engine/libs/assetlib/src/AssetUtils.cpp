@@ -182,6 +182,8 @@ namespace r2::asset
 			return 0;
 		case SOUND_DEFINTION:
 			return 0;
+		case RMODEL_MANIFEST:
+			return 0;
 		default:
 			//@TODO(Serge): may need to extend this using the Application
 			assert(false && "Unsupported assettype!");
