@@ -3,8 +3,6 @@ namespace flat;
 file_identifier "rast";
 file_extension "rast";
 
-
-
 struct UUID
 {
 	uuid:[ubyte:16] (force_align: 16);
@@ -16,7 +14,5 @@ table AssetName
 	assetName:ulong(hash:"fnv1a_64");
 	stringName:string;
 }
-
-
 
 root_type AssetName;

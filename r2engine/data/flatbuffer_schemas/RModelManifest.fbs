@@ -1,0 +1,16 @@
+include "AssetName.fbs";
+include "AssetRef.fbs";
+
+namespace flat;
+
+file_identifier "rmmn";
+file_extension "rmmn";
+
+table RModelsManifest
+{
+	version:uint;
+	assetName:AssetName;
+	models:[AssetRef];
+}
+
+root_type RModelsManifest;

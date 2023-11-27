@@ -17,20 +17,26 @@ struct AssetRef FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef AssetRefBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ASSETNAME = 4,
-    VT_PATH = 6
+    VT_BINPATH = 6,
+    VT_RAWPATH = 8
   };
   const flat::AssetName *assetName() const {
     return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
-  const flatbuffers::String *path() const {
-    return GetPointer<const flatbuffers::String *>(VT_PATH);
+  const flatbuffers::String *binPath() const {
+    return GetPointer<const flatbuffers::String *>(VT_BINPATH);
+  }
+  const flatbuffers::String *rawPath() const {
+    return GetPointer<const flatbuffers::String *>(VT_RAWPATH);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ASSETNAME) &&
            verifier.VerifyTable(assetName()) &&
-           VerifyOffset(verifier, VT_PATH) &&
-           verifier.VerifyString(path()) &&
+           VerifyOffset(verifier, VT_BINPATH) &&
+           verifier.VerifyString(binPath()) &&
+           VerifyOffset(verifier, VT_RAWPATH) &&
+           verifier.VerifyString(rawPath()) &&
            verifier.EndTable();
   }
 };
@@ -42,8 +48,11 @@ struct AssetRefBuilder {
   void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
     fbb_.AddOffset(AssetRef::VT_ASSETNAME, assetName);
   }
-  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
-    fbb_.AddOffset(AssetRef::VT_PATH, path);
+  void add_binPath(flatbuffers::Offset<flatbuffers::String> binPath) {
+    fbb_.AddOffset(AssetRef::VT_BINPATH, binPath);
+  }
+  void add_rawPath(flatbuffers::Offset<flatbuffers::String> rawPath) {
+    fbb_.AddOffset(AssetRef::VT_RAWPATH, rawPath);
   }
   explicit AssetRefBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -60,9 +69,11 @@ struct AssetRefBuilder {
 inline flatbuffers::Offset<AssetRef> CreateAssetRef(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flat::AssetName> assetName = 0,
-    flatbuffers::Offset<flatbuffers::String> path = 0) {
+    flatbuffers::Offset<flatbuffers::String> binPath = 0,
+    flatbuffers::Offset<flatbuffers::String> rawPath = 0) {
   AssetRefBuilder builder_(_fbb);
-  builder_.add_path(path);
+  builder_.add_rawPath(rawPath);
+  builder_.add_binPath(binPath);
   builder_.add_assetName(assetName);
   return builder_.Finish();
 }
@@ -70,12 +81,15 @@ inline flatbuffers::Offset<AssetRef> CreateAssetRef(
 inline flatbuffers::Offset<AssetRef> CreateAssetRefDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flat::AssetName> assetName = 0,
-    const char *path = nullptr) {
-  auto path__ = path ? _fbb.CreateString(path) : 0;
+    const char *binPath = nullptr,
+    const char *rawPath = nullptr) {
+  auto binPath__ = binPath ? _fbb.CreateString(binPath) : 0;
+  auto rawPath__ = rawPath ? _fbb.CreateString(rawPath) : 0;
   return flat::CreateAssetRef(
       _fbb,
       assetName,
-      path__);
+      binPath__,
+      rawPath__);
 }
 
 inline const flat::AssetRef *GetAssetRef(const void *buf) {
