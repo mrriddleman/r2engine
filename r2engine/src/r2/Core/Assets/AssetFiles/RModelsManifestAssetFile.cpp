@@ -136,7 +136,7 @@ namespace r2::asset
 
 	bool RModelsManifestAssetFile::SaveManifest()
 	{
-		r2::asset::pln::SaveAssetReferencesToManifestFile(1, mRModelAssetReferences, FilePath(), mRawPath);
+		r2::asset::pln::SaveRModelManifestAssetReferencesToManifestFile(1, mRModelAssetReferences, FilePath(), mRawPath);
 
 		ReloadManifestFile(false);
 

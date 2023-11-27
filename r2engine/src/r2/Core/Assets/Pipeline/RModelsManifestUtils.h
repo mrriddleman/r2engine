@@ -8,7 +8,7 @@
 
 namespace r2::asset::pln
 {
-	bool SaveRModelAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath);
+	bool SaveRModelManifestAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath);
 }
 
 #endif

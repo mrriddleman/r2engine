@@ -12,7 +12,7 @@ namespace r2::asset::pln
 {
 	const std::string RMODEL_MANIFEST_FBS = "RModelManifest.fbs";
 
-	bool SaveAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath)
+	bool SaveRModelManifestAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		std::vector < flatbuffers::Offset< flat::AssetRef >> flatAssetRefs;
