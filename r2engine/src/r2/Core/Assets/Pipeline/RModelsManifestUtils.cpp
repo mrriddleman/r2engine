@@ -60,6 +60,49 @@ namespace r2::asset::pln
 
 		return generatedJSON && generatedBinary;
 	}
+
+
+	bool GenerateEmptyModelManifest(u32 version, const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		std::vector < flatbuffers::Offset< flat::AssetRef >> flatAssetRefs;
+
+		std::filesystem::path binPath = binFilePath;
+
+		//add the texture packs to the manifest
+
+		const auto rmodelManifestAssetName = r2::asset::Asset::GetAssetNameForFilePath(binPath.string().c_str(), r2::asset::EngineAssetType::RMODEL_MANIFEST);
+
+		char rmodelManifestNameStr[r2::fs::FILE_PATH_LENGTH];
+
+		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), rmodelManifestNameStr, r2::asset::EngineAssetType::RMODEL_MANIFEST);
+
+		auto flatAssetName = flat::CreateAssetName(builder, 0, rmodelManifestAssetName, builder.CreateString(rmodelManifestNameStr));
+
+		auto manifest = flat::CreateRModelsManifest(builder, version, flatAssetName, builder.CreateVector(flatAssetRefs));
+
+		//generate the manifest
+		builder.Finish(manifest);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		utils::WriteFile(binPath.string(), (char*)buf, size);
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char rmodelManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), rmodelManifestSchemaPath, RMODEL_MANIFEST_FBS.c_str());
+
+		std::filesystem::path jsonPath = rawFilePath;
+
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), rmodelManifestSchemaPath, binPath.string());
+
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binPath.parent_path().string(), rmodelManifestSchemaPath, jsonPath.string());
+
+		return generatedJSON && generatedBinary;
+	}
 }
 
 #endif

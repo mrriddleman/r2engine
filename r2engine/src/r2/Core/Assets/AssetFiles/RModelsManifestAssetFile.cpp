@@ -131,6 +131,10 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
 	bool RModelsManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
 	{
+		if (!mReloadFilePathFunc)
+		{
+			return false;
+		}
 		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), type);
 	}
 

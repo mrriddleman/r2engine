@@ -3,10 +3,15 @@
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
+#include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
+#include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
+#include "r2/Core/Assets/Pipeline/RModelsManifestUtils.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace r2::asset::pln
 {
 	const std::string RMDL_EXT = ".rmdl";
+	const std::string RMODEL_MANIFEST_FBS = "RModelManifest.fbs";
 
 	ModelHotReloadCommand::ModelHotReloadCommand()
 	{
@@ -15,6 +20,7 @@ namespace r2::asset::pln
 
 	void ModelHotReloadCommand::Init(Milliseconds delay)
 	{
+		GenerateModelsManifestsIfNeeded();
 		GenerateRMDLFilesIfNeeded();
 	}
 
@@ -36,7 +42,15 @@ namespace r2::asset::pln
 		createDirCmd.startAtParent = false;
 		createDirCmd.startAtOne = false;
 
-		return { createDirCmd };
+		AssetHotReloadCommand::CreateDirCmd createManifestDirCmd;
+		
+		createManifestDirCmd.pathsToCreate.insert(createManifestDirCmd.pathsToCreate.end(), mRawModelManifestPaths.begin(), mRawModelManifestPaths.end());
+		createManifestDirCmd.pathsToCreate.insert(createManifestDirCmd.pathsToCreate.end(), mBinaryModelManifestPaths.begin(), mBinaryModelManifestPaths.end());
+
+		createManifestDirCmd.startAtParent = true;
+		createManifestDirCmd.startAtOne = false;
+
+		return { createDirCmd, createManifestDirCmd };
 	}
 
 	void ModelHotReloadCommand::AddBinaryModelDirectories(const std::vector<std::string>& binaryModelDirectories)
@@ -52,6 +66,16 @@ namespace r2::asset::pln
 	void ModelHotReloadCommand::AddMaterialManifestPaths(const std::vector<std::string>& materialManifestPaths)
 	{
 		mMaterialManifestPaths.insert(mMaterialManifestPaths.end(), materialManifestPaths.begin(), materialManifestPaths.end());
+	}
+
+	void ModelHotReloadCommand::AddBinaryModelManifestPaths(const std::vector<std::string>& binaryManifestPaths)
+	{
+		mBinaryModelManifestPaths.insert(mBinaryModelManifestPaths.end(), binaryManifestPaths.begin(), binaryManifestPaths.end());
+	}
+
+	void ModelHotReloadCommand::AddRawModelManifestPaths(const std::vector<std::string>& rawManifestPaths)
+	{
+		mRawModelManifestPaths.insert(mRawModelManifestPaths.end(), rawManifestPaths.begin(), rawManifestPaths.end());
 	}
 
 	std::filesystem::path ModelHotReloadCommand::GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir)
@@ -107,6 +131,49 @@ namespace r2::asset::pln
 		return output;
 	}
 
+
+	void ModelHotReloadCommand::GenerateModelsManifestsIfNeeded()
+	{
+		R2_CHECK(mBinaryModelManifestPaths.size() == mRawModelManifestPaths.size(), "these should be the same size!");
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char rmodelManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), rmodelManifestSchemaPath, RMODEL_MANIFEST_FBS.c_str());
+
+		for (size_t i = 0; i < mBinaryModelManifestPaths.size(); ++i)
+		{
+			std::filesystem::path binaryPath = mBinaryModelManifestPaths[i];
+			std::string binManifestDir = binaryPath.parent_path().string();
+
+			std::filesystem::path rawPath = mRawModelManifestPaths[i];
+			std::string rawManifestDir = rawPath.parent_path().string();
+
+			std::string modelManifestFile = "";
+
+			FindManifestFile(binManifestDir, binaryPath.stem().string(), ".rmmn", modelManifestFile, true);
+
+			if (modelManifestFile.empty())
+			{
+				if (FindManifestFile(rawManifestDir, rawPath.stem().string(), ".rmmn", modelManifestFile, false))
+				{
+					//Generate the binary file from json
+					bool generatedBinFile = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binManifestDir, rmodelManifestSchemaPath, rawPath.string());
+
+					R2_CHECK(generatedBinFile, "Failed to generate the binary file: %s", binaryPath.string().c_str());
+				}
+				else
+				{
+					//generate both
+					bool success = r2::asset::pln::GenerateEmptyModelManifest(1, binaryPath.string(), rawPath.string(), binManifestDir, rawManifestDir);
+
+					R2_CHECK(success, "Failed to generate the binary file: %s and the raw file: %s", binaryPath.string().c_str(), rawPath.string().c_str());
+				}
+			}
+		}
+	}
+
 	void ModelHotReloadCommand::GenerateRMDLFilesIfNeeded()
 	{
 		R2_CHECK(mRawModelDirectories.size() == mBinaryModelDirectories.size(), "These should be the same");
@@ -153,7 +220,6 @@ namespace r2::asset::pln
 			}
 		}
 	}
-
 }
 
 #endif

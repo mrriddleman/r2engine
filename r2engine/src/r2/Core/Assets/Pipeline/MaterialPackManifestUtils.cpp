@@ -63,26 +63,28 @@ namespace r2::asset::pln
 
 	bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary)
 	{
-		for (auto& file : std::filesystem::recursive_directory_iterator(directory))
-		{
-			//UGH MAC - ignore .DS_Store
-			if (std::filesystem::file_size(file.path()) <= 0 ||
-				(std::filesystem::path(file.path()).extension().string() != JSON_EXT &&
-					std::filesystem::path(file.path()).extension().string() != MPAK_EXT &&
-					file.path().stem().string() != stemName))
-			{
-				continue;
-			}
+		return FindManifestFile(directory, stemName, MPAK_EXT, outPath, isBinary);
 
-			if (file.path().stem().string() == stemName && ((isBinary && std::filesystem::path(file.path()).extension().string() == MPAK_EXT) ||
-				(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT)))
-			{
-				outPath = file.path().string();
-				return true;
-			}
-		}
+		//for (auto& file : std::filesystem::recursive_directory_iterator(directory))
+		//{
+		//	//UGH MAC - ignore .DS_Store
+		//	if (std::filesystem::file_size(file.path()) <= 0 ||
+		//		(std::filesystem::path(file.path()).extension().string() != JSON_EXT &&
+		//			std::filesystem::path(file.path()).extension().string() != MPAK_EXT &&
+		//			file.path().stem().string() != stemName))
+		//	{
+		//		continue;
+		//	}
 
-		return false;
+		//	if (file.path().stem().string() == stemName && ((isBinary && std::filesystem::path(file.path()).extension().string() == MPAK_EXT) ||
+		//		(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT)))
+		//	{
+		//		outPath = file.path().string();
+		//		return true;
+		//	}
+		//}
+
+		//return false;
 	}
 
 	bool RegenerateMaterialPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)

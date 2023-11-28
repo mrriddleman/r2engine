@@ -3,6 +3,7 @@
 
 #include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
 #include <fstream>
+#include <filesystem>
 
 namespace r2::asset::pln::utils
 {
@@ -57,5 +58,33 @@ namespace r2::asset::pln::utils
 	}
 }
 
+namespace r2::asset::pln
+{
+	static const std::string JSON_EXT = ".json";
+
+	bool FindManifestFile(const std::string& directory, const std::string& stemName, const std::string& binEXT, std::string& outPath, bool isBinary)
+	{
+		for (auto& file : std::filesystem::recursive_directory_iterator(directory))
+		{
+			//UGH MAC - ignore .DS_Store
+			if (std::filesystem::file_size(file.path()) <= 0 ||
+				(std::filesystem::path(file.path()).extension().string() != JSON_EXT &&
+					std::filesystem::path(file.path()).extension().string() != binEXT &&
+					file.path().stem().string() != stemName))
+			{
+				continue;
+			}
+
+			if (file.path().stem().string() == stemName && ((isBinary && std::filesystem::path(file.path()).extension().string() == binEXT) ||
+				(!isBinary && std::filesystem::path(file.path()).extension().string() == JSON_EXT)))
+			{
+				outPath = file.path().string();
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
 
 #endif

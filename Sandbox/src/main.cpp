@@ -1354,6 +1354,16 @@ public:
         return {SANDBOX_MODELS_DIR_RAW};
     }
 
+	std::vector<std::string> GetModelManifestRawPaths() const override
+	{
+		return { SANDBOX_MODELS_MANIFEST_DIR_RAW + std::string("/SandboxModels.json")};
+	}
+
+	std::vector<std::string> GetModelManifestBinaryPaths() const override
+	{
+		return { SANDBOX_MODELS_MANIFEST_DIR_BIN + std::string("/SandboxModels.rmmn" )};
+	}
+
     virtual std::vector<std::string> GetAnimationBinaryPaths() const override
     {
         return { SANDBOX_ANIMATIONS_DIR_BIN };

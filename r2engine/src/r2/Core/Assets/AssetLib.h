@@ -119,6 +119,7 @@ namespace r2::asset::lib
     ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType);
     ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
     ManifestAssetFile* MakeMaterialManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
+    ManifestAssetFile* MakeRModelsManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
 
     FileList MakeFileList(u64 capacity);
     

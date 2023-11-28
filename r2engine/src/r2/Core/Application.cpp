@@ -149,6 +149,16 @@ namespace r2
         return {};
     }
 
+    std::vector<std::string> Application::GetModelManifestRawPaths() const
+    {
+        return {};
+    }
+
+    std::vector<std::string> Application::GetModelManifestBinaryPaths() const
+    {
+        return {};
+    }
+
     std::vector<std::string> Application::GetAnimationBinaryPaths() const
     {
         return {};

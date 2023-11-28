@@ -16,6 +16,7 @@
 #include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/TexturePackManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/RModelsManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -577,6 +578,14 @@ namespace r2::asset::lib
         bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::MATERIAL_PACK_MANIFEST);
         R2_CHECK(result, "Failed to initialize the MaterialManifestAssetFile");
         return manifestFile;
+    }
+
+    ManifestAssetFile* MakeRModelsManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
+    {
+        RModelsManifestAssetFile* manifestFile = ALLOC(RModelsManifestAssetFile, *s_arenaPtr);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::RMODEL_MANIFEST);
+		R2_CHECK(result, "Failed to initialize the RModelManifestAssetFile");
+		return manifestFile;
     }
 
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, r2::asset::FileList files)

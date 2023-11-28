@@ -24,14 +24,23 @@ namespace r2::asset::pln
 		void AddRawModelDirectories(const std::vector<std::string>& rawModelDirectories);
 		void AddMaterialManifestPaths(const std::vector<std::string>& materialManifestPaths);
 
+		void AddBinaryModelManifestPaths(const std::vector<std::string>& binaryManifestPaths);
+		void AddRawModelManifestPaths(const std::vector<std::string>& rawManifestPaths);
+
 		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_MODEL_ASSET; }
 	private:
+
+
+		void GenerateModelsManifestsIfNeeded();
 		void GenerateRMDLFilesIfNeeded();
 		static std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir);
 
 		std::vector<std::string> mRawModelDirectories;
 		std::vector<std::string> mBinaryModelDirectories;
 		std::vector<std::string> mMaterialManifestPaths;
+
+		std::vector<std::string> mBinaryModelManifestPaths;
+		std::vector<std::string> mRawModelManifestPaths;
 	};
 }
 

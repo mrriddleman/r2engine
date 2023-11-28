@@ -130,25 +130,40 @@ namespace r2
 
             u32 numMaterialManifests = noptrApp->GetMaterialPackManifestsBinaryPaths().size();
             u32 numTextureManifets = noptrApp->GetTexturePackManifestsBinaryPaths().size();
-            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets + 1, 2); //+1 for sounds
+            u32 numModelManifests = noptrApp->GetModelManifestBinaryPaths().size();
+            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets + numModelManifests + 1, 2); //+1 for sounds
 
             r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
 
-            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1 + numTextureManifets + 1 + 1, Kilobytes(512));
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numModelManifests + numMaterialManifests + 1 + numTextureManifets + 1 + 1, Kilobytes(512));
 
             R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
 
             char internalShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
             r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR, internalShaderManifestPath, "r2shaders.sman");
 
+
+			std::vector<std::string> rawModelManifestPaths;
+			std::vector<std::string> binaryModelManifestPaths;
+
+			for (const std::string& nextPath : noptrApp->GetModelManifestBinaryPaths())
+			{
+				binaryModelManifestPaths.push_back(nextPath);
+			}
+
+			for (const std::string& nextPath : noptrApp->GetModelManifestRawPaths())
+			{
+				rawModelManifestPaths.push_back(nextPath);
+			}
+
 #ifdef R2_ASSET_PIPELINE
             
             std::string flatcPath = R2_FLATC;
 
-            
             std::vector<std::string> binaryModelPaths;
             std::vector<std::string> rawModelPaths;
             std::vector<std::string> binaryMaterialManifestPaths;
+
 
             //Model command data
             {
@@ -166,7 +181,7 @@ namespace r2
 
 				for (const std::string& nextPath : noptrApp->GetMaterialPackManifestsBinaryPaths())
 				{
-                    binaryMaterialManifestPaths.push_back(nextPath);
+					binaryMaterialManifestPaths.push_back(nextPath);
 				}
             }
 
@@ -174,7 +189,9 @@ namespace r2
 
             modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
             modelAssetCMD->AddRawModelDirectories(rawModelPaths);
-            modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths }); //@TODO(Serge): fix this - shouldn't have the [1]
+            modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths }); 
+            modelAssetCMD->AddRawModelManifestPaths(rawModelManifestPaths);
+            modelAssetCMD->AddBinaryModelManifestPaths(binaryModelManifestPaths);
 
             //std::vector<std::string> binaryAnimationPaths;
             //std::vector<std::string> rawAnimationPaths;
@@ -437,14 +454,15 @@ namespace r2
                 { appMaterialPacksManifests },
                 texturePackPath,
                 appInitialTexturePackManifests,
-                noptrApp->GetSoundDefinitionPath().c_str()
+                noptrApp->GetSoundDefinitionPath().c_str(),
+                binaryModelManifestPaths
 #ifdef R2_ASSET_PIPELINE
+                , rawModelManifestPaths
                 , engineMaterialPackManifestPathRaw.c_str()
                 , noptrApp->GetMaterialPackManifestsRawPaths()
                 , engineRawTextureManifestPath.c_str()
                 , noptrApp->GetTexturePackManifestsRawPaths()
                 , noptrApp->GetRawSoundDefinitionsPath().c_str()
-
                 , engineMaterialPackDirRaw.c_str()
                 , noptrApp->GetMaterialPacksWatchPaths()
                 , engineTexturePackDir.c_str()
@@ -1236,13 +1254,16 @@ namespace r2
 		}
     }
 
-    void Engine::SetupAssetLib(
-        const char* materialsPath,
-        const std::vector<std::string>& appMaterialPacksManifests,
+	void Engine::SetupAssetLib(
+		const char* engineMaterialsPath,
+		const std::vector<std::string>& appMaterialPacksManifests,
 		const char* engineTexturePacksManifestPath,
 		const std::vector<std::string>& appTexturePacksManifestPaths,
-        const char* soundDefinitionPath
+		const char* soundDefinitionPath,
+		const std::vector<std::string>& modelManifests
+
 #ifdef R2_ASSET_PIPELINE
+		, const std::vector<std::string>& rawModelManifests
 		, const char* rawEngineMaterialsPath
 		, const std::vector<std::string>& rawAppMaterialPacksManifests
 		, const char* rawEngineTexturePacksManifestPath
@@ -1255,12 +1276,12 @@ namespace r2
 		, const std::vector<std::string>& rawAppTexturePacksWatchPaths
 		, const char* rawSoundDefinitionWatchPath
 #endif
-    )
+	)
     {
 
         //@TODO(Serge): clean up this engine function - so bad!
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, rawEngineMaterialsPath, rawEngineMaterialsWatchPath);
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, engineMaterialsPath, rawEngineMaterialsPath, rawEngineMaterialsWatchPath);
 #else
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, "", "");
 #endif
@@ -1285,6 +1306,25 @@ namespace r2
             r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, nextManifestAssetFile);
             ++i;
         }
+
+        i = 0;
+
+        for (const std::string& manifestPath : modelManifests)
+        {
+#ifdef R2_ASSET_PIPELINE
+			r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeRModelsManifestAssetFile(*mAssetLib, manifestPath.c_str(), rawModelManifests[i].c_str(), "");
+#else
+			r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeRModelsManifestAssetFile(*mAssetLib, manifestPath.c_str(), "", "");
+#endif
+
+#ifdef R2_ASSET_PIPELINE
+		//	nextManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
+#endif
+			r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, nextManifestAssetFile);
+
+            ++i;
+        }
+
 
         i = 0;
 

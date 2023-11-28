@@ -98,6 +98,10 @@ namespace r2
         
         virtual std::vector<std::string> GetModelBinaryPaths() const;
         virtual std::vector<std::string> GetModelRawPaths() const;
+        virtual std::vector<std::string> GetModelManifestRawPaths() const;
+        virtual std::vector<std::string> GetModelManifestBinaryPaths() const;
+
+
         virtual std::vector<std::string> GetAnimationBinaryPaths() const;
         virtual std::vector<std::string> GetAnimationRawPaths() const;
 

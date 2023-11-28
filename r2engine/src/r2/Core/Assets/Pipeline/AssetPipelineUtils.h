@@ -9,4 +9,9 @@ namespace r2::asset::pln::utils
 	char* ReadFile(const std::string& filePath);
 }
 
+namespace r2::asset::pln
+{
+	bool FindManifestFile(const std::string& directory, const std::string& stemName, const std::string& binEXT, std::string& outPath, bool isBinary);
+}
+
 #endif // __ASSET_PIPELINE_UTILS_H__
