@@ -1,4 +1,4 @@
-#ifdef R2_EDITOR
+#if defined( R2_EDITOR ) && defined R2_IMGUI
 #ifndef __EDITOR_ASSET_PANEL_H__
 #define __EDITOR_ASSET_PANEL_H__
 
@@ -39,6 +39,10 @@ namespace r2::edit
 
 		void MaterialRawContextMenu(const std::filesystem::path& path);
 		void ModelRawContextMenu(const std::filesystem::path& path);
+
+		std::filesystem::path FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path);
+
+		
 
 
 		std::filesystem::path mEngineRawDirectory;

@@ -230,7 +230,7 @@ namespace r2::asset::lib
         {
             r2::asset::ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
-            if (manifestFile->GetAssetType() == type)
+            if (manifestFile->GetManifestAssetType() == type)
             {
                 r2::sarr::Push(*manifestDataArray, GetManifestData(assetLib, manifestFile->GetManifestFileHandle()));
             }
@@ -246,7 +246,7 @@ namespace r2::asset::lib
         {
             r2::asset::ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
-            if (manifestFile->GetAssetType() == type)
+            if (manifestFile->GetManifestAssetType() == type)
             {
                 count++;
             }
@@ -329,7 +329,7 @@ namespace r2::asset::lib
         {
             ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
-            if (manifestFile->GetAssetType() == type)
+            if (manifestFile->GetManifestAssetType() == type)
             {
                 r2::sarr::Push(*manifests, manifestFile);
             }
@@ -346,7 +346,7 @@ namespace r2::asset::lib
 		{
 			ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
-			if (manifestFile->GetAssetType() == type)
+			if (manifestFile->GetManifestAssetType() == type)
 			{
                 ++numManifestsForType;
 			}
@@ -355,7 +355,93 @@ namespace r2::asset::lib
         return numManifestsForType;
     }
 
+    EngineAssetType GetManifestTypeForAssetType(r2::asset::AssetType type)
+    {
+        if (type == RMODEL)
+        {
+            return RMODEL_MANIFEST;
+        }
+        else if (type == MATERIAL)
+        {
+            return MATERIAL_PACK_MANIFEST;
+        }
+        else if (type == TEXTURE || type == CUBEMAP_TEXTURE)
+        {
+            return TEXTURE_PACK_MANIFEST;
+        }
+        else if (type == SOUND)
+        {
+            return SOUND_DEFINTION;
+        }
+        else
+        {
+            R2_CHECK(false, "Unsupported asset type");
+            return DEFAULT;
+        }
+    }
+
+    bool HasAsset(AssetLib& assetLib, const char* path, r2::asset::AssetType type)
+    {
+        auto manifestType = GetManifestTypeForAssetType(type);
+
+        u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+
+        if (manifestsCount == 0)
+        {
+            R2_CHECK(false, "Probably a bug here");
+            return false;
+        }
+
+        r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
+        R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+        GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+        u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+
+        auto asset = r2::asset::Asset::MakeAssetFromFilePath(path, type);
+
+        for (u32 i = 0; i < numManifestsForType; ++i)
+        {
+            auto* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, i);
+
+            if (manifestAssetFile->HasAsset(asset))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 #ifdef R2_ASSET_PIPELINE
+	bool ImportAsset(AssetLib& assetLib, const AssetReference& assetReference, r2::asset::AssetType type)
+	{
+		auto manifestType = GetManifestTypeForAssetType(type);
+
+		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+
+		if (manifestsCount == 0)
+		{
+			R2_CHECK(false, "Probably a bug here");
+			return false;
+		}
+
+        R2_CHECK(manifestsCount == 1, "We need to only import into a specific manifest file - need a way of specifying in a parameter");
+
+		r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
+		R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+		GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+		u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+
+		R2_CHECK(numManifestsForType == 1, "We need to only import into a specific manifest file - need a way of specifying in a parameter");
+
+        auto* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, 0);
+
+        return manifestAssetFile->AddAssetReference(assetReference);
+	}
 
     bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, pln::HotReloadType type)
     {

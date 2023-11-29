@@ -3,6 +3,7 @@
 
 #include "r2/Editor/EditorAssetBrowser/EditorAssetPanel.h"
 
+#include "r2/Core/Assets/AssetLib.h"
 #include "assetlib/RModel_generated.h"
 #include "r2/Audio/SoundDefinition_generated.h"
 #include "r2/Core/File/PathUtils.h"
@@ -14,9 +15,10 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
 #include "r2/Editor/EditorTexturePackPanel/TexturePackPanel.h"
-
+#include "r2/Platform/Platform.h"
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Assets/AssetReference.h"
 #include "imgui.h"
 #include <algorithm>
 #include <string>
@@ -364,12 +366,14 @@ namespace r2::edit
 			}
 			else if (FindStringIC(relativePathString, "model"))
 			{
-				if (relativePath.extension().string() == RMODEL_BIN_EXT)
+				std::string extension = relativePath.extension().string();
+
+				if (extension == RMODEL_BIN_EXT)
 				{
 					ModelBinContextMenu(path);
 					return true;
 				}
-				else //@TODO(Serge): we should check for proper extensions that we support (when we do lol). I'm thinking we should only really support gltf files
+				else if(extension == ".fbx" || extension == ".gltf") //@TODO(Serge): we should check for proper extensions that we support (when we do lol). I'm thinking we should only really support gltf files
 				{
 					ModelRawContextMenu(path);
 					return true;
@@ -487,14 +491,53 @@ namespace r2::edit
 		}
 	}
 
+
+
 	void AssetPanel::ModelBinContextMenu(const std::filesystem::path& path)
 	{
 		ContextMenuTitle("Model");
 
-		if (ImGui::Selectable("Import To Level"))
-		{
-			
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
+		char filePath[r2::fs::FILE_PATH_LENGTH];
+		r2::util::PathCpy(filePath, path.string().c_str());
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(filePath, sanitizedPath);
+
+		bool isImportedToGame = r2::asset::lib::HasAsset(assetLib, sanitizedPath, r2::asset::RMODEL);
+		std::string labelString = "Import To Game";
+
+		if (isImportedToGame)
+		{
+			labelString = "Import To Level";
+		}
+
+		if (ImGui::Selectable(labelString.c_str()))
+		{
+			if (isImportedToGame)
+			{
+				printf("@TODO(Serge): Import to Current Level\n");
+			}
+			else
+			{
+				//add the path to assetLib
+				auto rawAssetPath = FindRawAssetPathFromBinaryAsset(path);
+				r2::asset::lib::ImportAsset(assetLib,  r2::asset::CreateNewAssetReference(path, rawAssetPath, r2::asset::RMODEL), r2::asset::RMODEL);
+			}
+		}
+	}
+
+	std::filesystem::path AssetPanel::FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path)
+	{
+		return "";
+	}
+
+	void AssetPanel::ModelRawContextMenu(const std::filesystem::path& path)
+	{
+		ContextMenuTitle("Model");
+
+		if (ImGui::Selectable("Build & Import To Level"))
+		{
 			printf("@TODO(Serge): Import to Current Level\n");
 		}
 	}
@@ -522,16 +565,6 @@ namespace r2::edit
 		if (ImGui::Selectable("Open Level"))
 		{
 			mnoptrEditor->LoadLevel(path.string());
-		}
-	}
-
-	void AssetPanel::ModelRawContextMenu(const std::filesystem::path& path)
-	{
-		ContextMenuTitle("Model");
-
-		if (ImGui::Selectable("Build & Import To Level"))
-		{
-			printf("@TODO(Serge): Import to Current Level\n");
 		}
 	}
 

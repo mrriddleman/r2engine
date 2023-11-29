@@ -29,7 +29,7 @@ namespace r2::asset
 	
 #ifdef R2_ASSET_PIPELINE
 
-	
+    struct AssetReference;
 
     struct ManifestReloadEntry
     {
@@ -100,13 +100,16 @@ namespace r2::asset::lib
     void GetManifestFilesForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<ManifestAssetFile*>* manifests);
     u32 GetManifestCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type);
 
+
+    bool HasAsset(AssetLib& assetLib, const char* path, r2::asset::AssetType type);
+   
+
 #ifdef R2_ASSET_PIPELINE
+    bool ImportAsset(AssetLib& assetLib, const AssetReference& assetReference, r2::asset::AssetType type);
     void PathChangedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& changedPaths);
     void PathAddedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsAdded);
     void PathRemovedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsRemoved);
-#endif
 
-#ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths);
     using AssetFilesBuiltListener = std::function<void(std::vector<std::string> paths)>;
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);

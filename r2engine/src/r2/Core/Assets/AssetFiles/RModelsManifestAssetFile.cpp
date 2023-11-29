@@ -44,7 +44,7 @@ namespace r2::asset
 		}
 	}
 
-	r2::asset::AssetType RModelsManifestAssetFile::GetAssetType() const
+	r2::asset::AssetType RModelsManifestAssetFile::GetManifestAssetType() const
 	{
 		return mAssetType;
 	}
@@ -128,7 +128,50 @@ namespace r2::asset
 		return true;
 	}
 
+	bool RModelsManifestAssetFile::HasAsset(const Asset& asset) const
+	{
+		R2_CHECK(mRModelManifest != nullptr, "Should never happen");
+
+		const auto* flatModelRefs = mRModelManifest->models();
+		for (flatbuffers::uoffset_t i = 0; i < flatModelRefs->size(); ++i)
+		{
+			//@TODO(Serge): change this to UUID
+			if (flatModelRefs->Get(i)->assetName()->assetName() == asset.HashID())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 #ifdef R2_ASSET_PIPELINE
+
+	bool RModelsManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
+	{
+		//first check to see if we have it already
+		bool hasAssetReference = false;
+		//if we don't add it
+		for (u32 i = 0; i < mRModelAssetReferences.size(); ++i)
+		{
+			if (mRModelAssetReferences[i].assetName == assetReference.assetName)
+			{
+				hasAssetReference = true;
+				break;
+			}
+		}
+
+		if (!hasAssetReference)
+		{
+			mRModelAssetReferences.push_back(assetReference);
+
+			//then regen the manifest
+			return SaveManifest();
+		}
+		
+		return hasAssetReference;
+	}
+
 	bool RModelsManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
 	{
 		if (!mReloadFilePathFunc)
@@ -165,7 +208,7 @@ namespace r2::asset
 			mManifestCacheRecord = {};
 		}
 
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
+		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
 
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 

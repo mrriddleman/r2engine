@@ -49,7 +49,7 @@ namespace r2::asset
 		}
 	}
 
-	r2::asset::AssetType MaterialManifestAssetFile::GetAssetType() const
+	r2::asset::AssetType MaterialManifestAssetFile::GetManifestAssetType() const
 	{
 		return mAssetType;
 	}
@@ -134,6 +134,11 @@ namespace r2::asset
 		return r2::asset::GetAssetNameForFilePath(FilePath(), mAssetType);
 	}
 
+	bool MaterialManifestAssetFile::HasAsset(const Asset& asset) const
+	{
+		return false;
+	}
+
 #ifdef R2_ASSET_PIPELINE
 	bool MaterialManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
 	{
@@ -148,7 +153,7 @@ namespace r2::asset
 			mManifestCacheRecord = {};
 		}
 
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
+		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
 
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 
@@ -200,6 +205,12 @@ namespace r2::asset
 			mMaterials.push_back(nextMaterial);
 		}
 	}
+
+	bool MaterialManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
+	{
+		return false;
+	}
+
 #endif
 
 }

@@ -16,6 +16,20 @@ namespace r2::asset
 		outAssetReference.rawPath = flatAssetRef->rawPath()->str();
 	}
 
+	AssetReference CreateNewAssetReference(const std::filesystem::path& binPath, const std::filesystem::path& rawPath, r2::asset::AssetType assetType)
+	{
+		AssetReference newAssetReference;
+
+		newAssetReference.binPath = binPath;
+		newAssetReference.rawPath = rawPath;
+		newAssetReference.assetName.hashID = r2::asset::GetAssetNameForFilePath(binPath.string().c_str(), assetType);
+		char nameStr[r2::fs::FILE_PATH_LENGTH];
+		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), nameStr, assetType);
+		newAssetReference.assetName.assetNameString = nameStr;
+
+		return newAssetReference;
+	}
+
 }
 
 #endif

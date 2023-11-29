@@ -6,6 +6,7 @@
 #include "r2/Core/Assets/AssetCacheRecord.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetCommandTypes.h"
+#include "r2/Core/Assets/AssetReference.h"
 #endif
 namespace r2::asset
 {
@@ -18,7 +19,7 @@ namespace r2::asset
 		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) = 0;
 		virtual void Shutdown() = 0;
 
-		virtual r2::asset::AssetType GetAssetType() const = 0;
+		virtual r2::asset::AssetType GetManifestAssetType() const = 0;
 		virtual u64 GetManifestFileHandle() const = 0;
 		
 		virtual bool LoadManifest() = 0;
@@ -26,10 +27,15 @@ namespace r2::asset
 		virtual const byte* GetManifestData() const = 0;
 		virtual const char* FilePath() const = 0;
 		
+		virtual bool HasAsset(const Asset& asset) const = 0;
+		
+
 		//@NOTE(Serge): These shouldn't exist
 		virtual bool AddAllFilePaths(FileList files) = 0;
 
 #ifdef R2_ASSET_PIPELINE
+		
+		virtual bool AddAssetReference(const AssetReference& assetReference) = 0;
 		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType) = 0;
 		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const std::string& manifestFilePath, const byte* manifestData, pln::HotReloadType hotreloadType)>;
 		void SetReloadFilePathCallback(ReloadFilePathFunc func)

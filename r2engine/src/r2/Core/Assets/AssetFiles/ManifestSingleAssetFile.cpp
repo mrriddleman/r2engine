@@ -40,7 +40,7 @@ namespace r2::asset
 		}
 	}
 
-	r2::asset::AssetType ManifestSingleAssetFile::GetAssetType() const
+	r2::asset::AssetType ManifestSingleAssetFile::GetManifestAssetType() const
 	{
 		return mAssetType;
 	}
@@ -120,6 +120,12 @@ namespace r2::asset
 		return mManifestCacheRecord.GetAssetBuffer()->Data();
 	}
 
+	bool ManifestSingleAssetFile::HasAsset(const Asset& asset) const
+	{
+		return false;
+	}
+
+
 #ifdef R2_ASSET_PIPELINE
 	bool ManifestSingleAssetFile::SaveManifest()
 	{
@@ -135,7 +141,7 @@ namespace r2::asset
 			mManifestCacheRecord = {};
 		}
 
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
+		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
 		
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 
@@ -143,5 +149,12 @@ namespace r2::asset
 
 		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
 	}
+
+	bool ManifestSingleAssetFile::AddAssetReference(const AssetReference& assetReference) 
+	{
+		return false;
+	}
+
+
 #endif
 }

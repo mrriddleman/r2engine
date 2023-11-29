@@ -20,7 +20,7 @@ namespace r2::asset
 	};
 
 	void MakeAssetReferenceFromFlatAssetRef(const flat::AssetRef* flatAssetRef, AssetReference& outAssetReference);
-
+	AssetReference CreateNewAssetReference(const std::filesystem::path& binPath, const std::filesystem::path& rawPath, r2::asset::AssetType assetType);
 }
 
 #endif

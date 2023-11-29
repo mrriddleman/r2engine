@@ -41,7 +41,7 @@ namespace r2::asset
 		}	
 	}
 
-	r2::asset::AssetType TexturePackManifestAssetFile::GetAssetType() const
+	r2::asset::AssetType TexturePackManifestAssetFile::GetManifestAssetType() const
 	{
 		return mAssetType;
 	}
@@ -170,7 +170,19 @@ namespace r2::asset
 		return mManifestCacheRecord.GetAssetBuffer()->Data();
 	}
 
+	bool TexturePackManifestAssetFile::HasAsset(const Asset& asset) const
+	{
+		return false;
+	}
+
 #ifdef R2_ASSET_PIPELINE
+
+	bool TexturePackManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
+	{
+		TODO;
+		return false;
+	}
+
 	bool TexturePackManifestAssetFile::SaveManifest()
 	{
 		TODO;
@@ -185,7 +197,7 @@ namespace r2::asset
 			mManifestCacheRecord = {};
 		}
 
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetAssetType()));
+		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
 
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 

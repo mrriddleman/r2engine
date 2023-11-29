@@ -16,9 +16,9 @@ namespace r2::asset
 		virtual bool Init(AssetCache* noptrAssetCache, const char* binpath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) override;
 		virtual void Shutdown() override;
 
-		virtual r2::asset::AssetType GetAssetType() const override;
+		virtual r2::asset::AssetType GetManifestAssetType() const override;
 
-
+		virtual bool HasAsset(const Asset& asset) const override;
 		virtual bool LoadManifest() override;
 		virtual bool UnloadManifest() override;
 		virtual const byte* GetManifestData() const override;
@@ -26,6 +26,8 @@ namespace r2::asset
 		virtual bool AddAllFilePaths(FileList files) override;
 		virtual u64 GetManifestFileHandle() const override;
 #ifdef R2_ASSET_PIPELINE
+		virtual bool AddAssetReference(const AssetReference& assetReference) override;
+
 		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type) override;
 
 		virtual bool SaveManifest() override;
