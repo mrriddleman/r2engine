@@ -17,6 +17,7 @@
 #include "r2/Editor/EditorTexturePackPanel/TexturePackPanel.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Audio/AudioEngine.h"
+#include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/AssetReference.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
@@ -518,7 +519,8 @@ namespace r2::edit
 		{
 			if (isImportedToGame)
 			{
-				printf("@TODO(Serge): Import to Current Level\n");
+				auto modelAsset = r2::asset::Asset::MakeAssetFromFilePath(sanitizedPath, r2::asset::RMODEL);
+				mnoptrEditor->AddModelToLevel(modelAsset);
 			}
 			else
 			{

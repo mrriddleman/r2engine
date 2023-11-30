@@ -41,6 +41,7 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Assets/Asset.h"
 #include "r2/Render/Renderer/Renderer.h"
 
 //@TEST: for test code only - REMOVE!
@@ -322,7 +323,7 @@ namespace r2
 
 				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadModel(microbatAnimModel);
 
-				AddModelToLevel(microbatAsset.HashID(), *microbatAnimModel);
+				AddModelToLevel(microbatAsset);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelName = microbatAsset.HashID();
@@ -553,29 +554,30 @@ namespace r2
 		}
 	}
 
-	void Editor::AddModelToLevel(u64 modelHandle, const r2::draw::Model& model)
+	void Editor::AddModelToLevel(const r2::asset::Asset& modelAsset)
 	{
+		//@TODO(Serge): shouldn't the level be doing this?
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		const auto* assetFile = gameAssetManager.GetAssetFile(r2::asset::Asset(modelHandle, r2::asset::RMODEL));
+		r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+
+		const auto* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
 		auto* modelAssets = mCurrentEditorLevel->GetModelAssets();
 		
-
-		r2::asset::AssetHandle modelAssetHandle = { modelHandle, gameAssetManager.GetAssetCacheSlot() };
-
-		//@TODO(Serge): shouldn't the level be doing this?
+		r2::asset::AssetHandle modelAssetHandle = { modelHandle.handle, gameAssetManager.GetAssetCacheSlot() };
+		
 		if (r2::sarr::IndexOf(*modelAssets, modelAssetHandle) == -1)
 		{
 			//@NOTE(Serge): may want to load here - dunno yet
 			r2::sarr::Push(*modelAssets, modelAssetHandle);
 		}
 
-		const u32 numMaterialNames = r2::sarr::Size(*model.optrMaterialNames);
+		const u32 numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
-			r2::mat::MaterialName materialName =r2::sarr::At(*model.optrMaterialNames, i);
+			r2::mat::MaterialName materialName =r2::sarr::At(*model->optrMaterialNames, i);
 			AddMaterialToLevel(materialName);
 		}
 	}

@@ -39,6 +39,11 @@ namespace r2::mat
 	struct MaterialName;
 }
 
+namespace r2::asset
+{
+	class Asset;
+}
+
 namespace r2
 {
 	
@@ -77,15 +82,17 @@ namespace r2
 
 
 		void OpenCreateNewLevelModal();
+
 		void AddSoundBankToLevel(u64 soundBankAssetName);
 		void AddMaterialToLevel(const r2::mat::MaterialName& materialName);
+		void AddModelToLevel(const r2::asset::Asset& modelAsset);
 
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
 
 	private:
 
-		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
+		
 		
 
 		Level* mCurrentEditorLevel;
