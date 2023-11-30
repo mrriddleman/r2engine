@@ -19,6 +19,8 @@
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/AssetReference.h"
+#include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
+#include "r2/Core/Application.h"
 #include "imgui.h"
 #include <algorithm>
 #include <string>
@@ -531,61 +533,42 @@ namespace r2::edit
 		}
 	}
 
-	std::filesystem::path AssetPanel::FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path)
-	{
-		//@NOTE(Serge): this whole method relies on the fact that we mirror our data in assets_bin to assets
-		//				probably will only work for models and textures
-
-		if (!std::filesystem::exists(path))
-			return "";
-
-		//now check each binary base against the path
-		//if the path is a non-empty relative path then use the other
-		std::filesystem::path pathToUse = path;
-		pathToUse = pathToUse.make_preferred();
-
-		std::filesystem::path result = "";
-
-		std::filesystem::path stem = "";
-		std::filesystem::path parentDirectory = "";
-		if ((result = std::filesystem::relative( pathToUse, mAppBinDirectory)) != "")
-		{
-			stem = result.stem();
-			parentDirectory = mAppRawDirectory / result.parent_path();
-		}
-		else if ((result = std::filesystem::relative( pathToUse, mEngineBinDirectory)) != "")
-		{
-			//@NOTE(Serge): this case should be basically non-existent since we shouldn't ever be
-			//				importing stuff into the engine. But, we're going to provide it just in case
-			stem = result.stem();
-			parentDirectory = mEngineRawDirectory / result.parent_path();
-		}
-
-		if (!std::filesystem::exists(parentDirectory))
-		{
-			R2_CHECK(false, "Maybe just for testing");
-			return "";
-		}
-
-		for (const auto& entry : std::filesystem::directory_iterator(parentDirectory))
-		{
-			//look through the parent directory for the stem name
-			if (entry.path().stem() == stem)
-			{
-				return entry.path();
-			}
-		}
-
-		return "";
-	}
+	
 
 	void AssetPanel::ModelRawContextMenu(const std::filesystem::path& path)
 	{
 		ContextMenuTitle("Model");
 
-		if (ImGui::Selectable("Build & Import To Level"))
+		if (ImGui::Selectable("Build Model"))
 		{
-			printf("@TODO(Serge): Import to Current Level\n");
+			std::filesystem::path preferredPath = path;
+			preferredPath = preferredPath.make_preferred();
+
+			auto binAssetPath = FindBinAssetPathFromRawAsset(path);
+
+			std::filesystem::path materialManifestPath = "";
+
+			if (std::filesystem::relative(binAssetPath, mAppBinDirectory) != "")
+			{
+				//get the app's material manifest
+				materialManifestPath = MENG.GetApplication().GetMaterialPacksManifestsBinaryPaths().at(0);
+			}
+			else
+			{
+				//else get r2's
+				char materialsPath[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
+
+				materialManifestPath = materialsPath;
+			}
+
+			materialManifestPath = materialManifestPath.make_preferred();
+
+
+			//@TODO(Serge): put in the hotreload pipeline for threading
+			int result = r2::asset::pln::assetconvert::RunModelConverter(preferredPath.string(), binAssetPath.make_preferred().parent_path().string(), materialManifestPath.string());
+
+			R2_CHECK(result == 0, "?");
 		}
 	}
 
@@ -631,6 +614,102 @@ namespace r2::edit
 
 	}
 
+
+	std::filesystem::path AssetPanel::FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path)
+	{
+		//@NOTE(Serge): this whole method relies on the fact that we mirror our data in assets_bin to assets
+		//				probably will only work for models and textures
+
+		if (!std::filesystem::exists(path))
+			return "";
+
+		//now check each binary base against the path
+		//if the path is a non-empty relative path then use the other
+		std::filesystem::path pathToUse = path;
+		pathToUse = pathToUse.make_preferred();
+
+		std::filesystem::path result = "";
+
+		std::filesystem::path stem = "";
+		std::filesystem::path parentDirectory = "";
+		if ((result = std::filesystem::relative(pathToUse, mAppBinDirectory)) != "")
+		{
+			stem = result.stem();
+			parentDirectory = mAppRawDirectory / result.parent_path();
+		}
+		else if ((result = std::filesystem::relative(pathToUse, mEngineBinDirectory)) != "")
+		{
+			//@NOTE(Serge): this case should be basically non-existent since we shouldn't ever be
+			//				importing stuff into the engine. But, we're going to provide it just in case
+			stem = result.stem();
+			parentDirectory = mEngineRawDirectory / result.parent_path();
+		}
+
+		if (!std::filesystem::exists(parentDirectory))
+		{
+			R2_CHECK(false, "Maybe just for testing");
+			return "";
+		}
+
+		for (const auto& entry : std::filesystem::directory_iterator(parentDirectory))
+		{
+			//look through the parent directory for the stem name
+			if (entry.path().stem() == stem)
+			{
+				return entry.path();
+			}
+		}
+
+		return "";
+	}
+
+	std::filesystem::path AssetPanel::FindBinAssetPathFromRawAsset(const std::filesystem::path& path)
+	{
+		//@NOTE(Serge): this whole method relies on the fact that we mirror our data in assets_bin to assets
+		//				probably will only work for models and textures
+
+		if (!std::filesystem::exists(path))
+			return "";
+
+		//now check each binary base against the path
+		//if the path is a non-empty relative path then use the other
+		std::filesystem::path pathToUse = path;
+		pathToUse = pathToUse.make_preferred();
+
+		std::filesystem::path result = "";
+
+		std::filesystem::path stem = "";
+		std::filesystem::path parentDirectory = "";
+		if ((result = std::filesystem::relative(pathToUse, mAppRawDirectory)) != "")
+		{
+			stem = result.stem();
+			parentDirectory = mAppBinDirectory / result.parent_path();
+		}
+		else if ((result = std::filesystem::relative(pathToUse, mEngineRawDirectory)) != "")
+		{
+			//@NOTE(Serge): this case should be basically non-existent since we shouldn't ever be
+			//				importing stuff into the engine. But, we're going to provide it just in case
+			stem = result.stem();
+			parentDirectory = mEngineBinDirectory / result.parent_path();
+		}
+
+		if (!std::filesystem::exists(parentDirectory))
+		{
+			R2_CHECK(false, "Maybe just for testing");
+			return "";
+		}
+
+		for (const auto& entry : std::filesystem::directory_iterator(parentDirectory))
+		{
+			//look through the parent directory for the stem name
+			if (entry.path().stem() == stem)
+			{
+				return entry.path();
+			}
+		}
+
+		return "";
+	}
 }
 
 #endif

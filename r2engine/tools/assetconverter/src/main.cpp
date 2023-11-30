@@ -253,70 +253,96 @@ int main(int agrc, char** argv)
 	flat::MipMapFilter mipMapFilter = flat::MipMapFilter_BOX;
 
 
-	for (auto& p : fs::directory_iterator(inputPath))
+	if (fs::is_regular_file(inputPath))
 	{
-		if (p.is_regular_file() && p.file_size() > 0 && p.path().filename().string() == "meta.json")
+		std::string extension = inputPath.extension().string();
+
+		if (IsModel(extension))
 		{
-			CreateMetaDataFile(p.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
-		}
-	}
+			//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
+			std::filesystem::path animationDirectory = "";
 
-	for (auto& p : fs::recursive_directory_iterator(inputPath))
-	{
-		fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, p.path());
+			std::filesystem::path animationsPath = inputPath.parent_path() / "Animations";
 
-		std::string extension = p.path().extension().string();
-
-	//	printf("Next file or folder: %s\n", p.path().string().c_str());
-
-		if (p.is_directory())
-		{
-			if(SkipDirectory(p.path()))
-				continue;
-
-			if (!fs::exists(newOutputPath))
+			if (std::filesystem::is_directory(animationsPath))
 			{
-				printf("Making new directory: %s\n", newOutputPath.string().c_str());
-
-				fs::create_directory(newOutputPath);
+				animationDirectory = animationsPath;
 			}
 
-			//make the meta.tmet file 
-			for (auto& sp : fs::directory_iterator(p.path()))
+			r2::assets::assetlib::ConvertModel(inputPath, outputPath, materialParamsManifestPath, animationDirectory, extension);
+		}
+
+		//@TODO(Serge): other types here
+	}
+	else if(fs::is_directory(inputPath))
+	{
+		for (auto& p : fs::directory_iterator(inputPath))
+		{
+			if (p.is_regular_file() && p.file_size() > 0 && p.path().filename().string() == "meta.json")
 			{
-				if (fs::is_regular_file(sp) && sp.path().filename().string() == "meta.json" )
+				CreateMetaDataFile(p.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
+			}
+		}
+
+		for (auto& p : fs::recursive_directory_iterator(inputPath))
+		{
+			fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, p.path());
+
+			std::string extension = p.path().extension().string();
+
+			//	printf("Next file or folder: %s\n", p.path().string().c_str());
+
+			if (p.is_directory())
+			{
+				if (SkipDirectory(p.path()))
+					continue;
+
+				if (!fs::exists(newOutputPath))
 				{
-					CreateMetaDataFile(sp.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
+					printf("Making new directory: %s\n", newOutputPath.string().c_str());
+
+					fs::create_directory(newOutputPath);
+				}
+
+				//make the meta.tmet file 
+				for (auto& sp : fs::directory_iterator(p.path()))
+				{
+					if (fs::is_regular_file(sp) && sp.path().filename().string() == "meta.json")
+					{
+						CreateMetaDataFile(sp.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
+					}
+				}
+			}
+			else if (p.is_regular_file() && p.file_size() > 0)
+			{
+				if (p.path().parent_path().stem().string() == "Animations")
+				{
+					continue;
+				}
+
+				if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
+				{
+					r2::assets::assetlib::ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);
+				}
+				else if (IsModel(extension))
+				{
+					//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
+					std::filesystem::path animationDirectory = "";
+
+					std::filesystem::path animationsPath = p.path().parent_path() / "Animations";
+
+					if (std::filesystem::is_directory(animationsPath))
+					{
+						animationDirectory = animationsPath;
+					}
+
+					r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, extension);
 				}
 			}
 		}
-		else if (p.is_regular_file() && p.file_size() > 0)
-		{
-			if (p.path().parent_path().stem().string() == "Animations")
-			{
-				continue;
-			}
-
-			if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
-			{
-				r2::assets::assetlib::ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);
-			}
-			else if (IsModel(extension))
-			{
-				//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
-				std::filesystem::path animationDirectory = "";
-				
-				std::filesystem::path animationsPath = p.path().parent_path() / "Animations";
-
-				if (std::filesystem::is_directory(animationsPath))
-				{
-					animationDirectory = animationsPath;
-				}
-
-				r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, extension);
-			}
-		}
 	}
+
+	
 
 	return 0;
 }

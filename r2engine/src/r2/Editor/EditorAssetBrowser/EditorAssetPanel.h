@@ -42,7 +42,7 @@ namespace r2::edit
 
 		std::filesystem::path FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path);
 
-		
+		std::filesystem::path FindBinAssetPathFromRawAsset(const std::filesystem::path& path);
 
 
 		std::filesystem::path mEngineRawDirectory;
