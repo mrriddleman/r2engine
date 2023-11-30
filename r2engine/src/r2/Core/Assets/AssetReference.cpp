@@ -4,6 +4,8 @@
 
 #include "r2/Core/Assets/AssetReference.h"
 #include "r2/Core/Assets/AssetRef_generated.h"
+#include "r2/Core/File/PathUtils.h"
+
 namespace r2::asset
 {
 
@@ -20,8 +22,12 @@ namespace r2::asset
 	{
 		AssetReference newAssetReference;
 
-		newAssetReference.binPath = binPath;
-		newAssetReference.rawPath = rawPath;
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(binPath.string().c_str(), sanitizedPath);
+		newAssetReference.binPath = sanitizedPath;
+		r2::fs::utils::SanitizeSubPath(rawPath.string().c_str(), sanitizedPath);
+		newAssetReference.rawPath = sanitizedPath;
+
 		newAssetReference.assetName.hashID = r2::asset::GetAssetNameForFilePath(binPath.string().c_str(), assetType);
 		char nameStr[r2::fs::FILE_PATH_LENGTH];
 		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), nameStr, assetType);

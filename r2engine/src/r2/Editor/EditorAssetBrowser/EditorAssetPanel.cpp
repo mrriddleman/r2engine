@@ -522,13 +522,60 @@ namespace r2::edit
 			{
 				//add the path to assetLib
 				auto rawAssetPath = FindRawAssetPathFromBinaryAsset(path);
-				r2::asset::lib::ImportAsset(assetLib,  r2::asset::CreateNewAssetReference(path, rawAssetPath, r2::asset::RMODEL), r2::asset::RMODEL);
+				if (rawAssetPath != "")
+				{
+					r2::asset::lib::ImportAsset(assetLib,  r2::asset::CreateNewAssetReference(path, rawAssetPath, r2::asset::RMODEL), r2::asset::RMODEL);
+				}
+				
 			}
 		}
 	}
 
 	std::filesystem::path AssetPanel::FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path)
 	{
+		//@NOTE(Serge): this whole method relies on the fact that we mirror our data in assets_bin to assets
+		//				probably will only work for models and textures
+
+		if (!std::filesystem::exists(path))
+			return "";
+
+		//now check each binary base against the path
+		//if the path is a non-empty relative path then use the other
+		std::filesystem::path pathToUse = path;
+		pathToUse = pathToUse.make_preferred();
+
+		std::filesystem::path result = "";
+
+		std::filesystem::path stem = "";
+		std::filesystem::path parentDirectory = "";
+		if ((result = std::filesystem::relative( pathToUse, mAppBinDirectory)) != "")
+		{
+			stem = result.stem();
+			parentDirectory = mAppRawDirectory / result.parent_path();
+		}
+		else if ((result = std::filesystem::relative( pathToUse, mEngineBinDirectory)) != "")
+		{
+			//@NOTE(Serge): this case should be basically non-existent since we shouldn't ever be
+			//				importing stuff into the engine. But, we're going to provide it just in case
+			stem = result.stem();
+			parentDirectory = mEngineRawDirectory / result.parent_path();
+		}
+
+		if (!std::filesystem::exists(parentDirectory))
+		{
+			R2_CHECK(false, "Maybe just for testing");
+			return "";
+		}
+
+		for (const auto& entry : std::filesystem::directory_iterator(parentDirectory))
+		{
+			//look through the parent directory for the stem name
+			if (entry.path().stem() == stem)
+			{
+				return entry.path();
+			}
+		}
+
 		return "";
 	}
 

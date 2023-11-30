@@ -407,9 +407,12 @@ namespace r2::asset::lib
 
             if (manifestAssetFile->HasAsset(asset))
             {
+                FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
                 return true;
             }
         }
+
+        FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
 
         return false;
     }
@@ -440,7 +443,11 @@ namespace r2::asset::lib
 
         auto* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, 0);
 
-        return manifestAssetFile->AddAssetReference(assetReference);
+        bool result = manifestAssetFile->AddAssetReference(assetReference);
+
+        FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
+
+        return result;
 	}
 
     bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, pln::HotReloadType type)
