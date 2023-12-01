@@ -354,24 +354,23 @@ namespace r2::asset::pln::tex
 			bool isAnisotropic = false;
 			bool hasIncrementedForCubemap = false;
 
-
-			
-
-
 			u64 numTexturesInPack = 0;
 			u64 packSize = 0;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> albedos;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> normals;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> emissives;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> metallics;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> details;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> roughnesses;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoats;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatRoughnesses;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatNormals;
+
+			std::vector<flatbuffers::Offset<flat::AssetRef>> textureAssetRefs;
+
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> albedos;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> normals;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> emissives;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> metallics;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> details;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> roughnesses;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoats;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatRoughnesses;
+			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatNormals;
 
 
 			std::vector<std::string> cubemapTexturePaths;
@@ -442,72 +441,85 @@ namespace r2::asset::pln::tex
 
 				if (file.path().parent_path().stem().string() == "albedo")
 				{
-					albedos.push_back( builder.CreateString(sanitizedPath) );
+					//albedos.push_back( builder.CreateString(sanitizedPath) );
 					cubemapTexturePaths.push_back(sanitizedPath);
 
-					++numTexturesInPack;
+					
 				}
-				else if (file.path().parent_path().stem().string() == "normal")
-				{
-					normals.push_back(builder.CreateString(sanitizedPath));
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "emissive")
-				{
-					emissives.push_back(builder.CreateString(sanitizedPath));
+				char assetNameString[r2::fs::FILE_PATH_LENGTH];
+				r2::asset::MakeAssetNameStringForFilePath(sanitizedPath, assetNameString, r2::asset::TEXTURE);
+			//	r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, , r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType());
+				
+				auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(sanitizedPath, r2::asset::TEXTURE), builder.CreateString(assetNameString));
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "metallic")
-				{
-					metallics.push_back(builder.CreateString(sanitizedPath));
+				auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(sanitizedPath), builder.CreateString(file.path().string()));
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "occlusion")
-				{
-					occlusions.push_back(builder.CreateString(sanitizedPath));
+				textureAssetRefs.push_back(assetRef);
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "detail")
-				{
-					details.push_back(builder.CreateString(sanitizedPath));
+				++numTexturesInPack;
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "height")
-				{
-					heights.push_back(builder.CreateString(sanitizedPath));
+				//else if (file.path().parent_path().stem().string() == "normal")
+				//{
+				//	normals.push_back(builder.CreateString(sanitizedPath));
 
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "anisotropy")
-				{
-					anisotropys.push_back(builder.CreateString(sanitizedPath));
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "roughness")
-				{
-					roughnesses.push_back(builder.CreateString(sanitizedPath));
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "clearCoat")
-				{
-					roughnesses.push_back(builder.CreateString(sanitizedPath));
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "clearCoatRoughness")
-				{
-					roughnesses.push_back(builder.CreateString(sanitizedPath));
-					++numTexturesInPack;
-				}
-				else if (file.path().parent_path().stem().string() == "clearCoatNormal")
-				{
-					roughnesses.push_back(builder.CreateString(sanitizedPath));
-					++numTexturesInPack;
-				}
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "emissive")
+				//{
+				//	emissives.push_back(builder.CreateString(sanitizedPath));
+
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "metallic")
+				//{
+				//	metallics.push_back(builder.CreateString(sanitizedPath));
+
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "occlusion")
+				//{
+				//	occlusions.push_back(builder.CreateString(sanitizedPath));
+
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "detail")
+				//{
+				//	details.push_back(builder.CreateString(sanitizedPath));
+
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "height")
+				//{
+				//	heights.push_back(builder.CreateString(sanitizedPath));
+
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "anisotropy")
+				//{
+				//	anisotropys.push_back(builder.CreateString(sanitizedPath));
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "roughness")
+				//{
+				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "clearCoat")
+				//{
+				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "clearCoatRoughness")
+				//{
+				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
+				//	++numTexturesInPack;
+				//}
+				//else if (file.path().parent_path().stem().string() == "clearCoatNormal")
+				//{
+				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
+				//	++numTexturesInPack;
+				//}
 
 			}
 
@@ -519,7 +531,8 @@ namespace r2::asset::pln::tex
 
 			std::vector<flatbuffers::Offset<flat::MipLevel>> cubemapMipLevels;
 
-			if (texturePackMetaData->mipLevels())
+			//@TODO(Serge): fix this when we have mip levels for normal textures
+			if (isCubemap)
 			{
 				auto numMipLevels = texturePackMetaData->mipLevels()->size();
 
@@ -553,20 +566,26 @@ namespace r2::asset::pln::tex
 				}
 			}
 
+			flatbuffers::Offset<flat::AssetName> packAssetName = flat::CreateAssetName(builder, 0, packName, builder.CreateString(texturePackDir.path().stem().string()));
+
 			//make the texture pack and add it to the vector
-			auto texturePack = flat::CreateTexturePack(builder, packName,
-				builder.CreateVector(albedos),
-				builder.CreateVector(normals),
-				builder.CreateVector(emissives),
-				builder.CreateVector(metallics),
-				builder.CreateVector(occlusions),
-				builder.CreateVector(roughnesses),
-				builder.CreateVector(heights),
-				builder.CreateVector(anisotropys),
-				builder.CreateVector(details),
-				builder.CreateVector(clearCoats),
-				builder.CreateVector(clearCoatRoughnesses),
-				builder.CreateVector(clearCoatNormals),
+			auto texturePack = flat::CreateTexturePack(
+				builder,
+				packAssetName, 
+				builder.CreateVector(textureAssetRefs),
+
+				//builder.CreateVector(albedos),
+				//builder.CreateVector(normals),
+				//builder.CreateVector(emissives),
+				//builder.CreateVector(metallics),
+				//builder.CreateVector(occlusions),
+				//builder.CreateVector(roughnesses),
+				//builder.CreateVector(heights),
+				//builder.CreateVector(anisotropys),
+				//builder.CreateVector(details),
+				//builder.CreateVector(clearCoats),
+				//builder.CreateVector(clearCoatRoughnesses),
+				//builder.CreateVector(clearCoatNormals),
 				packSize, numTexturesInPack,
 				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 
@@ -586,8 +605,11 @@ namespace r2::asset::pln::tex
 			formatMetaData.push_back(flat::CreateFormatMetaData(builder, rawFormat.textureFormat, rawFormat.maxWidth, rawFormat.maxHeight, rawFormat.numTextures, rawFormat.maxMips, rawFormat.isCubemap, rawFormat.isAnisotropic));
 		}
 
+		u64 texturePacksManifestAssetName = r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::TEXTURE_PACK_MANIFEST);
+		flat::CreateAssetName(builder, 0, texturePacksManifestAssetName, builder.CreateString(std::filesystem::path(binFilePath).stem().string()));
+
 		//add the texture packs to the manifest
- 		auto manifest = flat::CreateTexturePacksManifest(builder, builder.CreateVector(texturePacks), totalNumberOfTextures, manifestTotalTextureSize, maxNumTexturesInAPack, builder.CreateVector(formatMetaData));
+ 		auto manifest = flat::CreateTexturePacksManifest(builder, 1, 0, builder.CreateVector(texturePacks), totalNumberOfTextures, manifestTotalTextureSize, maxNumTexturesInAPack, builder.CreateVector(formatMetaData));
 
 		//generate the manifest
 		builder.Finish(manifest);
@@ -661,7 +683,7 @@ namespace r2::asset::pln::tex
 		{
 			const auto texturePack = manifest->texturePacks()->Get(i);
 
-			if (texturePack->packName() == packNameStringID)
+			if (texturePack->assetName()->assetName() == packNameStringID)
 			{
 				delete[] manifestFileData;
 				return true;
@@ -695,9 +717,19 @@ namespace r2::asset::pln::tex
 		{
 			const auto texturePack = manifest->texturePacks()->Get(i);
 
-			if (texturePack->packName() == packNameStringID)
+			if (texturePack->assetName()->assetName() == packNameStringID)
 			{
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->textures()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->textures()->Get(filePathIndex)->binPath()->str()) == std::filesystem::path(filePath))
+					{
+						delete[] manifestFileData;
+						return true;
+					}
+				}
+
+				/*for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
 				{
 					if (std::filesystem::path(texturePack->albedo()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
@@ -803,7 +835,7 @@ namespace r2::asset::pln::tex
 						delete[] manifestFileData;
 						return  true;
 					}
-				}
+				}*/
 			}
 		}
 
@@ -811,138 +843,6 @@ namespace r2::asset::pln::tex
 
 		return false;
 	}
-
-	/*std::vector<std::vector<std::string>> GetAllTexturesInTexturePack(const std::string& manifestFilePath, const std::string& packName)
-	{
-		std::vector<std::vector<std::string>> texturesInPack;
-		texturesInPack.resize(r2::draw::tex::TextureType::NUM_TEXTURE_TYPES);
-
-		char* manifestFileData = utils::ReadFile(manifestFilePath);
-
-		if (!manifestFileData)
-		{
-			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
-			return texturesInPack;
-		}
-
-		auto packNameStringID = r2::asset::Asset::GetAssetNameForFilePath(packName.c_str(), r2::asset::TEXTURE_PACK);
-
-		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
-
-		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
-
-		auto numTexturePacks = manifest->texturePacks()->size();
-
-		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
-		{
-			const auto texturePack = manifest->texturePacks()->Get(i);
-
-			if (texturePack->packName() == packNameStringID)
-			{
-				if (texturePack->albedo()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Diffuse].push_back(texturePack->albedo()->Get(filePathIndex)->str());
-					}
-				}
-
-				if (texturePack->normal()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->normal()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Normal].push_back(texturePack->normal()->Get(filePathIndex)->str());
-					}
-				}
-
-				
-				if (texturePack->metallic()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->metallic()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Metallic].push_back(texturePack->metallic()->Get(filePathIndex)->str());
-					}
-				}
-				
-				if (texturePack->roughness()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->roughness()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Roughness].push_back(texturePack->roughness()->Get(filePathIndex)->str());
-					}
-				}
-				
-				if (texturePack->occlusion()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->occlusion()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Occlusion].push_back(texturePack->occlusion()->Get(filePathIndex)->str());
-					}
-				}
-
-				if (texturePack->emissive()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->emissive()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Emissive].push_back(texturePack->emissive()->Get(filePathIndex)->str());
-					}
-				}
-
-				if (texturePack->anisotropy()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->anisotropy()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Anisotropy].push_back(texturePack->anisotropy()->Get(filePathIndex)->str());
-					}
-				}
-
-				
-				if (texturePack->height()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->height()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Height].push_back(texturePack->height()->Get(filePathIndex)->str());
-					}
-				}
-				
-				if (texturePack->detail()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->detail()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::Detail].push_back(texturePack->detail()->Get(filePathIndex)->str());
-					}
-				}
-				
-				if (texturePack->clearCoat()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoat()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::ClearCoat].push_back(texturePack->clearCoat()->Get(filePathIndex)->str());
-					}
-				}
-				
-				if (texturePack->clearCoatRoughness()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatRoughness()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::ClearCoatRoughness].push_back(texturePack->clearCoatRoughness()->Get(filePathIndex)->str());
-					}
-				}
-
-				if (texturePack->clearCoatNormal()->size() > 0)
-				{
-					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatNormal()->size(); ++filePathIndex)
-					{
-						texturesInPack[r2::draw::tex::TextureType::ClearCoatNormal].push_back(texturePack->clearCoatNormal()->Get(filePathIndex)->str());
-					}
-				}
-			}
-		}
-
-		delete[] manifestFileData;
-		return texturesInPack;
-	}*/
-
 
 	void MakeTexturePackMetaFileFromFlat(const flat::TexturePackMetaData* texturePackMetaData, TexturePackMetaFile& metaFile)
 	{

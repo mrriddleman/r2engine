@@ -6,8 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-#include "r2/Core/Assets/AssetName_generated.h"
-#include "r2/Core/Assets/AssetRef_generated.h"
+#include "AssetName_generated.h"
+#include "AssetRef_generated.h"
 
 namespace flat {
 

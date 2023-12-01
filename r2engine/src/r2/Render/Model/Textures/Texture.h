@@ -39,7 +39,8 @@ namespace r2::draw::tex
 
 	const u32 MAX_MIP_LEVELS = 10;
 
-	
+	//@NOTE(Serge): This is only being used for NUM_TEXTURE_TYPES in specific things
+	//@TODO(Serge): get rid of this completely
 	enum TextureType
 	{
 		Diffuse = 0,

@@ -6,6 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
+#include "AssetRef_generated.h"
 #include "TextureMetaData_generated.h"
 #include "TexturePackMetaData_generated.h"
 
@@ -23,61 +25,17 @@ struct TexturePacksManifestBuilder;
 struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef TexturePackBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PACKNAME = 4,
-    VT_ALBEDO = 6,
-    VT_NORMAL = 8,
-    VT_EMISSIVE = 10,
-    VT_METALLIC = 12,
-    VT_OCCLUSION = 14,
-    VT_ROUGHNESS = 16,
-    VT_HEIGHT = 18,
-    VT_ANISOTROPY = 20,
-    VT_DETAIL = 22,
-    VT_CLEARCOAT = 24,
-    VT_CLEARCOATROUGHNESS = 26,
-    VT_CLEARCOATNORMAL = 28,
-    VT_PACKSIZE = 30,
-    VT_TOTALNUMBEROFTEXTURES = 32,
-    VT_METADATA = 34
+    VT_ASSETNAME = 4,
+    VT_TEXTURES = 6,
+    VT_PACKSIZE = 8,
+    VT_TOTALNUMBEROFTEXTURES = 10,
+    VT_METADATA = 12
   };
-  uint64_t packName() const {
-    return GetField<uint64_t>(VT_PACKNAME, 0);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *albedo() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_ALBEDO);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *normal() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_NORMAL);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *emissive() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_EMISSIVE);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *metallic() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_METALLIC);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *occlusion() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_OCCLUSION);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *roughness() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_ROUGHNESS);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *height() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_HEIGHT);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *anisotropy() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_ANISOTROPY);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *detail() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_DETAIL);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoat() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOAT);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatRoughness() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOATROUGHNESS);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatNormal() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOATNORMAL);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *textures() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *>(VT_TEXTURES);
   }
   uint64_t packSize() const {
     return GetField<uint64_t>(VT_PACKSIZE, 0);
@@ -90,43 +48,11 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_PACKNAME) &&
-           VerifyOffset(verifier, VT_ALBEDO) &&
-           verifier.VerifyVector(albedo()) &&
-           verifier.VerifyVectorOfStrings(albedo()) &&
-           VerifyOffset(verifier, VT_NORMAL) &&
-           verifier.VerifyVector(normal()) &&
-           verifier.VerifyVectorOfStrings(normal()) &&
-           VerifyOffset(verifier, VT_EMISSIVE) &&
-           verifier.VerifyVector(emissive()) &&
-           verifier.VerifyVectorOfStrings(emissive()) &&
-           VerifyOffset(verifier, VT_METALLIC) &&
-           verifier.VerifyVector(metallic()) &&
-           verifier.VerifyVectorOfStrings(metallic()) &&
-           VerifyOffset(verifier, VT_OCCLUSION) &&
-           verifier.VerifyVector(occlusion()) &&
-           verifier.VerifyVectorOfStrings(occlusion()) &&
-           VerifyOffset(verifier, VT_ROUGHNESS) &&
-           verifier.VerifyVector(roughness()) &&
-           verifier.VerifyVectorOfStrings(roughness()) &&
-           VerifyOffset(verifier, VT_HEIGHT) &&
-           verifier.VerifyVector(height()) &&
-           verifier.VerifyVectorOfStrings(height()) &&
-           VerifyOffset(verifier, VT_ANISOTROPY) &&
-           verifier.VerifyVector(anisotropy()) &&
-           verifier.VerifyVectorOfStrings(anisotropy()) &&
-           VerifyOffset(verifier, VT_DETAIL) &&
-           verifier.VerifyVector(detail()) &&
-           verifier.VerifyVectorOfStrings(detail()) &&
-           VerifyOffset(verifier, VT_CLEARCOAT) &&
-           verifier.VerifyVector(clearCoat()) &&
-           verifier.VerifyVectorOfStrings(clearCoat()) &&
-           VerifyOffset(verifier, VT_CLEARCOATROUGHNESS) &&
-           verifier.VerifyVector(clearCoatRoughness()) &&
-           verifier.VerifyVectorOfStrings(clearCoatRoughness()) &&
-           VerifyOffset(verifier, VT_CLEARCOATNORMAL) &&
-           verifier.VerifyVector(clearCoatNormal()) &&
-           verifier.VerifyVectorOfStrings(clearCoatNormal()) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
+           VerifyOffset(verifier, VT_TEXTURES) &&
+           verifier.VerifyVector(textures()) &&
+           verifier.VerifyVectorOfTables(textures()) &&
            VerifyField<uint64_t>(verifier, VT_PACKSIZE) &&
            VerifyField<uint64_t>(verifier, VT_TOTALNUMBEROFTEXTURES) &&
            VerifyOffset(verifier, VT_METADATA) &&
@@ -139,44 +65,11 @@ struct TexturePackBuilder {
   typedef TexturePack Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_packName(uint64_t packName) {
-    fbb_.AddElement<uint64_t>(TexturePack::VT_PACKNAME, packName, 0);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(TexturePack::VT_ASSETNAME, assetName);
   }
-  void add_albedo(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> albedo) {
-    fbb_.AddOffset(TexturePack::VT_ALBEDO, albedo);
-  }
-  void add_normal(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> normal) {
-    fbb_.AddOffset(TexturePack::VT_NORMAL, normal);
-  }
-  void add_emissive(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive) {
-    fbb_.AddOffset(TexturePack::VT_EMISSIVE, emissive);
-  }
-  void add_metallic(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metallic) {
-    fbb_.AddOffset(TexturePack::VT_METALLIC, metallic);
-  }
-  void add_occlusion(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion) {
-    fbb_.AddOffset(TexturePack::VT_OCCLUSION, occlusion);
-  }
-  void add_roughness(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> roughness) {
-    fbb_.AddOffset(TexturePack::VT_ROUGHNESS, roughness);
-  }
-  void add_height(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height) {
-    fbb_.AddOffset(TexturePack::VT_HEIGHT, height);
-  }
-  void add_anisotropy(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> anisotropy) {
-    fbb_.AddOffset(TexturePack::VT_ANISOTROPY, anisotropy);
-  }
-  void add_detail(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail) {
-    fbb_.AddOffset(TexturePack::VT_DETAIL, detail);
-  }
-  void add_clearCoat(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoat) {
-    fbb_.AddOffset(TexturePack::VT_CLEARCOAT, clearCoat);
-  }
-  void add_clearCoatRoughness(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatRoughness) {
-    fbb_.AddOffset(TexturePack::VT_CLEARCOATROUGHNESS, clearCoatRoughness);
-  }
-  void add_clearCoatNormal(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatNormal) {
-    fbb_.AddOffset(TexturePack::VT_CLEARCOATNORMAL, clearCoatNormal);
+  void add_textures(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> textures) {
+    fbb_.AddOffset(TexturePack::VT_TEXTURES, textures);
   }
   void add_packSize(uint64_t packSize) {
     fbb_.AddElement<uint64_t>(TexturePack::VT_PACKSIZE, packSize, 0);
@@ -201,87 +94,32 @@ struct TexturePackBuilder {
 
 inline flatbuffers::Offset<TexturePack> CreateTexturePack(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t packName = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> albedo = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> normal = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metallic = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> roughness = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> anisotropy = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoat = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatRoughness = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatNormal = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> textures = 0,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
   TexturePackBuilder builder_(_fbb);
   builder_.add_totalNumberOfTextures(totalNumberOfTextures);
   builder_.add_packSize(packSize);
-  builder_.add_packName(packName);
   builder_.add_metaData(metaData);
-  builder_.add_clearCoatNormal(clearCoatNormal);
-  builder_.add_clearCoatRoughness(clearCoatRoughness);
-  builder_.add_clearCoat(clearCoat);
-  builder_.add_detail(detail);
-  builder_.add_anisotropy(anisotropy);
-  builder_.add_height(height);
-  builder_.add_roughness(roughness);
-  builder_.add_occlusion(occlusion);
-  builder_.add_metallic(metallic);
-  builder_.add_emissive(emissive);
-  builder_.add_normal(normal);
-  builder_.add_albedo(albedo);
+  builder_.add_textures(textures);
+  builder_.add_assetName(assetName);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t packName = 0,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *albedo = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *normal = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *emissive = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *metallic = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *occlusion = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *roughness = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *height = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *anisotropy = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *detail = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoat = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatRoughness = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatNormal = nullptr,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    const std::vector<flatbuffers::Offset<flat::AssetRef>> *textures = nullptr,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
-  auto albedo__ = albedo ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*albedo) : 0;
-  auto normal__ = normal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*normal) : 0;
-  auto emissive__ = emissive ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*emissive) : 0;
-  auto metallic__ = metallic ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*metallic) : 0;
-  auto occlusion__ = occlusion ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*occlusion) : 0;
-  auto roughness__ = roughness ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*roughness) : 0;
-  auto height__ = height ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*height) : 0;
-  auto anisotropy__ = anisotropy ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*anisotropy) : 0;
-  auto detail__ = detail ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*detail) : 0;
-  auto clearCoat__ = clearCoat ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoat) : 0;
-  auto clearCoatRoughness__ = clearCoatRoughness ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoatRoughness) : 0;
-  auto clearCoatNormal__ = clearCoatNormal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoatNormal) : 0;
+  auto textures__ = textures ? _fbb.CreateVector<flatbuffers::Offset<flat::AssetRef>>(*textures) : 0;
   return flat::CreateTexturePack(
       _fbb,
-      packName,
-      albedo__,
-      normal__,
-      emissive__,
-      metallic__,
-      occlusion__,
-      roughness__,
-      height__,
-      anisotropy__,
-      detail__,
-      clearCoat__,
-      clearCoatRoughness__,
-      clearCoatNormal__,
+      assetName,
+      textures__,
       packSize,
       totalNumberOfTextures,
       metaData);
@@ -392,12 +230,20 @@ inline flatbuffers::Offset<FormatMetaData> CreateFormatMetaData(
 struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef TexturePacksManifestBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_TEXTUREPACKS = 4,
-    VT_TOTALNUMBEROFTEXTURES = 6,
-    VT_TOTALTEXTURESIZE = 8,
-    VT_MAXTEXTURESINAPACK = 10,
-    VT_FORMATMETADATA = 12
+    VT_VERSION = 4,
+    VT_ASSETNAME = 6,
+    VT_TEXTUREPACKS = 8,
+    VT_TOTALNUMBEROFTEXTURES = 10,
+    VT_TOTALTEXTURESIZE = 12,
+    VT_MAXTEXTURESINAPACK = 14,
+    VT_FORMATMETADATA = 16
   };
+  uint32_t version() const {
+    return GetField<uint32_t>(VT_VERSION, 0);
+  }
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>> *texturePacks() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>> *>(VT_TEXTUREPACKS);
   }
@@ -415,6 +261,9 @@ struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_VERSION) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
            VerifyOffset(verifier, VT_TEXTUREPACKS) &&
            verifier.VerifyVector(texturePacks()) &&
            verifier.VerifyVectorOfTables(texturePacks()) &&
@@ -432,6 +281,12 @@ struct TexturePacksManifestBuilder {
   typedef TexturePacksManifest Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_version(uint32_t version) {
+    fbb_.AddElement<uint32_t>(TexturePacksManifest::VT_VERSION, version, 0);
+  }
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(TexturePacksManifest::VT_ASSETNAME, assetName);
+  }
   void add_texturePacks(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>>> texturePacks) {
     fbb_.AddOffset(TexturePacksManifest::VT_TEXTUREPACKS, texturePacks);
   }
@@ -461,6 +316,8 @@ struct TexturePacksManifestBuilder {
 
 inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifest(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>>> texturePacks = 0,
     uint64_t totalNumberOfTextures = 0,
     uint64_t totalTextureSize = 0,
@@ -472,11 +329,15 @@ inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifest(
   builder_.add_totalNumberOfTextures(totalNumberOfTextures);
   builder_.add_formatMetaData(formatMetaData);
   builder_.add_texturePacks(texturePacks);
+  builder_.add_assetName(assetName);
+  builder_.add_version(version);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifestDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
     const std::vector<flatbuffers::Offset<flat::TexturePack>> *texturePacks = nullptr,
     uint64_t totalNumberOfTextures = 0,
     uint64_t totalTextureSize = 0,
@@ -486,6 +347,8 @@ inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifestDirec
   auto formatMetaData__ = formatMetaData ? _fbb.CreateVector<flatbuffers::Offset<flat::FormatMetaData>>(*formatMetaData) : 0;
   return flat::CreateTexturePacksManifest(
       _fbb,
+      version,
+      assetName,
       texturePacks__,
       totalNumberOfTextures,
       totalTextureSize,

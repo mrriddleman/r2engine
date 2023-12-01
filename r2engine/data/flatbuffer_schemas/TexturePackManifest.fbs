@@ -1,6 +1,8 @@
 
 include "TexturePackMetaData.fbs";
 include "TextureMetaData.fbs";
+include "AssetName.fbs";
+include "AssetRef.fbs";
 
 namespace flat;
 
@@ -10,19 +12,8 @@ file_extension "tman";
 
 table TexturePack
 {
-	packName:ulong (hash:"fnv1a_64");
-	albedo:[string];
-	normal:[string];
-	emissive:[string];
-	metallic:[string];
-	occlusion:[string];
-	roughness:[string];	
-	height:[string];
-	anisotropy:[string];
-	detail:[string];
-	clearCoat:[string];
-	clearCoatRoughness:[string];
-	clearCoatNormal:[string];
+	assetName:AssetName;
+	textures:[AssetRef];
 	packSize:ulong;
 	totalNumberOfTextures:ulong;
 	metaData:TexturePackMetaData;
@@ -41,6 +32,8 @@ table FormatMetaData
 
 table TexturePacksManifest
 {
+	version:uint;
+	assetName:AssetName;
 	texturePacks:[TexturePack];
 	totalNumberOfTextures:ulong;
 	totalTextureSize:ulong;	

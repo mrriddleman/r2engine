@@ -10,6 +10,7 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TexturePackMetaData_generated.h"
+#include "r2/Core/Assets/AssetRef_generated.h"
 #include "r2/Utils/Hash.h"
 #include <algorithm>
 
@@ -138,7 +139,7 @@ namespace r2::draw::texche
 		{
 			const flat::TexturePack* texturePack = texturePacks->Get(i);
 
-			auto texturePackName = texturePack->packName();
+			auto texturePackName = texturePack->assetName()->assetName();
 
 			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, packManifestIndex);
 		}
@@ -180,7 +181,7 @@ namespace r2::draw::texche
 		{
 			const flat::TexturePack* texturePack = texturePacks->Get(i);
 
-			auto texturePackName = texturePack->packName();
+			auto texturePackName = texturePack->assetName()->assetName();
 
 			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, packManifestIndex);
 		}
@@ -195,7 +196,7 @@ namespace r2::draw::texche
 			{
 				for (u32 i = 0; i < manifest->texturePacks()->size(); ++i)
 				{
-					if (manifest->texturePacks()->Get(i)->packName() == iter->value.packName)
+					if (manifest->texturePacks()->Get(i)->assetName()->assetName() == iter->value.packName)
 					{
 						iter->value.metaData = manifest->texturePacks()->Get(i)->metaData();
 						break;
@@ -211,11 +212,13 @@ namespace r2::draw::texche
 		TexturePacksCache& texturePacksCache,
 		LoadedTexturePack& loadedTexturePack,
 		const flat::TexturePack* texturePack,
-		const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* paths)
+		const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* paths)
 	{
 		for (u32 i = 0; i < paths->size(); ++i)
 		{
-			const flatbuffers::String* texturePath = paths->Get(i);
+
+			const flatbuffers::String* texturePath = paths->Get(i)->binPath();
+			//  //paths->Get(i);
 
 			r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePath->c_str(), r2::asset::TEXTURE);
 
@@ -291,7 +294,7 @@ namespace r2::draw::texche
 
 		LoadedTexturePack loadedTexturePack;
 		
-		loadedTexturePack.packName = texturePack->packName();
+		loadedTexturePack.packName = texturePack->assetName()->assetName();
 		loadedTexturePack.metaData = texturePack->metaData();
 
 		if (loadedTexturePack.metaData->type() == flat::TextureType_TEXTURE)
@@ -299,18 +302,18 @@ namespace r2::draw::texche
 			loadedTexturePack.textures = MAKE_SARRAY(*texturePacksCache.mTexturePackArena, tex::Texture, numTexturesInThePack);
 			
 			//now load all of the textures of this pack
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->albedo());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->anisotropy());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoat());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatNormal());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatRoughness());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->detail());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->emissive());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->height());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->metallic());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->normal());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->occlusion());
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->roughness());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->textures());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->anisotropy());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoat());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatNormal());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatRoughness());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->detail());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->emissive());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->height());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->metallic());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->normal());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->occlusion());
+			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->roughness());
 		}
 		else if (loadedTexturePack.metaData->type() == flat::TextureType_CUBEMAP)
 		{
@@ -343,7 +346,7 @@ namespace r2::draw::texche
 		for (flatbuffers::uoffset_t i = 0; i < texturePacksManifest->texturePacks()->size(); ++i)
 		{
 			//@NOTE(Serge): we want to use this function since it checks to see if we have it loaded already
-			LoadTexturePackFromTexturePacksManifestFromDisk(texturePacksCache, handle, texturePacksManifest->texturePacks()->Get(i)->packName());
+			LoadTexturePackFromTexturePacksManifestFromDisk(texturePacksCache, handle, texturePacksManifest->texturePacks()->Get(i)->assetName()->assetName());
 		}
 
 		return true;
@@ -409,7 +412,7 @@ namespace r2::draw::texche
 		const flat::TexturePack* texturePack = nullptr;
 		for (flatbuffers::uoffset_t i = 0; i < texturePacksManifest->texturePacks()->size(); ++i)
 		{
-			if (texturePacksManifest->texturePacks()->Get(i)->packName() == texturePackName)
+			if (texturePacksManifest->texturePacks()->Get(i)->assetName()->assetName() == texturePackName)
 			{
 				texturePack = texturePacksManifest->texturePacks()->Get(i);
 				break;
@@ -446,7 +449,7 @@ namespace r2::draw::texche
 		for (flatbuffers::uoffset_t i = 0; i < texturePacksManifest->texturePacks()->size(); ++i)
 		{
 			//@NOTE(Serge): we want to use this function since it checks to see if we have it loaded already
-			UnloadTexturePack(texturePacksCache, handle, texturePacksManifest->texturePacks()->Get(i)->packName());
+			UnloadTexturePack(texturePacksCache, handle, texturePacksManifest->texturePacks()->Get(i)->assetName()->assetName());
 		}
 
 		return true;
@@ -517,29 +520,31 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* texturePaths, r2::asset::FileList fileList)
+	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
 	{
 		for (u32 i = 0; i < texturePaths->size(); ++i)
 		{
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->str().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
 		}
 	}
 
 	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
 	{
-		AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
-		AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-		AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-		AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-		AddAllTexturesFromTextureType(texturePack->height(), fileList);
-		AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-		AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-		AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
+		AddAllTexturesFromTextureType(texturePack->textures(), fileList);
+
+		//AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->height(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
 
 		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
 		{
@@ -579,7 +584,7 @@ namespace r2::draw::texche
 
 		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
 		{
-			if (entry.flatTexturePacksManifest->texturePacks()->Get(i)->packName() == texturePackName)
+			if (entry.flatTexturePacksManifest->texturePacks()->Get(i)->assetName()->assetName() == texturePackName)
 			{
 				return entry.flatTexturePacksManifest->texturePacks()->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP;
 			}
@@ -602,7 +607,17 @@ namespace r2::draw::texche
 	{
 		bool found = false;
 
-		const auto* albedos = texturePack->albedo();
+		const auto* textures = texturePack->textures();
+		for (flatbuffers::uoffset_t i = 0; i < textures->size(); ++i)
+		{
+			if (textures->Get(i)->assetName()->assetName() == textureName)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		/*const auto* albedos = texturePack->albedo();
 
 		for (flatbuffers::uoffset_t i = 0; i < albedos->size(); ++i)
 		{
@@ -733,7 +748,7 @@ namespace r2::draw::texche
 				found = true;
 				break;
 			}
-		}
+		}*/
 
 		return found;
 	}
@@ -764,7 +779,7 @@ namespace r2::draw::texche
 		const flat::TexturePack* foundPack = nullptr;
 		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
 		{
-			if (texturePacks->Get(i)->packName() == texturePackName)
+			if (texturePacks->Get(i)->assetName()->assetName() == texturePackName)
 			{
 				//find the texture in question
 				foundPack = texturePacks->Get(i);
@@ -836,9 +851,10 @@ namespace r2::draw::texche
 		else
 		{
 			bool foundInPack = false;
-			for (flatbuffers::uoffset_t i = 0; i < foundPack->albedo()->size(); ++i)
+			for (flatbuffers::uoffset_t i = 0; i < foundPack->textures()->size(); ++i)
 			{
-				if (STRING_ID(foundPack->albedo()->Get(i)->c_str()) == textureName)
+				//if (STRING_ID(foundPack->albedo()->Get(i)->c_str()) == textureName)
+				if(foundPack->textures()->Get(i)->assetName()->assetName() == textureName)
 				{
 					foundInPack = true;
 					break;

@@ -46,29 +46,29 @@ namespace r2::asset
 		return mAssetType;
 	}
 
-	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* texturePaths, r2::asset::FileList fileList)
+	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
 	{
 		for (u32 i = 0; i < texturePaths->size(); ++i)
 		{
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
 		}
 	}
 
 	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
 	{
-		AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
-		AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-		AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-		AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-		AddAllTexturesFromTextureType(texturePack->height(), fileList);
-		AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-		AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-		AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
+		AddAllTexturesFromTextureType(texturePack->textures(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->height(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
+		//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
 
 		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
 		{

@@ -91,7 +91,8 @@ project "r2engine"
 		"%{includeDirs.ImGuizmo}",
 		"%{prj.name}/src/r2/Render/Model",
 		"%{prj.name}/src/r2/Render/Model/Shader",
-		"%{prj.name}/src/r2/Game/ECS"
+		"%{prj.name}/src/r2/Game/ECS",
+		"%{prj.name}/src/r2/Core/Assets"
 	}
 
 	links
