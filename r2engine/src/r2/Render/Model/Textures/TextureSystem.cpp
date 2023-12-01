@@ -15,7 +15,7 @@ namespace r2::draw
 	{
 		u64 assetName;
 		r2::draw::tex::GPUHandle gpuHandle;
-		r2::draw::tex::TextureType type = tex::Diffuse;
+//		r2::draw::tex::TextureType type = tex::Diffuse;
 		float anisotropy;
 		s32 wrapMode;
 		s32 minFilter;
@@ -205,7 +205,7 @@ namespace r2::draw::texsys
 
 		texGPUHandle.assetName = texture.textureAssetHandle.handle;
 		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(imageData, dataSize, anisotropy, wrapMode, minFilter, magFilter);
-		texGPUHandle.type = texture.type;
+		//texGPUHandle.type = texture.type;
 		texGPUHandle.anisotropy = anisotropy;
 		texGPUHandle.minFilter = minFilter;
 		texGPUHandle.magFilter = magFilter;
@@ -266,7 +266,7 @@ namespace r2::draw::texsys
 
 		texGPUHandle.assetName = cubemapAssetHandle.handle;
 		texGPUHandle.gpuHandle = tex::CreateTexture(textureFormat, 1, true);
-		texGPUHandle.type = tex::Cubemap;
+	//	texGPUHandle.type = tex::NUM_TEXTURE_TYPES;
 		texGPUHandle.anisotropy = anisotropy;
 		texGPUHandle.minFilter = minFilter;
 		texGPUHandle.magFilter = magFilter;
@@ -311,8 +311,8 @@ namespace r2::draw::texsys
 		{
 			UnloadFromGPU(texture);
 		}
-
-		texsys::UploadToGPU({ texture, texGPUHandle.type }, texGPUHandle.anisotropy, texGPUHandle.wrapMode, texGPUHandle.minFilter, texGPUHandle.magFilter);
+//, texGPUHandle.type 
+		texsys::UploadToGPU({ texture}, texGPUHandle.anisotropy, texGPUHandle.wrapMode, texGPUHandle.minFilter, texGPUHandle.magFilter);
 	}
 
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture)

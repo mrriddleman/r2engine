@@ -39,6 +39,7 @@ namespace r2::draw::tex
 
 	const u32 MAX_MIP_LEVELS = 10;
 
+	
 	enum TextureType
 	{
 		Diffuse = 0,
@@ -53,7 +54,7 @@ namespace r2::draw::tex
 		ClearCoat,
 		ClearCoatRoughness,
 		ClearCoatNormal,
-		Cubemap,
+
 		NUM_TEXTURE_TYPES
 	};
 
@@ -71,7 +72,7 @@ namespace r2::draw::tex
 	struct Texture
 	{
 		r2::asset::AssetHandle textureAssetHandle;
-		TextureType type = TextureType::Diffuse;
+	//	TextureType type = TextureType::Diffuse;
 	};
 
 	struct MipLevel
@@ -174,7 +175,7 @@ namespace r2::draw::tex
 		s32 x, s32 y,
 		u32 width, u32 height);
 
-	const char* GetTextureTypeName(TextureType type);
+	//const char* GetTextureTypeName(TextureType type);
 
 	u32 MaxMipsForSparseTextureSize(const r2::draw::tex::TextureHandle& textureHandle);
 	u32 MaxMipsForTextureSizeBiggerThan(const r2::draw::tex::TextureHandle& textureHandle, u32 dim);

@@ -211,8 +211,7 @@ namespace r2::draw::texche
 		TexturePacksCache& texturePacksCache,
 		LoadedTexturePack& loadedTexturePack,
 		const flat::TexturePack* texturePack,
-		const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* paths,
-		r2::draw::tex::TextureType type)
+		const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* paths)
 	{
 		for (u32 i = 0; i < paths->size(); ++i)
 		{
@@ -221,7 +220,7 @@ namespace r2::draw::texche
 			r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePath->c_str(), r2::asset::TEXTURE);
 
 			tex::Texture newTexture;
-			newTexture.type = type;
+			//newTexture.type = type;
 
 			newTexture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
 
@@ -269,7 +268,7 @@ namespace r2::draw::texche
 				r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(side->textureName()->c_str(), r2::asset::CUBEMAP_TEXTURE);
 
 				r2::draw::tex::Texture texture;
-				texture.type = tex::TextureType::Diffuse;
+				//texture.type = tex::TextureType::Diffuse;
 				texture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
 
 				R2_CHECK(!r2::asset::IsInvalidAssetHandle(texture.textureAssetHandle), "We couldn't load the texture: %s!", side->textureName()->c_str());
@@ -300,18 +299,18 @@ namespace r2::draw::texche
 			loadedTexturePack.textures = MAKE_SARRAY(*texturePacksCache.mTexturePackArena, tex::Texture, numTexturesInThePack);
 			
 			//now load all of the textures of this pack
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->albedo(), tex::TextureType::Diffuse);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->anisotropy(), tex::TextureType::Anisotropy);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoat(), tex::TextureType::ClearCoat);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatNormal(), tex::TextureType::ClearCoatNormal);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatRoughness(), tex::TextureType::ClearCoatRoughness);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->detail(), tex::TextureType::Detail);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->emissive(), tex::TextureType::Emissive);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->height(), tex::TextureType::Height);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->metallic(), tex::TextureType::Metallic);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->normal(), tex::TextureType::Normal);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->occlusion(), tex::TextureType::Occlusion);
-			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->roughness(), tex::TextureType::Roughness);
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->albedo());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->anisotropy());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoat());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatNormal());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatRoughness());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->detail());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->emissive());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->height());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->metallic());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->normal());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->occlusion());
+			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->roughness());
 		}
 		else if (loadedTexturePack.metaData->type() == flat::TextureType_CUBEMAP)
 		{
@@ -599,19 +598,19 @@ namespace r2::draw::texche
 		return LoadTexturePack(texturePacksCache, texturePackName);
 	}
 
-	r2::draw::tex::TextureType GetTextureTypeForTextureName(const flat::TexturePack* texturePack, u64 textureName)
+	bool IsTextureInFlatTexturePack(const flat::TexturePack* texturePack, u64 textureName)
 	{
-		r2::draw::tex::TextureType textureType = tex::NUM_TEXTURE_TYPES;
+		bool found = false;
 
 		const auto* albedos = texturePack->albedo();
 
 		for (flatbuffers::uoffset_t i = 0; i < albedos->size(); ++i)
 		{
-
 			std::string albedoString = albedos->Get(i)->c_str();
 			if (r2::asset::Asset::GetAssetNameForFilePath(albedoString.c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Diffuse;
+				found = true;
+				break;
 			}
 		}
 
@@ -621,7 +620,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(metallics->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Metallic;
+				found = true;
+				break;
 			}
 		}
 
@@ -631,7 +631,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(roughnesses->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Roughness;
+				found = true;
+				break;
 			}
 		}
 
@@ -641,7 +642,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(normals->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Normal;
+				found = true;
+				break;
 			}
 		}
 
@@ -651,7 +653,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(aos->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Occlusion;
+				found = true;
+				break;
 			}
 		}
 
@@ -661,7 +664,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(emissives->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Emissive;
+				found = true;
+				break;
 			}
 		}
 
@@ -671,7 +675,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(anisotropies->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Anisotropy;
+				found = true;
+				break;
 			}
 		}
 
@@ -681,7 +686,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoats->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::ClearCoat;
+				found = true;
+				break;
 			}
 		}
 
@@ -691,7 +697,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoatNormals->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::ClearCoatNormal;
+				found = true;
+				break;
 			}
 		}
 
@@ -701,7 +708,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoatRoughnesses->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::ClearCoatRoughness;
+				found = true;
+				break;
 			}
 		}
 
@@ -711,7 +719,8 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(details->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Detail;
+				found = true;
+				break;
 			}
 		}
 
@@ -721,11 +730,12 @@ namespace r2::draw::texche
 		{
 			if (r2::asset::Asset::GetAssetNameForFilePath(heights->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
 			{
-				return tex::TextureType::Height;
+				found = true;
+				break;
 			}
 		}
 
-		return tex::TextureType::NUM_TEXTURE_TYPES;
+		return found;
 	}
 
 	bool ReloadTextureInTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName)
@@ -768,11 +778,11 @@ namespace r2::draw::texche
 			return false;
 		}
 
-		tex::TextureType textureType;
+		//tex::TextureType textureType;
 		if (foundPack->metaData()->type() == flat::TextureType_TEXTURE)
 		{
 			//get the type in case we have never loaded this texture
-			textureType = GetTextureTypeForTextureName(foundPack, textureName);
+			bool foundInFlatTexturePack = IsTextureInFlatTexturePack(foundPack, textureName);
 
 			//find the texture in the loadedTexturePack
 			const auto numTextures = r2::sarr::Size(*loadedTexturePack.textures);
@@ -782,7 +792,7 @@ namespace r2::draw::texche
 			{
 				const auto& texture = r2::sarr::At(*loadedTexturePack.textures, i);
 
-				if (texture.textureAssetHandle.handle == textureName && texture.type == textureType)
+				if (texture.textureAssetHandle.handle == textureName)// && texture.type == textureType)
 				{
 					foundTexture = &texture;
 					foundIndex = i;
@@ -792,18 +802,18 @@ namespace r2::draw::texche
 
 			r2::asset::Asset textureAsset = r2::asset::Asset(textureName, r2::asset::TEXTURE);
 
-			if (textureType != tex::TextureType::NUM_TEXTURE_TYPES && foundTexture) 
+			if (foundInFlatTexturePack && foundTexture)
 			{
 				//we have the texture and it's in the manifest - just reload
 				auto handle = texturePacksCache.mnoptrGameAssetManager->ReloadAsset(textureAsset);
 
 				R2_CHECK(!r2::asset::IsInvalidAssetHandle(handle), "We couldn't reload the asset");
 			}
-			else if (textureType != tex::TextureType::NUM_TEXTURE_TYPES && !foundTexture)
+			else if (foundInFlatTexturePack && !foundTexture)
 			{
 				//we have the texture in the manifest, not loaded - added new texture
 				tex::Texture newTexture;
-				newTexture.type = textureType;
+			//	newTexture.type = textureType;
 
 				newTexture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
 
@@ -811,7 +821,7 @@ namespace r2::draw::texche
 
 				r2::sarr::Push(*loadedTexturePack.textures, newTexture);
 			}
-			else if (textureType == tex::TextureType::NUM_TEXTURE_TYPES && foundTexture)
+			else if (!foundInFlatTexturePack && foundTexture)
 			{
 				//we have the texture but it's not in the manifest - removed the texture
 				texturePacksCache.mnoptrGameAssetManager->UnloadAsset(foundTexture->textureAssetHandle);

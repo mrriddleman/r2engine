@@ -44,7 +44,7 @@ namespace r2::draw::rmat
 	void UpdateGPURenderMaterialForMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
 	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material);
 	void RemoveGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
-	tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType);
+	//tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType);
 
 	RenderMaterialCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numMaterials, const char* areaName)
 	{
@@ -217,7 +217,7 @@ namespace r2::draw::rmat
 
 	bool IsTextureParamCubemapTexture(const tex::CubemapTexture* cubemapTexture, u64 textureName, flat::ShaderPropertyType propertyType)
 	{
-		return tex::GetCubemapAssetHandle(*cubemapTexture).handle == textureName && GetTextureTypeForPropertyType(propertyType) == tex::Diffuse;
+		return tex::GetCubemapAssetHandle(*cubemapTexture).handle == textureName && propertyType == flat::ShaderPropertyType_ALBEDO; //GetTextureTypeForPropertyType(propertyType) == tex::Diffuse;
 	}
 
 	bool IsTextureParamCubemapTexture(const r2::SArray<tex::CubemapTexture>* cubemapTextures, u64 textureName, flat::ShaderPropertyType propertyType, const tex::CubemapTexture** foundCubemap)
@@ -351,8 +351,8 @@ namespace r2::draw::rmat
 						texsys::ReloadTexture(texture->textureAssetHandle);
 					}
 					else
-					{
-						texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					{//, texture->type
+						texsys::UploadToGPU({ texture->textureAssetHandle }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
 					}
 				}
 			}
@@ -443,8 +443,8 @@ namespace r2::draw::rmat
 					if (texture)
 					{
 						r2::sarr::Push(*materialTextures, *texture);
-
-						r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+//, texture->type
+						r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
 					}
 				}
 			}
@@ -556,10 +556,9 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	s32 GetPackingType(const flat::Material* material, tex::TextureType textureType)
+	/*s32 GetPackingType(const flat::Material* material, tex::TextureType textureType)
 	{
 		R2_CHECK(material != nullptr, "This shouldn't be null!");
-
 
 		const auto* textureParams = material->shaderParams()->textureParams();
 
@@ -567,70 +566,16 @@ namespace r2::draw::rmat
 		{
 			const flat::ShaderTextureParam* texParam = textureParams->Get(i);
 
-			if (textureType == tex::TextureType::Roughness &&
-				texParam->propertyType() == flat::ShaderPropertyType::ShaderPropertyType_ROUGHNESS)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
+			auto paramTextureType = GetTextureTypeForPropertyType(texParam->propertyType());
 
-			if (textureType == tex::TextureType::Metallic && texParam->propertyType() == flat::ShaderPropertyType_METALLIC)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Diffuse && texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Occlusion && texParam->propertyType() == flat::ShaderPropertyType_AMBIENT_OCCLUSION)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::ClearCoat && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::ClearCoatNormal && texParam->propertyType() == flat::ShaderPropertyType_CLEAR_COAT_NORMAL)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Anisotropy && texParam->propertyType() == flat::ShaderPropertyType_ANISOTROPY)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Height && texParam->propertyType() == flat::ShaderPropertyType_HEIGHT)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Emissive && texParam->propertyType() == flat::ShaderPropertyType_EMISSION)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Normal && texParam->propertyType() == flat::ShaderPropertyType_NORMAL)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-
-			if (textureType == tex::TextureType::Detail && texParam->propertyType() == flat::ShaderPropertyType_DETAIL)
+			if (textureType != tex::TextureType::NUM_TEXTURE_TYPES && textureType == paramTextureType)
 			{
 				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 		}
 
 		return 0;
-	}
+	}*/
 
 	void ClearRenderMaterialParams(RenderMaterialParams* renderMaterialParams)
 	{
@@ -760,59 +705,62 @@ namespace r2::draw::rmat
 					theTexture = &renderMaterialCache.mMissingTexture;
 				}
 
+
+				auto propertyType = textureParam->propertyType();
+
 				tex::TextureAddress address = texsys::GetTextureAddress(*theTexture);
 
-				tex::TextureType textureType = GetTextureTypeForPropertyType(textureParam->propertyType());
+			//	tex::TextureType textureType = GetTextureTypeForPropertyType(textureParam->propertyType());
 
-			 	s32 channel = GetPackingType(material, textureType);
+			 	s32 channel = textureParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : textureParam->packingType();//GetPackingType(material, textureType);
 
-				switch (textureType)
+				switch (propertyType)
 				{
-				case tex::Diffuse:
+				case flat::ShaderPropertyType_ALBEDO:
 					gpuRenderMaterial->albedo.texture = address;
 					gpuRenderMaterial->albedo.texture.channel = channel;
 					break;
-				case tex::Metallic:
+				case flat::ShaderPropertyType_METALLIC:
 					gpuRenderMaterial->metallic.texture = address;
 					gpuRenderMaterial->metallic.texture.channel = channel;
 					break;
-				case tex::Normal:
+				case flat::ShaderPropertyType_NORMAL:
 					gpuRenderMaterial->normalMap.texture = address;
 					gpuRenderMaterial->normalMap.texture.channel = channel;
 					break;
-				case tex::Emissive:
+				case flat::ShaderPropertyType_EMISSION:
 					gpuRenderMaterial->emission.texture = address;
 					gpuRenderMaterial->emission.texture.channel = channel;
 					break;
-				case tex::Roughness:
+				case flat::ShaderPropertyType_ROUGHNESS:
 					gpuRenderMaterial->roughness.texture = address;
 					gpuRenderMaterial->roughness.texture.channel = channel;
 					break;
-				case tex::Anisotropy:
+				case flat::ShaderPropertyType_ANISOTROPY:
 					gpuRenderMaterial->anisotropy.texture = address;
 					gpuRenderMaterial->anisotropy.texture.channel = channel;
 					break;
-				case tex::Height:
+				case flat::ShaderPropertyType_HEIGHT:
 					gpuRenderMaterial->height.texture = address;
 					gpuRenderMaterial->height.texture.channel = channel;
 					break;
-				case tex::ClearCoat:
+				case flat::ShaderPropertyType_CLEAR_COAT:
 					gpuRenderMaterial->clearCoat.texture = address;
 					gpuRenderMaterial->clearCoat.texture.channel = channel;
 					break;
-				case tex::ClearCoatNormal:
+				case flat::ShaderPropertyType_CLEAR_COAT_NORMAL:
 					gpuRenderMaterial->clearCoatNormal.texture = address;
 					gpuRenderMaterial->clearCoatNormal.texture.channel = channel;
 					break;
-				case tex::ClearCoatRoughness:
+				case flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS:
 					gpuRenderMaterial->clearCoatRoughness.texture = address;
 					gpuRenderMaterial->clearCoatRoughness.texture.channel = channel;
 					break;
-				case tex::Detail:
+				case flat::ShaderPropertyType_DETAIL:
 					gpuRenderMaterial->detail.texture = address;
 					gpuRenderMaterial->detail.texture.channel = channel;
 					break;
-				case tex::Occlusion:
+				case flat::ShaderPropertyType_AMBIENT_OCCLUSION:
 					gpuRenderMaterial->ao.texture = address;
 					gpuRenderMaterial->ao.texture.channel = channel;
 					break;
@@ -946,40 +894,40 @@ namespace r2::draw::rmat
 		r2::shashmap::Remove(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
 	}
 
-	tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType)
-	{
-		switch (propertyType)
-		{
-		case flat::ShaderPropertyType_ALBEDO:
-			return tex::TextureType::Diffuse;
-		case flat::ShaderPropertyType_AMBIENT_OCCLUSION:
-			return tex::TextureType::Occlusion;
-		case  flat::ShaderPropertyType_ANISOTROPY:
-			return tex::TextureType::Anisotropy;
-		case flat::ShaderPropertyType_CLEAR_COAT:
-			return tex::TextureType::ClearCoat;
-		case flat::ShaderPropertyType_CLEAR_COAT_NORMAL:
-			return tex::TextureType::ClearCoatNormal;
-		case flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS:
-			return tex::TextureType::ClearCoatRoughness;
-		case flat::ShaderPropertyType_DETAIL:
-			return tex::TextureType::Detail;
-		case flat::ShaderPropertyType_EMISSION:
-			return tex::TextureType::Emissive;
-		case flat::ShaderPropertyType::ShaderPropertyType_HEIGHT:
-			return tex::TextureType::Height;
-		case flat::ShaderPropertyType_METALLIC:
-			return tex::TextureType::Metallic;
-		case flat::ShaderPropertyType_NORMAL:
-			return tex::TextureType::Normal;
-		case flat::ShaderPropertyType_ROUGHNESS:
-			return tex::TextureType::Roughness;
+	//tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType)
+	//{
+	//	switch (propertyType)
+	//	{
+	//	case flat::ShaderPropertyType_ALBEDO:
+	//		return tex::TextureType::Diffuse;
+	//	case flat::ShaderPropertyType_AMBIENT_OCCLUSION:
+	//		return tex::TextureType::Occlusion;
+	//	case  flat::ShaderPropertyType_ANISOTROPY:
+	//		return tex::TextureType::Anisotropy;
+	//	case flat::ShaderPropertyType_CLEAR_COAT:
+	//		return tex::TextureType::ClearCoat;
+	//	case flat::ShaderPropertyType_CLEAR_COAT_NORMAL:
+	//		return tex::TextureType::ClearCoatNormal;
+	//	case flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS:
+	//		return tex::TextureType::ClearCoatRoughness;
+	//	case flat::ShaderPropertyType_DETAIL:
+	//		return tex::TextureType::Detail;
+	//	case flat::ShaderPropertyType_EMISSION:
+	//		return tex::TextureType::Emissive;
+	//	case flat::ShaderPropertyType::ShaderPropertyType_HEIGHT:
+	//		return tex::TextureType::Height;
+	//	case flat::ShaderPropertyType_METALLIC:
+	//		return tex::TextureType::Metallic;
+	//	case flat::ShaderPropertyType_NORMAL:
+	//		return tex::TextureType::Normal;
+	//	case flat::ShaderPropertyType_ROUGHNESS:
+	//		return tex::TextureType::Roughness;
 
-		default:
-			R2_CHECK(false, "Unsupported MaterialPropertyType");	
-		}
-		
-		return tex::TextureType::Diffuse;
+	//	default:
+	//		R2_CHECK(false, "Unsupported MaterialPropertyType");	
+	//	}
+	//	
+	//	return tex::TextureType::Diffuse;
 
-	}
+	//}
 }

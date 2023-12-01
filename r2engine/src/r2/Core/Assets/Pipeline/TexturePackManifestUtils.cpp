@@ -812,7 +812,7 @@ namespace r2::asset::pln::tex
 		return false;
 	}
 
-	std::vector<std::vector<std::string>> GetAllTexturesInTexturePack(const std::string& manifestFilePath, const std::string& packName)
+	/*std::vector<std::vector<std::string>> GetAllTexturesInTexturePack(const std::string& manifestFilePath, const std::string& packName)
 	{
 		std::vector<std::vector<std::string>> texturesInPack;
 		texturesInPack.resize(r2::draw::tex::TextureType::NUM_TEXTURE_TYPES);
@@ -941,7 +941,7 @@ namespace r2::asset::pln::tex
 
 		delete[] manifestFileData;
 		return texturesInPack;
-	}
+	}*/
 
 
 	void MakeTexturePackMetaFileFromFlat(const flat::TexturePackMetaData* texturePackMetaData, TexturePackMetaFile& metaFile)

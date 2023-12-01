@@ -309,7 +309,7 @@ namespace r2
 			return false;
 		}
 
-		u32 numTexturePacks = materialPack->pack()->size() * draw::tex::Cubemap;
+		u32 numTexturePacks = materialPack->pack()->size() * draw::tex::NUM_TEXTURE_TYPES;
 
 		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, numTexturePacks);
 
@@ -421,7 +421,7 @@ namespace r2
 			return false;
 		}
 
-		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, materialPack->pack()->size() * draw::tex::Cubemap);
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, materialPack->pack()->size() * draw::tex::NUM_TEXTURE_TYPES);
 
 		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
 		{
@@ -440,6 +440,7 @@ namespace r2
 	{
 		s32 materialParamsPackIndex = -1;
 		s32 materialTexParamsIndex = -1;
+		u64 textureName = 0;
 
 		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
 		{
@@ -455,6 +456,7 @@ namespace r2
 					{
 						materialParamsPackIndex = i;
 						materialTexParamsIndex = j;
+						textureName = textureParams->Get(j)->value();
 						break;
 					}
 				}
@@ -478,7 +480,7 @@ namespace r2
 		for (u32 i = 0; i < numTextures; ++i)
 		{
 			const draw::tex::Texture& texture = r2::sarr::At(*textures, i);
-			if (texture.type == draw::tex::Diffuse)
+			if (texture.textureAssetHandle.handle == textureName)
 			{
 				return &texture;
 			}
