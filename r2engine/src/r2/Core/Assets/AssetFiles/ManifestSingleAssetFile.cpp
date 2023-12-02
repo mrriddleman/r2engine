@@ -74,10 +74,10 @@ namespace r2::asset
 			R2_CHECK(false, "Passed in nullptr for the AssetCache");
 			return false;
 		}
-		//@TODO(Serge): this breaks publish build since this method is only for asset pipeline
-		const r2::asset::AssetFile* foundAssetFile = mnoptrAssetCache->GetAssetFileForAssetHandle({ mManifestAssetFile->GetAssetHandle(0), mnoptrAssetCache->GetSlot() });
+		
+		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
 
-		if (foundAssetFile != mManifestAssetFile)
+		if (!foundAssetFile)
 		{
 			//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
 			FileList fileList = mnoptrAssetCache->GetFileList();
