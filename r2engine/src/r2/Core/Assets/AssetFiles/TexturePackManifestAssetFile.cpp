@@ -58,17 +58,6 @@ namespace r2::asset
 	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
 	{
 		AddAllTexturesFromTextureType(texturePack->textures(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->height(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
 
 		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
 		{
