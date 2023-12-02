@@ -358,21 +358,6 @@ namespace r2::asset::pln::tex
 			u64 packSize = 0;
 
 			std::vector<flatbuffers::Offset<flat::AssetRef>> textureAssetRefs;
-
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> albedos;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> normals;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> emissives;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> metallics;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> details;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> roughnesses;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoats;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatRoughnesses;
-			//std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatNormals;
-
-
 			std::vector<std::string> cubemapTexturePaths;
 
 			u64 packName = r2::asset::Asset::GetAssetNameForFilePath(texturePackDir.path().stem().string().c_str(), r2::asset::TEXTURE_PACK);
@@ -441,91 +426,24 @@ namespace r2::asset::pln::tex
 
 				if (file.path().parent_path().stem().string() == "albedo")
 				{
-					//albedos.push_back( builder.CreateString(sanitizedPath) );
 					cubemapTexturePaths.push_back(sanitizedPath);
-
-					
 				}
 
 				char assetNameString[r2::fs::FILE_PATH_LENGTH];
 				r2::asset::MakeAssetNameStringForFilePath(sanitizedPath, assetNameString, r2::asset::TEXTURE);
-			//	r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, , r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType());
-				
+
 				auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(sanitizedPath, r2::asset::TEXTURE), builder.CreateString(assetNameString));
 
-				auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(sanitizedPath), builder.CreateString(file.path().string()));
+				char rawPath[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), rawPath);
+
+				auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(sanitizedPath), builder.CreateString(rawPath));
 
 				textureAssetRefs.push_back(assetRef);
 
 				++numTexturesInPack;
 
-				//else if (file.path().parent_path().stem().string() == "normal")
-				//{
-				//	normals.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "emissive")
-				//{
-				//	emissives.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "metallic")
-				//{
-				//	metallics.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "occlusion")
-				//{
-				//	occlusions.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "detail")
-				//{
-				//	details.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "height")
-				//{
-				//	heights.push_back(builder.CreateString(sanitizedPath));
-
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "anisotropy")
-				//{
-				//	anisotropys.push_back(builder.CreateString(sanitizedPath));
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "roughness")
-				//{
-				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "clearCoat")
-				//{
-				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "clearCoatRoughness")
-				//{
-				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
-				//	++numTexturesInPack;
-				//}
-				//else if (file.path().parent_path().stem().string() == "clearCoatNormal")
-				//{
-				//	roughnesses.push_back(builder.CreateString(sanitizedPath));
-				//	++numTexturesInPack;
-				//}
-
 			}
-
-		//	char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
-
-		//	const auto packMetaData = flat::GetTexturePackMetaData(texturePackMetaData);
 
 			auto textureType = texturePackMetaData->type();
 
@@ -573,19 +491,6 @@ namespace r2::asset::pln::tex
 				builder,
 				packAssetName, 
 				builder.CreateVector(textureAssetRefs),
-
-				//builder.CreateVector(albedos),
-				//builder.CreateVector(normals),
-				//builder.CreateVector(emissives),
-				//builder.CreateVector(metallics),
-				//builder.CreateVector(occlusions),
-				//builder.CreateVector(roughnesses),
-				//builder.CreateVector(heights),
-				//builder.CreateVector(anisotropys),
-				//builder.CreateVector(details),
-				//builder.CreateVector(clearCoats),
-				//builder.CreateVector(clearCoatRoughnesses),
-				//builder.CreateVector(clearCoatNormals),
 				packSize, numTexturesInPack,
 				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 
