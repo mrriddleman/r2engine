@@ -6,84 +6,37 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-namespace flat {
+#include "AssetName_generated.h"
+#include "AssetRef_generated.h"
 
-struct BankFile;
-struct BankFileBuilder;
+namespace flat {
 
 struct SoundDefinitions;
 struct SoundDefinitionsBuilder;
 
-struct BankFile FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef BankFileBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PATH = 4
-  };
-  const flatbuffers::String *path() const {
-    return GetPointer<const flatbuffers::String *>(VT_PATH);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_PATH) &&
-           verifier.VerifyString(path()) &&
-           verifier.EndTable();
-  }
-};
-
-struct BankFileBuilder {
-  typedef BankFile Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
-    fbb_.AddOffset(BankFile::VT_PATH, path);
-  }
-  explicit BankFileBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  BankFileBuilder &operator=(const BankFileBuilder &);
-  flatbuffers::Offset<BankFile> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<BankFile>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<BankFile> CreateBankFile(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> path = 0) {
-  BankFileBuilder builder_(_fbb);
-  builder_.add_path(path);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<BankFile> CreateBankFileDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const char *path = nullptr) {
-  auto path__ = path ? _fbb.CreateString(path) : 0;
-  return flat::CreateBankFile(
-      _fbb,
-      path__);
-}
-
 struct SoundDefinitions FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef SoundDefinitionsBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MASTERBANK = 4,
-    VT_MASTERBANKSTRINGS = 6,
-    VT_BANKS = 8
+    VT_VERSION = 4,
+    VT_MASTERBANK = 6,
+    VT_MASTERBANKSTRINGS = 8,
+    VT_BANKS = 10
   };
-  const flat::BankFile *masterBank() const {
-    return GetPointer<const flat::BankFile *>(VT_MASTERBANK);
+  uint32_t version() const {
+    return GetField<uint32_t>(VT_VERSION, 0);
   }
-  const flat::BankFile *masterBankStrings() const {
-    return GetPointer<const flat::BankFile *>(VT_MASTERBANKSTRINGS);
+  const flat::AssetRef *masterBank() const {
+    return GetPointer<const flat::AssetRef *>(VT_MASTERBANK);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::BankFile>> *banks() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::BankFile>> *>(VT_BANKS);
+  const flat::AssetRef *masterBankStrings() const {
+    return GetPointer<const flat::AssetRef *>(VT_MASTERBANKSTRINGS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *banks() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *>(VT_BANKS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_VERSION) &&
            VerifyOffset(verifier, VT_MASTERBANK) &&
            verifier.VerifyTable(masterBank()) &&
            VerifyOffset(verifier, VT_MASTERBANKSTRINGS) &&
@@ -99,13 +52,16 @@ struct SoundDefinitionsBuilder {
   typedef SoundDefinitions Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_masterBank(flatbuffers::Offset<flat::BankFile> masterBank) {
+  void add_version(uint32_t version) {
+    fbb_.AddElement<uint32_t>(SoundDefinitions::VT_VERSION, version, 0);
+  }
+  void add_masterBank(flatbuffers::Offset<flat::AssetRef> masterBank) {
     fbb_.AddOffset(SoundDefinitions::VT_MASTERBANK, masterBank);
   }
-  void add_masterBankStrings(flatbuffers::Offset<flat::BankFile> masterBankStrings) {
+  void add_masterBankStrings(flatbuffers::Offset<flat::AssetRef> masterBankStrings) {
     fbb_.AddOffset(SoundDefinitions::VT_MASTERBANKSTRINGS, masterBankStrings);
   }
-  void add_banks(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::BankFile>>> banks) {
+  void add_banks(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> banks) {
     fbb_.AddOffset(SoundDefinitions::VT_BANKS, banks);
   }
   explicit SoundDefinitionsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -122,24 +78,28 @@ struct SoundDefinitionsBuilder {
 
 inline flatbuffers::Offset<SoundDefinitions> CreateSoundDefinitions(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flat::BankFile> masterBank = 0,
-    flatbuffers::Offset<flat::BankFile> masterBankStrings = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::BankFile>>> banks = 0) {
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetRef> masterBank = 0,
+    flatbuffers::Offset<flat::AssetRef> masterBankStrings = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> banks = 0) {
   SoundDefinitionsBuilder builder_(_fbb);
   builder_.add_banks(banks);
   builder_.add_masterBankStrings(masterBankStrings);
   builder_.add_masterBank(masterBank);
+  builder_.add_version(version);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<SoundDefinitions> CreateSoundDefinitionsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flat::BankFile> masterBank = 0,
-    flatbuffers::Offset<flat::BankFile> masterBankStrings = 0,
-    const std::vector<flatbuffers::Offset<flat::BankFile>> *banks = nullptr) {
-  auto banks__ = banks ? _fbb.CreateVector<flatbuffers::Offset<flat::BankFile>>(*banks) : 0;
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetRef> masterBank = 0,
+    flatbuffers::Offset<flat::AssetRef> masterBankStrings = 0,
+    const std::vector<flatbuffers::Offset<flat::AssetRef>> *banks = nullptr) {
+  auto banks__ = banks ? _fbb.CreateVector<flatbuffers::Offset<flat::AssetRef>>(*banks) : 0;
   return flat::CreateSoundDefinitions(
       _fbb,
+      version,
       masterBank,
       masterBankStrings,
       banks__);

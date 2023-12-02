@@ -10,10 +10,12 @@
 #include "SoundDefinitionUtils.h"
 #include "r2/Audio/SoundDefinition_generated.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
+
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Audio/AudioEngine.h"
+#include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
 #include <filesystem>
-#include <fstream>
+
 
 namespace r2::asset::pln::audio
 {
@@ -34,11 +36,11 @@ namespace r2::asset::pln::audio
         return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, soundDefinitionFilePath);
     }
     
-	bool GenerateSoundDefinitionsFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories)
+	bool GenerateSoundDefinitionsFromDirectories(u32 version, const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories)
     {
-        std::vector<std::string> bankFiles;
-        std::string masterBankFile;
-        std::string masterBankStringsFile;
+        std::vector<r2::asset::AssetReference> bankFiles;
+        r2::asset::AssetReference masterBankFile;
+        r2::asset::AssetReference masterBankStringsFile;
 
 		char directoryPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, "", directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
@@ -61,45 +63,46 @@ namespace r2::asset::pln::audio
                 std::string sanitizedPathStr = sanitizedPath;
                 if (sanitizedPathStr.find("Master.bank") != std::string::npos)
                 {
-                    masterBankFile = sanitizedPathStr;
+                    masterBankFile = r2::asset::CreateNewAssetReference(sanitizedPathStr, sanitizedPathStr, r2::asset::SOUND);
                 }
                 else if (sanitizedPathStr.find("Master.strings.bank") != std::string::npos)
                 {
-                    masterBankStringsFile = sanitizedPathStr;
+                    masterBankStringsFile = r2::asset::CreateNewAssetReference(sanitizedPathStr, sanitizedPathStr, r2::asset::SOUND);
                 }
                 else
                 {
-                    bankFiles.push_back(sanitizedPathStr);
+                    bankFiles.push_back(r2::asset::CreateNewAssetReference(sanitizedPathStr, sanitizedPathStr, r2::asset::SOUND));
                 }
             }
         }
 
-        return GenerateSoundDefinitionsFile(binFilePath, jsonFilePath, masterBankFile, masterBankStringsFile, bankFiles);
+        return GenerateSoundDefinitionsFile(version, binFilePath, jsonFilePath, masterBankFile, masterBankStringsFile, bankFiles);
     }
-    
-   /* bool AddNewSoundDefinition(std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions, const r2::audio::AudioEngine::SoundDefinition& def)
+
+    bool SaveSoundDefinitionsManifestAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath)
     {
-        r2::audio::AudioEngine::SoundDefinition matchedDef;
-        u64 soundKey = def.soundKey;
-        
-        auto iter = std::find_if(soundDefinitions.begin(), soundDefinitions.end(), [soundKey, &matchedDef](const r2::audio::AudioEngine::SoundDefinition & otherDef){
-            if (otherDef.soundKey == soundKey)
-            {
-                matchedDef = otherDef;
-                return true;
-            }
-            return false;
-        });
-        
-        if (iter != soundDefinitions.end())
+        r2::asset::AssetReference masterBankAssetReference;
+        r2::asset::AssetReference masterBankStringsAssetReference;
+        std::vector<r2::asset::AssetReference> banks;
+
+        for (const r2::asset::AssetReference& assetReference : assetReferences)
         {
-            R2_LOGE("Matched sound key for filepath: %s with existing filepath: %s\n", def.soundName, matchedDef.soundName);
-            return false;
+			if (assetReference.binPath ==  "Master.bank")
+			{
+                masterBankAssetReference = assetReference;
+			}
+			else if (assetReference.binPath == "Master.strings.bank")
+			{
+                masterBankStringsAssetReference = assetReference;
+			}
+			else
+			{
+                banks.push_back(assetReference);
+			}
         }
-        
-        soundDefinitions.push_back(def);
-        return true;
-    }*/
+
+        return GenerateSoundDefinitionsFile(version, binFilePath, rawFilePath, masterBankAssetReference, masterBankStringsAssetReference, banks);
+    }
     
     bool FindSoundDefinitionFile(const std::string& directory, std::string& outPath, bool isBinary)
     {
@@ -121,113 +124,40 @@ namespace r2::asset::pln::audio
         return false;
     }
     
-    /*std::vector<r2::audio::AudioEngine::SoundDefinition> LoadSoundDefinitions(const std::string& soundDefinitionFilePath)
-    {
-        std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions;
-        
-        std::fstream fs;
-        fs.open(soundDefinitionFilePath, std::fstream::in | std::fstream::binary);
-        if (fs.good())
-        {
-            fs.seekg(0, fs.end);
-            size_t length = fs.tellg();
-            fs.seekg(0, fs.beg);
-            
-            char* buf = new(std::nothrow) char[length];
-            
-            R2_CHECK(buf != nullptr, "Failed to allocate buffer for sound definitions");
-          
-            fs.read(buf, length);
-            
-            if (!fs.good())
-            {
-                R2_LOGE("Failed read file %s\n", soundDefinitionFilePath.c_str());
-                delete [] buf;
-                fs.close();
-                return soundDefinitions;
-            }
-            
-            auto soundDefinitionsBuf = r2::GetSoundDefinitions(buf);
-            
-            flatbuffers::uoffset_t numDefinitions = soundDefinitionsBuf->definitions()->size();
-            
-            for (flatbuffers::uoffset_t i = 0; i < numDefinitions; ++i)
-            {
-                r2::audio::AudioEngine::SoundDefinition definition;
-                const auto& soundDef = soundDefinitionsBuf->definitions()->Get(i);
-                r2::util::PathCpy( definition.soundName, soundDef->soundName()->c_str() );
-
-
-                definition.defaultVolume = soundDef->defaultVolume();
-                definition.minDistance = soundDef->minDistance();
-                definition.maxDistance = soundDef->maxDistance();
-                definition.loadOnRegister = soundDef->loadOnRegister();
-                definition.defaultPitch = soundDef->pitch();
-                
-                if (soundDef->loop())
-                {
-                    definition.flags |= r2::audio::AudioEngine::LOOP;
-                }
-                
-                if (soundDef->is3D())
-                {
-                    definition.flags |= r2::audio::AudioEngine::IS_3D;
-                }
-                
-                if (soundDef->stream())
-                {
-                    definition.flags |= r2::audio::AudioEngine::STREAM;
-                }
-                
-                char fileName[r2::fs::FILE_PATH_LENGTH];
-                r2::fs::utils::CopyFileNameWithExtension(definition.soundName, fileName);
-                definition.soundKey = STRING_ID(fileName);
-                
-                AddNewSoundDefinition(soundDefinitions, definition);
-            }
-            
-            delete [] buf;
-        }
-        
-        fs.close();
-        
-        return soundDefinitions;
-    }*/
-    
-	bool GenerateSoundDefinitionsFile(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& masterBank, const std::string& masterBankStrings, const std::vector<std::string>& bankFiles)
+	bool GenerateSoundDefinitionsFile(u32 version, const std::string& binFilePath, const std::string& jsonFilePath, const r2::asset::AssetReference& masterBank, const r2::asset::AssetReference& masterBankStrings, const std::vector<r2::asset::AssetReference>& bankFiles)
     {
         flatbuffers::FlatBufferBuilder builder;
-        std::vector<flatbuffers::Offset<flat::BankFile>> flatBankFiles;
+        std::vector<flatbuffers::Offset<flat::AssetRef>> flatBankFiles;
 
         for (const auto& bankFile : bankFiles)
         {
-            flatBankFiles.push_back(flat::CreateBankFile(builder, builder.CreateString(bankFile)));
+
+            //@TODO(Serge): UUID
+            auto assetName = flat::CreateAssetName(builder, 0, bankFile.assetName.hashID, builder.CreateString(bankFile.assetName.assetNameString));
+            auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(bankFile.binPath.string()), builder.CreateString(bankFile.rawPath.string()));
+
+            flatBankFiles.push_back(assetRef);
         }
 
-        auto masterBankFile = flat::CreateBankFile(builder, builder.CreateString(masterBank));
-        auto masterBankStringsFile = flat::CreateBankFile(builder, builder.CreateString(masterBankStrings));
+        //@TODO(Serge): UUID
+        auto masterBankFileAssetName = flat::CreateAssetName(builder, 0, masterBank.assetName.hashID, builder.CreateString(masterBank.assetName.assetNameString));
 
-        auto soundDef = flat::CreateSoundDefinitions(builder, masterBankFile, masterBankStringsFile, builder.CreateVector(flatBankFiles));
+        auto masterBankFile = flat::CreateAssetRef(builder, masterBankFileAssetName, builder.CreateString(masterBank.binPath.string()), builder.CreateString(masterBank.rawPath.string()));
+
+        //@TODO(Serge): UUID
+        auto masterBankStringsAssetName = flat::CreateAssetName(builder, 0, masterBankStrings.assetName.hashID, builder.CreateString(masterBankStrings.assetName.assetNameString));
+
+        auto masterBankStringsFile = flat::CreateAssetRef(builder, masterBankStringsAssetName, builder.CreateString(masterBankStrings.binPath.string()), builder.CreateString(masterBankStrings.rawPath.string()));
+
+        auto soundDef = flat::CreateSoundDefinitions(builder, version, masterBankFile, masterBankStringsFile, builder.CreateVector(flatBankFiles));
 
         builder.Finish(soundDef);
         
         byte* buf = builder.GetBufferPointer();
         u32 size = builder.GetSize();
         
-        std::fstream fs;
-        fs.open(binFilePath, std::fstream::out | std::fstream::binary);
-        if (fs.good())
-        {
-            fs.write((const char*)buf, size);
-            
-            R2_CHECK(fs.good(), "Failed to write out the buffer!");
-            if (!fs.good())
-            {
-                return false;
-            }
-        }
-        
-        fs.close();
+        bool result = r2::asset::pln::utils::WriteFile(binFilePath,(char*)buf, size);
+        R2_CHECK(result, "Should never happen");
         
         std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
         

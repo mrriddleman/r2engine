@@ -13,10 +13,10 @@
 #include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
-#include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/TexturePackManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/RModelsManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/SoundManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -647,15 +647,6 @@ namespace r2::asset::lib
         return zipAssetFile;
     }
     
-    ManifestAssetFile* MakeManifestSingleAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
-    {
-        ManifestSingleAssetFile* manifestFile = ALLOC(ManifestSingleAssetFile, *s_arenaPtr);
-
-        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, assetType);
-        R2_CHECK(result, "Failed to initialize the ManifestSingleAssetFile");
-        return manifestFile;
-    }
-
     ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
     {
         TexturePackManifestAssetFile* manifestFile = ALLOC(TexturePackManifestAssetFile, *s_arenaPtr);
@@ -679,6 +670,14 @@ namespace r2::asset::lib
         bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::RMODEL_MANIFEST);
 		R2_CHECK(result, "Failed to initialize the RModelManifestAssetFile");
 		return manifestFile;
+    }
+
+    ManifestAssetFile* MakeSoundsManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
+    {
+        SoundManifestAssetFile* manifestFile = ALLOC(SoundManifestAssetFile, *s_arenaPtr);
+		bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::SOUND_DEFINTION);
+		R2_CHECK(result, "Failed to initialize the SoundManifestAssetFile");
+        return manifestFile;
     }
 
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, r2::asset::FileList files)

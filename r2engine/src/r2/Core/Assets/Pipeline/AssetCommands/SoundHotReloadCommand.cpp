@@ -136,7 +136,8 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromDirectories(mSoundDefinitionBinFilePath, mSoundDefinitionRawFilePath, mSoundDirectories))
+					//@TODO(Serge): version
+					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromDirectories(1, mSoundDefinitionBinFilePath, mSoundDefinitionRawFilePath, mSoundDirectories))
 					{
 						R2_CHECK(false, "Failed to generate sound definition file from directories!");
 						return;

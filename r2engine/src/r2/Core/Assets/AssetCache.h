@@ -89,6 +89,7 @@ namespace r2::asset
 
         s64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
+        //@TODO(Serge): get rid of all of this
         void AddReloadFunction(AssetReloadedFunc func);
 
         void ResetFileList(FileList fileList);
@@ -104,13 +105,14 @@ namespace r2::asset
 
         void RegisterAssetFreedCallback(AssetFreedCallback func);
         
+        //@TODO(Serge): get rid of these
         const FileList GetFileList() const { return mnoptrFiles; }
-
         const AssetFile* GetAssetFile(const Asset& asset) const;
         const AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle) const;
-
         void AddAssetFile(AssetFile* assetFile);
         void RemoveFile(const Asset& asset);
+
+
 
         static u64 TotalMemoryNeeded(u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
@@ -175,6 +177,7 @@ namespace r2::asset
 #endif
         
 #ifdef R2_ASSET_PIPELINE
+        //@TODO(Serge): get rid of all of this
         struct AssetRecord
         {
             AssetHandle handle;

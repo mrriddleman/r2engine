@@ -61,8 +61,8 @@ namespace r2::asset
 			R2_CHECK(false, "Passed in nullptr for the AssetCache");
 			return false;
 		}
-		//@TODO(Serge): this breaks publish build since this method is only for asset pipeline
-		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));//GetAssetFileForAssetHandle({ mManifestAssetFile->GetAssetHandle(0), mnoptrAssetCache->GetSlot() });
+		
+		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
 
 		if (!foundAssetFile)
 		{

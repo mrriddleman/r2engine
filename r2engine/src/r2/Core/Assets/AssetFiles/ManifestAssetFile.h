@@ -16,35 +16,35 @@ namespace r2::asset
 	{
 	public:
 		virtual ~ManifestAssetFile() {}
-		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) = 0;
-		virtual void Shutdown() = 0;
+		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType);
+		virtual void Shutdown();
 
-		virtual r2::asset::AssetType GetManifestAssetType() const = 0;
-		virtual u64 GetManifestFileHandle() const = 0;
+		virtual r2::asset::AssetType GetManifestAssetType() const;
+		virtual u64 GetManifestFileHandle() const;
 		
-		virtual bool LoadManifest() = 0;
-		virtual bool UnloadManifest() = 0;
-		virtual const byte* GetManifestData() const = 0;
-		virtual const char* FilePath() const = 0;
+		virtual bool LoadManifest();
+		virtual bool UnloadManifest() ;
+		virtual const byte* GetManifestData() const ;
+		virtual const char* FilePath() const ;
 		
-		virtual bool HasAsset(const Asset& asset) const = 0;
+		virtual bool HasAsset(const Asset& asset) const ;
 		
 
 		//@NOTE(Serge): These shouldn't exist
-		virtual bool AddAllFilePaths(FileList files) = 0;
+		virtual bool AddAllFilePaths(FileList files);
 
 #ifdef R2_ASSET_PIPELINE
 		
-		virtual bool AddAssetReference(const AssetReference& assetReference) = 0;
-		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType) = 0;
+		virtual bool AddAssetReference(const AssetReference& assetReference) ;
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType);
 		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const std::string& manifestFilePath, const byte* manifestData, pln::HotReloadType hotreloadType)>;
 		void SetReloadFilePathCallback(ReloadFilePathFunc func)
 		{
 			mReloadFilePathFunc = func;
 		}
 
-		virtual bool SaveManifest() = 0;
-		virtual void Reload() = 0;
+		virtual bool SaveManifest();
+		virtual void Reload();
 #endif
 	protected:
 #ifdef R2_ASSET_PIPELINE

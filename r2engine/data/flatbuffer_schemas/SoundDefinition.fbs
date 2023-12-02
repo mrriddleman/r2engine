@@ -1,18 +1,16 @@
+include "AssetRef.fbs";
+
 namespace flat;
 
 file_identifier "sdef";
 file_extension "sdef";
 
-table BankFile
-{
-	path:string;
-}
-
 table SoundDefinitions
 {
-	masterBank:BankFile;
-	masterBankStrings:BankFile;
-	banks:[BankFile];
+	version:uint;
+	masterBank:AssetRef;
+	masterBankStrings:AssetRef;
+	banks:[AssetRef];
 }
 
 root_type SoundDefinitions;

@@ -1,26 +1,13 @@
 #include "r2pch.h"
-#include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
-
-#include "r2/Core/File/File.h"
-#include "r2/Core/File/FileSystem.h"
-#include "r2/Core/File/PathUtils.h"
-#include "r2/Core/Assets/AssetCache.h"
+#include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetCache.h"
 
 namespace r2::asset
 {
-	ManifestSingleAssetFile::ManifestSingleAssetFile()
-	{
 
-	}
-
-	ManifestSingleAssetFile::~ManifestSingleAssetFile()
-	{
-	}
-
-	bool ManifestSingleAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
+	bool ManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
 	{
 		mnoptrAssetCache = noptrAssetCache;
 		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
@@ -30,7 +17,7 @@ namespace r2::asset
 		return mManifestAssetFile != nullptr;
 	}
 
-	void ManifestSingleAssetFile::Shutdown()
+	void ManifestAssetFile::Shutdown()
 	{
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord) ||
 			!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle))
@@ -40,41 +27,24 @@ namespace r2::asset
 		}
 	}
 
-	r2::asset::AssetType ManifestSingleAssetFile::GetManifestAssetType() const
+	r2::asset::AssetType ManifestAssetFile::GetManifestAssetType() const
 	{
 		return mAssetType;
 	}
 
-	bool ManifestSingleAssetFile::AddAllFilePaths(FileList files)
-	{
-		return true;
-	}
-
-	u64 ManifestSingleAssetFile::GetManifestFileHandle() const
+	u64 ManifestAssetFile::GetManifestFileHandle() const
 	{
 		return r2::asset::GetAssetNameForFilePath(FilePath(), mAssetType);
 	}
 
-#ifdef R2_ASSET_PIPELINE
-	bool ManifestSingleAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
-	{
-		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), type);
-	}
-#endif
-
-	const char* ManifestSingleAssetFile::FilePath() const
-	{
-		return mManifestAssetFile->FilePath();
-	}
-
-	bool ManifestSingleAssetFile::LoadManifest()
+	bool ManifestAssetFile::LoadManifest()
 	{
 		if (mnoptrAssetCache == nullptr)
 		{
 			R2_CHECK(false, "Passed in nullptr for the AssetCache");
 			return false;
 		}
-		
+
 		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
 
 		if (!foundAssetFile)
@@ -93,7 +63,7 @@ namespace r2::asset
 		return !r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord);
 	}
 
-	bool ManifestSingleAssetFile::UnloadManifest()
+	bool ManifestAssetFile::UnloadManifest()
 	{
 		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
@@ -109,7 +79,7 @@ namespace r2::asset
 		return success;
 	}
 
-	const byte* ManifestSingleAssetFile::GetManifestData() const
+	const byte* ManifestAssetFile::GetManifestData() const
 	{
 		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
@@ -120,20 +90,38 @@ namespace r2::asset
 		return mManifestCacheRecord.GetAssetBuffer()->Data();
 	}
 
-	bool ManifestSingleAssetFile::HasAsset(const Asset& asset) const
+	const char* ManifestAssetFile::FilePath() const
+	{
+		return mManifestAssetFile->FilePath();
+	}
+
+	bool ManifestAssetFile::HasAsset(const Asset& asset) const
 	{
 		return false;
 	}
 
+	bool ManifestAssetFile::AddAllFilePaths(FileList files)
+	{
+		return false;
+	}
 
 #ifdef R2_ASSET_PIPELINE
-	bool ManifestSingleAssetFile::SaveManifest()
+	bool ManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
 	{
-		TODO;
 		return false;
 	}
 
-	void ManifestSingleAssetFile::Reload()
+	bool ManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType)
+	{
+		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), hotreloadType);
+	}
+
+	bool ManifestAssetFile::SaveManifest()
+	{
+		return false;
+	}
+
+	void ManifestAssetFile::Reload()
 	{
 		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
 		{
@@ -142,7 +130,7 @@ namespace r2::asset
 		}
 
 		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
-		
+
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
 
 		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
@@ -150,11 +138,6 @@ namespace r2::asset
 		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
 	}
 
-	bool ManifestSingleAssetFile::AddAssetReference(const AssetReference& assetReference) 
-	{
-		return false;
-	}
-
-
 #endif
+
 }

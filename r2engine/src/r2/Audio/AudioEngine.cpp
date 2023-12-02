@@ -339,11 +339,11 @@ namespace r2::audio
 
 			char directoryPath[r2::fs::FILE_PATH_LENGTH];
 
-			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBank()->path()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
+		    r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBank()->binPath()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
 
             gImpl->mMasterBank = LoadBank(directoryPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
 
-			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBankStrings()->path()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
+			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBankStrings()->binPath()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
 
             gImpl->mMasterStringsBank = LoadBank(directoryPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             

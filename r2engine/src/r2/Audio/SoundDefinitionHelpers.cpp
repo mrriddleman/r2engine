@@ -32,7 +32,7 @@ namespace r2::audio
 
 			for (flatbuffers::uoffset_t j = 0; j < flatSoundDef->banks()->size(); ++j)
 			{
-				const char* soundBankName = flatSoundDef->banks()->Get(j)->path()->c_str();
+				const char* soundBankName = flatSoundDef->banks()->Get(j)->binPath()->c_str();
 				u64 flatSoundBankAssetName = r2::asset::GetAssetNameForFilePath(soundBankName, r2::asset::SOUND);
 
 				if (flatSoundBankAssetName == soundBankAssetName)

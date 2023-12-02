@@ -1355,9 +1355,9 @@ namespace r2
         }
 
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, rawSoundDefinitionPath, rawSoundDefinitionWatchPath, r2::asset::SOUND_DEFINTION);
+        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeSoundsManifestAssetFile(*mAssetLib, soundDefinitionPath, rawSoundDefinitionPath, rawSoundDefinitionWatchPath);
 #else
-        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(*mAssetLib, soundDefinitionPath, "", "", r2::asset::SOUND_DEFINTION);
+        r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeSoundsManifestAssetFile(*mAssetLib, soundDefinitionPath, "", "");
 #endif
 
 #ifdef R2_ASSET_PIPELINE
