@@ -216,7 +216,7 @@ namespace r2
 		r2::SArray<u64>* soundBanks = MAKE_SARRAY(*mLevelArena, u64, MAX_NUM_SOUND_BANKS);
 #else
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->modelFilePaths()->size());
-		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
+		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, flatLevelData->materialNames()->size() * r2::draw::tex::NUM_TEXTURE_TYPES);
 		r2::SArray<u64>* soundBanks = MAKE_SARRAY(*mLevelArena, u64, flatLevelData->soundPaths()->size());
 #endif
 		

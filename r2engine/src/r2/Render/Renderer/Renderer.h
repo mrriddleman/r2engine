@@ -129,15 +129,7 @@ namespace r2::draw
 		static u64 MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
-#ifdef R2_DEBUG
-
-	struct DebugRenderConstants
-	{
-		glm::vec4 color;
-		glm::mat4 modelMatrix;
-	};
-
-	struct BatchRenderOffsets
+struct BatchRenderOffsets
 	{
 		//@TODO(Serge): Should this be the forward pass' shader? or should this be ShaderEffectPasses?
 		ShaderEffectPasses shaderEffectPasses;
@@ -151,6 +143,16 @@ namespace r2::draw
 		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
 
 	};
+
+#ifdef R2_DEBUG
+
+	struct DebugRenderConstants
+	{
+		glm::vec4 color;
+		glm::mat4 modelMatrix;
+	};
+
+	
 
 	struct DebugDrawCommandData
 	{

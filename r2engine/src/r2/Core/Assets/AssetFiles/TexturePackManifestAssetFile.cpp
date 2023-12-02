@@ -124,6 +124,7 @@ namespace r2::asset
 			return false;
 		}
 
+		//@TODO(Serge): this breaks publish build since this method is only for asset pipeline
 		const r2::asset::AssetFile* foundAssetFile = mnoptrAssetCache->GetAssetFileForAssetHandle({ mManifestAssetFile->GetAssetHandle(0), mnoptrAssetCache->GetSlot() });
 
 		if (foundAssetFile != mManifestAssetFile)

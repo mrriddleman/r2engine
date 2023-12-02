@@ -1283,7 +1283,7 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, engineMaterialsPath, rawEngineMaterialsPath, rawEngineMaterialsWatchPath);
 #else
-        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, materialsPath, "", "");
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, engineMaterialsPath, "", "");
 #endif
 
 #ifdef R2_ASSET_PIPELINE

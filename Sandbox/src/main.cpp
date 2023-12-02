@@ -64,12 +64,12 @@
 #include "DummyComponentArrayData_generated.h"
 
 #include "../../r2engine/vendor/imgui/imgui.h"
-
+#include <mutex>
 struct DummyComponent
 {
 	int dummyValue;
 };
-
+#ifdef R2_EDITOR
 class InspectorPanelDummyComponentDataSource : public r2::edit::InspectorPanelComponentDataSource
 {
 public:
@@ -130,7 +130,7 @@ public:
     virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances) override{}
 
 };
-
+#endif
 
 namespace r2::ecs
 {
