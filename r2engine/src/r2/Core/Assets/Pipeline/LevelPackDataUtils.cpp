@@ -58,63 +58,66 @@ namespace r2::asset::pln
 		return flatMaterialNames;
 	}
 
-	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const r2::SArray<r2::asset::AssetHandle>* assetHandles)
+	//@TODO(Serge): r2::SArray<r2::asset::AssetHandle> should be r2::SArray<flat::AssetName>
+	std::vector<flatbuffers::Offset<flat::AssetName>> MakeAssetNamesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const r2::SArray<r2::asset::AssetHandle>* assetHandles)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences;
+		std::vector<flatbuffers::Offset<flat::AssetName>> assetNames;
 
 		size_t numFiles = r2::sarr::Size(*assetHandles);
 
-		char directoryPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::BuildPathFromCategory(directory, "", directoryPath);
+		char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
+		char assetNameStr[r2::fs::FILE_PATH_LENGTH];
 
 		for (size_t i = 0; i < numFiles; ++i)
 		{
-			const r2::asset::AssetFile* assetFile = gameAssetManager.GetAssetFile(r2::sarr::At(*assetHandles, i));
 
-			std::filesystem::path filePath = assetFile->FilePath();
+			const auto assetHandle = r2::sarr::At(*assetHandles, i);
 
-			std::filesystem::path filePathURI = filePath.lexically_relative(directoryPath);
+			//This shouldn't really exist - should just get the AssetName and use that
+			{
+				const r2::asset::AssetFile* assetFile = gameAssetManager.GetAssetFile(assetHandle);
 
-			//make sure to sanitize the filePathURI first
-			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
+				std::filesystem::path filePath = assetFile->FilePath();
 
-			r2::fs::utils::SanitizeSubPath(filePathURI.string().c_str(), sanitizedFilePathURI);
+				r2::fs::utils::SanitizeSubPath(filePath.string().c_str(), sanitizedFilePathURI);
 
-			const auto assetHandle = r2::asset::Asset::GetAssetNameForFilePath(sanitizedFilePathURI, assetType);
+				r2::asset::MakeAssetNameStringForFilePath(sanitizedFilePathURI, assetNameStr, assetType);
+			}
 
-			//@TODO(Serge): if we have packs with multiple assets in them, this might be a problem
-			auto packReference = flat::CreatePackReference(builder, assetHandle, builder.CreateString(sanitizedFilePathURI));
+			
+			//@TODO(Serge): UUID
+			auto assetName = flat::CreateAssetName(builder, 0, assetHandle.handle, builder.CreateString(assetNameStr));
 
-			packReferences.push_back(packReference);
+			assetNames.push_back(assetName);
 		}
 
-		return packReferences;
+		return assetNames;
 	}
 
-	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromSoundBankAssetNames(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<u64>* soundBankAssetNames)
+	//@TODO(Serge): r2::SArray<u64> should be r2::SArray<flat::AssetName>
+	std::vector<flatbuffers::Offset<flat::AssetName>> MakePackReferencesFromSoundBankAssetNames(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<u64>* soundBankAssetNames)
 	{
-		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences = {};
+		std::vector<flatbuffers::Offset<flat::AssetName>> assetNames = {};
 
 		size_t numSoundBanks = r2::sarr::Size(*soundBankAssetNames);
 
 		for (size_t i = 0; i < numSoundBanks; ++i)
 		{
-			const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(r2::sarr::At(*soundBankAssetNames, i));
+			u64 assetBankName = r2::sarr::At(*soundBankAssetNames, i);
+			const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(assetBankName);
 
 			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
 
 			r2::fs::utils::SanitizeSubPath(soundBankName, sanitizedFilePathURI);
 
-			const auto assetHandle = r2::asset::Asset::GetAssetNameForFilePath(sanitizedFilePathURI, r2::asset::SOUND);
+			auto assetName = flat::CreateAssetName(builder, 0, assetBankName, builder.CreateString(sanitizedFilePathURI));
 
-			auto packReference = flat::CreatePackReference(builder, assetHandle, builder.CreateString(sanitizedFilePathURI));
-
-			packReferences.push_back(packReference);
+			assetNames.push_back(assetName);
 		}
 
-		return packReferences;
+		return assetNames;
 	}
 
 	bool SaveLevelData(
@@ -152,26 +155,30 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::EntityData>> entityVec;
 		std::vector<flatbuffers::Offset<flat::ComponentArrayData>> componentDataArray;
 
-		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, r2::asset::RMODEL, editorLevel.GetModelAssets());
+		std::vector<flatbuffers::Offset<flat::AssetName>> modelPackReferences = MakeAssetNamesFromFileList(builder, r2::fs::utils::Directory::MODELS, r2::asset::RMODEL, editorLevel.GetModelAssets());
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = MakeMaterialNameVectorFromMaterialNames(builder, editorLevel.GetMaterials());
-		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = MakePackReferencesFromSoundBankAssetNames(builder, editorLevel.GetSoundBankAssetNames());
+		std::vector<flatbuffers::Offset<flat::AssetName>> soundReferences = MakePackReferencesFromSoundBankAssetNames(builder, editorLevel.GetSoundBankAssetNames());
 		
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
 
+		auto levelAssetHash= r2::asset::GetAssetNameForFilePath(fsBinLevelPath.string().c_str(), r2::asset::LEVEL);
+		auto groupAssetHash = r2::asset::GetAssetNameForFilePath(groupName.c_str(), r2::asset::LEVEL_GROUP);
+
+		auto levelAssetName = flat::CreateAssetName(builder, 0, levelAssetHash, builder.CreateString(levelName));
+		auto levelAssetRef = flat::CreateAssetRef(builder, levelAssetName, builder.CreateString(binLevelPath), builder.CreateString(rawJSONPath));
+
+		auto groupAssetName = flat::CreateAssetName(builder, 0, groupAssetHash, builder.CreateString(groupName.c_str()));
+
 		auto levelData = flat::CreateLevelData(
 			builder,
-			editorLevel.GetVersion(),
-			r2::asset::GetAssetNameForFilePath(fsBinLevelPath.string().c_str(), r2::asset::LEVEL),
-			builder.CreateString(levelName),
-			r2::asset::GetAssetNameForFilePath(groupName.c_str(), r2::asset::LEVEL_GROUP),
-			builder.CreateString(groupName.c_str()),
-			builder.CreateString(binLevelPath), 
+			editorLevel.GetVersion(), levelAssetRef, groupAssetName,
 			numEntities,
 			builder.CreateVector(entityVec),
 			builder.CreateVector(componentDataArray),
-			builder.CreateVector(modelPackReferences),
 			builder.CreateVector(materialNames),
-			builder.CreateVector(soundReferences));
+			builder.CreateVector(modelPackReferences),
+			builder.CreateVector(soundReferences)
+			);
 
 		builder.Finish(levelData);
 

@@ -13,7 +13,7 @@
 
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
-
+#include "r2/Core/Assets/AssetName_generated.h"
 #include "r2/Render/Renderer/Renderer.h"
 
 #ifdef R2_ASSET_PIPELINE
@@ -224,8 +224,8 @@ namespace r2
 
 		newLevel.Init(
 			flatLevelData->version(),
-			flatLevelData->levelNameString()->c_str(),
-			flatLevelData->groupNameString()->c_str(),
+			flatLevelData->levelAsset()->binPath()->c_str(),
+			flatLevelData->groupAssetName()->stringName()->c_str(),
 			levelHandle,
 			modelAssets,
 			texturePackAssets,
@@ -394,7 +394,7 @@ namespace r2
 
 		for (flatbuffers::uoffset_t i = 0; i < numModelFiles; ++i)
 		{
-			r2::asset::Asset modelAsset = r2::asset::Asset::MakeAssetFromFilePath(modelFiles->Get(i)->binPath()->str().c_str(), r2::asset::RMODEL);
+			r2::asset::Asset modelAsset = r2::asset::Asset(modelFiles->Get(i)->assetName(), r2::asset::RMODEL); //r2::asset::Asset::MakeAssetFromFilePath(modelFiles->Get(i)->binPath()->str().c_str(), r2::asset::RMODEL);
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 			r2::sarr::Push(*modelAssets, modelHandle);
 			const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
@@ -412,7 +412,7 @@ namespace r2
 		char soundBankFilePath[r2::fs::FILE_PATH_LENGTH];
 		for (flatbuffers::uoffset_t i = 0; i < numSoundPaths; ++i)
 		{
-			const char* soundBankURI = soundPaths->Get(i)->binPath()->c_str();
+			const char* soundBankURI = soundPaths->Get(i)->stringName()->c_str();
 			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, soundBankURI, soundBankFilePath);
 			audioEngine.LoadBank(soundBankFilePath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
 

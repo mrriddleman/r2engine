@@ -70,10 +70,13 @@ namespace r2
 		char mGroupName[r2::fs::FILE_PATH_LENGTH];
 
 		//we're going to add in arrays for each type of asset handle
+
+		//@TODO(Serge): this should be an AssetName SArray
 		r2::SArray<r2::asset::AssetHandle>* mModelAssets;
 		//we'll need to do something special for the materials/textures
 		r2::SArray<r2::mat::MaterialName>* mMaterials;
 
+		//@TODO(Serge): this should be an AssetName SArray
 		r2::SArray<u64>* mSoundBanks;
 
 		r2::SArray<ecs::Entity>* mEntities;

@@ -7,10 +7,10 @@
 #include "flatbuffers/flatbuffers.h"
 
 #include "AssetName_generated.h"
+#include "AssetRef_generated.h"
 #include "ComponentArrayData_generated.h"
 #include "EntityData_generated.h"
 #include "LevelData_generated.h"
-#include "Model_generated.h"
 
 namespace flat {
 

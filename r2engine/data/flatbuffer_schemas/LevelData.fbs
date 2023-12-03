@@ -1,34 +1,25 @@
 include "EntityData.fbs";
 include "ComponentArrayData.fbs";
-include "Model.fbs";
+include "AssetName.fbs";
+include "AssetRef.fbs";
 
 namespace flat;
 
 file_identifier "rlvl";
 file_extension "rlvl";
 
-table PackReference
-{
-	hashName:ulong (hash:"fnv1a_64");
-	binPath:string;
-}
-
 table LevelData
 {
 	version:uint;
-
-	levelAssetName:ulong (hash:"fnv1a_64");
-	levelNameString:string;
-	groupAssetName:ulong(hash:"fnv1a_64");
-	groupNameString:string;
-	path:string;
+	levelAsset:AssetRef;
+	groupAssetName:AssetName;
 	numEntities:uint;
 	entities:[EntityData];
 	componentArrays:[ComponentArrayData];
 
-	modelFilePaths:[PackReference];
 	materialNames:[MaterialName];
-	soundPaths:[PackReference];
+	modelFilePaths:[AssetName];
+	soundPaths:[AssetName];
 }
 
 root_type LevelData;
