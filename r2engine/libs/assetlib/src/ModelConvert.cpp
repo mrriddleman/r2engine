@@ -40,9 +40,9 @@ namespace r2::assets::assetlib
 	struct MaterialName
 	{
 		uint64_t name = 0;
-
-
 		uint64_t materialPackName = 0;
+		std::string materialNameStr = "";
+		std::string materialPackNameStr = "";
 	};
 
 	struct Joint
@@ -689,8 +689,9 @@ namespace r2::assets::assetlib
 									if (textureNameID == texParam->value())
 									{
 										materialName.name = material->assetName()->assetName();//materialParams->name();
-
+										materialName.materialNameStr = material->assetName()->stringName()->str();
 										materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
+										materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
 										found = true;
 										break;
 									}
@@ -705,7 +706,9 @@ namespace r2::assets::assetlib
 				{
 					const char* matName = material->GetName().C_Str();
 					materialName.name = STRING_ID(matName);
+					materialName.materialNameStr = matName;
 					materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
+					materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
 				}
 
 
@@ -1160,8 +1163,8 @@ namespace r2::assets::assetlib
 		for (size_t i = 0; i < numMaterialsInModel; ++i)
 		{
 			//@TODO(Serge): UUID
-			auto materialAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].name, dataBuilder.CreateString(""));
-			auto materialPackAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].materialPackName, dataBuilder.CreateString(""));
+			auto materialAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].name, dataBuilder.CreateString(model.materialNames[i].materialNameStr));
+			auto materialPackAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].materialPackName, dataBuilder.CreateString(model.materialNames[i].materialPackNameStr));
 
 			flatMaterialNames.push_back(flat::CreateMaterialName(dataBuilder, materialAssetName,materialPackAssetName));
 		}

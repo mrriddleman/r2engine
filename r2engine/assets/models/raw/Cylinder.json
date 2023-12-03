@@ -7,11 +7,11 @@
     {
       name: {
         assetName: 9578052887469947454,
-        stringName: ""
+        stringName: "Default"
       },
       materialPackName: {
         assetName: 6190804764461037178,
-        stringName: ""
+        stringName: "engine_material_pack.mpak"
       }
     }
   ]

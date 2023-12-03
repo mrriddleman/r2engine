@@ -7,11 +7,11 @@
     {
       name: {
         assetName: 6031424017685759555,
-        stringName: ""
+        stringName: "Skybox"
       },
       materialPackName: {
         assetName: 6190804764461037178,
-        stringName: ""
+        stringName: "engine_material_pack.mpak"
       }
     }
   ]

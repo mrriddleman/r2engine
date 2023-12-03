@@ -1388,8 +1388,8 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flatbuffers::String>> meshPaths = { fbb.CreateString(filePath) };
 
 		//@TODO(Serge): UUID
-		auto materialAssetName = flat::CreateAssetName(fbb, 0, STRING_ID(materialName), fbb.CreateString(""));
-		auto materialPackAssetName = flat::CreateAssetName(fbb, 0, materialPackName, fbb.CreateString(""));
+		auto materialAssetName = flat::CreateAssetName(fbb, 0, STRING_ID(materialName), fbb.CreateString(materialName));
+		auto materialPackAssetName = flat::CreateAssetName(fbb, 0, materialPackName, fbb.CreateString("engine_material_pack.mpak"));
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = { flat::CreateMaterialName(fbb, materialAssetName, materialPackAssetName) };
 
 		auto model = flat::CreateModelDirect(fbb, STRING_ID(filename.c_str()), &meshPaths, &materialNames);
