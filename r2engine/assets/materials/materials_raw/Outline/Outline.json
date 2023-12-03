@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17811847082446735133,
   stringName: "Outline",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

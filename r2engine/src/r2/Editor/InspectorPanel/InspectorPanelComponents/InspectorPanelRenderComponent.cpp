@@ -717,7 +717,7 @@ namespace r2::edit
 
 					const flat::Material* flatMaterial = r2::mat::GetMaterialForMaterialName(materialName);
 
-					std::string materialNameString = flatMaterial->stringName()->str();
+					std::string materialNameString = flatMaterial->assetName()->stringName()->str();
 					ImGui::PushID(j);
 
 					ImGui::Text("Slot %u:", j); 
@@ -731,7 +731,7 @@ namespace r2::edit
 						{
 							r2::mat::MaterialParam materialParam = suitableMaterials[k];
 							const flat::Material* suitableMaterial = materialParam.flatMaterial;
-							if (ImGui::Selectable(suitableMaterial->stringName()->str().c_str(), flatMaterial->stringName()->str() == suitableMaterial->stringName()->str()))
+							if (ImGui::Selectable(suitableMaterial->assetName()->stringName()->str().c_str(), flatMaterial->assetName()->stringName()->str() == suitableMaterial->assetName()->stringName()->str()))
 							{
 								r2::sarr::At(*materialsToUse, j) = materialParam.materialName;
 							}

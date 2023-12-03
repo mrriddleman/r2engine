@@ -107,7 +107,14 @@ namespace r2::asset
 		{
 			const auto* materialName = flatModel->materials()->Get(i);
 			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
-			r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
+			r2::sarr::Push(*model->optrMaterialNames, { 
+				{ 
+					materialName->name()
+#ifdef R2_ASSET_PIPELINE
+					,""
+#endif
+				},
+				materialName->materialPackName() });
 		}
 
 		auto numMaterialsToAdd = numMeshes - numMaterialNames;
@@ -121,7 +128,14 @@ namespace r2::asset
 
 			for (u64 i = numMaterialNames; i < numMeshes; ++i)
 			{
-				r2::sarr::Push(*model->optrMaterialNames, { defaultMaterialName, materialPackName });
+				r2::sarr::Push(*model->optrMaterialNames, { 
+					{
+						defaultMaterialName
+#ifdef R2_ASSET_PIPELINE
+						, "default"
+#endif
+					}
+				, materialPackName });
 			}
 		}
 

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 1439807986245414403,
   stringName: "Sponza_Floor",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

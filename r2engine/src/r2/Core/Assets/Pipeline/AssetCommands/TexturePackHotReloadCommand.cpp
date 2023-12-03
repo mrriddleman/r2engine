@@ -190,7 +190,7 @@ namespace r2::asset::pln
 					cubemapTextureToUse = &r2::sarr::At(*cubemaps, 0);
 				}
 
-				bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material->assetName());
+				bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material->assetName()->assetName());
 
 				if (isLoaded)
 				{

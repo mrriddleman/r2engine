@@ -1,10 +1,15 @@
 {
-  assetName: 6056264068655311179,
-  assetNameString: "sandboxmaterialpack.mpak",
+  version: 1,
+  assetName: {
+    assetName: 6056264068655311179,
+    stringName: "sandboxmaterialpack.mpak"
+  },
   pack: [
     {
-      assetName: 254534012248538617,
-      stringName: "BlueClearCoat",
+      assetName: {
+        assetName: 254534012248538617,
+        stringName: "BlueClearCoat"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -168,8 +173,10 @@
       }
     },
     {
-      assetName: 13632125256007332093,
-      stringName: "ColorGradingLUT",
+      assetName: {
+        assetName: 13632125256007332093,
+        stringName: "ColorGradingLUT"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -333,8 +340,10 @@
       }
     },
     {
-      assetName: 6088666330291882227,
-      stringName: "EllenBody",
+      assetName: {
+        assetName: 6088666330291882227,
+        stringName: "EllenBody"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -494,8 +503,10 @@
       }
     },
     {
-      assetName: 16041279221578763100,
-      stringName: "EllenDefault",
+      assetName: {
+        assetName: 16041279221578763100,
+        stringName: "EllenDefault"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -655,8 +666,10 @@
       }
     },
     {
-      assetName: 10074459559892431748,
-      stringName: "EllenEye",
+      assetName: {
+        assetName: 10074459559892431748,
+        stringName: "EllenEye"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -802,8 +815,10 @@
       }
     },
     {
-      assetName: 8222929225575970643,
-      stringName: "EllenHair",
+      assetName: {
+        assetName: 8222929225575970643,
+        stringName: "EllenHair"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -964,8 +979,10 @@
       }
     },
     {
-      assetName: 10849559150594760209,
-      stringName: "EllenHead",
+      assetName: {
+        assetName: 10849559150594760209,
+        stringName: "EllenHead"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1132,8 +1149,10 @@
       }
     },
     {
-      assetName: 5688973756030079883,
-      stringName: "EllenTear",
+      assetName: {
+        assetName: 5688973756030079883,
+        stringName: "EllenTear"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1293,8 +1312,10 @@
       }
     },
     {
-      assetName: 17351122780281340654,
-      stringName: "MicroBat",
+      assetName: {
+        assetName: 17351122780281340654,
+        stringName: "MicroBat"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1455,8 +1476,10 @@
       }
     },
     {
-      assetName: 11939199546922744086,
-      stringName: "NewportConvolved",
+      assetName: {
+        assetName: 11939199546922744086,
+        stringName: "NewportConvolved"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1600,8 +1623,10 @@
       }
     },
     {
-      assetName: 747981529608325426,
-      stringName: "NewportLUTDFG",
+      assetName: {
+        assetName: 747981529608325426,
+        stringName: "NewportLUTDFG"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1761,8 +1786,10 @@
       }
     },
     {
-      assetName: 5888278623692366668,
-      stringName: "NewportPrefiltered",
+      assetName: {
+        assetName: 5888278623692366668,
+        stringName: "NewportPrefiltered"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1906,8 +1933,10 @@
       }
     },
     {
-      assetName: 17037780642595464548,
-      stringName: "NewportSkybox",
+      assetName: {
+        assetName: 17037780642595464548,
+        stringName: "NewportSkybox"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2051,8 +2080,10 @@
       }
     },
     {
-      assetName: 5241291254806722222,
-      stringName: "Skeleton",
+      assetName: {
+        assetName: 5241291254806722222,
+        stringName: "Skeleton"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2212,8 +2243,10 @@
       }
     },
     {
-      assetName: 2191929442153370249,
-      stringName: "Sponza_BlackPot",
+      assetName: {
+        assetName: 2191929442153370249,
+        stringName: "Sponza_BlackPot"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2374,8 +2407,10 @@
       }
     },
     {
-      assetName: 17116071044852532028,
-      stringName: "Sponza_BlueCircularBanner",
+      assetName: {
+        assetName: 17116071044852532028,
+        stringName: "Sponza_BlueCircularBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2535,8 +2570,10 @@
       }
     },
     {
-      assetName: 151525349772927348,
-      stringName: "Sponza_BlueCrestBanner",
+      assetName: {
+        assetName: 151525349772927348,
+        stringName: "Sponza_BlueCrestBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2696,8 +2733,10 @@
       }
     },
     {
-      assetName: 1250174769109493738,
-      stringName: "Sponza_Ceiling",
+      assetName: {
+        assetName: 1250174769109493738,
+        stringName: "Sponza_Ceiling"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -2857,8 +2896,10 @@
       }
     },
     {
-      assetName: 6672287905260019413,
-      stringName: "Sponza_Chains",
+      assetName: {
+        assetName: 6672287905260019413,
+        stringName: "Sponza_Chains"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3018,8 +3059,10 @@
       }
     },
     {
-      assetName: 12930837855527852669,
-      stringName: "Sponza_Column",
+      assetName: {
+        assetName: 12930837855527852669,
+        stringName: "Sponza_Column"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3179,8 +3222,10 @@
       }
     },
     {
-      assetName: 8145633656637884532,
-      stringName: "Sponza_FirePit",
+      assetName: {
+        assetName: 8145633656637884532,
+        stringName: "Sponza_FirePit"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3340,8 +3385,10 @@
       }
     },
     {
-      assetName: 1439807986245414403,
-      stringName: "Sponza_Floor",
+      assetName: {
+        assetName: 1439807986245414403,
+        stringName: "Sponza_Floor"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3502,8 +3549,10 @@
       }
     },
     {
-      assetName: 11066278595232299432,
-      stringName: "Sponza_Flower",
+      assetName: {
+        assetName: 11066278595232299432,
+        stringName: "Sponza_Flower"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3663,8 +3712,10 @@
       }
     },
     {
-      assetName: 6894896099151112035,
-      stringName: "Sponza_FlowerPot",
+      assetName: {
+        assetName: 6894896099151112035,
+        stringName: "Sponza_FlowerPot"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3824,8 +3875,10 @@
       }
     },
     {
-      assetName: 7801476042652392317,
-      stringName: "Sponza_GreenCircularBanner",
+      assetName: {
+        assetName: 7801476042652392317,
+        stringName: "Sponza_GreenCircularBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -3985,8 +4038,10 @@
       }
     },
     {
-      assetName: 7470224791640852787,
-      stringName: "Sponza_GreenCrestBanner",
+      assetName: {
+        assetName: 7470224791640852787,
+        stringName: "Sponza_GreenCrestBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4146,8 +4201,10 @@
       }
     },
     {
-      assetName: 9791586214575832680,
-      stringName: "Sponza_Leafs",
+      assetName: {
+        assetName: 9791586214575832680,
+        stringName: "Sponza_Leafs"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4307,8 +4364,10 @@
       }
     },
     {
-      assetName: 5246457941392705303,
-      stringName: "Sponza_LionHead",
+      assetName: {
+        assetName: 5246457941392705303,
+        stringName: "Sponza_LionHead"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4468,8 +4527,10 @@
       }
     },
     {
-      assetName: 11412110603620388499,
-      stringName: "Sponza_MetalRod",
+      assetName: {
+        assetName: 11412110603620388499,
+        stringName: "Sponza_MetalRod"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4629,8 +4690,10 @@
       }
     },
     {
-      assetName: 5669317547529202594,
-      stringName: "Sponza_OutsideWall",
+      assetName: {
+        assetName: 5669317547529202594,
+        stringName: "Sponza_OutsideWall"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4790,8 +4853,10 @@
       }
     },
     {
-      assetName: 14818281701145395351,
-      stringName: "Sponza_Pillar",
+      assetName: {
+        assetName: 14818281701145395351,
+        stringName: "Sponza_Pillar"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -4951,8 +5016,10 @@
       }
     },
     {
-      assetName: 16775513102546423521,
-      stringName: "Sponza_Railing",
+      assetName: {
+        assetName: 16775513102546423521,
+        stringName: "Sponza_Railing"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5112,8 +5179,10 @@
       }
     },
     {
-      assetName: 10814149529960584285,
-      stringName: "Sponza_RedCircularBanner",
+      assetName: {
+        assetName: 10814149529960584285,
+        stringName: "Sponza_RedCircularBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5273,8 +5342,10 @@
       }
     },
     {
-      assetName: 5788349427589635987,
-      stringName: "Sponza_RedCrestBanner",
+      assetName: {
+        assetName: 5788349427589635987,
+        stringName: "Sponza_RedCrestBanner"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5434,8 +5505,10 @@
       }
     },
     {
-      assetName: 9563529688673692329,
-      stringName: "Sponza_Roof",
+      assetName: {
+        assetName: 9563529688673692329,
+        stringName: "Sponza_Roof"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5595,8 +5668,10 @@
       }
     },
     {
-      assetName: 17590638093559374990,
-      stringName: "Sponza_Shield",
+      assetName: {
+        assetName: 17590638093559374990,
+        stringName: "Sponza_Shield"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5756,8 +5831,10 @@
       }
     },
     {
-      assetName: 16940304359131613044,
-      stringName: "Sponza_SmallColumn",
+      assetName: {
+        assetName: 16940304359131613044,
+        stringName: "Sponza_SmallColumn"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -5917,8 +5994,10 @@
       }
     },
     {
-      assetName: 5406175627352774136,
-      stringName: "Sponza_White",
+      assetName: {
+        assetName: 5406175627352774136,
+        stringName: "Sponza_White"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -6078,8 +6157,10 @@
       }
     },
     {
-      assetName: 17045398062959099023,
-      stringName: "Sponza_Window",
+      assetName: {
+        assetName: 17045398062959099023,
+        stringName: "Sponza_Window"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -6239,8 +6320,10 @@
       }
     },
     {
-      assetName: 17743152345863433361,
-      stringName: "TransparentWindow",
+      assetName: {
+        assetName: 17743152345863433361,
+        stringName: "TransparentWindow"
+      },
       transparencyType: "TRANSPARENT",
       shaderEffectPasses: {
         shaderEffectPasses: [

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17590638093559374990,
   stringName: "Sponza_Shield",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

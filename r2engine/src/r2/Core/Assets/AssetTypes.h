@@ -11,8 +11,6 @@ namespace r2::asset
 	const u64 INVALID_ASSET_HANDLE = 0;
 	const s64 INVALID_ASSET_CACHE = -1;
 
-
-
 	struct AssetName
 	{
 		//UUID uuid;

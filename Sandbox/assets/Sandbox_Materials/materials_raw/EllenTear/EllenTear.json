@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5688973756030079883,
   stringName: "EllenTear",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

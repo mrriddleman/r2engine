@@ -1202,7 +1202,7 @@ public:
         drawWorldParams.layer = r2::draw::DL_SKYBOX;
 
 
-        r2::mat::MaterialName skyboxMaterialName = { STRING_ID("NewportSkybox"), materialParamsPackName };
+        r2::mat::MaterialName skyboxMaterialName = { {STRING_ID("NewportSkybox"), "newportskybox"}, materialParamsPackName };
 
 		/*  r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
 		  r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);

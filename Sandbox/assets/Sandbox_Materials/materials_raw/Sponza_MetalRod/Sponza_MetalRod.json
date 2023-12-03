@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 11412110603620388499,
   stringName: "Sponza_MetalRod",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

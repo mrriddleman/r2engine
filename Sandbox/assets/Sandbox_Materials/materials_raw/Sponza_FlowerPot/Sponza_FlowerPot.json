@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 6894896099151112035,
   stringName: "Sponza_FlowerPot",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

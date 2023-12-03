@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17743152345863433361,
   stringName: "TransparentWindow",
+},
   transparencyType: "TRANSPARENT",
   shaderEffectPasses: {
     shaderEffectPasses: [

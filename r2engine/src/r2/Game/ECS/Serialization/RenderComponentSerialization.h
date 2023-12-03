@@ -109,8 +109,8 @@ namespace r2::ecs
 					const auto& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
 
 					flat::MaterialNameBuilder overrideMaterialBuilder(fbb);
-					overrideMaterialBuilder.add_name(materialOverride.name);
-					overrideMaterialBuilder.add_materialPackName(materialOverride.packName);
+					overrideMaterialBuilder.add_name(materialOverride.assetName.hashID);
+					overrideMaterialBuilder.add_materialPackName(materialOverride.packName.hashID);
 
 					flatOverrideMaterials.push_back(overrideMaterialBuilder.Finish());
 				}
@@ -203,8 +203,8 @@ namespace r2::ecs
 					const auto* flatOverrideMaterial = flatRenderComponent->overrideMaterials()->Get(j);
 
 					r2::mat::MaterialName renderMaterialOverride;
-					renderMaterialOverride.name = flatOverrideMaterial->name();
-					renderMaterialOverride.packName = flatOverrideMaterial->materialPackName();
+					renderMaterialOverride.assetName.hashID = flatOverrideMaterial->name();
+					renderMaterialOverride.packName.hashID = flatOverrideMaterial->materialPackName();
 
 					r2::sarr::Push(*renderComponent.optrMaterialOverrideNames, renderMaterialOverride);
 				}

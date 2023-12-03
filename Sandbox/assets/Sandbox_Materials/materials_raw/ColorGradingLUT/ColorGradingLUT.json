@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 13632125256007332093,
   stringName: "ColorGradingLUT",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

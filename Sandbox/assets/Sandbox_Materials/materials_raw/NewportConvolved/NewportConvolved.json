@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 11939199546922744086,
   stringName: "NewportConvolved",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

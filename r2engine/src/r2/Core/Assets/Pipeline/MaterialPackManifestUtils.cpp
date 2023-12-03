@@ -210,10 +210,11 @@ namespace r2::asset::pln
 				builder.CreateVector(shaderStringParams),
 				builder.CreateVector(shaderStageParams));
 
+			auto assetName = flat::CreateAssetName(builder, 0, material.materialName.assetName.hashID, builder.CreateString(material.stringName));
+
 			flatMaterials.push_back(flat::CreateMaterial(
 				builder,
-				material.materialName.name,
-				builder.CreateString(material.stringName),
+				assetName,
 				material.transparencyType,
 				shaderEffectPasses,
 				shaderParams));
@@ -229,7 +230,10 @@ namespace r2::asset::pln
 
 		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), materialPackNameStr, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
-		auto manifest = flat::CreateMaterialPack(builder, materialPackName, builder.CreateString(materialPackNameStr), builder.CreateVector(flatMaterials));
+		auto assetName = flat::CreateAssetName(builder, 0, materialPackName, builder.CreateString(materialPackNameStr));
+
+		//@TODO(Serge): version
+		auto manifest = flat::CreateMaterialPack(builder, 1, assetName, builder.CreateVector(flatMaterials));
 
 		//generate the manifest
 		builder.Finish(manifest);
@@ -849,10 +853,12 @@ namespace r2::asset::pln
 				builder.CreateVector(shaderStringParams),
 				builder.CreateVector(shaderStageParams));
 
+			//@TODO(Serge): UUID
+			auto assetName = flat::CreateAssetName(builder,0, binMaterial->assetName()->assetName(), builder.CreateString(binMaterial->assetName()->stringName()->str()));
+
 			flatMaterials.push_back(flat::CreateMaterial(
 				builder,
-				binMaterial->assetName(), 
-				builder.CreateString(binMaterial->stringName()),
+				assetName,
 				binMaterial->transparencyType(),
 				shaderEffectPasses,
 				shaderParams));
@@ -870,7 +876,11 @@ namespace r2::asset::pln
 
 		r2::asset::MakeAssetNameStringForFilePath(binPath.string().c_str(), materialPackNameStr, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
-		auto manifest = flat::CreateMaterialPack(builder, materialPackName, builder.CreateString(materialPackNameStr), builder.CreateVector(flatMaterials));
+		//@TODO(Serge): UUID
+		auto assetName = flat::CreateAssetName(builder, 0, materialPackName, builder.CreateString(materialPackNameStr));
+
+		//@TODO(Serge): version
+		auto manifest = flat::CreateMaterialPack(builder, 1, assetName, builder.CreateVector(flatMaterials));
 
 		//generate the manifest
 		builder.Finish(manifest);
@@ -883,6 +893,8 @@ namespace r2::asset::pln
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
 		char materialPackManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+
 
 		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialPackManifestSchemaPath, MATERIAL_PACK_MANIFEST_NAME_FBS.c_str());
 

@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "ShaderEffect_generated.h"
 #include "ShaderEffectPasses_generated.h"
 #include "ShaderParams_generated.h"
@@ -49,16 +50,12 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ASSETNAME = 4,
-    VT_STRINGNAME = 6,
-    VT_TRANSPARENCYTYPE = 8,
-    VT_SHADEREFFECTPASSES = 10,
-    VT_SHADERPARAMS = 12
+    VT_TRANSPARENCYTYPE = 6,
+    VT_SHADEREFFECTPASSES = 8,
+    VT_SHADERPARAMS = 10
   };
-  uint64_t assetName() const {
-    return GetField<uint64_t>(VT_ASSETNAME, 0);
-  }
-  const flatbuffers::String *stringName() const {
-    return GetPointer<const flatbuffers::String *>(VT_STRINGNAME);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
   flat::eTransparencyType transparencyType() const {
     return static_cast<flat::eTransparencyType>(GetField<uint8_t>(VT_TRANSPARENCYTYPE, 0));
@@ -71,9 +68,8 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_ASSETNAME) &&
-           VerifyOffset(verifier, VT_STRINGNAME) &&
-           verifier.VerifyString(stringName()) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
            VerifyField<uint8_t>(verifier, VT_TRANSPARENCYTYPE) &&
            VerifyOffset(verifier, VT_SHADEREFFECTPASSES) &&
            verifier.VerifyTable(shaderEffectPasses()) &&
@@ -87,11 +83,8 @@ struct MaterialBuilder {
   typedef Material Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_assetName(uint64_t assetName) {
-    fbb_.AddElement<uint64_t>(Material::VT_ASSETNAME, assetName, 0);
-  }
-  void add_stringName(flatbuffers::Offset<flatbuffers::String> stringName) {
-    fbb_.AddOffset(Material::VT_STRINGNAME, stringName);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(Material::VT_ASSETNAME, assetName);
   }
   void add_transparencyType(flat::eTransparencyType transparencyType) {
     fbb_.AddElement<uint8_t>(Material::VT_TRANSPARENCYTYPE, static_cast<uint8_t>(transparencyType), 0);
@@ -116,35 +109,16 @@ struct MaterialBuilder {
 
 inline flatbuffers::Offset<Material> CreateMaterial(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetName = 0,
-    flatbuffers::Offset<flatbuffers::String> stringName = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
     flat::eTransparencyType transparencyType = flat::eTransparencyType_OPAQUE,
     flatbuffers::Offset<flat::ShaderEffectPasses> shaderEffectPasses = 0,
     flatbuffers::Offset<flat::ShaderParams> shaderParams = 0) {
   MaterialBuilder builder_(_fbb);
-  builder_.add_assetName(assetName);
   builder_.add_shaderParams(shaderParams);
   builder_.add_shaderEffectPasses(shaderEffectPasses);
-  builder_.add_stringName(stringName);
+  builder_.add_assetName(assetName);
   builder_.add_transparencyType(transparencyType);
   return builder_.Finish();
-}
-
-inline flatbuffers::Offset<Material> CreateMaterialDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetName = 0,
-    const char *stringName = nullptr,
-    flat::eTransparencyType transparencyType = flat::eTransparencyType_OPAQUE,
-    flatbuffers::Offset<flat::ShaderEffectPasses> shaderEffectPasses = 0,
-    flatbuffers::Offset<flat::ShaderParams> shaderParams = 0) {
-  auto stringName__ = stringName ? _fbb.CreateString(stringName) : 0;
-  return flat::CreateMaterial(
-      _fbb,
-      assetName,
-      stringName__,
-      transparencyType,
-      shaderEffectPasses,
-      shaderParams);
 }
 
 inline const flat::Material *GetMaterial(const void *buf) {

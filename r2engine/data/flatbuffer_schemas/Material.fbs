@@ -1,3 +1,4 @@
+include "AssetName.fbs";
 include "ShaderEffectPasses.fbs";
 
 namespace flat;
@@ -13,8 +14,7 @@ enum eTransparencyType : uint8
 
 table Material
 {
-	assetName:ulong (hash:"fnv1a_64");
-	stringName:string;
+	assetName:AssetName;
 	transparencyType:eTransparencyType;
 	shaderEffectPasses:ShaderEffectPasses;
 	shaderParams:ShaderParams;

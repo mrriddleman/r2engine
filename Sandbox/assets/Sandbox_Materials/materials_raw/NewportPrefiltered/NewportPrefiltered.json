@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5888278623692366668,
   stringName: "NewportPrefiltered",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

@@ -32,6 +32,7 @@ project "assetlib"
 		"../../src/r2/Render/Model/Shader",
 		"../../src/r2/Render/Model/Materials",
 		"../../src/r2/Utils",
+		"../../src/r2/Core/Assets/",
 		"%{libIncludeDirs.lz4}",
 		"%{libIncludeDirs.flatbuffers}",
 		"%{libIncludeDirs.stb}",

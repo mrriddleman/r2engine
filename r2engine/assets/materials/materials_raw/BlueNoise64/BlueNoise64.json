@@ -1,6 +1,10 @@
 {
-  assetName: 13345338042702901259,
-  stringName: "BlueNoise64",
+  
+  assetName: 
+  {
+    assetName:13345338042702901259,
+    stringName: "BlueNoise64"
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

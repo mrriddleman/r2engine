@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17351122780281340654,
   stringName: "MicroBat",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

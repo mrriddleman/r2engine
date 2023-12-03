@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 747981529608325426,
   stringName: "NewportLUTDFG",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

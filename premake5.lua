@@ -492,6 +492,7 @@ project "Sandbox"
 	{
 		"r2engine/src/r2/Render/Model",
 		"r2engine/src/r2/Render/Model/Shader",
+		"r2engine/src/r2/Core/Assets",
 		"r2engine/src",
 		"%{includeDirs.glm}",
 		"%{includeDirs.flatbuffers}",

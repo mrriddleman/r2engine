@@ -167,7 +167,7 @@ namespace r2::edit
 
 				const flat::Material* material = r2::mat::GetMaterialForMaterialName(nextMaterialName);
 
-				if (ImGui::TreeNodeEx(material->stringName()->c_str(), ImGuiTreeNodeFlags_Bullet))
+				if (ImGui::TreeNodeEx(material->assetName()->stringName()->c_str(), ImGuiTreeNodeFlags_Bullet))
 				{
 					if (!wasActivated && (ImGui::IsItemActivated() || ImGui::IsItemActive()))
 					{
@@ -257,7 +257,7 @@ namespace r2::edit
 			const r2::mat::MaterialName& nextMaterialName = r2::sarr::At(*materialsNames, i);
 
 			const flat::Material* material = r2::mat::GetMaterialForMaterialName(nextMaterialName);
-			std::string modelFileStemStr = material->stringName()->str();
+			std::string modelFileStemStr = material->assetName()->stringName()->str();
 			const char* fileNameString = modelFileStemStr.c_str();
 			ImGui::PushID(fileNameString);
 			

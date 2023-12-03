@@ -588,7 +588,7 @@ namespace r2::draw::rmat
 
 		s32 defaultIndex;
 
-		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, material->assetName(), defaultIndex);
+		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, material->assetName()->assetName(), defaultIndex);
 
 		RenderMaterialParams* gpuRenderMaterial = nullptr;
 
@@ -772,11 +772,11 @@ namespace r2::draw::rmat
 
 			r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
 
-			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()))
+			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName()))
 			{
 				textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
 
-				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
+				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
 			}
 			else
 			{
@@ -784,17 +784,17 @@ namespace r2::draw::rmat
 				{
 					r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
 
-					textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), defaultTextureAssetHandles);
+					textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), defaultTextureAssetHandles);
 
 					if (r2::sarr::Capacity(*textureAssetHandles) < r2::sarr::Size(*textures))
 					{
 						FREE(textureAssetHandles, *renderMaterialCache.mAssetHandleArena);
 
-						r2::shashmap::Remove(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName());
+						r2::shashmap::Remove(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName());
 
 						textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
 
-						r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
+						r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
 					}
 				}
 				
@@ -819,17 +819,17 @@ namespace r2::draw::rmat
 
 		r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
 
-		if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()))
+		if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName()))
 		{
 			textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, numAssetHandles);
 
-			r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), textureAssetHandles);
+			r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
 		}
 		else
 		{
 			r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
 
-			textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName(), defaultTextureAssetHandles);
+			textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), defaultTextureAssetHandles);
 
 			R2_CHECK(r2::sarr::Capacity(*textureAssetHandles) >= numAssetHandles, "Since this is a cubemap this must be true");
 		}
@@ -852,7 +852,7 @@ namespace r2::draw::rmat
 	{
 		R2_CHECK(material != nullptr, "Should never be the case");
 
-		u64 materialName = material->assetName();
+		u64 materialName = material->assetName()->assetName();
 
 		R2_CHECK(!r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName), "Shouldn't have this already");
 
@@ -893,41 +893,4 @@ namespace r2::draw::rmat
 
 		r2::shashmap::Remove(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
 	}
-
-	//tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType)
-	//{
-	//	switch (propertyType)
-	//	{
-	//	case flat::ShaderPropertyType_ALBEDO:
-	//		return tex::TextureType::Diffuse;
-	//	case flat::ShaderPropertyType_AMBIENT_OCCLUSION:
-	//		return tex::TextureType::Occlusion;
-	//	case  flat::ShaderPropertyType_ANISOTROPY:
-	//		return tex::TextureType::Anisotropy;
-	//	case flat::ShaderPropertyType_CLEAR_COAT:
-	//		return tex::TextureType::ClearCoat;
-	//	case flat::ShaderPropertyType_CLEAR_COAT_NORMAL:
-	//		return tex::TextureType::ClearCoatNormal;
-	//	case flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS:
-	//		return tex::TextureType::ClearCoatRoughness;
-	//	case flat::ShaderPropertyType_DETAIL:
-	//		return tex::TextureType::Detail;
-	//	case flat::ShaderPropertyType_EMISSION:
-	//		return tex::TextureType::Emissive;
-	//	case flat::ShaderPropertyType::ShaderPropertyType_HEIGHT:
-	//		return tex::TextureType::Height;
-	//	case flat::ShaderPropertyType_METALLIC:
-	//		return tex::TextureType::Metallic;
-	//	case flat::ShaderPropertyType_NORMAL:
-	//		return tex::TextureType::Normal;
-	//	case flat::ShaderPropertyType_ROUGHNESS:
-	//		return tex::TextureType::Roughness;
-
-	//	default:
-	//		R2_CHECK(false, "Unsupported MaterialPropertyType");	
-	//	}
-	//	
-	//	return tex::TextureType::Diffuse;
-
-	//}
 }

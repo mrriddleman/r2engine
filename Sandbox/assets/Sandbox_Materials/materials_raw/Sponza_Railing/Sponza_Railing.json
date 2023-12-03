@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 16775513102546423521,
   stringName: "Sponza_Railing",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

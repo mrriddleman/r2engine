@@ -40,6 +40,8 @@ namespace r2::assets::assetlib
 	struct MaterialName
 	{
 		uint64_t name = 0;
+
+
 		uint64_t materialPackName = 0;
 	};
 
@@ -686,8 +688,9 @@ namespace r2::assets::assetlib
 
 									if (textureNameID == texParam->value())
 									{
-										materialName.name = material->assetName();//materialParams->name();
-										materialName.materialPackName = materialManifest->assetName();//materialManifest->name();
+										materialName.name = material->assetName()->assetName();//materialParams->name();
+
+										materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
 										found = true;
 										break;
 									}
@@ -702,7 +705,7 @@ namespace r2::assets::assetlib
 				{
 					const char* matName = material->GetName().C_Str();
 					materialName.name = STRING_ID(matName);
-					materialName.materialPackName = materialManifest->assetName();//materialManifest->name();
+					materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
 				}
 
 

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 16940304359131613044,
   stringName: "Sponza_SmallColumn",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

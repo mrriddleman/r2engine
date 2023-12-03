@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 15070655777485683174,
   stringName: "ShadowDepth",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

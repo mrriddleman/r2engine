@@ -1,6 +1,8 @@
 {
-  assetName: 6548932671593371265,
-  stringName: "DebugTransparentLines",
+  assetName:{
+    assetName: 6548932671593371265,
+    stringName: "DebugTransparentLines",
+  },
   transparencyType: "TRANSPARENT",
   shaderEffectPasses: {
     shaderEffectPasses: [

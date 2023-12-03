@@ -49,7 +49,7 @@ namespace r2::asset::pln
 		{
 			r2::mat::MaterialName materialName = r2::sarr::At(*materialNames, i);
 
-			flatMaterialNames.push_back(flat::CreateMaterialName(builder, materialName.name, materialName.packName));
+			flatMaterialNames.push_back(flat::CreateMaterialName(builder, materialName.assetName.hashID, materialName.packName.hashID));
 		}
 		return flatMaterialNames;
 	}

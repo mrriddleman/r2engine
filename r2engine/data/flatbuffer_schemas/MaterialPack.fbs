@@ -1,3 +1,4 @@
+include "AssetName.fbs";
 include "Material.fbs";
 
 namespace flat;
@@ -7,8 +8,8 @@ file_extension "mpak";
 
 table MaterialPack
 {
-	assetName:ulong (hash:"fnv1a_64");
-	assetNameString:string;
+	version:uint;
+	assetName:AssetName;
 	pack:[Material];
 }
 

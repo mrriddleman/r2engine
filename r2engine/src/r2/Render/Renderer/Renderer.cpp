@@ -1297,7 +1297,21 @@ namespace r2::draw::renderer
 		FREE(engineCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
 
-		newRenderer->mDefaultOutlineMaterialName = { STRING_ID("Outline"), engineMaterialPack->assetName() };
+		newRenderer->mDefaultOutlineMaterialName.assetName.hashID = STRING_ID("Outline");
+
+		newRenderer->mDefaultOutlineMaterialName.packName.hashID = engineMaterialPack->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+		newRenderer->mDefaultOutlineMaterialName.assetName.assetNameString = "outline";
+		newRenderer->mDefaultOutlineMaterialName.packName.assetNameString = engineMaterialPack->assetName()->stringName()->str();
+#endif
+
+//		newRenderer->mDefaultOutlineMaterialName = { 
+//			
+//#ifdef R2_ASSET_PIPELINE
+//			,"outline"
+//#endif
+//			},
+//			engineMaterialPack->assetName() };
 
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
@@ -6039,7 +6053,7 @@ namespace r2::draw::renderer
 			{
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, i);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.assetName.hashID);
 
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
 
@@ -6054,7 +6068,7 @@ namespace r2::draw::renderer
 
 			const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, 0);
 
-			const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
+			const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.assetName.hashID);
 			r2::draw::ShaderEffectPasses shaderEffectPasses = r2::mat::GetShaderEffectPassesForMaterialName(materialName);
 
 			for (u32 i = 0; i < gpuModelRef->numMaterials; ++i)
@@ -6239,7 +6253,7 @@ namespace r2::draw::renderer
 			{
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, j + materialOffset);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName.name);
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName.assetName.hashID);
 
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
 				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 9563529688673692329,
   stringName: "Sponza_Roof",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

@@ -80,7 +80,7 @@ namespace r2::edit
 
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
-		r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, materialName.packName);
+		r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, materialName.packName.hashID);
 
 		R2_CHECK(materialManifestFile != nullptr, "Should never be the case");
 
@@ -108,8 +108,8 @@ namespace r2::edit
 	void CreateNewMaterial(bool& windowOpen)
 	{
 		r2::mat::Material material;
-		material.materialName.name = 0;
-		material.materialName.packName = 0;
+		material.materialName.assetName.hashID = 0;
+		material.materialName.packName.hashID = 0;
 		material.stringName = "";
 		material.transparencyType = flat::eTransparencyType_OPAQUE;
 		material.shaderParams.boolParams.clear();
@@ -150,7 +150,7 @@ namespace r2::edit
 
 			ImGui::Text(materialNameLabel.c_str());
 			
-			r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, material.materialName.packName);
+			r2::asset::MaterialManifestAssetFile* materialManifestFile = (r2::asset::MaterialManifestAssetFile*)r2::asset::lib::GetManifest(assetLib, material.materialName.packName.hashID);
 
 			if (materialManifestFile)
 			{
@@ -846,7 +846,7 @@ namespace r2::edit
 			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 			R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
 
-			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName.name);
+			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName.assetName.hashID);
 
 			bool result = gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");

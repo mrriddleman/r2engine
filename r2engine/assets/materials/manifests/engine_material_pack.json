@@ -1,10 +1,15 @@
 {
-  assetName: 6190804764461037178,
-  assetNameString: "engine_material_pack.mpak",
+  version: 1,
+  assetName: {
+    assetName: 6190804764461037178,
+    stringName: "engine_material_pack.mpak"
+  },
   pack: [
     {
-      assetName: 13345338042702901259,
-      stringName: "BlueNoise64",
+      assetName: {
+        assetName: 13345338042702901259,
+        stringName: "BlueNoise64"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -162,8 +167,10 @@
       }
     },
     {
-      assetName: 16908702471843575683,
-      stringName: "DebugLines",
+      assetName: {
+        assetName: 16908702471843575683,
+        stringName: "DebugLines"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -303,8 +310,10 @@
       }
     },
     {
-      assetName: 10619972626572432034,
-      stringName: "DebugModels",
+      assetName: {
+        assetName: 10619972626572432034,
+        stringName: "DebugModels"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -448,8 +457,10 @@
       }
     },
     {
-      assetName: 6548932671593371265,
-      stringName: "DebugTransparentLines",
+      assetName: {
+        assetName: 6548932671593371265,
+        stringName: "DebugTransparentLines"
+      },
       transparencyType: "TRANSPARENT",
       shaderEffectPasses: {
         shaderEffectPasses: [
@@ -590,8 +601,10 @@
       }
     },
     {
-      assetName: 15623047818465650140,
-      stringName: "DebugTransparentModels",
+      assetName: {
+        assetName: 15623047818465650140,
+        stringName: "DebugTransparentModels"
+      },
       transparencyType: "TRANSPARENT",
       shaderEffectPasses: {
         shaderEffectPasses: [
@@ -732,8 +745,10 @@
       }
     },
     {
-      assetName: 9578052887469947454,
-      stringName: "Default",
+      assetName: {
+        assetName: 9578052887469947454,
+        stringName: "Default"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -819,9 +834,9 @@
         colorParams: [
           {
             value: {
-              r: 0.105008,
-              g: 0.177922,
-              b: 0.931373,
+              r: 0.552887,
+              g: 0.852941,
+              b: 0.342849,
               a: 1.0
             }
           }
@@ -892,8 +907,10 @@
       }
     },
     {
-      assetName: 12045337332518377258,
-      stringName: "Depth",
+      assetName: {
+        assetName: 12045337332518377258,
+        stringName: "Depth"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1040,8 +1057,10 @@
       }
     },
     {
-      assetName: 10355281907393599618,
-      stringName: "EntityColorModel",
+      assetName: {
+        assetName: 10355281907393599618,
+        stringName: "EntityColorModel"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1179,14 +1198,15 @@
         ],
         shaderStageParams: [
           {
-            value: ""
           }
         ]
       }
     },
     {
-      assetName: 1775896799068096922,
-      stringName: "FinalComposite",
+      assetName: {
+        assetName: 1775896799068096922,
+        stringName: "FinalComposite"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1326,8 +1346,10 @@
       }
     },
     {
-      assetName: 3810770610641481446,
-      stringName: "MissingTexture",
+      assetName: {
+        assetName: 3810770610641481446,
+        stringName: "MissingTexture"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1485,8 +1507,10 @@
       }
     },
     {
-      assetName: 17811847082446735133,
-      stringName: "Outline",
+      assetName: {
+        assetName: 17811847082446735133,
+        stringName: "Outline"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {
@@ -1628,8 +1652,10 @@
       }
     },
     {
-      assetName: 15070655777485683174,
-      stringName: "ShadowDepth",
+      assetName: {
+        assetName: 15070655777485683174,
+        stringName: "ShadowDepth"
+      },
       shaderEffectPasses: {
         shaderEffectPasses: [
           {

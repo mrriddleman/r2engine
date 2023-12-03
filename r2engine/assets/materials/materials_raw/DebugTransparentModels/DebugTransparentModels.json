@@ -1,6 +1,9 @@
 {
-  assetName: 15623047818465650140,
-  stringName: "DebugTransparentModels",
+  assetName:{
+  
+    assetName: 15623047818465650140,
+    stringName: "DebugTransparentModels",
+  },
   transparencyType: "TRANSPARENT",
   shaderEffectPasses: {
     shaderEffectPasses: [

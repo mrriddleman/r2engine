@@ -1,6 +1,8 @@
 {
-  assetName: 10619972626572432034,
-  stringName: "DebugModels",
+  assetName:{
+    assetName: 10619972626572432034,
+    stringName: "DebugModels",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

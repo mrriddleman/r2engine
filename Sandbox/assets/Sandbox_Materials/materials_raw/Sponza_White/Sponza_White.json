@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5406175627352774136,
   stringName: "Sponza_White",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

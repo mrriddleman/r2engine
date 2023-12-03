@@ -200,7 +200,7 @@ namespace r2::asset
 		for (flatbuffers::uoffset_t i = 0; i < flatMaterials->size(); ++i)
 		{
 			r2::mat::Material nextMaterial;
-			r2::mat::MakeMaterialFromFlatMaterial(mMaterialPackManifest->assetName(), flatMaterials->Get(i), nextMaterial);
+			r2::mat::MakeMaterialFromFlatMaterial(mMaterialPackManifest->assetName()->assetName(), flatMaterials->Get(i), nextMaterial);
 
 			mMaterials.push_back(nextMaterial);
 		}

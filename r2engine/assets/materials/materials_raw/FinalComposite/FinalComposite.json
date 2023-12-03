@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 1775896799068096922,
   stringName: "FinalComposite",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

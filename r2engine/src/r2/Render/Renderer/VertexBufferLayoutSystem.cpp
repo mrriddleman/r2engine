@@ -90,7 +90,7 @@ namespace r2::draw::vb
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayout), ALIGNMENT, stackHeaderSize, boundsChecking)
 		) * numBufferLayouts;
 
-		R2_CHECK(vertexBufferLayoutArenaSize <= Megabytes(64), "Don't want this to go crazy");
+		R2_CHECK(vertexBufferLayoutArenaSize <= Megabytes(70), "Don't want this to go crazy");
 
 		return vertexBufferLayoutArenaSize;
 	}

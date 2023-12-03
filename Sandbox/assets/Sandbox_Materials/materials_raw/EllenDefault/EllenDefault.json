@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 16041279221578763100,
   stringName: "EllenDefault",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

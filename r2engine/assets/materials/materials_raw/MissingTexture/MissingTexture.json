@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 3810770610641481446,
   stringName: "MissingTexture",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

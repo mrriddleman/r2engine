@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 10355281907393599618,
   stringName: "EntityColorModel",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

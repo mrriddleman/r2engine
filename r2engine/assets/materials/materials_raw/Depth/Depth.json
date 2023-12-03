@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 12045337332518377258,
   stringName: "Depth",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

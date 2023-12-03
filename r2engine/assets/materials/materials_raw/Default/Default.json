@@ -1,6 +1,8 @@
 {
-  assetName: 9578052887469947454,
-  stringName: "Default",
+  assetName:{
+    assetName: 9578052887469947454,
+    stringName: "Default",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

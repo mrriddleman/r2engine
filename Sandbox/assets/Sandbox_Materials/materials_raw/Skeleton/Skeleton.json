@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5241291254806722222,
   stringName: "Skeleton",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

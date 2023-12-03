@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17037780642595464548,
   stringName: "NewportSkybox",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

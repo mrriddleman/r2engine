@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17116071044852532028,
   stringName: "Sponza_BlueCircularBanner",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

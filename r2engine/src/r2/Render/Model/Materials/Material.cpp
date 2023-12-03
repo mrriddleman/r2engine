@@ -7,9 +7,11 @@ namespace r2::mat
 {
 	void MakeMaterialFromFlatMaterial(u64 materialPackName, const flat::Material* flatMaterial, Material& outMaterial)
 	{
-		outMaterial.materialName.name = flatMaterial->assetName();
-		outMaterial.materialName.packName = materialPackName;
-		outMaterial.stringName = flatMaterial->stringName()->str();
+		outMaterial.materialName.assetName.hashID = flatMaterial->assetName()->assetName();
+		outMaterial.materialName.packName.hashID = materialPackName;
+		
+		outMaterial.stringName = flatMaterial->assetName()->stringName()->str();
+
 		outMaterial.transparencyType = flatMaterial->transparencyType();
 		r2::draw::MakeMaterialShaderEffectPasses(flatMaterial->shaderEffectPasses(), outMaterial.shaderEffectPasses);
 		r2::draw::MakeShaderParams(flatMaterial->shaderParams(), outMaterial.shaderParams);
@@ -128,10 +130,11 @@ namespace r2::mat
 			builder.CreateVector(shaderStringParams),
 			builder.CreateVector(shaderStageParams));
 
+		auto assetName = flat::CreateAssetName(builder, 0, material.materialName.assetName.hashID, builder.CreateString(material.stringName));
+
 		auto flatMaterial = flat::CreateMaterial(
 			builder,
-			material.materialName.name,
-			builder.CreateString(material.stringName),
+			assetName,
 			material.transparencyType,
 			shaderEffectPasses,
 			shaderParams);

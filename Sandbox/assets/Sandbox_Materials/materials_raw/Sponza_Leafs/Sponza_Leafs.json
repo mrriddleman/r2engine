@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 9791586214575832680,
   stringName: "Sponza_Leafs",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

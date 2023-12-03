@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5246457941392705303,
   stringName: "Sponza_LionHead",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 6672287905260019413,
   stringName: "Sponza_Chains",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

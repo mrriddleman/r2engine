@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 10074459559892431748,
   stringName: "EllenEye",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

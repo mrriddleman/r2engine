@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "Material_generated.h"
 #include "ShaderEffect_generated.h"
 #include "ShaderEffectPasses_generated.h"
@@ -19,24 +20,24 @@ struct MaterialPackBuilder;
 struct MaterialPack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialPackBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ASSETNAME = 4,
-    VT_ASSETNAMESTRING = 6,
+    VT_VERSION = 4,
+    VT_ASSETNAME = 6,
     VT_PACK = 8
   };
-  uint64_t assetName() const {
-    return GetField<uint64_t>(VT_ASSETNAME, 0);
+  uint32_t version() const {
+    return GetField<uint32_t>(VT_VERSION, 0);
   }
-  const flatbuffers::String *assetNameString() const {
-    return GetPointer<const flatbuffers::String *>(VT_ASSETNAMESTRING);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::Material>> *pack() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::Material>> *>(VT_PACK);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_ASSETNAME) &&
-           VerifyOffset(verifier, VT_ASSETNAMESTRING) &&
-           verifier.VerifyString(assetNameString()) &&
+           VerifyField<uint32_t>(verifier, VT_VERSION) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
            VerifyOffset(verifier, VT_PACK) &&
            verifier.VerifyVector(pack()) &&
            verifier.VerifyVectorOfTables(pack()) &&
@@ -48,11 +49,11 @@ struct MaterialPackBuilder {
   typedef MaterialPack Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_assetName(uint64_t assetName) {
-    fbb_.AddElement<uint64_t>(MaterialPack::VT_ASSETNAME, assetName, 0);
+  void add_version(uint32_t version) {
+    fbb_.AddElement<uint32_t>(MaterialPack::VT_VERSION, version, 0);
   }
-  void add_assetNameString(flatbuffers::Offset<flatbuffers::String> assetNameString) {
-    fbb_.AddOffset(MaterialPack::VT_ASSETNAMESTRING, assetNameString);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(MaterialPack::VT_ASSETNAME, assetName);
   }
   void add_pack(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::Material>>> pack) {
     fbb_.AddOffset(MaterialPack::VT_PACK, pack);
@@ -71,27 +72,26 @@ struct MaterialPackBuilder {
 
 inline flatbuffers::Offset<MaterialPack> CreateMaterialPack(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetName = 0,
-    flatbuffers::Offset<flatbuffers::String> assetNameString = 0,
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::Material>>> pack = 0) {
   MaterialPackBuilder builder_(_fbb);
-  builder_.add_assetName(assetName);
   builder_.add_pack(pack);
-  builder_.add_assetNameString(assetNameString);
+  builder_.add_assetName(assetName);
+  builder_.add_version(version);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<MaterialPack> CreateMaterialPackDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetName = 0,
-    const char *assetNameString = nullptr,
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
     const std::vector<flatbuffers::Offset<flat::Material>> *pack = nullptr) {
-  auto assetNameString__ = assetNameString ? _fbb.CreateString(assetNameString) : 0;
   auto pack__ = pack ? _fbb.CreateVector<flatbuffers::Offset<flat::Material>>(*pack) : 0;
   return flat::CreateMaterialPack(
       _fbb,
+      version,
       assetName,
-      assetNameString__,
       pack__);
 }
 

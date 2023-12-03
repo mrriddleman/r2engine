@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 17045398062959099023,
   stringName: "Sponza_Window",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

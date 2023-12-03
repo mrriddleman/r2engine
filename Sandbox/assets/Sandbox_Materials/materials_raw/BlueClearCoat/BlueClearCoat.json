@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 254534012248538617,
   stringName: "BlueClearCoat",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

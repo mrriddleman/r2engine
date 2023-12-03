@@ -24,7 +24,7 @@ namespace r2::mat
 
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
 		{
-			if (materialPack->pack()->Get(i)->assetName() == materialName)
+			if (materialPack->pack()->Get(i)->assetName()->assetName() == materialName)
 			{
 				return materialPack->pack()->Get(i);
 			}
@@ -42,7 +42,7 @@ namespace r2::mat
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName.hashID);
 
 		R2_CHECK(manifestData != nullptr, "");
 
@@ -50,7 +50,7 @@ namespace r2::mat
 
 		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-		const flat::Material* material = GetMaterialForMaterialName(materialParamsPack, materialName.name);
+		const flat::Material* material = GetMaterialForMaterialName(materialParamsPack, materialName.assetName.hashID);
 
 		return material;
 	}
@@ -192,8 +192,8 @@ namespace r2::mat
 	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName)
 	{
 		MaterialName materialName;
-		materialName.name = flatMaterialName->name();
-		materialName.packName = flatMaterialName->materialPackName();
+		materialName.assetName.hashID = flatMaterialName->name();
+		materialName.packName.hashID = flatMaterialName->materialPackName();
 
 		return materialName;
 	}
@@ -324,6 +324,12 @@ namespace r2::mat
 
 			const flat::MaterialPack* materialParamsPack = flat::GetMaterialPack(manifestData);
 
+			r2::asset::AssetName packAssetName;
+			packAssetName.hashID = materialParamsPack->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+			packAssetName.assetNameString = materialParamsPack->assetName()->stringName()->str();
+#endif
+
 			const auto* pack = materialParamsPack->pack();
 
 			for (flatbuffers::uoffset_t j = 0; j < pack->size(); ++j)
@@ -338,7 +344,16 @@ namespace r2::mat
 				{
 					MaterialParam materialParam;
 					materialParam.flatMaterial = material;
-					materialParam.materialName = { material->assetName(), materialParamsPack->assetName() };
+
+					r2::asset::AssetName nextAssetName;
+					nextAssetName.hashID = material->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+					nextAssetName.assetNameString = material->assetName()->stringName()->str();
+#endif
+					//TODO(Serge): UUID
+					materialParam.materialName.assetName = nextAssetName;
+					materialParam.materialName.packName = packAssetName;
+
 					materialsToReturn.push_back(materialParam);
 				}
 			}
@@ -379,9 +394,26 @@ namespace r2::mat
 			
 			for (u32 j = 0; j < pack->size(); ++j)
 			{
-				if (pack->Get(j)->assetName() == materialAssetName)
+				if (pack->Get(j)->assetName()->assetName() == materialAssetName)
 				{
-					result={ materialAssetName, materialParamsPack->assetName() };
+					//@TODO(Serge): UUID
+
+					result.assetName.hashID = pack->Get(j)->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+					result.assetName.assetNameString = pack->Get(j)->assetName()->stringName()->str();
+#endif
+					result.packName.hashID = materialParamsPack->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+					result.packName.assetNameString = materialParamsPack->assetName()->stringName()->str();
+#endif
+//					result = { 
+//						{
+//							materialAssetName
+//#ifdef R2_ASSET_PIPELINE
+//							,pack->Get(j)->assetName()->stringName()->str()
+//#endif
+//						},
+//						materialParamsPack->assetName() };
 					break;
 				}
 			}

@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 8145633656637884532,
   stringName: "Sponza_FirePit",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

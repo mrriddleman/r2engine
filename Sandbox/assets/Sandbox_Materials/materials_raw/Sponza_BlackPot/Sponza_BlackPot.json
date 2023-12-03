@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 2191929442153370249,
   stringName: "Sponza_BlackPot",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

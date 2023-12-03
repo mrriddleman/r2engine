@@ -445,7 +445,7 @@ namespace r2
 		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
 		{
 			const flat::Material* material = materialPack->pack()->Get(i);
-			if (material->assetName() == materialName)
+			if (material->assetName()->assetName() == materialName)
 			{
 				const auto* textureParams = material->shaderParams()->textureParams();
 				const auto numTextureParams = textureParams->size();
@@ -497,7 +497,7 @@ namespace r2
 		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
 		{
 			const flat::Material* material = materialPack->pack()->Get(i);
-			if (material->assetName() == materialName)
+			if (material->assetName()->assetName() == materialName)
 			{
 				const auto* textureParams = material->shaderParams()->textureParams();
 				const auto numTextureParams = textureParams->size();

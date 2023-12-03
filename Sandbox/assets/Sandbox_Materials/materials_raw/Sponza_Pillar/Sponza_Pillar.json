@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 14818281701145395351,
   stringName: "Sponza_Pillar",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

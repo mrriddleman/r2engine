@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 8222929225575970643,
   stringName: "EllenHair",
+  },
   shaderEffectPasses: {
     shaderEffectPasses: [
       {

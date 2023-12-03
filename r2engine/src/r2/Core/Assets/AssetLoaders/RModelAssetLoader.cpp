@@ -234,7 +234,14 @@ namespace r2::asset
 			const auto* materialName = flatMaterialNames->Get(i);
 			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
 
-			r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
+			r2::sarr::Push(*model->optrMaterialNames, { 
+				{
+					materialName->name()
+#ifdef R2_ASSET_PIPELINE
+					, ""
+#endif
+				},
+				materialName->materialPackName() });
 		}
 
 		const auto flatMeshes = modelData->meshes();

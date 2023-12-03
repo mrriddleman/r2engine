@@ -147,7 +147,7 @@ namespace r2::asset::pln
 
 			const auto* material = materials->Get(i);
 
-			if (material->assetName() == materialName)//materialParams->name() == materialName)
+			if (material->assetName()->assetName() == materialName)//materialParams->name() == materialName)
 			{
 				//foundMaterialParams = materialParams;
 				foundMaterial = material;

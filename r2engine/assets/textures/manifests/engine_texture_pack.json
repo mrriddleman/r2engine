@@ -1,42 +1,20 @@
 {
+  version: 1,
   texturePacks: [
     {
-      packName: 10372555064690079691,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/BlueNoise64/albedo/BlueNoise64.rtex"
-      ],
-      normal: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      roughness: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      detail: [
-
-      ],
-      clearCoat: [
-
-      ],
-      clearCoatRoughness: [
-
-      ],
-      clearCoatNormal: [
-
+      assetName: {
+        assetName: 10372555064690079691,
+        stringName: "BlueNoise64"
+      },
+      textures: [
+        {
+          assetName: {
+            assetName: 13920872556035723023,
+            stringName: "bluenoise64/albedo/bluenoise64.rtex"
+          },
+          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/BlueNoise64/albedo/BlueNoise64.rtex",
+          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/BlueNoise64/albedo/BlueNoise64.tga"
+        }
       ],
       packSize: 12596,
       totalNumberOfTextures: 1,
@@ -47,42 +25,19 @@
       }
     },
     {
-      packName: 9710199649643689989,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.rtex"
-      ],
-      normal: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      roughness: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      detail: [
-
-      ],
-      clearCoat: [
-
-      ],
-      clearCoatRoughness: [
-
-      ],
-      clearCoatNormal: [
-
+      assetName: {
+        assetName: 9710199649643689989,
+        stringName: "DynamicMissingTexture"
+      },
+      textures: [
+        {
+          assetName: {
+            assetName: 16698786754159630943,
+            stringName: "dynamicmissingtexture/albedo/dynamicmissingtexture.rtex"
+          },
+          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.rtex",
+          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.png"
+        }
       ],
       packSize: 230,
       totalNumberOfTextures: 1,
@@ -93,42 +48,19 @@
       }
     },
     {
-      packName: 233901043217827384,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.rtex"
-      ],
-      normal: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      roughness: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      detail: [
-
-      ],
-      clearCoat: [
-
-      ],
-      clearCoatRoughness: [
-
-      ],
-      clearCoatNormal: [
-
+      assetName: {
+        assetName: 233901043217827384,
+        stringName: "StaticMissingTexture"
+      },
+      textures: [
+        {
+          assetName: {
+            assetName: 4014417027310264329,
+            stringName: "staticmissingtexture/albedo/staticmissingtexture.rtex"
+          },
+          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.rtex",
+          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.png"
+        }
       ],
       packSize: 230,
       totalNumberOfTextures: 1,

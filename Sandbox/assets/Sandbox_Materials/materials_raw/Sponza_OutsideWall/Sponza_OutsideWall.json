@@ -1,6 +1,8 @@
 {
+  assetName:{
   assetName: 5669317547529202594,
   stringName: "Sponza_OutsideWall",
+},
   shaderEffectPasses: {
     shaderEffectPasses: [
       {
