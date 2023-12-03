@@ -6,7 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-#include "Model_generated.h"
+#include "AssetName_generated.h"
 
 namespace flat {
 

@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "Mesh_generated.h"
 #include "Model_generated.h"
 #include "RAnimation_generated.h"

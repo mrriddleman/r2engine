@@ -203,9 +203,12 @@ namespace r2::ecs
 					const auto* flatOverrideMaterial = flatRenderComponent->overrideMaterials()->Get(j);
 
 					r2::mat::MaterialName renderMaterialOverride;
-					renderMaterialOverride.assetName.hashID = flatOverrideMaterial->name();
-					renderMaterialOverride.packName.hashID = flatOverrideMaterial->materialPackName();
-
+					renderMaterialOverride.assetName.hashID = flatOverrideMaterial->name()->assetName();
+					renderMaterialOverride.packName.hashID = flatOverrideMaterial->materialPackName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+					renderMaterialOverride.assetName.assetNameString = flatOverrideMaterial->name()->stringName()->str();
+					renderMaterialOverride.packName.assetNameString = flatOverrideMaterial->materialPackName()->stringName()->str();
+#endif
 					r2::sarr::Push(*renderComponent.optrMaterialOverrideNames, renderMaterialOverride);
 				}
 			}

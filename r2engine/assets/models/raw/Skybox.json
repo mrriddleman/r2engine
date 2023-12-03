@@ -5,8 +5,14 @@
   ],
   materials: [
     {
-      name: 6031424017685759555,
-      materialPackName: 6190804764461037178
+      name: {
+        assetName: 6031424017685759555,
+        stringName: ""
+      },
+      materialPackName: {
+        assetName: 6190804764461037178,
+        stringName: ""
+      }
     }
   ]
 }

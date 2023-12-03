@@ -15,4 +15,10 @@ table AssetName
 	stringName:string;
 }
 
+table MaterialName
+{
+	name:AssetName;
+	materialPackName:AssetName;
+}
+
 root_type AssetName;

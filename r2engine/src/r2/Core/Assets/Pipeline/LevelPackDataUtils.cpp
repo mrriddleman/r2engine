@@ -49,7 +49,11 @@ namespace r2::asset::pln
 		{
 			r2::mat::MaterialName materialName = r2::sarr::At(*materialNames, i);
 
-			flatMaterialNames.push_back(flat::CreateMaterialName(builder, materialName.assetName.hashID, materialName.packName.hashID));
+			//@TODO(Serge): UUID
+			auto materialAssetName = flat::CreateAssetName(builder, 0, materialName.assetName.hashID, builder.CreateString(materialName.assetName.assetNameString));
+			auto materialPackAssetName = flat::CreateAssetName(builder, 0, materialName.packName.hashID, builder.CreateString(materialName.packName.assetNameString));
+
+			flatMaterialNames.push_back(flat::CreateMaterialName(builder, materialAssetName, materialPackAssetName));
 		}
 		return flatMaterialNames;
 	}

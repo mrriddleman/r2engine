@@ -192,8 +192,12 @@ namespace r2::mat
 	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName)
 	{
 		MaterialName materialName;
-		materialName.assetName.hashID = flatMaterialName->name();
-		materialName.packName.hashID = flatMaterialName->materialPackName();
+		materialName.assetName.hashID = flatMaterialName->name()->assetName();
+		materialName.packName.hashID = flatMaterialName->materialPackName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+		materialName.assetName.assetNameString = flatMaterialName->name()->stringName()->str();
+		materialName.packName.assetNameString= flatMaterialName->materialPackName()->stringName()->str();
+#endif
 
 		return materialName;
 	}

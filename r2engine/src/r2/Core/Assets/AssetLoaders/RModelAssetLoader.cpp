@@ -10,7 +10,7 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
 #include <glm/glm.hpp>
-
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
 #ifdef R2_EDITOR
 #include "r2/Core/File/PathUtils.h"
 #endif
@@ -231,17 +231,9 @@ namespace r2::asset
 
 		for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 		{
-			const auto* materialName = flatMaterialNames->Get(i);
-			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
-
-			r2::sarr::Push(*model->optrMaterialNames, { 
-				{
-					materialName->name()
-#ifdef R2_ASSET_PIPELINE
-					, ""
-#endif
-				},
-				materialName->materialPackName() });
+			const auto* flatMaterialName = flatMaterialNames->Get(i);
+			R2_CHECK(flatMaterialName->materialPackName() != 0, "The material pack name should never be nullptr");
+			r2::sarr::Push(*model->optrMaterialNames, r2::mat::MakeMaterialNameFromFlatMaterial(flatMaterialName));
 		}
 
 		const auto flatMeshes = modelData->meshes();

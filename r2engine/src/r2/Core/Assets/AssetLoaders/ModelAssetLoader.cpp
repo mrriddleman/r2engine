@@ -7,7 +7,7 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/File/PathUtils.h"
-
+#include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Utils/Hash.h"
 
 namespace r2::asset
@@ -105,16 +105,9 @@ namespace r2::asset
 
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialNames; ++i)
 		{
-			const auto* materialName = flatModel->materials()->Get(i);
-			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
-			r2::sarr::Push(*model->optrMaterialNames, { 
-				{ 
-					materialName->name()
-#ifdef R2_ASSET_PIPELINE
-					,""
-#endif
-				},
-				materialName->materialPackName() });
+			const auto* flatMaterialName = flatModel->materials()->Get(i);
+			R2_CHECK(flatMaterialName->materialPackName()->assetName() != 0, "The material pack name should never be nullptr");
+			r2::sarr::Push(*model->optrMaterialNames, r2::mat::MakeMaterialNameFromFlatMaterial(flatMaterialName));
 		}
 
 		auto numMaterialsToAdd = numMeshes - numMaterialNames;

@@ -13,6 +13,9 @@ struct UUID;
 struct AssetName;
 struct AssetNameBuilder;
 
+struct MaterialName;
+struct MaterialNameBuilder;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) UUID FLATBUFFERS_FINAL_CLASS {
  private:
   uint8_t uuid_[16];
@@ -101,6 +104,60 @@ inline flatbuffers::Offset<AssetName> CreateAssetNameDirect(
       uuid,
       assetName,
       stringName__);
+}
+
+struct MaterialName FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef MaterialNameBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4,
+    VT_MATERIALPACKNAME = 6
+  };
+  const flat::AssetName *name() const {
+    return GetPointer<const flat::AssetName *>(VT_NAME);
+  }
+  const flat::AssetName *materialPackName() const {
+    return GetPointer<const flat::AssetName *>(VT_MATERIALPACKNAME);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyTable(name()) &&
+           VerifyOffset(verifier, VT_MATERIALPACKNAME) &&
+           verifier.VerifyTable(materialPackName()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MaterialNameBuilder {
+  typedef MaterialName Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_name(flatbuffers::Offset<flat::AssetName> name) {
+    fbb_.AddOffset(MaterialName::VT_NAME, name);
+  }
+  void add_materialPackName(flatbuffers::Offset<flat::AssetName> materialPackName) {
+    fbb_.AddOffset(MaterialName::VT_MATERIALPACKNAME, materialPackName);
+  }
+  explicit MaterialNameBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MaterialNameBuilder &operator=(const MaterialNameBuilder &);
+  flatbuffers::Offset<MaterialName> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MaterialName>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MaterialName> CreateMaterialName(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flat::AssetName> name = 0,
+    flatbuffers::Offset<flat::AssetName> materialPackName = 0) {
+  MaterialNameBuilder builder_(_fbb);
+  builder_.add_materialPackName(materialPackName);
+  builder_.add_name(name);
+  return builder_.Finish();
 }
 
 inline const flat::AssetName *GetAssetName(const void *buf) {

@@ -1159,7 +1159,11 @@ namespace r2::assets::assetlib
 		const auto numMaterialsInModel = model.materialNames.size();
 		for (size_t i = 0; i < numMaterialsInModel; ++i)
 		{
-			flatMaterialNames.push_back(flat::CreateMaterialName(dataBuilder, model.materialNames[i].name, model.materialNames[i].materialPackName));
+			//@TODO(Serge): UUID
+			auto materialAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].name, dataBuilder.CreateString(""));
+			auto materialPackAssetName = flat::CreateAssetName(dataBuilder, 0, model.materialNames[i].materialPackName, dataBuilder.CreateString(""));
+
+			flatMaterialNames.push_back(flat::CreateMaterialName(dataBuilder, materialAssetName,materialPackAssetName));
 		}
 
 		flat::Matrix4 flatGlobalInverseTransform = ToFlatMatrix4(model.globalInverseTransform);
