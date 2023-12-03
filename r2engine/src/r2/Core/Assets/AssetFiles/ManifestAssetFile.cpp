@@ -113,6 +113,11 @@ namespace r2::asset
 
 	bool ManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType hotreloadType)
 	{
+		if (!mReloadFilePathFunc)
+		{
+			return false;
+		}
+
 		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), hotreloadType);
 	}
 

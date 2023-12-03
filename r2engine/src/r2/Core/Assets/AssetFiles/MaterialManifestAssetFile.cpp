@@ -17,7 +17,6 @@
 
 namespace r2::asset
 {
-
 	MaterialManifestAssetFile::MaterialManifestAssetFile()
 		:mMaterialPackManifest(nullptr)
 	{
@@ -29,55 +28,9 @@ namespace r2::asset
 
 	}
 
-	bool MaterialManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
-	{
-		mnoptrAssetCache = noptrAssetCache;
-		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
-		mAssetType = assetType;
-		r2::util::PathCpy(mRawPath, rawPath);
-		r2::util::PathCpy(mWatchPath, watchPath);
-		return mManifestAssetFile != nullptr;
-	}
-
-	void MaterialManifestAssetFile::Shutdown()
-	{
-		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord) ||
-			!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle))
-		{
-			R2_CHECK(false, "We haven't unloaded the Manifest!");
-			return;
-		}
-	}
-
-	r2::asset::AssetType MaterialManifestAssetFile::GetManifestAssetType() const
-	{
-		return mAssetType;
-	}
-
 	bool MaterialManifestAssetFile::LoadManifest()
 	{
-		if (mnoptrAssetCache == nullptr)
-		{
-			R2_CHECK(false, "Passed in nullptr for the AssetCache");
-			return false;
-		}
-		
-		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
-
-		if (!foundAssetFile)
-		{
-			//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
-			FileList fileList = mnoptrAssetCache->GetFileList();
-			r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
-		}
-
-		mManifestAssetHandle = mnoptrAssetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
-
-		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
-
-		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
-
-		bool success = !r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord);
+		bool success = ManifestAssetFile::LoadManifest();
 
 		mMaterialPackManifest  = flat::GetMaterialPack(mManifestCacheRecord.GetAssetBuffer()->Data());
 
@@ -86,21 +39,13 @@ namespace r2::asset
 		FillMaterialVector();
 #endif
 
-		return success;
+		return success && !mMaterialPackManifest;
 	}
 
 	bool MaterialManifestAssetFile::UnloadManifest()
 	{
-		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			return true;
-		}
+		bool success = ManifestAssetFile::UnloadManifest();
 
-		bool success = mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
-		R2_CHECK(success, "Failed to return the asset cache record");
-
-		mManifestCacheRecord = {};
-		mManifestAssetHandle = {};
 		mMaterialPackManifest = nullptr;
 #ifdef R2_ASSET_PIPELINE
 		mMaterials.clear();
@@ -108,30 +53,9 @@ namespace r2::asset
 		return success;
 	}
 
-	const byte* MaterialManifestAssetFile::GetManifestData() const
-	{
-		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			R2_CHECK(false, "Probably a bug");
-			return nullptr;
-		}
-
-		return mManifestCacheRecord.GetAssetBuffer()->Data();
-	}
-
-	const char* MaterialManifestAssetFile::FilePath() const
-	{
-		return mManifestAssetFile->FilePath();
-	}
-
 	bool MaterialManifestAssetFile::AddAllFilePaths(FileList files)
 	{
 		return true;
-	}
-
-	u64 MaterialManifestAssetFile::GetManifestFileHandle() const
-	{
-		return r2::asset::GetAssetNameForFilePath(FilePath(), mAssetType);
 	}
 
 	bool MaterialManifestAssetFile::HasAsset(const Asset& asset) const
@@ -140,26 +64,10 @@ namespace r2::asset
 	}
 
 #ifdef R2_ASSET_PIPELINE
-	bool MaterialManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
-	{
-		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), type);
-	}
 
 	void MaterialManifestAssetFile::ReloadManifestFile(bool fillVector)
 	{
-		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
-			mManifestCacheRecord = {};
-		}
-
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
-
-		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
-
-		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
-
-		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
+		ManifestAssetFile::Reload();
 
 		mMaterialPackManifest = flat::GetMaterialPack(mManifestCacheRecord.GetAssetBuffer()->Data());
 

@@ -23,29 +23,18 @@ namespace r2::asset
 		TexturePackManifestAssetFile();
 		~TexturePackManifestAssetFile();
 
-		virtual bool Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType) override;
-		virtual r2::asset::AssetType GetManifestAssetType() const override;
-		virtual void Shutdown() override;
-
 		virtual bool LoadManifest() override;
 		virtual bool UnloadManifest() override;
-		virtual const byte* GetManifestData() const override;
-
 
 		virtual bool AddAllFilePaths(FileList files) override;
-		virtual u64 GetManifestFileHandle() const override;
-
 		virtual bool HasAsset(const Asset& asset) const override;
+
 #ifdef R2_ASSET_PIPELINE
 
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;
-		virtual bool ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type) override;
-
 		virtual bool SaveManifest() override;
 		virtual void Reload() override;
 #endif
-
-		virtual const char* FilePath() const override;
 
 	private:
 		const flat::TexturePacksManifest* mTexturePacksManifest;

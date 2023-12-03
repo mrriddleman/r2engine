@@ -21,31 +21,6 @@ namespace r2::asset
 	{
 	}
 
-	bool TexturePackManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
-	{
-		mnoptrAssetCache = noptrAssetCache;
-		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
-		mAssetType = assetType;
-		r2::util::PathCpy(mRawPath, rawPath);
-		r2::util::PathCpy(mWatchPath, watchPath);
-		return mManifestAssetFile != nullptr;
-	}
-
-	void TexturePackManifestAssetFile::Shutdown()
-	{
-		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord) ||
-			!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle))
-		{
-			R2_CHECK(false, "We haven't unloaded the Manifest!");
-			return;
-		}	
-	}
-
-	r2::asset::AssetType TexturePackManifestAssetFile::GetManifestAssetType() const
-	{
-		return mAssetType;
-	}
-
 	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
 	{
 		for (u32 i = 0; i < texturePaths->size(); ++i)
@@ -88,54 +63,20 @@ namespace r2::asset
 		return true;
 	}
 
-	u64 TexturePackManifestAssetFile::GetManifestFileHandle() const
-	{
-		return r2::asset::GetAssetNameForFilePath(FilePath(), mAssetType);
-	}
-
-#ifdef R2_ASSET_PIPELINE
-	bool TexturePackManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, pln::HotReloadType type)
-	{
-		return mReloadFilePathFunc(paths, FilePath(), GetManifestData(), type);
-	}
-#endif
-
-	const char* TexturePackManifestAssetFile::FilePath() const
-	{
-		return mManifestAssetFile->FilePath();
-	}
-
 	bool TexturePackManifestAssetFile::LoadManifest()
 	{
-		if (mnoptrAssetCache == nullptr)
+		bool success = ManifestAssetFile::LoadManifest();
+		if (!success)
 		{
-			R2_CHECK(false, "Passed in nullptr for the AssetCache");
+			R2_CHECK(false, "Failed to load the manifest file: %s\n", FilePath());
 			return false;
 		}
-
-		
-		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
-
-		if (!foundAssetFile)
-		{
-			//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
-			FileList fileList = mnoptrAssetCache->GetFileList();
-			r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
-		}
-
-		mManifestAssetHandle = mnoptrAssetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
-
-		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
-
-		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
-
-		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "The asset cache record is empty");
 
 		mTexturePacksManifest = flat::GetTexturePacksManifest(mManifestCacheRecord.GetAssetBuffer()->Data());
 
 		R2_CHECK(mTexturePacksManifest != nullptr, "Should never happen");
 
-		return true;
+		return success && !mTexturePacksManifest;
 	}
 
 	bool TexturePackManifestAssetFile::UnloadManifest()
@@ -153,11 +94,6 @@ namespace r2::asset
 		mTexturePacksManifest = nullptr;
 
 		return success;
-	}
-
-	const byte* TexturePackManifestAssetFile::GetManifestData() const
-	{
-		return mManifestCacheRecord.GetAssetBuffer()->Data();
 	}
 
 	bool TexturePackManifestAssetFile::HasAsset(const Asset& asset) const
@@ -181,19 +117,7 @@ namespace r2::asset
 
 	void TexturePackManifestAssetFile::Reload()
 	{
-		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
-			mManifestCacheRecord = {};
-		}
-
-		mManifestAssetHandle = mnoptrAssetCache->ReloadAsset(Asset::MakeAssetFromFilePath(FilePath(), GetManifestAssetType()));
-
-		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
-
-		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
-
-		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
+		ManifestAssetFile::Reload();
 
 		mTexturePacksManifest = flat::GetTexturePacksManifest(mManifestCacheRecord.GetAssetBuffer()->Data());
 
