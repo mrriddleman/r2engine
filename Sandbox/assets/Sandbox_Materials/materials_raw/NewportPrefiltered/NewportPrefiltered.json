@@ -79,10 +79,17 @@
     ],
     textureParams: [
       {
-        value: 17725017979188646988,
+        value: 
+        {
+          assetName:17725017979188646988,
+          stringName:"newport_prefilter/albedo/newport_loft0_prefilter_right.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter",
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        },
         minFilter: "NEAREST_MIPMAP_LINEAR",
         wrapS: "CLAMP_TO_EDGE",
         wrapT: "CLAMP_TO_EDGE",
@@ -90,52 +97,101 @@
       },
       {
         propertyType: "NORMAL",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 12058307412772650114,
-        texturePackNameStr: "newport_prefilter"
+        texturePack:
+        { 
+          assetName:12058307412772650114,
+          stringName: "newport_prefilter",
+        }
       }
     ],
     stringParams: [

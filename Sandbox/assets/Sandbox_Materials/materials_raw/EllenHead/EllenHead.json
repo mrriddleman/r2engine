@@ -98,66 +98,129 @@
     ],
     textureParams: [
       {
-        value: 2379790831602284068,
+        value:
+        {
+          assetName: 2379790831602284068,
+          stringName: "ellen/albedo/ellen_head_albedo.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 11456694447760794408,
+        value: 
+        {
+          assetName:11456694447760794408,
+          stringName:"ellen/normal/ellen_head_normal.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 6356021717650671978,
+        value: 
+        {
+          assetName:6356021717650671978,
+          stringName:"ellen/metallic/ellen_head_metallicsmooth.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "DETAIL",
-        value: 3632210179874935440,
+        value: 
+        {
+          assetName:3632210179874935440,
+          stringName:"ellen/detail/ellen_head_microdetail.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       }
     ],
     stringParams: [

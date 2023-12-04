@@ -492,7 +492,7 @@ namespace r2::edit
 
 						//@NOTE(Serge): for now we don't want to list all our textures, just show what the texture is
 						//@TODO(Serge): be able to modify this later
-						r2::asset::AssetHandle textureAssetHandle = { textureParam.value, gameAssetManager.GetAssetCacheSlot() };
+						r2::asset::AssetHandle textureAssetHandle = { textureParam.value.hashID, gameAssetManager.GetAssetCacheSlot() };
 						const r2::asset::AssetFile* assetFile = gameAssetManager.GetAssetFile(textureAssetHandle);
 						if (assetFile)
 						{
@@ -515,7 +515,7 @@ namespace r2::edit
 						//}
 
 						//@NOTE(Serge): this should change with the texture you set above
-						std::string texturePackName = std::string("Texture Pack: ") + textureParam.texturePackNameString;
+						std::string texturePackName = std::string("Texture Pack: ") + textureParam.texturePack.assetNameString;
 						ImGui::Text(texturePackName.c_str());
 
 						ImGui::Text("Packing Type: ");
@@ -695,9 +695,10 @@ namespace r2::edit
 				{
 					r2::draw::ShaderTextureParam newTextureParam;
 					newTextureParam.propertyType = texturePropertyTypeToAdd;
-					newTextureParam.value = STRING_ID("");
-					newTextureParam.texturePackName = newTextureParam.value;
-					newTextureParam.texturePackNameString = "";
+					newTextureParam.value.hashID = STRING_ID("");
+					newTextureParam.value.assetNameString = "";
+					newTextureParam.texturePack.hashID = newTextureParam.value.hashID;
+					newTextureParam.texturePack.assetNameString = "";
 					newTextureParam.packingType = flat::ShaderPropertyPackingType_RGBA;
 					newTextureParam.minFilter = flat::MinTextureFilter_LINEAR;
 					newTextureParam.magFilter = flat::MagTextureFilter_LINEAR;

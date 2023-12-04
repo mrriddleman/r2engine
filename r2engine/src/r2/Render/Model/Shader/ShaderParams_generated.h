@@ -6,6 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
+
 namespace flat {
 
 struct Colour;
@@ -675,29 +677,25 @@ struct ShaderTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PROPERTYTYPE = 4,
     VT_VALUE = 6,
     VT_PACKINGTYPE = 8,
-    VT_TEXTUREPACKNAME = 10,
-    VT_TEXTUREPACKNAMESTR = 12,
-    VT_MINFILTER = 14,
-    VT_MAGFILTER = 16,
-    VT_ANISOTROPICFILTERING = 18,
-    VT_WRAPS = 20,
-    VT_WRAPT = 22,
-    VT_WRAPR = 24
+    VT_TEXTUREPACK = 10,
+    VT_MINFILTER = 12,
+    VT_MAGFILTER = 14,
+    VT_ANISOTROPICFILTERING = 16,
+    VT_WRAPS = 18,
+    VT_WRAPT = 20,
+    VT_WRAPR = 22
   };
   flat::ShaderPropertyType propertyType() const {
     return static_cast<flat::ShaderPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
   }
-  uint64_t value() const {
-    return GetField<uint64_t>(VT_VALUE, 0);
+  const flat::AssetName *value() const {
+    return GetPointer<const flat::AssetName *>(VT_VALUE);
   }
   flat::ShaderPropertyPackingType packingType() const {
     return static_cast<flat::ShaderPropertyPackingType>(GetField<int8_t>(VT_PACKINGTYPE, 0));
   }
-  uint64_t texturePackName() const {
-    return GetField<uint64_t>(VT_TEXTUREPACKNAME, 0);
-  }
-  const flatbuffers::String *texturePackNameStr() const {
-    return GetPointer<const flatbuffers::String *>(VT_TEXTUREPACKNAMESTR);
+  const flat::AssetName *texturePack() const {
+    return GetPointer<const flat::AssetName *>(VT_TEXTUREPACK);
   }
   flat::MinTextureFilter minFilter() const {
     return static_cast<flat::MinTextureFilter>(GetField<uint8_t>(VT_MINFILTER, 0));
@@ -720,11 +718,11 @@ struct ShaderTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_PROPERTYTYPE) &&
-           VerifyField<uint64_t>(verifier, VT_VALUE) &&
+           VerifyOffset(verifier, VT_VALUE) &&
+           verifier.VerifyTable(value()) &&
            VerifyField<int8_t>(verifier, VT_PACKINGTYPE) &&
-           VerifyField<uint64_t>(verifier, VT_TEXTUREPACKNAME) &&
-           VerifyOffset(verifier, VT_TEXTUREPACKNAMESTR) &&
-           verifier.VerifyString(texturePackNameStr()) &&
+           VerifyOffset(verifier, VT_TEXTUREPACK) &&
+           verifier.VerifyTable(texturePack()) &&
            VerifyField<uint8_t>(verifier, VT_MINFILTER) &&
            VerifyField<uint8_t>(verifier, VT_MAGFILTER) &&
            VerifyField<float>(verifier, VT_ANISOTROPICFILTERING) &&
@@ -742,17 +740,14 @@ struct ShaderTextureParamBuilder {
   void add_propertyType(flat::ShaderPropertyType propertyType) {
     fbb_.AddElement<uint16_t>(ShaderTextureParam::VT_PROPERTYTYPE, static_cast<uint16_t>(propertyType), 0);
   }
-  void add_value(uint64_t value) {
-    fbb_.AddElement<uint64_t>(ShaderTextureParam::VT_VALUE, value, 0);
+  void add_value(flatbuffers::Offset<flat::AssetName> value) {
+    fbb_.AddOffset(ShaderTextureParam::VT_VALUE, value);
   }
   void add_packingType(flat::ShaderPropertyPackingType packingType) {
     fbb_.AddElement<int8_t>(ShaderTextureParam::VT_PACKINGTYPE, static_cast<int8_t>(packingType), 0);
   }
-  void add_texturePackName(uint64_t texturePackName) {
-    fbb_.AddElement<uint64_t>(ShaderTextureParam::VT_TEXTUREPACKNAME, texturePackName, 0);
-  }
-  void add_texturePackNameStr(flatbuffers::Offset<flatbuffers::String> texturePackNameStr) {
-    fbb_.AddOffset(ShaderTextureParam::VT_TEXTUREPACKNAMESTR, texturePackNameStr);
+  void add_texturePack(flatbuffers::Offset<flat::AssetName> texturePack) {
+    fbb_.AddOffset(ShaderTextureParam::VT_TEXTUREPACK, texturePack);
   }
   void add_minFilter(flat::MinTextureFilter minFilter) {
     fbb_.AddElement<uint8_t>(ShaderTextureParam::VT_MINFILTER, static_cast<uint8_t>(minFilter), 0);
@@ -787,10 +782,9 @@ struct ShaderTextureParamBuilder {
 inline flatbuffers::Offset<ShaderTextureParam> CreateShaderTextureParam(
     flatbuffers::FlatBufferBuilder &_fbb,
     flat::ShaderPropertyType propertyType = flat::ShaderPropertyType_ALBEDO,
-    uint64_t value = 0,
+    flatbuffers::Offset<flat::AssetName> value = 0,
     flat::ShaderPropertyPackingType packingType = flat::ShaderPropertyPackingType_R,
-    uint64_t texturePackName = 0,
-    flatbuffers::Offset<flatbuffers::String> texturePackNameStr = 0,
+    flatbuffers::Offset<flat::AssetName> texturePack = 0,
     flat::MinTextureFilter minFilter = flat::MinTextureFilter_LINEAR,
     flat::MagTextureFilter magFilter = flat::MagTextureFilter_LINEAR,
     float anisotropicFiltering = 0.0f,
@@ -798,10 +792,9 @@ inline flatbuffers::Offset<ShaderTextureParam> CreateShaderTextureParam(
     flat::TextureWrapMode wrapT = flat::TextureWrapMode_REPEAT,
     flat::TextureWrapMode wrapR = flat::TextureWrapMode_REPEAT) {
   ShaderTextureParamBuilder builder_(_fbb);
-  builder_.add_texturePackName(texturePackName);
-  builder_.add_value(value);
   builder_.add_anisotropicFiltering(anisotropicFiltering);
-  builder_.add_texturePackNameStr(texturePackNameStr);
+  builder_.add_texturePack(texturePack);
+  builder_.add_value(value);
   builder_.add_propertyType(propertyType);
   builder_.add_wrapR(wrapR);
   builder_.add_wrapT(wrapT);
@@ -810,35 +803,6 @@ inline flatbuffers::Offset<ShaderTextureParam> CreateShaderTextureParam(
   builder_.add_minFilter(minFilter);
   builder_.add_packingType(packingType);
   return builder_.Finish();
-}
-
-inline flatbuffers::Offset<ShaderTextureParam> CreateShaderTextureParamDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flat::ShaderPropertyType propertyType = flat::ShaderPropertyType_ALBEDO,
-    uint64_t value = 0,
-    flat::ShaderPropertyPackingType packingType = flat::ShaderPropertyPackingType_R,
-    uint64_t texturePackName = 0,
-    const char *texturePackNameStr = nullptr,
-    flat::MinTextureFilter minFilter = flat::MinTextureFilter_LINEAR,
-    flat::MagTextureFilter magFilter = flat::MagTextureFilter_LINEAR,
-    float anisotropicFiltering = 0.0f,
-    flat::TextureWrapMode wrapS = flat::TextureWrapMode_REPEAT,
-    flat::TextureWrapMode wrapT = flat::TextureWrapMode_REPEAT,
-    flat::TextureWrapMode wrapR = flat::TextureWrapMode_REPEAT) {
-  auto texturePackNameStr__ = texturePackNameStr ? _fbb.CreateString(texturePackNameStr) : 0;
-  return flat::CreateShaderTextureParam(
-      _fbb,
-      propertyType,
-      value,
-      packingType,
-      texturePackName,
-      texturePackNameStr__,
-      minFilter,
-      magFilter,
-      anisotropicFiltering,
-      wrapS,
-      wrapT,
-      wrapR);
 }
 
 struct ShaderParams FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

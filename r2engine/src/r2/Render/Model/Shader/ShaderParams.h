@@ -5,6 +5,7 @@
 
 #include "r2/Render/Model/Shader/ShaderParams_generated.h"
 #include "r2/Render/Model/Shader/ShaderTypes.h"
+#include "r2/Core/Assets/AssetTypes.h"
 #include <glm/glm.hpp>
 
 namespace r2::draw
@@ -42,10 +43,9 @@ namespace r2::draw
 	struct ShaderTextureParam
 	{
 		flat::ShaderPropertyType propertyType;
-		u64 value;
+		r2::asset::AssetName value;
 		flat::ShaderPropertyPackingType packingType;
-		u64 texturePackName;
-		std::string texturePackNameString;
+		r2::asset::AssetName texturePack;
 		flat::MinTextureFilter minFilter;
 		flat::MagTextureFilter magFilter;
 		float anisotropicFiltering;

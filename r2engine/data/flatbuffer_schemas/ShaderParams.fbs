@@ -1,3 +1,5 @@
+include "AssetName.fbs";
+
 namespace flat;
 
 file_identifier "sprm";
@@ -113,10 +115,9 @@ table ShaderStageParam
 table ShaderTextureParam
 {
 	propertyType:ShaderPropertyType;
-	value:ulong (hash:"fnv1a_64");
+	value:AssetName;
 	packingType:ShaderPropertyPackingType;
-	texturePackName:ulong (hash:"fnv1a_64");
-	texturePackNameStr:string;
+	texturePack:AssetName;
 	minFilter:MinTextureFilter;
 	magFilter:MagTextureFilter;
 	anisotropicFiltering:float;

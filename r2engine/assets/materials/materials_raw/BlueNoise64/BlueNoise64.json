@@ -98,59 +98,108 @@
     ],
     textureParams: [
       {
-        value: 13920872556035723023,
+        value:
+        {
+         assetName:13920872556035723023,
+         stringName:"bluenoise64/albedo/bluenoise64.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        { 
+          assetName:10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        { 
+          assetName:10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value:
+        {
+          assetName: 14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        { 
+          assetName:10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        {
+          assetName: 10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+         texturePack:
+        {
+          assetName: 10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value:
+        {
+          assetName: 14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        {
+          assetName: 10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        {
+          assetName: 10372555064690079691,
+          stringName: "bluenoise64"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
         packingType: "RGBA",
-        texturePackName: 10372555064690079691,
-        texturePackNameStr: "bluenoise64"
+        texturePack:
+        {
+          assetName: 10372555064690079691,
+          stringName: "bluenoise64"
+        }
       }
     ],
     stringParams: [

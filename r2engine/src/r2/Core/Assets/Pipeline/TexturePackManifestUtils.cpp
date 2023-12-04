@@ -431,8 +431,9 @@ namespace r2::asset::pln::tex
 
 				char assetNameString[r2::fs::FILE_PATH_LENGTH];
 				r2::asset::MakeAssetNameStringForFilePath(sanitizedPath, assetNameString, r2::asset::TEXTURE);
+				auto textureHash = r2::asset::GetAssetNameForFilePath(sanitizedPath, r2::asset::TEXTURE);
 
-				auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(sanitizedPath, r2::asset::TEXTURE), builder.CreateString(assetNameString));
+				auto assetName = flat::CreateAssetName(builder, 0, textureHash, builder.CreateString(assetNameString));
 
 				char rawPath[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), rawPath);

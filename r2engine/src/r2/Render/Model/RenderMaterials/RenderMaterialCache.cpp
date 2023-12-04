@@ -330,7 +330,7 @@ namespace r2::draw::rmat
 		{
 			const flat::ShaderTextureParam* textureParam = textureParams->Get(i);
 
-			u64 textureHandle = textureParam->value();
+			u64 textureHandle = textureParam->value()->assetName();
 
 			if (textureHandle == EMPTY_TEXTURE)
 			{
@@ -406,7 +406,7 @@ namespace r2::draw::rmat
 			{
 				const flat::ShaderTextureParam* textureParam = textureParams->Get(j);
 
-				u64 textureHandle = textureParam->value();
+				u64 textureHandle = textureParam->value()->assetName();
 				flat::ShaderPropertyType propertyType = textureParam->propertyType();
 
 				if (textureHandle == EMPTY_TEXTURE || propertyType != flat::ShaderPropertyType_ALBEDO)
@@ -430,7 +430,7 @@ namespace r2::draw::rmat
 				{
 					const flat::ShaderTextureParam* textureParam = textureParams->Get(j);
 
-					u64 textureHandle = textureParam->value();
+					u64 textureHandle = textureParam->value()->assetName();
 					flat::ShaderPropertyType propertyType = textureParam->propertyType();
 
 					if (textureHandle == EMPTY_TEXTURE)
@@ -689,7 +689,7 @@ namespace r2::draw::rmat
 			for (flatbuffers::uoffset_t i = 0; i < shaderParams->textureParams()->size(); ++i)
 			{
 				const auto* textureParam = shaderParams->textureParams()->Get(i);
-				u64 textureHandle = textureParam->value();
+				u64 textureHandle = textureParam->value()->assetName();
 
 				if (textureHandle == EMPTY_TEXTURE)
 				{

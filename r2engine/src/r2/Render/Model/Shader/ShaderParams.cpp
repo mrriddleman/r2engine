@@ -107,10 +107,11 @@ namespace r2::draw
 
 			ShaderTextureParam shaderTextureParam;
 			shaderTextureParam.propertyType = flatTextureParam->propertyType();
-			shaderTextureParam.value = flatTextureParam->value();
+			shaderTextureParam.value.hashID = flatTextureParam->value()->assetName();
+			shaderTextureParam.value.assetNameString = flatTextureParam->value()->stringName()->str();
 			shaderTextureParam.packingType = flatTextureParam->packingType();
-			shaderTextureParam.texturePackName = flatTextureParam->texturePackName();
-			shaderTextureParam.texturePackNameString = flatTextureParam->texturePackNameStr()->str();
+			shaderTextureParam.texturePack.hashID = flatTextureParam->texturePack()->assetName();
+			shaderTextureParam.texturePack.assetNameString = flatTextureParam->texturePack()->stringName()->str();
 			shaderTextureParam.minFilter = flatTextureParam->minFilter();
 			shaderTextureParam.magFilter = flatTextureParam->magFilter();
 			shaderTextureParam.anisotropicFiltering = flatTextureParam->anisotropicFiltering();

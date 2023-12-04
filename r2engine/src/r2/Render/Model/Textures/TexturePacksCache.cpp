@@ -372,7 +372,9 @@ namespace r2::draw::texche
 
 		for (u32 i = 0; i < numTexturePacks; ++i)
 		{
-			bool result = LoadTexturePack(texturePacksCache, r2::sarr::At(texturePacks, i));
+			auto texturePack = r2::sarr::At(texturePacks, i);
+
+			bool result = LoadTexturePack(texturePacksCache, texturePack);
 
 			R2_CHECK(result != false, "?");
 		}

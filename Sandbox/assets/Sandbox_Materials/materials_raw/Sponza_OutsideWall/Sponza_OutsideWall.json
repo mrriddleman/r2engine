@@ -98,59 +98,115 @@
     ],
     textureParams: [
       {
-        value: 9449369332499046033,
+        value: 
+        {
+          assetName:9449369332499046033,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 5298947125007223408,
+        value: 
+        {
+          assetName:5298947125007223408,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 12061951680829150190,
+        value: 
+        {
+          assetName:12061951680829150190,
+          stringName: ""
+        },
         packingType: "B",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 12061951680829150190,
+        value: 
+        {
+          assetName:12061951680829150190,
+          stringName: ""
+        },
         packingType: "G",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 16503806373553748554,
-        texturePackNameStr: "sponza"
+        texturePack:
+        {
+          assetName: 16503806373553748554,
+          stringName: "sponza"
+        }
       }
     ],
     stringParams: [

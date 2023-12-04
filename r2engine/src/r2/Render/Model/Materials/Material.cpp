@@ -88,17 +88,22 @@ namespace r2::mat
 			for (u32 i = 0; i < material.shaderParams.textureParams.size(); ++i)
 			{
 				const auto& shaderTextureParam = material.shaderParams.textureParams[i];
+
+				//@TODO(Serge): UUID
+				auto textureAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam.value.hashID, builder.CreateString(shaderTextureParam.value.assetNameString));
+				auto texturePackAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam.texturePack.hashID, builder.CreateString(shaderTextureParam.texturePack.assetNameString));
+
 				shaderTextureParams.push_back(
 					flat::CreateShaderTextureParam(
 						builder,
 						shaderTextureParam.propertyType,
-						shaderTextureParam.value,
+						textureAssetName,
 						shaderTextureParam.packingType,
-						shaderTextureParam.texturePackName,
-						builder.CreateString(shaderTextureParam.texturePackNameString),
+						texturePackAssetName,
 						shaderTextureParam.minFilter,
 						shaderTextureParam.magFilter,
-						shaderTextureParam.anisotropicFiltering, shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR));
+						shaderTextureParam.anisotropicFiltering,
+						shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR));
 			}
 		}
 

@@ -99,59 +99,115 @@
     ],
     textureParams: [
       {
-        value: 4168401993807687909,
+        value: 
+        {
+          assetName:4168401993807687909,
+          stringName:"microbat/albedo/micro_bat_col.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 14781115403476922414,
-        texturePackNameStr: "microbat"
+        texturePack:
+        {
+          assetName: 14781115403476922414,
+          stringName: "microbat"
+        }
       }
     ],
     stringParams: [

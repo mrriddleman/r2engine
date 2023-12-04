@@ -182,7 +182,7 @@ namespace r2::mat
 
 			if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
 			{
-				return texParam->value();
+				return texParam->value()->assetName();
 			}
 		}
 
@@ -225,7 +225,7 @@ namespace r2::mat
 		{
 			const auto* textureParam = textureParams->Get(i);
 
-			u64 texturePackName = textureParam->texturePackName();
+			u64 texturePackName = textureParam->texturePack()->assetName();
 
 			if (r2::sarr::IndexOf(*texturePacks, texturePackName) != -1)
 			{
@@ -262,7 +262,7 @@ namespace r2::mat
 			{
 				const auto* textureParam = textureParams->Get(t);
 
-				if (textureParam->texturePackName() == texturePackName && textureParam->value() == textureName)
+				if (textureParam->texturePack()->assetName() == texturePackName && textureParam->value()->assetName() == textureName)
 				{
 					materialToReturn.push_back(material);
 					break;
@@ -297,7 +297,7 @@ namespace r2::mat
 			{
 				const auto* textureParam = textureParams->Get(t);
 
-				if (textureParam->texturePackName() == texturePackName)
+				if (textureParam->texturePack()->assetName() == texturePackName)
 				{
 					materialsToReturn.push_back(material);
 					break;

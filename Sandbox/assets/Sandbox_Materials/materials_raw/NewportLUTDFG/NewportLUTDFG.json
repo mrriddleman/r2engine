@@ -95,10 +95,17 @@
     ],
     textureParams: [
       {
-        value: 9304353661668134401,
+        value: 
+        {
+          assetName:9304353661668134401,
+          stringName:"newport_lutdfg/albedo/newport_loft_lutdfg.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg",
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        },
         minFilter: "NEAREST_MIPMAP_LINEAR",
         wrapS: "CLAMP_TO_EDGE",
         wrapT: "CLAMP_TO_EDGE",
@@ -106,52 +113,101 @@
       },
       {
         propertyType: "NORMAL",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 2007009599742851203,
-        texturePackNameStr: "newport_lutdfg"
+        texturePack:
+        {
+          assetName: 2007009599742851203,
+          stringName: "newport_lutdfg"
+        }
       }
     ],
     stringParams: [

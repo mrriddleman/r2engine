@@ -26,43 +26,20 @@
     },
     {
       assetName: {
-        assetName: 9710199649643689989,
-        stringName: "DynamicMissingTexture"
+        assetName: 14688499991538622502,
+        stringName: "MissingTexture"
       },
       textures: [
         {
           assetName: {
-            assetName: 16698786754159630943,
-            stringName: "dynamicmissingtexture/albedo/dynamicmissingtexture.rtex"
+            assetName: 10378197049549166270,
+            stringName: "missingtexture/albedo/purple.rtex"
           },
-          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.rtex",
-          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.png"
+          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/MissingTexture/albedo/Purple.rtex",
+          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/MissingTexture/albedo/Purple.png"
         }
       ],
-      packSize: 230,
-      totalNumberOfTextures: 1,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      assetName: {
-        assetName: 233901043217827384,
-        stringName: "StaticMissingTexture"
-      },
-      textures: [
-        {
-          assetName: {
-            assetName: 4014417027310264329,
-            stringName: "staticmissingtexture/albedo/staticmissingtexture.rtex"
-          },
-          binPath: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.rtex",
-          rawPath: "D:/Projects/r2engine/r2engine/assets/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.png"
-        }
-      ],
-      packSize: 230,
+      packSize: 214,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -71,15 +48,15 @@
       }
     }
   ],
-  totalNumberOfTextures: 3,
-  totalTextureSize: 13056,
+  totalNumberOfTextures: 2,
+  totalTextureSize: 12810,
   maxTexturesInAPack: 1,
   formatMetaData: [
     {
       format: "SRGBA8",
       maxWidth: 64,
       maxHeight: 64,
-      numTextures: 3,
+      numTextures: 2,
       maxMips: 1
     }
   ]

@@ -98,59 +98,115 @@
     ],
     textureParams: [
       {
-        value: 15735064610023955664,
+        value: 
+        {
+          assetName:15735064610023955664,
+          stringName:"skeleton/albedo/skel_archer_col.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value: 
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 5651713804920238990,
-        texturePackNameStr: "skeleton"
+        texturePack:
+        {
+          assetName: 5651713804920238990,
+          stringName: "skeleton"
+        }
       }
     ],
     stringParams: [

@@ -109,59 +109,99 @@
         ],
         textureParams: [
           {
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           }
         ],
         stringParams: [
@@ -276,59 +316,99 @@
         ],
         textureParams: [
           {
-            value: 1004251653123596550,
+            value: {
+              assetName: 1004251653123596550,
+              stringName: "colorgradinglut/albedo/test_color_grading_lut.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 16285348456908105885,
-            texturePackNameStr: "colorgradinglut"
+            texturePack: {
+              assetName: 16285348456908105885,
+              stringName: "colorgradinglut"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           }
         ],
         stringParams: [
@@ -439,59 +519,99 @@
         ],
         textureParams: [
           {
-            value: 163784342759858482,
+            value: {
+              assetName: 163784342759858482,
+              stringName: "ellen/albedo/ellen_body_albedo.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 493036664370160730,
+            value: {
+              assetName: 493036664370160730,
+              stringName: "ellen/normal/ellen_body_normal.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 5004622482266610334,
+            value: {
+              assetName: 5004622482266610334,
+              stringName: "ellen/emissive/ellen_body_emission.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 9666963599837156528,
+            value: {
+              assetName: 9666963599837156528,
+              stringName: "ellen/metallic/ellen_body_metallicsmooth.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 4881461682669073314,
+            value: {
+              assetName: 4881461682669073314,
+              stringName: "ellen/occlusion/ellen_body_occlusion.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           }
         ],
         stringParams: [
@@ -602,59 +722,99 @@
         ],
         textureParams: [
           {
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           }
         ],
         stringParams: [
@@ -751,59 +911,99 @@
         ],
         textureParams: [
           {
-            value: 1392971798304760317,
+            value: {
+              assetName: 1392971798304760317,
+              stringName: "ellen/albedo/ellen_eye_albedo.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 9457471972328044689,
+            value: {
+              assetName: 9457471972328044689,
+              stringName: "ellen/normal/ellen_eye_normal.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           }
         ],
         stringParams: [
@@ -915,59 +1115,99 @@
         ],
         textureParams: [
           {
-            value: 16263571197208879384,
+            value: {
+              assetName: 16263571197208879384,
+              stringName: "ellen/albedo/ellen_hair_albedotransparency.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 6519228988855625550,
+            value: {
+              assetName: 6519228988855625550,
+              stringName: "ellen/normal/ellen_hair_normal.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 4926758553282250496,
+            value: {
+              assetName: 4926758553282250496,
+              stringName: "ellen/metallic/ellen_hair_metallicsmooth.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 15509217301797856404,
+            value: {
+              assetName: 15509217301797856404,
+              stringName: "ellen/anisotropy/ellen_hair_aniso.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           }
         ],
         stringParams: [
@@ -1078,66 +1318,111 @@
         ],
         textureParams: [
           {
-            value: 2379790831602284068,
+            value: {
+              assetName: 2379790831602284068,
+              stringName: "ellen/albedo/ellen_head_albedo.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 11456694447760794408,
+            value: {
+              assetName: 11456694447760794408,
+              stringName: "ellen/normal/ellen_head_normal.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 6356021717650671978,
+            value: {
+              assetName: 6356021717650671978,
+              stringName: "ellen/metallic/ellen_head_metallicsmooth.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           },
           {
             propertyType: "DETAIL",
-            value: 3632210179874935440,
+            value: {
+              assetName: 3632210179874935440,
+              stringName: "ellen/detail/ellen_head_microdetail.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 1741090675266394315,
-            texturePackNameStr: "ellen"
+            texturePack: {
+              assetName: 1741090675266394315,
+              stringName: "ellen"
+            }
           }
         ],
         stringParams: [
@@ -1248,59 +1533,99 @@
         ],
         textureParams: [
           {
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14695981039346656837,
-            texturePackNameStr: ""
+            texturePack: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            }
           }
         ],
         stringParams: [
@@ -1412,59 +1737,99 @@
         ],
         textureParams: [
           {
-            value: 4168401993807687909,
+            value: {
+              assetName: 4168401993807687909,
+              stringName: "microbat/albedo/micro_bat_col.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 14781115403476922414,
-            texturePackNameStr: "microbat"
+            texturePack: {
+              assetName: 14781115403476922414,
+              stringName: "microbat"
+            }
           }
         ],
         stringParams: [
@@ -1555,10 +1920,15 @@
         ],
         textureParams: [
           {
-            value: 10545158156670519146,
+            value: {
+              assetName: 10545158156670519146,
+              stringName: "newport_conv/albedo/newport_loft_conv_right.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv",
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            },
             minFilter: "NEAREST_MIPMAP_LINEAR",
             wrapS: "CLAMP_TO_EDGE",
             wrapT: "CLAMP_TO_EDGE",
@@ -1566,52 +1936,87 @@
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 477817908088162409,
-            texturePackNameStr: "newport_conv"
+            texturePack: {
+              assetName: 477817908088162409,
+              stringName: "newport_conv"
+            }
           }
         ],
         stringParams: [
@@ -1718,10 +2123,15 @@
         ],
         textureParams: [
           {
-            value: 9304353661668134401,
+            value: {
+              assetName: 9304353661668134401,
+              stringName: "newport_lutdfg/albedo/newport_loft_lutdfg.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg",
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            },
             minFilter: "NEAREST_MIPMAP_LINEAR",
             wrapS: "CLAMP_TO_EDGE",
             wrapT: "CLAMP_TO_EDGE",
@@ -1729,52 +2139,87 @@
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 2007009599742851203,
-            texturePackNameStr: "newport_lutdfg"
+            texturePack: {
+              assetName: 2007009599742851203,
+              stringName: "newport_lutdfg"
+            }
           }
         ],
         stringParams: [
@@ -1865,10 +2310,15 @@
         ],
         textureParams: [
           {
-            value: 17725017979188646988,
+            value: {
+              assetName: 17725017979188646988,
+              stringName: "newport_prefilter/albedo/newport_loft0_prefilter_right.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter",
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            },
             minFilter: "NEAREST_MIPMAP_LINEAR",
             wrapS: "CLAMP_TO_EDGE",
             wrapT: "CLAMP_TO_EDGE",
@@ -1876,52 +2326,87 @@
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 12058307412772650114,
-            texturePackNameStr: "newport_prefilter"
+            texturePack: {
+              assetName: 12058307412772650114,
+              stringName: "newport_prefilter"
+            }
           }
         ],
         stringParams: [
@@ -2012,10 +2497,15 @@
         ],
         textureParams: [
           {
-            value: 6233334720156616994,
+            value: {
+              assetName: 6233334720156616994,
+              stringName: "newport/albedo/newport0_right.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport",
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            },
             minFilter: "NEAREST_MIPMAP_LINEAR",
             wrapS: "CLAMP_TO_EDGE",
             wrapT: "CLAMP_TO_EDGE",
@@ -2023,52 +2513,87 @@
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 15406085935930000306,
-            texturePackNameStr: "newport"
+            texturePack: {
+              assetName: 15406085935930000306,
+              stringName: "newport"
+            }
           }
         ],
         stringParams: [
@@ -2179,59 +2704,99 @@
         ],
         textureParams: [
           {
-            value: 15735064610023955664,
+            value: {
+              assetName: 15735064610023955664,
+              stringName: "skeleton/albedo/skel_archer_col.rtex"
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 5651713804920238990,
-            texturePackNameStr: "skeleton"
+            texturePack: {
+              assetName: 5651713804920238990,
+              stringName: "skeleton"
+            }
           }
         ],
         stringParams: [
@@ -2343,59 +2908,99 @@
         ],
         textureParams: [
           {
-            value: 8163608996704689077,
+            value: {
+              assetName: 8163608996704689077,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 654756865241454098,
+            value: {
+              assetName: 654756865241454098,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 15271771113314728577,
+            value: {
+              assetName: 15271771113314728577,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 15271771113314728577,
+            value: {
+              assetName: 15271771113314728577,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -2506,59 +3111,99 @@
         ],
         textureParams: [
           {
-            value: 12142643605602856702,
+            value: {
+              assetName: 12142643605602856702,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 8693301080638463630,
+            value: {
+              assetName: 8693301080638463630,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -2669,59 +3314,99 @@
         ],
         textureParams: [
           {
-            value: 17065171054310952003,
+            value: {
+              assetName: 17065171054310952003,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 1626114565491962929,
+            value: {
+              assetName: 1626114565491962929,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -2832,59 +3517,99 @@
         ],
         textureParams: [
           {
-            value: 14168699856865940632,
+            value: {
+              assetName: 14168699856865940632,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 10719836979340884588,
+            value: {
+              assetName: 10719836979340884588,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 12092170428558657381,
+            value: {
+              assetName: 12092170428558657381,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 12092170428558657381,
+            value: {
+              assetName: 12092170428558657381,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -2995,59 +3720,99 @@
         ],
         textureParams: [
           {
-            value: 88856667988396022,
+            value: {
+              assetName: 88856667988396022,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 13312444671963589446,
+            value: {
+              assetName: 13312444671963589446,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 9655237313350957661,
+            value: {
+              assetName: 9655237313350957661,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 9655237313350957661,
+            value: {
+              assetName: 9655237313350957661,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3158,59 +3923,99 @@
         ],
         textureParams: [
           {
-            value: 3167470172417465670,
+            value: {
+              assetName: 3167470172417465670,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 3357278792012791113,
+            value: {
+              assetName: 3357278792012791113,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 5844469145068071865,
+            value: {
+              assetName: 5844469145068071865,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 5844469145068071865,
+            value: {
+              assetName: 5844469145068071865,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3321,59 +4126,99 @@
         ],
         textureParams: [
           {
-            value: 10395804237716770730,
+            value: {
+              assetName: 10395804237716770730,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 10580506633510871855,
+            value: {
+              assetName: 10580506633510871855,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 7271676636954397093,
+            value: {
+              assetName: 7271676636954397093,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 7271676636954397093,
+            value: {
+              assetName: 7271676636954397093,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3485,59 +4330,99 @@
         ],
         textureParams: [
           {
-            value: 3021860056773991573,
+            value: {
+              assetName: 3021860056773991573,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 17130015246423892402,
+            value: {
+              assetName: 17130015246423892402,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 1284348387821626884,
+            value: {
+              assetName: 1284348387821626884,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 1284348387821626884,
+            value: {
+              assetName: 1284348387821626884,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3648,59 +4533,99 @@
         ],
         textureParams: [
           {
-            value: 9198756674974329970,
+            value: {
+              assetName: 9198756674974329970,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 12767564925174330283,
+            value: {
+              assetName: 12767564925174330283,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14525595583333137932,
+            value: {
+              assetName: 14525595583333137932,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14525595583333137932,
+            value: {
+              assetName: 14525595583333137932,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3811,59 +4736,99 @@
         ],
         textureParams: [
           {
-            value: 6943833634136520402,
+            value: {
+              assetName: 6943833634136520402,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 5969612409461271589,
+            value: {
+              assetName: 5969612409461271589,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 12986939270339573473,
+            value: {
+              assetName: 12986939270339573473,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 12986939270339573473,
+            value: {
+              assetName: 12986939270339573473,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -3974,59 +4939,99 @@
         ],
         textureParams: [
           {
-            value: 10133915010748211346,
+            value: {
+              assetName: 10133915010748211346,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 16932007811600427417,
+            value: {
+              assetName: 16932007811600427417,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4137,59 +5142,99 @@
         ],
         textureParams: [
           {
-            value: 5440042956170169063,
+            value: {
+              assetName: 5440042956170169063,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 13968232786405990221,
+            value: {
+              assetName: 13968232786405990221,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4300,59 +5345,99 @@
         ],
         textureParams: [
           {
-            value: 13459973682508036682,
+            value: {
+              assetName: 13459973682508036682,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 2998957336377958315,
+            value: {
+              assetName: 2998957336377958315,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 13520855206419045137,
+            value: {
+              assetName: 13520855206419045137,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 13520855206419045137,
+            value: {
+              assetName: 13520855206419045137,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4463,59 +5548,99 @@
         ],
         textureParams: [
           {
-            value: 16291688997862788631,
+            value: {
+              assetName: 16291688997862788631,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 7393596504137874014,
+            value: {
+              assetName: 7393596504137874014,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14073536022307886586,
+            value: {
+              assetName: 14073536022307886586,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14073536022307886586,
+            value: {
+              assetName: 14073536022307886586,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4626,59 +5751,99 @@
         ],
         textureParams: [
           {
-            value: 6532118057148726938,
+            value: {
+              assetName: 6532118057148726938,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 12879720757010877325,
+            value: {
+              assetName: 12879720757010877325,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14690084676174885226,
+            value: {
+              assetName: 14690084676174885226,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14690084676174885226,
+            value: {
+              assetName: 14690084676174885226,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4789,59 +5954,99 @@
         ],
         textureParams: [
           {
-            value: 9449369332499046033,
+            value: {
+              assetName: 9449369332499046033,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 5298947125007223408,
+            value: {
+              assetName: 5298947125007223408,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 12061951680829150190,
+            value: {
+              assetName: 12061951680829150190,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 12061951680829150190,
+            value: {
+              assetName: 12061951680829150190,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -4952,59 +6157,99 @@
         ],
         textureParams: [
           {
-            value: 15715411768049146126,
+            value: {
+              assetName: 15715411768049146126,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 6609127135623179667,
+            value: {
+              assetName: 6609127135623179667,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 1322291627988490193,
+            value: {
+              assetName: 1322291627988490193,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 1322291627988490193,
+            value: {
+              assetName: 1322291627988490193,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5115,59 +6360,99 @@
         ],
         textureParams: [
           {
-            value: 1876365764808534256,
+            value: {
+              assetName: 1876365764808534256,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14089808394595118092,
+            value: {
+              assetName: 14089808394595118092,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 2650041923814798727,
+            value: {
+              assetName: 2650041923814798727,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 2650041923814798727,
+            value: {
+              assetName: 2650041923814798727,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5278,59 +6563,99 @@
         ],
         textureParams: [
           {
-            value: 117861230168359056,
+            value: {
+              assetName: 117861230168359056,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 447028236078383837,
+            value: {
+              assetName: 447028236078383837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 8256319822413219366,
+            value: {
+              assetName: 8256319822413219366,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5441,59 +6766,99 @@
         ],
         textureParams: [
           {
-            value: 3418705563093627197,
+            value: {
+              assetName: 3418705563093627197,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 8819305553315486722,
+            value: {
+              assetName: 8819305553315486722,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 13850718670552377923,
+            value: {
+              assetName: 13850718670552377923,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5604,59 +6969,99 @@
         ],
         textureParams: [
           {
-            value: 4438131070929789138,
+            value: {
+              assetName: 4438131070929789138,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 11461059644124115629,
+            value: {
+              assetName: 11461059644124115629,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 16179446132711680672,
+            value: {
+              assetName: 16179446132711680672,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 16179446132711680672,
+            value: {
+              assetName: 16179446132711680672,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5767,59 +7172,99 @@
         ],
         textureParams: [
           {
-            value: 1159714686818938111,
+            value: {
+              assetName: 1159714686818938111,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 10414372034366305725,
+            value: {
+              assetName: 10414372034366305725,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 15086018262463772007,
+            value: {
+              assetName: 15086018262463772007,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 15086018262463772007,
+            value: {
+              assetName: 15086018262463772007,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -5930,59 +7375,99 @@
         ],
         textureParams: [
           {
-            value: 11114429244299537308,
+            value: {
+              assetName: 11114429244299537308,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 13806604758815533751,
+            value: {
+              assetName: 13806604758815533751,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 6307434074906228974,
+            value: {
+              assetName: 6307434074906228974,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 6307434074906228974,
+            value: {
+              assetName: 6307434074906228974,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -6093,59 +7578,99 @@
         ],
         textureParams: [
           {
-            value: 12685420089048241241,
+            value: {
+              assetName: 12685420089048241241,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -6256,59 +7781,99 @@
         ],
         textureParams: [
           {
-            value: 15897594446743142470,
+            value: {
+              assetName: 15897594446743142470,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 10621683913463961771,
+            value: {
+              assetName: 10621683913463961771,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 3458730591926785923,
+            value: {
+              assetName: 3458730591926785923,
+              stringName: ""
+            },
             packingType: "B",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 3458730591926785923,
+            value: {
+              assetName: 3458730591926785923,
+              stringName: ""
+            },
             packingType: "G",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 16503806373553748554,
-            texturePackNameStr: "sponza"
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "sponza"
+            }
           }
         ],
         stringParams: [
@@ -6408,59 +7973,99 @@
         ],
         textureParams: [
           {
-            value: 12654673806030675710,
+            value: {
+              assetName: 12654673806030675710,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "NORMAL",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "EMISSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "METALLIC",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "ROUGHNESS",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "AMBIENT_OCCLUSION",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "HEIGHT",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           },
           {
             propertyType: "ANISOTROPY",
-            value: 14695981039346656837,
+            value: {
+              assetName: 14695981039346656837,
+              stringName: ""
+            },
             packingType: "RGBA",
-            texturePackName: 8561905345233882129,
-            texturePackNameStr: "transparentwindow"
+            texturePack: {
+              assetName: 8561905345233882129,
+              stringName: "transparentwindow"
+            }
           }
         ],
         stringParams: [

@@ -86,59 +86,115 @@
     ],
     textureParams: [
       {
-        value: 1392971798304760317,
+        value: 
+        {
+          assetName:1392971798304760317,
+          stringName:"ellen/albedo/ellen_eye_albedo.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "NORMAL",
-        value: 9457471972328044689,
+        value:
+        { 
+          assetName:9457471972328044689,
+          stringName:"ellen/normal/ellen_eye_normal.rtex"
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "EMISSION",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "METALLIC",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "HEIGHT",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value: 14695981039346656837,
+        value:
+        { 
+          assetName:14695981039346656837,
+          stringName: ""
+        },
         packingType: "RGBA",
-        texturePackName: 1741090675266394315,
-        texturePackNameStr: "ellen"
+        texturePack: 
+        { 
+          assetName:1741090675266394315,
+          stringName: "ellen"
+        }
       }
     ],
     stringParams: [

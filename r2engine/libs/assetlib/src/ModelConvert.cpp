@@ -20,7 +20,7 @@
 #include "assetlib/ModelAsset.h"
 #include "assetlib/AssetUtils.h"
 #include "assetlib/AnimationConvert.h"
-
+#include "AssetName_generated.h"
 
 #define MAX_BONE_WEIGHTS 4
 
@@ -680,13 +680,13 @@ namespace r2::assets::assetlib
 
 								if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
 								{
-									auto packNameStr = texParam->texturePackNameStr()->str();
+									auto packNameStr = texParam->texturePack()->stringName()->str();//texParam->texturePackNameStr()->str();
 									
 									std::string textureNameWithParents = packNameStr + "/albedo/" + diffuseTextureNameStr;
 
 									auto textureNameID = STRING_ID(textureNameWithParents.c_str());
 
-									if (textureNameID == texParam->value())
+									if (textureNameID == texParam->value()->assetName())
 									{
 										materialName.name = material->assetName()->assetName();//materialParams->name();
 										materialName.materialNameStr = material->assetName()->stringName()->str();
@@ -1153,6 +1153,7 @@ namespace r2::assets::assetlib
 			compressedSize = modelMetaData->meshInfos()->Get(i)->compressedSize();
 
 			meshData[i].resize(compressedSize);
+
 
 			flatMeshes.push_back(flat::CreateRMesh(dataBuilder, mesh.materialIndex, dataBuilder.CreateVector(meshData[i])));
 

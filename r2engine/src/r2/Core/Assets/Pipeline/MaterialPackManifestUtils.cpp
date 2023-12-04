@@ -168,17 +168,21 @@ namespace r2::asset::pln
 				for (u32 i = 0; i < material.shaderParams.textureParams.size(); ++i)
 				{
 					const auto& shaderTextureParam = material.shaderParams.textureParams[i];
+					//@TODO(Serge): UUID
+					auto textureAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam.value.hashID, builder.CreateString(shaderTextureParam.value.assetNameString));
+					auto texturePackAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam.texturePack.hashID, builder.CreateString(shaderTextureParam.texturePack.assetNameString));
+
 					shaderTextureParams.push_back(
 						flat::CreateShaderTextureParam(
 							builder,
 							shaderTextureParam.propertyType,
-							shaderTextureParam.value,
+							textureAssetName,
 							shaderTextureParam.packingType,
-							shaderTextureParam.texturePackName,
-							builder.CreateString(shaderTextureParam.texturePackNameString),
+							texturePackAssetName,
 							shaderTextureParam.minFilter,
 							shaderTextureParam.magFilter,
-							shaderTextureParam.anisotropicFiltering, shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR));
+							shaderTextureParam.anisotropicFiltering,
+							shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR));
 				}
 			}
 
@@ -811,17 +815,28 @@ namespace r2::asset::pln
 				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->textureParams()->size(); ++i)
 				{
 					const auto* shaderTextureParam = binMaterial->shaderParams()->textureParams()->Get(i);
+					//@TODO(Serge): UUID
+
+					std::string textureName = "";
+					if (shaderTextureParam->value()->stringName())
+					{
+						textureName = shaderTextureParam->value()->stringName()->str();
+					}
+
+					auto textureAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam->value()->assetName(), builder.CreateString(textureName));
+					auto texturePackAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam->texturePack()->assetName(), builder.CreateString(shaderTextureParam->texturePack()->stringName()->str()));
+
 					shaderTextureParams.push_back(
 						flat::CreateShaderTextureParam(
 							builder,
 							shaderTextureParam->propertyType(),
-							shaderTextureParam->value(),
+							textureAssetName,
 							shaderTextureParam->packingType(),
-							shaderTextureParam->texturePackName(),
-							builder.CreateString(shaderTextureParam->texturePackNameStr()),
+							texturePackAssetName,
 							shaderTextureParam->minFilter(),
 							shaderTextureParam->magFilter(),
-							shaderTextureParam->anisotropicFiltering(), shaderTextureParam->wrapS(), shaderTextureParam->wrapT(), shaderTextureParam->wrapR()));
+							shaderTextureParam->anisotropicFiltering(),
+							shaderTextureParam->wrapS(), shaderTextureParam->wrapT(), shaderTextureParam->wrapR()));
 				}
 			}
 

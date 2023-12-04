@@ -213,7 +213,7 @@ namespace r2
 
 		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
 		{
-			u64 texturePackName = textureParams->Get(i)->texturePackName();
+			u64 texturePackName = textureParams->Get(i)->texturePack()->assetName();
 
 			if (EMPTY_TEXTURE_PACK_NAME == texturePackName)
 			{
@@ -380,14 +380,14 @@ namespace r2
 
 		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
 		{
-			if (textureParams->Get(i)->value() == EMPTY_TEXTURE_PACK_NAME)
+			if (textureParams->Get(i)->value()->assetName() == EMPTY_TEXTURE_PACK_NAME)
 			{
 				continue;
 			}
 
-			if (!r2::draw::texche::IsTexturePackACubemap(*mTexturePacksCache, textureParams->Get(i)->texturePackName()))
+			if (!r2::draw::texche::IsTexturePackACubemap(*mTexturePacksCache, textureParams->Get(i)->texturePack()->assetName()))
 			{
-				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName(), textureParams->Get(i)->value());
+				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePack()->assetName(), textureParams->Get(i)->value()->assetName());
 
 				if (texture)
 				{
@@ -396,7 +396,7 @@ namespace r2
 			}
 			else
 			{
-				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName());
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePack()->assetName());
 
 				R2_CHECK(cubemap != nullptr, "Should never be nullptr");
 
@@ -456,7 +456,7 @@ namespace r2
 					{
 						materialParamsPackIndex = i;
 						materialTexParamsIndex = j;
-						textureName = textureParams->Get(j)->value();
+						textureName = textureParams->Get(j)->value()->assetName();
 						break;
 					}
 				}
@@ -473,7 +473,7 @@ namespace r2
 			return nullptr;
 		}
 
-		const r2::SArray<r2::draw::tex::Texture>* textures =draw::texche::GetTexturesForTexturePack(*mTexturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePackName());
+		const r2::SArray<r2::draw::tex::Texture>* textures =draw::texche::GetTexturesForTexturePack(*mTexturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePack()->assetName());
 
 		const auto numTextures = r2::sarr::Size(*textures);
 
@@ -524,7 +524,7 @@ namespace r2
 			return nullptr;
 		}
 
-		return r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePackName());
+		return r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePack()->assetName());
 	}
 
 	s64 GameAssetManager::GetAssetCacheSlot() const
