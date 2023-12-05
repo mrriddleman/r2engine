@@ -516,22 +516,30 @@ namespace r2::edit
 		ecs::RenderComponent& renderComponent = *renderComponentPtr;
 
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
 		{
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
+			
 			const r2::draw::Model* model = nullptr;
 			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			if (gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL }))
+			if (r2::asset::lib::HasAsset(assetLib, { renderComponent.assetModelName , r2::asset::RMODEL })) //gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL }))
 			{
 				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelName);
-				currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
+				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::RMODEL)); //gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 			}
 			else
 			{
 				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelName);
-				r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
+				//@TODO(Serge): we need to ensure that we have a new manifest for internal MODEL assets
+				//				currently it doesn't exist
+				TODO;
+
+				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::MODEL));
+				
+
+				/*r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
 				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
 				for (u32 i = 0; i < numPrimitiveModels; ++i)
 				{
@@ -542,29 +550,33 @@ namespace r2::edit
 						currentModelAssetfile = assetFile;
 						break;
 					}
-				}
+				}*/
 			}
 
 			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
 
-			std::vector<r2::asset::AssetFile*> rModelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
+			std::vector<r2::asset::AssetFile*> rModelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::RMODEL);//gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
 
 			//@TODO(Serge): remove the primitive model lines once we have refactored the r2::asset::MODEL stuff
 			{
-				r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
-				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
-				for (u32 i = 0; i < numPrimitiveModels; ++i)
-				{
-					r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
-					std::filesystem::path assetFilePath = assetFile->FilePath();
+				std::vector<r2::asset::AssetFile*> modelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::MODEL);
 
-					if (assetFilePath.extension().string() == ".modl" &&
-						(assetFilePath.stem().string() != "FullscreenTriangle" &&
-							assetFilePath.stem().string() != "Skybox"))
-					{
-						rModelFiles.push_back(assetFile);
-					}
-				}
+				rModelFiles.insert(rModelFiles.end(), modelFiles.begin(), modelFiles.end());
+
+				//r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
+				//const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
+				//for (u32 i = 0; i < numPrimitiveModels; ++i)
+				//{
+				//	r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
+				//	std::filesystem::path assetFilePath = assetFile->FilePath();
+
+				//	if (assetFilePath.extension().string() == ".modl" &&
+				//		(assetFilePath.stem().string() != "FullscreenTriangle" &&
+				//			assetFilePath.stem().string() != "Skybox"))
+				//	{
+				//		rModelFiles.push_back(assetFile);
+				//	}
+				//}
 			}
 
 

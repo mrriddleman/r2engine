@@ -45,14 +45,14 @@ namespace r2::asset
 			return false;
 		}
 
-		bool foundAssetFile = mnoptrAssetCache->HasAsset(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
+		//bool foundAssetFile = mnoptrAssetCache->IsAssetLoaded(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
 
-		if (!foundAssetFile)
-		{
-			//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
-			FileList fileList = mnoptrAssetCache->GetFileList();
-			r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
-		}
+		//if (!foundAssetFile)
+		//{
+		//	//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
+		//	FileList fileList = mnoptrAssetCache->GetFileList();
+		//	r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
+		//}
 
 		mManifestAssetHandle = mnoptrAssetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
 

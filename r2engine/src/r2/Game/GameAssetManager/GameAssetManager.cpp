@@ -53,27 +53,29 @@ namespace r2
 		return memorySize;
 	}
 
-	bool GameAssetManager::HasAsset(const r2::asset::Asset& asset)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return false;
-		}
+	//@TODO(Serge): do we even need this?
+	//bool GameAssetManager::HasAsset(const r2::asset::Asset& asset)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return false;
+	//	}
 
-		return mAssetCache->HasAsset(asset);
-	}
+	//	//@TODO(Serge): FIX ME - should probably use the 
+	//	//return mAssetCache->IsAssetLoaded(asset);
+	//}
 
-	const r2::asset::FileList GameAssetManager::GetFileList() const
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return false;
-		}
+	//const r2::asset::FileList GameAssetManager::GetFileList() const
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return false;
+	//	}
 
-		return mAssetCache->GetFileList();
-	}
+	//	return mAssetCache->GetFileList();
+	//}
 
 	u64 GameAssetManager::GetAssetDataSize(r2::asset::AssetHandle assetHandle)
 	{
@@ -140,9 +142,9 @@ namespace r2
 			
 			if (!wasReturned)
 			{
-				const auto* assetFile = mAssetCache->GetAssetFile(assetHandle);
+			//	const auto* assetFile = mAssetCache->GetAssetFile(assetHandle);
 
-				R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record: %s", assetFile->FilePath());
+				R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record");
 			}
 			
 		}
@@ -185,16 +187,16 @@ namespace r2
 		mAssetCache->RegisterAssetLoader(assetLoader);
 	}
 
-	void GameAssetManager::RegisterAssetWriter(r2::asset::AssetWriter* assetWriter)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
-		}
+	//void GameAssetManager::RegisterAssetWriter(r2::asset::AssetWriter* assetWriter)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return;
+	//	}
 
-		mAssetCache->RegisterAssetWriter(assetWriter);
-	}
+	//	mAssetCache->RegisterAssetWriter(assetWriter);
+	//}
 
 	void GameAssetManager::RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func)
 	{
@@ -604,75 +606,75 @@ namespace r2
 		return draw::texche::ReloadTexturePack(*mTexturePacksCache, texturePackName);
 	}
 
-	void GameAssetManager::AddAssetFile(r2::asset::AssetFile* assetFile)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
-		}
+	//void GameAssetManager::AddAssetFile(r2::asset::AssetFile* assetFile)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return;
+	//	}
 
-		r2::asset::FileList fileList = mAssetCache->GetFileList();
-		r2::sarr::Push(*fileList, assetFile);
-	}
+	//	r2::asset::FileList fileList = mAssetCache->GetFileList();
+	//	r2::sarr::Push(*fileList, assetFile);
+	//}
 
-	void GameAssetManager::RemoveAssetFile(const std::string& filePath)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
-		}
+	//void GameAssetManager::RemoveAssetFile(const std::string& filePath)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return;
+	//	}
 
-		//find it first
-		r2::asset::FileList fileList = mAssetCache->GetFileList();
+	//	//find it first
+	//	r2::asset::FileList fileList = mAssetCache->GetFileList();
 
-		const u32 numFiles = r2::sarr::Size(*fileList);
+	//	const u32 numFiles = r2::sarr::Size(*fileList);
 
-		for (u32 i = 0; i < numFiles; ++i)
-		{
-			const r2::asset::AssetFile* nextAssetFile = r2::sarr::At(*fileList, i);
+	//	for (u32 i = 0; i < numFiles; ++i)
+	//	{
+	//		const r2::asset::AssetFile* nextAssetFile = r2::sarr::At(*fileList, i);
 
-			if (std::string(nextAssetFile->FilePath()) == filePath)
-			{
-				r2::sarr::RemoveAndSwapWithLastElement(*fileList, i);
-				break;
-			}
-		}
-	}
+	//		if (std::string(nextAssetFile->FilePath()) == filePath)
+	//		{
+	//			r2::sarr::RemoveAndSwapWithLastElement(*fileList, i);
+	//			break;
+	//		}
+	//	}
+	//}
 
-	std::vector<r2::asset::AssetFile*> GameAssetManager::GetAllAssetFilesForAssetType(r2::asset::AssetType type)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return {};
-		}
+	//std::vector<r2::asset::AssetFile*> GameAssetManager::GetAllAssetFilesForAssetType(r2::asset::AssetType type)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return {};
+	//	}
 
-		return mAssetCache->GetAllAssetFilesForAssetType(type);
-	}
+	//	return mAssetCache->GetAllAssetFilesForAssetType(type);
+	//}
 
-	const r2::asset::AssetFile* GameAssetManager::GetAssetFile(const r2::asset::Asset& asset)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return nullptr;
-		}
+	//const r2::asset::AssetFile* GameAssetManager::GetAssetFile(const r2::asset::Asset& asset)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return nullptr;
+	//	}
 
-		return mAssetCache->GetAssetFileForAsset(asset);
-	}
+	//	return mAssetCache->GetAssetFileForAsset(asset);
+	//}
 
-	const r2::asset::AssetFile* GameAssetManager::GetAssetFile(const r2::asset::AssetHandle& assetHandle)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return nullptr;
-		}
+	//const r2::asset::AssetFile* GameAssetManager::GetAssetFile(const r2::asset::AssetHandle& assetHandle)
+	//{
+	//	if (!mAssetCache)
+	//	{
+	//		R2_CHECK(false, "Asset Cache is nullptr");
+	//		return nullptr;
+	//	}
 
-		return mAssetCache->GetAssetFileForAssetHandle(assetHandle);
-	}
+	//	return mAssetCache->GetAssetFileForAssetHandle(assetHandle);
+	//}
 
 #endif
 

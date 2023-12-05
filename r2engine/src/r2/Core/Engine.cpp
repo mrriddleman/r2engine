@@ -1221,22 +1221,31 @@ namespace r2
 
 		mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
-		r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
+	//	r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
 
-		noptrApp->AddLooseAssetFiles(r2::asset::lib::GetFileList(*mAssetLib));
+#ifdef R2_ASSET_PIPELINE
+        //@Temporary: remove this once we have things more stable
+        r2::asset::FileList looseFileList = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetFile*, 100);
+
+		noptrApp->AddLooseAssetFiles(looseFileList);
+
+        r2::asset::lib::ImportAssetFiles(*mAssetLib, looseFileList);
+
+        FREE(looseFileList, *MEM_ENG_SCRATCH_PTR);
+#endif
 		
         auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
 
         u32 gameAssetCacheSize = noptrApp->GetAssetMemorySize();
 
-        r2::asset::FileList gameFileList = r2::asset::lib::GetFileList(*mAssetLib);
+   //     r2::asset::FileList gameFileList = r2::asset::lib::GetFileList(*mAssetLib);
 
-        u32 numFiles = r2::sarr::Capacity(*gameFileList);
-        auto totalCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(numFiles, gameAssetCacheSize, ALIGNMENT, std::max(numFiles, 1024u), std::max(numFiles, 1024u));
+     //   u32 numFiles = r2::sarr::Capacity(*gameFileList);
+        auto totalCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, gameAssetCacheSize, ALIGNMENT, std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u), std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u));
 		memoryArea->Init(totalCacheAmount, 0);
 
-		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, gameFileList, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks, gameAssetCacheSize);
+		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks, gameAssetCacheSize);
 
         const auto engineTexturePacksManifestHandle = r2::asset::Asset::GetAssetNameForFilePath(engineTexturePackManifestPath, r2::asset::TEXTURE_PACK_MANIFEST);
 

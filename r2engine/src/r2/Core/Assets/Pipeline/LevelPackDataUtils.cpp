@@ -11,6 +11,7 @@
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Core/Assets/AssetLib.h"
 #include "r2/Audio/SoundDefinitionHelpers.h"
 
 namespace r2::asset::pln
@@ -62,7 +63,7 @@ namespace r2::asset::pln
 	std::vector<flatbuffers::Offset<flat::AssetName>> MakeAssetNamesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const r2::SArray<r2::asset::AssetHandle>* assetHandles)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 		std::vector<flatbuffers::Offset<flat::AssetName>> assetNames;
 
 		size_t numFiles = r2::sarr::Size(*assetHandles);
@@ -77,7 +78,7 @@ namespace r2::asset::pln
 
 			//This shouldn't really exist - should just get the AssetName and use that
 			{
-				const r2::asset::AssetFile* assetFile = gameAssetManager.GetAssetFile(assetHandle);
+				const r2::asset::AssetFile* assetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, assetType));//gameAssetManager.GetAssetFile(assetHandle);
 
 				std::filesystem::path filePath = assetFile->FilePath();
 

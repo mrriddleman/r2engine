@@ -18,7 +18,7 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
-
+#include "r2/Core/Assets/AssetReference.h"
 #endif // R2_ASSET_PIPELINE
 
 #include "r2/Core/Engine.h"
@@ -111,20 +111,20 @@ namespace r2
 		mLoadedLevels = MAKE_SARRAY(*mArena, Level, maxNumLevels);
 
 		//@TODO(Serge): add in the level files from the path
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-		r2::asset::FileList fileList = gameAssetManager.GetFileList();
+		//GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		//r2::asset::FileList fileList = gameAssetManager.GetFileList();
 
-		//@Temporary
-		for (auto& file : std::filesystem::recursive_directory_iterator(binLevelOutputPath))
-		{
-			if (!(file.is_regular_file() && file.file_size() > 0))
-			{
-				continue;
-			}
+		////@Temporary
+		//for (auto& file : std::filesystem::recursive_directory_iterator(binLevelOutputPath))
+		//{
+		//	if (!(file.is_regular_file() && file.file_size() > 0))
+		//	{
+		//		continue;
+		//	}
 
-			r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(file.path().string().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
-		}
+		//	r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(file.path().string().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
+		//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
+		//}
 
 		return true;
 	}
@@ -194,10 +194,11 @@ namespace r2
 		}
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
 		const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
 
-		if (!gameAssetManager.HasAsset(levelAsset))
+		if (!r2::asset::lib::HasAsset(assetLib, levelAsset))//gameAssetManager.HasAsset(levelAsset))
 		{
 			return nullptr;
 		}
@@ -305,19 +306,19 @@ namespace r2
 		return FindLoadedLevel(levelName, index);
 	}
 
-	bool LevelManager::ExistsOnDisk(const char* levelURI)
-	{
-		return ExistsOnDisk(STRING_ID(levelURI));
-	}
+	//bool LevelManager::ExistsOnDisk(const char* levelURI)
+	//{
+	//	return ExistsOnDisk(STRING_ID(levelURI));
+	//}
 
-	bool LevelManager::ExistsOnDisk(LevelName levelName)
-	{
-		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+	//bool LevelManager::ExistsOnDisk(LevelName levelName)
+	//{
+	//	r2::asset::AssetLib& gameAssetManager = CENG.GetGameAssetManager();
 
-		const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
+	//	const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
 
-		return gameAssetManager.HasAsset(levelAsset);
-	}
+	//	return gameAssetManager.HasAsset(levelAsset);
+	//}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
 	{
@@ -337,9 +338,11 @@ namespace r2
 
 	Level* LevelManager::ReloadLevel(LevelName levelName)
 	{
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
 		//Basically this is saying if this doesn't exist on disk but we have it loaded
 		//then we have created the level without saving so just give it back 
-		if (!ExistsOnDisk(levelName) && IsLevelLoaded(levelName))
+		if (!r2::asset::lib::HasAsset(assetLib, r2::asset::Asset(levelName, r2::asset::LEVEL)) && IsLevelLoaded(levelName))
 		{
 			return GetLevel(levelName);
 		}
@@ -711,17 +714,22 @@ namespace r2
 
 		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(binLevelPath, r2::asset::LEVEL);
 
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		//GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		//first check to see if we have asset for this
-		if (!gameAssetManager.HasAsset(newLevelAsset))
-		{	
-			const r2::asset::FileList fileList = gameAssetManager.GetFileList();
+		if (!r2::asset::lib::HasAsset(assetLib, newLevelAsset))
+		{
+			r2::asset::lib::ImportAsset(assetLib, r2::asset::CreateNewAssetReference(binLevelPath, rawLevelPath, r2::asset::LEVEL), r2::asset::LEVEL);
+
+
+		//	const r2::asset::FileList fileList = gameAssetManager.GetFileList();
 			
 			//make a new asset file for the asset cache
-			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
+			//r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
 
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
+			//r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
 		}
 		
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();

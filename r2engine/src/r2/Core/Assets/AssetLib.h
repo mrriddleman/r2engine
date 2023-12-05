@@ -55,7 +55,7 @@ namespace r2::asset
 
         r2::SArray<ManifestAssetFile*>* mManifestFiles;
 
-        FileList mGameFileList;
+     //   FileList mGameFileList;
 
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::AssetThreadSafeQueue<ManifestReloadEntry> mManifestChangedRequests;
@@ -72,6 +72,8 @@ namespace r2::asset
 
 namespace r2::asset::lib
 {
+    const u32 MAX_NUM_GAME_ASSET_FILES = 2000;
+
     bool Init(const r2::mem::utils::MemBoundary& boundary);
     void Update();
     void Shutdown();
@@ -90,10 +92,10 @@ namespace r2::asset::lib
     void RegisterAndLoadManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
 
     //not sure if needed?
-    bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
+//    bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
 
     //@TODO(Serge): get rid of this
-    FileList GetFileList(const AssetLib& assetLib);
+  //  FileList GetFileList(const AssetLib& assetLib);
 
 
     ManifestAssetFile* GetManifest(AssetLib& assetLib, u64 manifestAssetHandle);
@@ -102,6 +104,11 @@ namespace r2::asset::lib
 
 
     bool HasAsset(AssetLib& assetLib, const char* path, r2::asset::AssetType type);
+    bool HasAsset(AssetLib& assetLib, const Asset& asset);
+
+    r2::asset::AssetFile* GetAssetFileForAsset(AssetLib& assetLib, const Asset& asset);
+
+
    
 
 #ifdef R2_ASSET_PIPELINE
@@ -110,11 +117,15 @@ namespace r2::asset::lib
     void PathAddedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsAdded);
     void PathRemovedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsRemoved);
 
-    void PushFilesBuilt(std::vector<std::string> paths);
-    using AssetFilesBuiltListener = std::function<void(std::vector<std::string> paths)>;
-    void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);
+    //void PushFilesBuilt(std::vector<std::string> paths);
+    //using AssetFilesBuiltListener = std::function<void(std::vector<std::string> paths)>;
+    //void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);
 
-    void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list);
+    //void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list);
+
+    std::vector<r2::asset::AssetFile*> GetAllAssetFilesForType(AssetLib& assetLib, r2::asset::AssetType type);
+	//@Temporary
+	void ImportAssetFiles(AssetLib& assetLib, r2::asset::FileList fileList);
 #endif
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
@@ -130,9 +141,9 @@ namespace r2::asset::lib
     //@TODO(Serge): implement helpers to create file lists easier
     //For example with a manifest or a directory 
 
-    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, r2::asset::FileList files);
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize);
     void DestroyCache(r2::asset::AssetCache* cache);
-    r2::asset::AssetCache* GetAssetCache(s64 slot);
+   // r2::asset::AssetCache* GetAssetCache(s64 slot);
 
 }
 

@@ -767,7 +767,7 @@ namespace r2::draw::renderer
 	u32 GetMaxNumBones();
 
 #ifdef R2_EDITOR
-	r2::asset::FileList GetModelFiles();
+	//r2::asset::FileList GetModelFiles();
 	const r2::draw::Model* GetDefaultModel(u64 assetName);
 
 	struct EntityInstance

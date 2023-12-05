@@ -54,7 +54,7 @@ namespace r2::draw::modlche
 		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, r2::asset::AssetCache::TotalMemoryNeeded(r2::sarr::Capacity(*files), modelCacheSize, ALIGNMENT), ALIGNMENT);
 		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize, files);
+		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize);
 
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(meshLoader);
@@ -64,8 +64,8 @@ namespace r2::draw::modlche
 
 		newModelSystem->mModelCache->RegisterAssetLoader(modelLoader);
 
-		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
-		newModelSystem->mModelCache->RegisterAssetLoader(rmodelLoader);
+		//r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
+		//newModelSystem->mModelCache->RegisterAssetLoader(rmodelLoader);
 
 		return newModelSystem;
 	}
@@ -279,53 +279,6 @@ namespace r2::draw::modlche
 		return model;
 	}
 
-	/*const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle)
-	{
-		if (!system)
-		{
-			R2_CHECK(false, "Passed in a null model system");
-			return nullptr;
-		}
-
-		if (handle.assetCache != system->mModelCache->GetSlot())
-		{
-			R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
-			return nullptr;
-		}
-
-		r2::asset::AssetCacheRecord record;
-		if (system->mCacheModelReferences)
-		{
-			if (!r2::shashmap::Has(*system->mModels, handle.handle))
-			{
-				record = system->mModelCache->GetAssetBuffer(handle);
-				r2::shashmap::Set(*system->mModels, handle.handle, record);
-			}
-			else
-			{
-				r2::asset::AssetCacheRecord defaultRecord;
-				record = r2::shashmap::Get(*system->mModels, handle.handle, defaultRecord);
-
-				R2_CHECK(record.GetAssetBuffer() != defaultRecord.GetAssetBuffer(), "We couldn't get the record!");
-			}
-		}
-		else
-		{
-			record = system->mModelCache->GetAssetBuffer(handle);
-
-			if (!r2::shashmap::Has(*system->mModels, handle.handle))
-			{
-				r2::shashmap::Set(*system->mModels, handle.handle, record);
-			}
-		}
-
-		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.GetAssetBuffer()->MutableData();
-
-		model->model.assetName = handle.handle;
-
-		return model;
-	}*/
-
 	void ReturnModel(ModelCache* system, const Model* model)
 	{
 		if (!system)
@@ -355,33 +308,6 @@ namespace r2::draw::modlche
 		
 
 	}
-
-	//void ReturnAnimModel(ModelCache* system, const AnimModel* model)
-	//{
-	//	if (!system)
-	//	{
-	//		R2_CHECK(false, "Passed in a null model system");
-	//		return;
-	//	}
-
-	//	if (!model)
-	//	{
-	//		R2_CHECK(false, "Passed in a null model");
-	//		return;
-	//	}
-
-	//	r2::asset::AssetCacheRecord defaultRecord;
-
-	//	r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.assetName, defaultRecord);
-
-	//	if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
-	//	{
-	//		R2_CHECK(false, "Failed to get the asset cache record!");
-	//		return;
-	//	}
-
-	//	system->mModelCache->ReturnAssetBuffer(theRecord);
-	//}
 
 	void LoadModels(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles)
 	{
@@ -455,20 +381,5 @@ namespace r2::draw::modlche
 
 			system->mModelCache->FlushAll();
 		}
-	}
-
-	const r2::asset::AssetFile* GetAssetFileForName(const ModelCache& modelSystem, u64 assetName)
-	{
-		return modelSystem.mModelCache->GetAssetFile(r2::asset::Asset(assetName, r2::asset::RMODEL));
-	}
-
-	const r2::asset::FileList GetFileList(const ModelCache& modelSystem)
-	{
-		return modelSystem.mModelCache->GetFileList();
-	}
-
-	void ClearFileList(ModelCache& modelSystem)
-	{
-		modelSystem.mModelCache->ClearFileList();
 	}
 }

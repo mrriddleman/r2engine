@@ -49,11 +49,10 @@ namespace r2
 		bool Init(
 			ARENA& arena,
 			r2::mem::MemoryArea::Handle assetMemoryHandle,
-			r2::asset::FileList fileList,
 			u32 numTextures,
 			u32 numTextureManifests,
 			u32 numTexturePacks,
-			u32 assetCache)
+			u32 assetCacheSize)
 		{
 			r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
 			R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
@@ -61,9 +60,9 @@ namespace r2
 			auto areaBoundary = gameAssetManagerMemoryArea->AreaBoundary();
 			areaBoundary.alignment = 16;
 
-			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCache, fileList);
+			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCacheSize);
 
-			const u64 fileListCapacity = r2::sarr::Capacity(*fileList);
+			const u64 fileListCapacity = r2::asset::lib::MAX_NUM_GAME_ASSET_FILES;
 
 			mCachedRecords = MAKE_SARRAY(arena, r2::asset::AssetCacheRecord, fileListCapacity);
 
@@ -112,8 +111,8 @@ namespace r2
 		static u64 MemorySizeForGameAssetManager(u32 numFiles, u32 alignment, u32 headerSize);
 		static u64 CacheMemorySize(u32 numAssets, u32 assetCapacity, u32 alignment, u32 headerSize, u32 boundsChecking, u32 lruCapacity, u32 mapCapacity);
 
-		bool HasAsset(const r2::asset::Asset& asset);
-		const r2::asset::FileList GetFileList() const;
+	//	bool HasAsset(const r2::asset::Asset& asset);
+//		const r2::asset::FileList GetFileList() const;
 
 		//@TODO(Serge): probably want more types of loads for threading and stuff, for now keep it simple
 		r2::asset::AssetHandle LoadAsset(const r2::asset::Asset& asset);
@@ -189,7 +188,7 @@ namespace r2
 		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
 
 		void RegisterAssetLoader(r2::asset::AssetLoader* assetLoader);
-		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
+		//void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
 		//@TODO(Serge): really annoying we have two different interfaces - 1 for textures, 1 for everything else
@@ -217,12 +216,12 @@ namespace r2
 		bool ReloadTextureInTexturePack(u64 texturePackName, u64 textureName);
 		bool ReloadTexturePack(u64 texturePackName);
 
-		void AddAssetFile(r2::asset::AssetFile* assetFile);
-		void RemoveAssetFile(const std::string& filePath);
+		//void AddAssetFile(r2::asset::AssetFile* assetFile);
+		//void RemoveAssetFile(const std::string& filePath);
 
-		std::vector<r2::asset::AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
-		const r2::asset::AssetFile* GetAssetFile(const r2::asset::Asset& asset);
-		const r2::asset::AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle);
+		//std::vector<r2::asset::AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
+		//const r2::asset::AssetFile* GetAssetFile(const r2::asset::Asset& asset);
+		//const r2::asset::AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle);
 #endif
 		s64 GetAssetCacheSlot() const;
 

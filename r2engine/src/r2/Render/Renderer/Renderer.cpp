@@ -8803,10 +8803,10 @@ namespace r2::draw::renderer
 	}
 
 #ifdef R2_EDITOR
-	r2::asset::FileList GetModelFiles(Renderer& renderer)
-	{
-		return r2::draw::modlche::GetFileList(*renderer.mModelCache);
-	}
+	//r2::asset::FileList GetModelFiles(Renderer& renderer)
+	//{
+	//	return r2::draw::modlche::GetFileList(*renderer.mModelCache);
+	//}
 
 	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName)
 	{
@@ -9405,10 +9405,10 @@ namespace r2::draw::renderer
 	}
 
 #ifdef R2_EDITOR
-	r2::asset::FileList GetModelFiles()
-	{
-		return GetModelFiles(MENG.GetCurrentRendererRef());
-	}
+	//r2::asset::FileList GetModelFiles()
+	//{
+	//	return GetModelFiles(MENG.GetCurrentRendererRef());
+	//}
 
 	const r2::draw::Model* GetDefaultModel(u64 assetName)
 	{

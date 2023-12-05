@@ -47,21 +47,21 @@ namespace r2::asset
         
         explicit AssetCache(u64 slot, const r2::mem::utils::MemBoundary& boundary);
 
-        bool Init(FileList noptrList, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        bool Init(/*FileList noptrList,*/ u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         
         void Shutdown();
         
         void RegisterAssetLoader(AssetLoader* assetLoader);
-        void RegisterAssetWriter(AssetWriter* assetWriter);
+     //   void RegisterAssetWriter(AssetWriter* assetWriter);
 
         //The handle should remain valid across the run of the game
         AssetHandle LoadAsset(const Asset& asset);
-        bool HasAsset(const Asset& asset);
+        bool IsAssetLoaded(const Asset& asset);
 
         AssetHandle ReloadAsset(const Asset& asset);
         void FreeAsset(const AssetHandle& handle);
 
-        void WriteAssetFile(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
+      //  void WriteAssetFile(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         //Should not keep this pointer around for longer than necessary to use it as it can change in debug
         AssetCacheRecord GetAssetBuffer(AssetHandle handle);
@@ -81,36 +81,37 @@ namespace r2::asset
             return ALLOC(T, mAssetCacheArena);
         }
         
-        template<class T>
-        AssetWriter* MakeAssetWriter()
-        {
-            return ALLOC(T, mAssetCacheArena);
-        }
+        //template<class T>
+        //AssetWriter* MakeAssetWriter()
+        //{
+        //    return ALLOC(T, mAssetCacheArena);
+        //}
 
+        //@TODO(Serge): get rid of this
         s64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         //@TODO(Serge): get rid of all of this
-        void AddReloadFunction(AssetReloadedFunc func);
+       // void AddReloadFunction(AssetReloadedFunc func);
 
-        void ResetFileList(FileList fileList);
+        //void ResetFileList(FileList fileList);
 
-        std::vector<AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
+        //std::vector<AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
 
-        const AssetFile* GetAssetFileForAsset(const r2::asset::Asset& asset);
+        //const AssetFile* GetAssetFileForAsset(const r2::asset::Asset& asset);
 
-        const AssetFile* GetAssetFileForAssetHandle(const r2::asset::AssetHandle& assetHandle);
+        //const AssetFile* GetAssetFileForAssetHandle(const r2::asset::AssetHandle& assetHandle);
 
 #endif
-        void ClearFileList();
+    //    void ClearFileList();
 
         void RegisterAssetFreedCallback(AssetFreedCallback func);
         
         //@TODO(Serge): get rid of these
-        const FileList GetFileList() const { return mnoptrFiles; }
-        const AssetFile* GetAssetFile(const Asset& asset) const;
-        const AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle) const;
-        void AddAssetFile(AssetFile* assetFile);
-        void RemoveFile(const Asset& asset);
+     //   const FileList GetFileList() const { return mnoptrFiles; }
+     //   const AssetFile* GetAssetFile(const Asset& asset) const;
+      //  const AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle) const;
+      //  void AddAssetFile(AssetFile* assetFile);
+      //  void RemoveFile(const Asset& asset);
 
 
 
@@ -132,16 +133,16 @@ namespace r2::asset
         using AssetList = r2::SQueue<AssetHandle>*;
         using AssetMap = r2::SArray<AssetBufferRef>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
-        using AssetWriterList = r2::SArray<AssetWriter*>*;
+    //    using AssetWriterList = r2::SArray<AssetWriter*>*;
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
 
         bool IsLoaded(const Asset& asset);
 
         AssetBuffer* Load(const Asset& asset);
-        void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
+  //      void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         void UpdateLRU(AssetHandle handle);
-        FileHandle FindInFiles(u64 assetID) const;
+   //     FileHandle FindInFiles(u64 assetID) const;
         AssetBufferRef& Find(u64 handle, AssetBufferRef& theDefault);
         void RemoveAssetBuffer(u64 handle);
 
@@ -154,11 +155,11 @@ namespace r2::asset
         u64 MemoryHighWaterMark();
 	
 
-        FileList mnoptrFiles;
+      //  FileList mnoptrFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
-        AssetWriterList mAssetWriters;
+     //   AssetWriterList mAssetWriters;
         AssetFreedCallbackList mAssetFreedCallbackList;
 
         DefaultAssetLoader* mDefaultLoader;
@@ -178,25 +179,25 @@ namespace r2::asset
         
 #ifdef R2_ASSET_PIPELINE
         //@TODO(Serge): get rid of all of this
-        struct AssetRecord
-        {
-            AssetHandle handle;
-            std::string name;
-            AssetType type;
-        };
-        struct AssetsToFile
-        {
-            AssetFile* assetFile = nullptr;
-            std::vector<AssetRecord> assets;
-        };
-        
-        std::vector<AssetReloadedFunc> mReloadFunctions;
-        
-        void AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord);
-        void RemoveAssetFromAssetForFileList(AssetHandle assetHandle);
-        void InvalidateAssetsForFile(AssetFile* file);
+        //struct AssetRecord
+        //{
+        //    AssetHandle handle;
+        //    std::string name;
+        //    AssetType type;
+        //};
+        //struct AssetsToFile
+        //{
+        //    AssetFile* assetFile = nullptr;
+        //    std::vector<AssetRecord> assets;
+        //};
+        //
+        //std::vector<AssetReloadedFunc> mReloadFunctions;
+        //
+        //void AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord);
+        //void RemoveAssetFromAssetForFileList(AssetHandle assetHandle);
+        //void InvalidateAssetsForFile(AssetFile* file);
 
-        std::vector<AssetsToFile> mAssetsForFiles;
+        //std::vector<AssetsToFile> mAssetsForFiles;
 
 #endif
         //Debug stuff
@@ -204,8 +205,8 @@ namespace r2::asset
         void PrintLRU();
         void PrintAssetMap();
         void PrintHighWaterMark();
-        void PrintAllAssetsInFiles();
-        void PrintAssetsInFile(AssetFile* file);
+   //     void PrintAllAssetsInFiles();
+     //   void PrintAssetsInFile(AssetFile* file);
         void PrintAsset(const char* asset, AssetHandle assetHandle, u32 refcount);
 #endif
     };

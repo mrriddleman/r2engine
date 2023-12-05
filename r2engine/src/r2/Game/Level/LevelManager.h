@@ -54,8 +54,8 @@ namespace r2
 		Level* GetLevel(LevelName levelName);
 
 		void UnloadLevel(const Level* level);
-		bool ExistsOnDisk(const char* levelURI);
-		bool ExistsOnDisk(LevelName levelName);
+		//bool ExistsOnDisk(const char* levelURI);
+		//bool ExistsOnDisk(LevelName levelName);
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 

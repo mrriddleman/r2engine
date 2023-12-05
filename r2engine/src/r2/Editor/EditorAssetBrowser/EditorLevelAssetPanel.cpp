@@ -14,6 +14,8 @@
 #include "r2/Platform/Platform.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
+#include "r2/Core/Assets/AssetLib.h"
+
 #include "imgui.h"
 
 namespace r2::edit
@@ -159,6 +161,8 @@ namespace r2::edit
 
 		r2::GameAssetManager& gameAssetManager = MENG.GetGameAssetManager();
 		
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
 		if (ImGui::TreeNode("Materials"))
 		{
 			for (u32 i = 0; i < r2::sarr::Size(*materialsNames); ++i)
@@ -195,7 +199,7 @@ namespace r2::edit
 			{
 				r2::asset::AssetHandle assetHandle = r2::sarr::At(*modelAssets, i);
 
-				const r2::asset::AssetFile* modelAssetFile = gameAssetManager.GetAssetFile(assetHandle);
+				const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, r2::asset::RMODEL));//gameAssetManager.GetAssetFile(assetHandle);
 
 				std::filesystem::path modelFilePath = modelAssetFile->FilePath();
 
@@ -291,11 +295,13 @@ namespace r2::edit
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = level.GetModelAssets();
 		r2::GameAssetManager& gameAssetManager = MENG.GetGameAssetManager();
 
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
 		for (u32 i = 0; i < r2::sarr::Size(*modelAssets); ++i)
 		{
 			r2::asset::AssetHandle assetHandle = r2::sarr::At(*modelAssets, i);
 
-			const r2::asset::AssetFile* modelAssetFile = gameAssetManager.GetAssetFile(assetHandle);
+			const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, r2::asset::RMODEL)); //gameAssetManager.GetAssetFile(assetHandle);
 
 			std::filesystem::path modelFilePath = modelAssetFile->FilePath();
 

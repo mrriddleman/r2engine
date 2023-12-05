@@ -34,7 +34,6 @@ namespace r2::draw
 		void Shutdown(ModelCache* system);
 		u64 MemorySize(u64 numAssets, u64 assetCapacityInBytes);
 
-
 		bool HasMesh(ModelCache* system, const r2::asset::Asset& mesh);
 		MeshHandle GetMeshHandle(ModelCache* system, const r2::asset::Asset& mesh);
 		MeshHandle LoadMesh(ModelCache* system, const r2::asset::Asset& mesh);
@@ -42,21 +41,13 @@ namespace r2::draw
 
 		void ReturnMesh(ModelCache* system, const Mesh* mesh);
 
-
 		ModelHandle LoadModel(ModelCache* system, const r2::asset::Asset& model);
 		const Model* GetModel(ModelCache* system, const ModelHandle& handle);
-//		const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle);
 
 		void ReturnModel(ModelCache* system, const Model* model);
-//		void ReturnAnimModel(ModelCache* system, const AnimModel* model);
-
 		void LoadModels(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles);
 		void LoadMeshes(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles);
 		void FlushAll(ModelCache* system);
-
-		const r2::asset::AssetFile* GetAssetFileForName(const ModelCache& modelSystem, u64 assetName);
-		const r2::asset::FileList GetFileList(const ModelCache& modelSystem);
-		void ClearFileList(ModelCache& modelSystem);
 	}
 }
 

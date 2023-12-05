@@ -18,7 +18,7 @@ namespace r2::asset::pln
 	{
 		ReloadManifests();
 
-		r2::asset::pln::cmp::Init(mAssetTempPath, r2::asset::lib::PushFilesBuilt);
+	//	r2::asset::pln::cmp::Init(mAssetTempPath, r2::asset::lib::PushFilesBuilt);
 
 		for (const auto& manifest : mManifests)
 		{
