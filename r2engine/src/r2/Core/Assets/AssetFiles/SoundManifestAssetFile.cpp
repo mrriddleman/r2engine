@@ -67,10 +67,10 @@ namespace r2::asset
 		return false;
 	}
 
-	bool SoundManifestAssetFile::AddAllFilePaths(FileList files) 
-	{
-		return true;
-	}
+	//bool SoundManifestAssetFile::AddAllFilePaths(FileList files) 
+	//{
+	//	return true;
+	//}
 
 #ifdef R2_ASSET_PIPELINE
 	bool SoundManifestAssetFile::AddAssetReference(const AssetReference& assetReference)

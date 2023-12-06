@@ -53,10 +53,10 @@ namespace r2::asset
 		return success;
 	}
 
-	bool MaterialManifestAssetFile::AddAllFilePaths(FileList files)
-	{
-		return true;
-	}
+	//bool MaterialManifestAssetFile::AddAllFilePaths(FileList files)
+	//{
+	//	return true;
+	//}
 
 	bool MaterialManifestAssetFile::HasAsset(const Asset& asset) const
 	{

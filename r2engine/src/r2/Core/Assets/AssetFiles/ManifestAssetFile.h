@@ -31,7 +31,7 @@ namespace r2::asset
 		
 
 		//@NOTE(Serge): These shouldn't exist
-		virtual bool AddAllFilePaths(FileList files);
+		//virtual bool AddAllFilePaths(FileList files);
 
 #ifdef R2_ASSET_PIPELINE
 		

@@ -24,6 +24,7 @@ namespace r2::asset
 
 	struct AssetHandle
 	{
+		//@TODO(Serge): probably this will just turn into a UUID?
 		u64 handle = INVALID_ASSET_HANDLE;
 		s64 assetCache = INVALID_ASSET_CACHE;
 

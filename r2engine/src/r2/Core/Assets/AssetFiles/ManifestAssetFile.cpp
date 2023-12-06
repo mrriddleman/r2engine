@@ -100,10 +100,10 @@ namespace r2::asset
 		return false;
 	}
 
-	bool ManifestAssetFile::AddAllFilePaths(FileList files)
-	{
-		return false;
-	}
+	//bool ManifestAssetFile::AddAllFilePaths(FileList files)
+	//{
+	//	return false;
+	//}
 
 #ifdef R2_ASSET_PIPELINE
 	bool ManifestAssetFile::AddAssetReference(const AssetReference& assetReference)

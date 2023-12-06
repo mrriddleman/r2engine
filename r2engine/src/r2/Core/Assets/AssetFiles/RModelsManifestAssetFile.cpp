@@ -48,10 +48,10 @@ namespace r2::asset
 		return success;
 	}
 
-	bool RModelsManifestAssetFile::AddAllFilePaths(FileList files)
-	{
-		return true;
-	}
+	//bool RModelsManifestAssetFile::AddAllFilePaths(FileList files)
+	//{
+	//	return true;
+	//}
 
 	bool RModelsManifestAssetFile::HasAsset(const Asset& asset) const
 	{

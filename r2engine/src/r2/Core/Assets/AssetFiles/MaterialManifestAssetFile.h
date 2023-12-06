@@ -23,7 +23,7 @@ namespace r2::asset
 		virtual bool LoadManifest() override;
 		virtual bool UnloadManifest() override;
 
-		virtual bool AddAllFilePaths(FileList files) override;
+	//	virtual bool AddAllFilePaths(FileList files) override;
 
 		virtual bool HasAsset(const Asset& asset) const override;
 #ifdef R2_ASSET_PIPELINE

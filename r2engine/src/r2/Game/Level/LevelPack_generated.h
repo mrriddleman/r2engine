@@ -8,9 +8,6 @@
 
 #include "AssetName_generated.h"
 #include "AssetRef_generated.h"
-#include "ComponentArrayData_generated.h"
-#include "EntityData_generated.h"
-#include "LevelData_generated.h"
 
 namespace flat {
 
@@ -23,34 +20,24 @@ struct LevelPackDataBuilder;
 struct LevelGroupData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelGroupDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_GROUPNAME = 4,
-    VT_GROUPHASH = 6,
-    VT_MAXLEVELSIZEINGROUP = 8,
-    VT_GROUPSIZEINBYTES = 10,
-    VT_LEVELS = 12
+    VT_VERSION = 4,
+    VT_ASSETNAME = 6,
+    VT_LEVELS = 8
   };
-  const flatbuffers::String *groupName() const {
-    return GetPointer<const flatbuffers::String *>(VT_GROUPNAME);
+  uint32_t version() const {
+    return GetField<uint32_t>(VT_VERSION, 0);
   }
-  uint64_t groupHash() const {
-    return GetField<uint64_t>(VT_GROUPHASH, 0);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
-  uint32_t maxLevelSizeInGroup() const {
-    return GetField<uint32_t>(VT_MAXLEVELSIZEINGROUP, 0);
-  }
-  uint32_t groupSizeInBytes() const {
-    return GetField<uint32_t>(VT_GROUPSIZEINBYTES, 0);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>> *levels() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>> *>(VT_LEVELS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *levels() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>> *>(VT_LEVELS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_GROUPNAME) &&
-           verifier.VerifyString(groupName()) &&
-           VerifyField<uint64_t>(verifier, VT_GROUPHASH) &&
-           VerifyField<uint32_t>(verifier, VT_MAXLEVELSIZEINGROUP) &&
-           VerifyField<uint32_t>(verifier, VT_GROUPSIZEINBYTES) &&
+           VerifyField<uint32_t>(verifier, VT_VERSION) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
            VerifyOffset(verifier, VT_LEVELS) &&
            verifier.VerifyVector(levels()) &&
            verifier.VerifyVectorOfTables(levels()) &&
@@ -62,19 +49,13 @@ struct LevelGroupDataBuilder {
   typedef LevelGroupData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_groupName(flatbuffers::Offset<flatbuffers::String> groupName) {
-    fbb_.AddOffset(LevelGroupData::VT_GROUPNAME, groupName);
+  void add_version(uint32_t version) {
+    fbb_.AddElement<uint32_t>(LevelGroupData::VT_VERSION, version, 0);
   }
-  void add_groupHash(uint64_t groupHash) {
-    fbb_.AddElement<uint64_t>(LevelGroupData::VT_GROUPHASH, groupHash, 0);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(LevelGroupData::VT_ASSETNAME, assetName);
   }
-  void add_maxLevelSizeInGroup(uint32_t maxLevelSizeInGroup) {
-    fbb_.AddElement<uint32_t>(LevelGroupData::VT_MAXLEVELSIZEINGROUP, maxLevelSizeInGroup, 0);
-  }
-  void add_groupSizeInBytes(uint32_t groupSizeInBytes) {
-    fbb_.AddElement<uint32_t>(LevelGroupData::VT_GROUPSIZEINBYTES, groupSizeInBytes, 0);
-  }
-  void add_levels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>>> levels) {
+  void add_levels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> levels) {
     fbb_.AddOffset(LevelGroupData::VT_LEVELS, levels);
   }
   explicit LevelGroupDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -91,35 +72,26 @@ struct LevelGroupDataBuilder {
 
 inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> groupName = 0,
-    uint64_t groupHash = 0,
-    uint32_t maxLevelSizeInGroup = 0,
-    uint32_t groupSizeInBytes = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>>> levels = 0) {
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>> levels = 0) {
   LevelGroupDataBuilder builder_(_fbb);
-  builder_.add_groupHash(groupHash);
   builder_.add_levels(levels);
-  builder_.add_groupSizeInBytes(groupSizeInBytes);
-  builder_.add_maxLevelSizeInGroup(maxLevelSizeInGroup);
-  builder_.add_groupName(groupName);
+  builder_.add_assetName(assetName);
+  builder_.add_version(version);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *groupName = nullptr,
-    uint64_t groupHash = 0,
-    uint32_t maxLevelSizeInGroup = 0,
-    uint32_t groupSizeInBytes = 0,
-    const std::vector<flatbuffers::Offset<flat::LevelData>> *levels = nullptr) {
-  auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
-  auto levels__ = levels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelData>>(*levels) : 0;
+    uint32_t version = 0,
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    const std::vector<flatbuffers::Offset<flat::AssetRef>> *levels = nullptr) {
+  auto levels__ = levels ? _fbb.CreateVector<flatbuffers::Offset<flat::AssetRef>>(*levels) : 0;
   return flat::CreateLevelGroupData(
       _fbb,
-      groupName__,
-      groupHash,
-      maxLevelSizeInGroup,
-      groupSizeInBytes,
+      version,
+      assetName,
       levels__);
 }
 
@@ -127,55 +99,26 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelPackDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
-    VT_MAXNUMBEROFLEVELSINAGROUP = 6,
-    VT_MAXLEVELSIZEINBYTES = 8,
-    VT_MAXGROUPSIZEINBYTES = 10,
-    VT_MAXNUMMODELFILESINAGROUP = 12,
-    VT_MAXNUMANIMATIONFILESINAGROUP = 14,
-    VT_MAXMODELSIZEINAGROUP = 16,
-    VT_MAXANIMATIONSIZEINAGROUP = 18,
-    VT_ALLLEVELS = 20
+    VT_ASSETNAME = 6,
+    VT_LEVELGROUPS = 8
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
-  uint32_t maxNumberOfLevelsInAGroup() const {
-    return GetField<uint32_t>(VT_MAXNUMBEROFLEVELSINAGROUP, 0);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
-  uint32_t maxLevelSizeInBytes() const {
-    return GetField<uint32_t>(VT_MAXLEVELSIZEINBYTES, 0);
-  }
-  uint32_t maxGroupSizeInBytes() const {
-    return GetField<uint32_t>(VT_MAXGROUPSIZEINBYTES, 0);
-  }
-  uint32_t maxNumModelFilesInAGroup() const {
-    return GetField<uint32_t>(VT_MAXNUMMODELFILESINAGROUP, 0);
-  }
-  uint32_t maxNumAnimationFilesInAGroup() const {
-    return GetField<uint32_t>(VT_MAXNUMANIMATIONFILESINAGROUP, 0);
-  }
-  uint32_t maxModelSizeInAGroup() const {
-    return GetField<uint32_t>(VT_MAXMODELSIZEINAGROUP, 0);
-  }
-  uint32_t maxAnimationSizeInAGroup() const {
-    return GetField<uint32_t>(VT_MAXANIMATIONSIZEINAGROUP, 0);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *>(VT_ALLLEVELS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *levelGroups() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *>(VT_LEVELGROUPS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMBEROFLEVELSINAGROUP) &&
-           VerifyField<uint32_t>(verifier, VT_MAXLEVELSIZEINBYTES) &&
-           VerifyField<uint32_t>(verifier, VT_MAXGROUPSIZEINBYTES) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMMODELFILESINAGROUP) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMANIMATIONFILESINAGROUP) &&
-           VerifyField<uint32_t>(verifier, VT_MAXMODELSIZEINAGROUP) &&
-           VerifyField<uint32_t>(verifier, VT_MAXANIMATIONSIZEINAGROUP) &&
-           VerifyOffset(verifier, VT_ALLLEVELS) &&
-           verifier.VerifyVector(allLevels()) &&
-           verifier.VerifyVectorOfTables(allLevels()) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
+           VerifyOffset(verifier, VT_LEVELGROUPS) &&
+           verifier.VerifyVector(levelGroups()) &&
+           verifier.VerifyVectorOfTables(levelGroups()) &&
            verifier.EndTable();
   }
 };
@@ -187,29 +130,11 @@ struct LevelPackDataBuilder {
   void add_version(uint32_t version) {
     fbb_.AddElement<uint32_t>(LevelPackData::VT_VERSION, version, 0);
   }
-  void add_maxNumberOfLevelsInAGroup(uint32_t maxNumberOfLevelsInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMBEROFLEVELSINAGROUP, maxNumberOfLevelsInAGroup, 0);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(LevelPackData::VT_ASSETNAME, assetName);
   }
-  void add_maxLevelSizeInBytes(uint32_t maxLevelSizeInBytes) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXLEVELSIZEINBYTES, maxLevelSizeInBytes, 0);
-  }
-  void add_maxGroupSizeInBytes(uint32_t maxGroupSizeInBytes) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXGROUPSIZEINBYTES, maxGroupSizeInBytes, 0);
-  }
-  void add_maxNumModelFilesInAGroup(uint32_t maxNumModelFilesInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMODELFILESINAGROUP, maxNumModelFilesInAGroup, 0);
-  }
-  void add_maxNumAnimationFilesInAGroup(uint32_t maxNumAnimationFilesInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMANIMATIONFILESINAGROUP, maxNumAnimationFilesInAGroup, 0);
-  }
-  void add_maxModelSizeInAGroup(uint32_t maxModelSizeInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMODELSIZEINAGROUP, maxModelSizeInAGroup, 0);
-  }
-  void add_maxAnimationSizeInAGroup(uint32_t maxAnimationSizeInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXANIMATIONSIZEINAGROUP, maxAnimationSizeInAGroup, 0);
-  }
-  void add_allLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels) {
-    fbb_.AddOffset(LevelPackData::VT_ALLLEVELS, allLevels);
+  void add_levelGroups(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> levelGroups) {
+    fbb_.AddOffset(LevelPackData::VT_LEVELGROUPS, levelGroups);
   }
   explicit LevelPackDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -226,23 +151,11 @@ struct LevelPackDataBuilder {
 inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
-    uint32_t maxNumberOfLevelsInAGroup = 0,
-    uint32_t maxLevelSizeInBytes = 0,
-    uint32_t maxGroupSizeInBytes = 0,
-    uint32_t maxNumModelFilesInAGroup = 0,
-    uint32_t maxNumAnimationFilesInAGroup = 0,
-    uint32_t maxModelSizeInAGroup = 0,
-    uint32_t maxAnimationSizeInAGroup = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels = 0) {
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> levelGroups = 0) {
   LevelPackDataBuilder builder_(_fbb);
-  builder_.add_allLevels(allLevels);
-  builder_.add_maxAnimationSizeInAGroup(maxAnimationSizeInAGroup);
-  builder_.add_maxModelSizeInAGroup(maxModelSizeInAGroup);
-  builder_.add_maxNumAnimationFilesInAGroup(maxNumAnimationFilesInAGroup);
-  builder_.add_maxNumModelFilesInAGroup(maxNumModelFilesInAGroup);
-  builder_.add_maxGroupSizeInBytes(maxGroupSizeInBytes);
-  builder_.add_maxLevelSizeInBytes(maxLevelSizeInBytes);
-  builder_.add_maxNumberOfLevelsInAGroup(maxNumberOfLevelsInAGroup);
+  builder_.add_levelGroups(levelGroups);
+  builder_.add_assetName(assetName);
   builder_.add_version(version);
   return builder_.Finish();
 }
@@ -250,26 +163,14 @@ inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
 inline flatbuffers::Offset<LevelPackData> CreateLevelPackDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
-    uint32_t maxNumberOfLevelsInAGroup = 0,
-    uint32_t maxLevelSizeInBytes = 0,
-    uint32_t maxGroupSizeInBytes = 0,
-    uint32_t maxNumModelFilesInAGroup = 0,
-    uint32_t maxNumAnimationFilesInAGroup = 0,
-    uint32_t maxModelSizeInAGroup = 0,
-    uint32_t maxAnimationSizeInAGroup = 0,
-    const std::vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels = nullptr) {
-  auto allLevels__ = allLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroupData>>(*allLevels) : 0;
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    const std::vector<flatbuffers::Offset<flat::LevelGroupData>> *levelGroups = nullptr) {
+  auto levelGroups__ = levelGroups ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroupData>>(*levelGroups) : 0;
   return flat::CreateLevelPackData(
       _fbb,
       version,
-      maxNumberOfLevelsInAGroup,
-      maxLevelSizeInBytes,
-      maxGroupSizeInBytes,
-      maxNumModelFilesInAGroup,
-      maxNumAnimationFilesInAGroup,
-      maxModelSizeInAGroup,
-      maxAnimationSizeInAGroup,
-      allLevels__);
+      assetName,
+      levelGroups__);
 }
 
 inline const flat::LevelPackData *GetLevelPackData(const void *buf) {

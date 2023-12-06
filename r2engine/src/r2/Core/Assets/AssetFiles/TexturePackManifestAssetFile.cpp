@@ -1,11 +1,7 @@
 #include "r2pch.h"
 #include "r2/Core/Assets/AssetFiles/TexturePackManifestAssetFile.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
-#include "r2/Core/File/FileSystem.h"
-#include "r2/Core/File/PathUtils.h"
-#include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetCache.h"
-#include "r2/Core/Assets/AssetLib.h"
+
 #include "r2/Core/Assets/AssetBuffer.h"
 
 namespace r2::asset
@@ -21,47 +17,47 @@ namespace r2::asset
 	{
 	}
 
-	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
-	{
-		for (u32 i = 0; i < texturePaths->size(); ++i)
-		{
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-		}
-	}
+	//void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
+	//{
+	//	for (u32 i = 0; i < texturePaths->size(); ++i)
+	//	{
+	//		r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+	//		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+	//	}
+	//}
 
-	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
-	{
-		AddAllTexturesFromTextureType(texturePack->textures(), fileList);
+	//void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
+	//{
+	//	AddAllTexturesFromTextureType(texturePack->textures(), fileList);
 
-		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
-		{
-			for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
-			{
-				const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
+	//	if (texturePack->metaData() && texturePack->metaData()->mipLevels())
+	//	{
+	//		for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
+	//		{
+	//			const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
 
-				for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
-				{
-					r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::CUBEMAP_TEXTURE));
-					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-				}
-			}
-		}
-	}
+	//			for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
+	//			{
+	//				r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::CUBEMAP_TEXTURE));
+	//				r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+	//			}
+	//		}
+	//	}
+	//}
 
-	bool TexturePackManifestAssetFile::AddAllFilePaths(FileList fileList)
-	{
-		auto texturePacks = mTexturePacksManifest->texturePacks();
+	//bool TexturePackManifestAssetFile::AddAllFilePaths(FileList fileList)
+	//{
+	//	auto texturePacks = mTexturePacksManifest->texturePacks();
 
-		for (flatbuffers::uoffset_t i = 0; i < texturePacks->size(); ++i)
-		{
-			const flat::TexturePack* texturePack = texturePacks->Get(i);
+	//	for (flatbuffers::uoffset_t i = 0; i < texturePacks->size(); ++i)
+	//	{
+	//		const flat::TexturePack* texturePack = texturePacks->Get(i);
 
-			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
-		}
+	//		AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
+	//	}
 
-		return true;
-	}
+	//	return true;
+	//}
 
 	bool TexturePackManifestAssetFile::LoadManifest()
 	{
@@ -81,16 +77,8 @@ namespace r2::asset
 
 	bool TexturePackManifestAssetFile::UnloadManifest()
 	{
-		if (r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord))
-		{
-			return true;
-		}
+		bool success = ManifestAssetFile::UnloadManifest();
 
-		bool success = mnoptrAssetCache->ReturnAssetBuffer(mManifestCacheRecord);
-		R2_CHECK(success, "Failed to return the asset cache record");
-
-		mManifestCacheRecord = {};
-		mManifestAssetHandle = {};
 		mTexturePacksManifest = nullptr;
 
 		return success;

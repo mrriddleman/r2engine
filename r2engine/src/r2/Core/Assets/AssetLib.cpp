@@ -429,8 +429,6 @@ namespace r2::asset::lib
         return nullptr;
     }
 
-
-
 #ifdef R2_ASSET_PIPELINE
 	void ImportAssetFiles(AssetLib& assetLib, r2::asset::FileList fileList)
 	{

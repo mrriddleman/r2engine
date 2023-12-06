@@ -1,4 +1,5 @@
-include "LevelData.fbs";
+include "AssetName.fbs";
+include "AssetRef.fbs";
 
 namespace flat;
 
@@ -7,26 +8,16 @@ file_extension "rlpk";
 
 table LevelGroupData
 {
-	groupName:string;
-	groupHash:ulong(hash:"fnv1a_64");
-	maxLevelSizeInGroup:uint;
-	groupSizeInBytes:uint;
-	levels:[LevelData];
+	version:uint;
+	assetName:AssetName;
+	levels:[AssetRef];
 }
 
 table LevelPackData
 {	
 	version:uint;
-	maxNumberOfLevelsInAGroup:uint;
-	maxLevelSizeInBytes:uint;
-	maxGroupSizeInBytes:uint;
-	
-	maxNumModelFilesInAGroup:uint;
-	maxNumAnimationFilesInAGroup:uint;
-	maxModelSizeInAGroup:uint;
-	maxAnimationSizeInAGroup:uint;
-	
-	allLevels:[LevelGroupData];
+	assetName:AssetName;
+	levelGroups:[LevelGroupData];
 }
 
 root_type LevelPackData;

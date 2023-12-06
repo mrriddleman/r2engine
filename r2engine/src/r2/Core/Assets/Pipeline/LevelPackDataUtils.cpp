@@ -7,6 +7,7 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/Level/LevelData_generated.h"
+#include "r2/Game/Level/LevelPack_generated.h"
 #include <filesystem>
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
@@ -17,8 +18,9 @@
 namespace r2::asset::pln
 {
 	const std::string LEVEL_DATA_FBS = "LevelData.fbs";
+	const std::string LEVEL_PACK_DATA_FBS = "LevelPack.fbs";
 
-	bool WriteNewLevelDataFromBinary(const std::string& binLevelPath, const std::string& rawJSONPath, const void* data, u32 dataSize)
+	bool WriteNewLevelDataFromBinary(const std::string& binLevelPath, const std::string& rawJSONPath, const std::string& fbs, const void* data, u32 dataSize)
 	{
 		utils::WriteFile(binLevelPath, (char*)data, dataSize);
 
@@ -26,7 +28,7 @@ namespace r2::asset::pln
 
 		char levelDataSchemaPath[r2::fs::FILE_PATH_LENGTH];
 
-		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), levelDataSchemaPath, LEVEL_DATA_FBS.c_str());
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), levelDataSchemaPath, fbs.c_str());
 
 		std::filesystem::path binaryPath = binLevelPath;
 
@@ -186,7 +188,7 @@ namespace r2::asset::pln
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
 
-		return WriteNewLevelDataFromBinary(binLevelPath, rawJSONPath, buf, size);
+		return WriteNewLevelDataFromBinary(binLevelPath, rawJSONPath, LEVEL_DATA_FBS, buf, size);
 	}
 
 	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
@@ -198,6 +200,49 @@ namespace r2::asset::pln
 	{
 		R2_CHECK(false, "Not implemented");
 		return false;
+	}
+
+	bool SaveLevelPackData(u32 version, const std::vector<LevelGroup>& levelGroups, const std::string& binFilePath, const std::string& rawFilePath)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		std::vector<flatbuffers::Offset<flat::LevelGroupData>> flatLevelGroups;
+		
+		char levelName[r2::fs::FILE_PATH_LENGTH];
+
+		for (size_t i = 0; i < levelGroups.size(); ++i)
+		{
+			std::vector<flatbuffers::Offset<flat::AssetRef>> levelAssetRefs;
+
+			for (size_t j = 0; j < levelGroups[i].levelReferences.size(); ++j)
+			{
+				r2::asset::MakeAssetNameStringForFilePath(levelGroups[i].levelReferences[j].binPath.string().c_str(), levelName, r2::asset::LEVEL);
+
+				auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(levelGroups[i].levelReferences[j].binPath.string().c_str(), r2::asset::LEVEL), builder.CreateString(levelName));
+
+				auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(levelGroups[i].levelReferences[j].binPath.string()), builder.CreateString(levelGroups[i].levelReferences[j].rawPath.string()));
+
+				levelAssetRefs.push_back(assetRef);
+			}
+
+			auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(levelGroups[i].groupName.c_str(), r2::asset::LEVEL_GROUP), builder.CreateString(levelGroups[i].groupName));
+
+			flatLevelGroups.push_back( flat::CreateLevelGroupData(builder, version, assetName, builder.CreateVector(levelAssetRefs)) );
+
+		}
+
+		std::filesystem::path levelPackPath = binFilePath;
+
+		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK), builder.CreateString(levelPackPath.filename().string()));
+
+		auto levelPackData = flat::CreateLevelPackData(builder, version, assetName, builder.CreateVector(flatLevelGroups));
+
+		builder.Finish(levelPackData);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		return WriteNewLevelDataFromBinary(binFilePath, rawFilePath, LEVEL_PACK_DATA_FBS, buf, size);
 	}
 
 }
