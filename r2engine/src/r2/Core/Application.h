@@ -119,6 +119,9 @@ namespace r2
 		virtual std::string GetLevelPackDataBinPath() const = 0;
 		virtual std::string GetLevelPackDataJSONPath() const = 0;
 
+        virtual std::string GetLevelPackDataManifestBinPath() const = 0;
+        virtual std::string GetLevelPackDataManifestJSONPath() const = 0;
+
 
         virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
         virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;

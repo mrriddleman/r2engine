@@ -1462,6 +1462,17 @@ public:
 	{
 		return SANDBOX_LEVELS_DIR_RAW;
 	}
+
+	std::string GetLevelPackDataManifestBinPath() const
+	{
+		return SANDBOX_LEVELS_DIR_BIN + std::string("/manifests/SandboxLevels.rlpk");
+	}
+
+	std::string GetLevelPackDataManifestJSONPath() const
+	{
+        return SANDBOX_LEVELS_DIR_RAW + std::string("/manifests/SandboxLevels.json");
+	}
+
     
     virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {

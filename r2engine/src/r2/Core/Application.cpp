@@ -194,6 +194,17 @@ namespace r2
 		return "";
 	}
 
+    std::string Application::GetLevelPackDataManifestBinPath() const
+    {
+        return "";
+    }
+
+    std::string Application::GetLevelPackDataManifestJSONPath() const
+    {
+        return "";
+    }
+
+
 	void Application::RegisterECSData(r2::ecs::ECSWorld& ecsWorld)
 	{
 

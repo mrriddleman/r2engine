@@ -412,8 +412,8 @@ namespace r2
             std::unique_ptr<r2::asset::pln::LevelPackHotReloadCommand> levelPackAssetCommand = std::make_unique<r2::asset::pln::LevelPackHotReloadCommand>();
 
             {
-                levelPackAssetCommand->SetLevelPackBinFilePath(noptrApp->GetLevelPackDataBinPath());
-                levelPackAssetCommand->SetLevelPackRawFilePath(noptrApp->GetLevelPackDataJSONPath());
+                levelPackAssetCommand->SetLevelPackBinFilePath(noptrApp->GetLevelPackDataManifestBinPath());
+                levelPackAssetCommand->SetLevelPackRawFilePath(noptrApp->GetLevelPackDataManifestJSONPath());
             }
 
 
@@ -467,9 +467,9 @@ namespace r2
                 appInitialTexturePackManifests,
                 noptrApp->GetSoundDefinitionPath().c_str(),
                 binaryModelManifestPaths,
-                noptrApp->GetLevelPackDataBinPath().c_str()
+                noptrApp->GetLevelPackDataManifestBinPath().c_str()
 #ifdef R2_ASSET_PIPELINE
-                , noptrApp->GetLevelPackDataJSONPath().c_str()
+                , noptrApp->GetLevelPackDataManifestJSONPath().c_str()
                 , rawModelManifestPaths
                 , engineMaterialPackManifestPathRaw.c_str()
                 , noptrApp->GetMaterialPackManifestsRawPaths()
