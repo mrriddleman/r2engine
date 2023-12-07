@@ -251,30 +251,30 @@ namespace r2
         void ControllerRemappedEvent(io::ControllerID controllerID);
         
         //Materials Setup
-        void SetupAssetLib(
-            const char* engineMaterialsPath,
-            const std::vector<std::string>& appMaterialPacksManifests,
-            const char* engineTexturePacksManifestPath,
-            const std::vector<std::string>& appTexturePacksManifestPaths,
-            const char* soundDefinitionPath,
-            const std::vector<std::string>& modelManifests
-
+		void Engine::SetupAssetLib(
+			const char* engineMaterialsPath,
+			const std::vector<std::string>& appMaterialPacksManifests,
+			const char* engineTexturePacksManifestPath,
+			const std::vector<std::string>& appTexturePacksManifestPaths,
+			const char* soundDefinitionPath,
+			const std::vector<std::string>& modelManifests,
+			const char* appLevelPackBinManifestPath
 #ifdef R2_ASSET_PIPELINE
-            , const std::vector<std::string>& rawModelManifests
-            , const char* rawEngineMaterialsPath
-            , const std::vector<std::string>& rawAppMaterialPacksManifests
+			, const char* appLevelPackJSONManifestPath
+			, const std::vector<std::string>& rawModelManifests
+			, const char* rawEngineMaterialsPath
+			, const std::vector<std::string>& rawAppMaterialPacksManifests
 			, const char* rawEngineTexturePacksManifestPath
 			, const std::vector<std::string>& rawAppTexturePacksManifestPaths
 			, const char* rawSoundDefinitionPath
 
-            , const char* rawEngineMaterialsWatchPath
+			, const char* rawEngineMaterialsWatchPath
 			, const std::vector<std::string>& rawAppMaterialWatchPaths
 			, const char* rawEngineTexturePacksWatchPath
 			, const std::vector<std::string>& rawAppTexturePacksWatchPaths
 			, const char* rawSoundDefinitionWatchPath
-
 #endif
-        );
+		);
 
         void SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp);
 

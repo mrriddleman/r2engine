@@ -14,6 +14,8 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Audio/SoundDefinitionHelpers.h"
+#include "flatbuffers/idl.h"
+#include "flatbuffers/util.h"
 
 namespace r2::asset::pln
 {
@@ -191,9 +193,80 @@ namespace r2::asset::pln
 		return WriteNewLevelDataFromBinary(binLevelPath, rawJSONPath, LEVEL_DATA_FBS, buf, size);
 	}
 
-	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
+	bool GenerateLevelPackDataFromDirectories(u32 version, const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
 	{
-		R2_CHECK(false, "not implemented");
+		flatbuffers::FlatBufferBuilder builder;
+
+		std::vector<flatbuffers::Offset<flat::LevelGroupData>> flatLevelGroups;
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+		char levelDataSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), levelDataSchemaPath, LEVEL_PACK_DATA_FBS.c_str());
+
+		for (auto& groupDir : std::filesystem::directory_iterator(rawDir))
+		{
+			if (!std::filesystem::is_directory(groupDir) ||
+				std::filesystem::file_size(groupDir.path()) <= 0 ||
+				groupDir.path().filename() == ".DS_Store")
+			{
+				continue;
+			}
+
+			std::vector<flatbuffers::Offset<flat::AssetRef>> levelsInGroup;
+
+			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
+			char levelName[r2::fs::FILE_PATH_LENGTH];
+
+			for (auto& file : std::filesystem::directory_iterator(groupDir))
+			{
+				if (std::filesystem::file_size(file.path()) <= 0 ||
+					file.path().filename() == ".DS_Store" ||
+					file.path().extension() != ".json")
+				{
+					continue;
+				}
+
+				std::filesystem::path levelPath = file;
+				levelPath.replace_extension(".rlvl");
+
+				r2::fs::utils::SanitizeSubPath(levelPath.string().c_str(), sanitizedFilePathURI);
+
+				r2::asset::MakeAssetNameStringForFilePath(sanitizedFilePathURI, levelName, r2::asset::LEVEL);
+
+				auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(sanitizedFilePathURI, r2::asset::LEVEL), builder.CreateString(levelName));
+
+				std::filesystem::path binLevelPath = binaryDir;
+				binLevelPath /= levelName;
+
+				r2::fs::utils::SanitizeSubPath(binLevelPath.string().c_str(), sanitizedFilePathURI);
+
+				r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), levelName);
+
+				auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(sanitizedFilePathURI), builder.CreateString(levelName));
+
+				levelsInGroup.push_back(assetRef);
+			}
+
+			std::filesystem::path groupPath = groupDir.path();
+
+			auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(groupPath.string().c_str(), r2::asset::LEVEL_GROUP), builder.CreateString(groupPath.stem().string()));
+
+			flat::CreateLevelGroupData(builder, version, assetName, builder.CreateVector(levelsInGroup));
+		}
+
+		std::filesystem::path levelPackPath = binFilePath;
+
+		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK), builder.CreateString(levelPackPath.filename().string()));
+
+		auto levelPackData = flat::CreateLevelPackData(builder, version, assetName, builder.CreateVector(flatLevelGroups));
+
+		builder.Finish(levelPackData);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		return WriteNewLevelDataFromBinary(binFilePath, rawFilePath, LEVEL_PACK_DATA_FBS, buf, size);
 	}
 
 	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath)

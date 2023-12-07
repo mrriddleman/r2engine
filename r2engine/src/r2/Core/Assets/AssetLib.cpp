@@ -17,6 +17,7 @@
 #include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/RModelsManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/SoundManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/LevelPackManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -700,6 +701,14 @@ namespace r2::asset::lib
         SoundManifestAssetFile* manifestFile = ALLOC(SoundManifestAssetFile, *s_arenaPtr);
 		bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::SOUND_DEFINTION);
 		R2_CHECK(result, "Failed to initialize the SoundManifestAssetFile");
+        return manifestFile;
+    }
+
+    ManifestAssetFile* MakeLevelPackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
+    {
+        LevelPackManifestAssetFile* manifestFile = ALLOC(LevelPackManifestAssetFile, *s_arenaPtr);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::LEVEL_PACK);
+        R2_CHECK(result, "Failed to initialize the LevelPackManifestAssetFile");
         return manifestFile;
     }
 

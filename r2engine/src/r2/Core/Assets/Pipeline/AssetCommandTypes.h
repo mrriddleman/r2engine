@@ -15,6 +15,7 @@ namespace r2::asset::pln
 		AHRCT_ANIMATION_ASSET,
 		AHRCT_SHADER_ASSET,
 		AHRCT_SOUND_ASSET,
+		AHRCT_LEVEL_ASSET
 	};
 	
 	enum HotReloadType : u32

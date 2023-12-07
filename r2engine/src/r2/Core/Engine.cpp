@@ -54,14 +54,13 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/GameAssetHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
-#include "r2/Core/Assets/Pipeline/AssetCommands/AnimationHotReloadCommand.h"
+//#include "r2/Core/Assets/Pipeline/AssetCommands/AnimationHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/LevelPackHotReloadCommand.h"
 #endif
 
 
 namespace
 {
-	const u32 MAX_NUM_MATERIAL_SYSTEMS = 32; //@TODO(Serge): change this - very limiting
-	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 256; //@TODO(Serge): change this - very limiting
     const u32 MAX_NUM_SHADERS = 512;
     const u32 ALIGNMENT = 16;
 }
@@ -401,13 +400,22 @@ namespace r2
                 soundAssetCommand->SetSoundDefinitionRawFilePath(noptrApp->GetRawSoundDefinitionsPath());
             }
 
-            std::unique_ptr<r2::asset::pln::GameAssetHotReloadCommand> gameAssetCommand = std::make_unique<r2::asset::pln::GameAssetHotReloadCommand>();
+            //    std::unique_ptr<r2::asset::pln::GameAssetHotReloadCommand> gameAssetCommand = std::make_unique<r2::asset::pln::GameAssetHotReloadCommand>();
 
             {
-                gameAssetCommand->SetAssetTempPath(noptrApp->GetAssetCompilerTempPath());
-                gameAssetCommand->SetAssetManifestsPath(noptrApp->GetAssetManifestPath());
-                gameAssetCommand->AddWatchPaths(noptrApp->GetAssetWatchPaths());
+                //      gameAssetCommand->SetAssetTempPath(noptrApp->GetAssetCompilerTempPath());
+              //  gameAssetCommand->SetAssetManifestsPath(noptrApp->GetAssetManifestPath());
+              //  gameAssetCommand->AddWatchPaths(noptrApp->GetAssetWatchPaths());
             }
+
+
+            std::unique_ptr<r2::asset::pln::LevelPackHotReloadCommand> levelPackAssetCommand = std::make_unique<r2::asset::pln::LevelPackHotReloadCommand>();
+
+            {
+                levelPackAssetCommand->SetLevelPackBinFilePath(noptrApp->GetLevelPackDataBinPath());
+                levelPackAssetCommand->SetLevelPackRawFilePath(noptrApp->GetLevelPackDataJSONPath());
+            }
+
 
 			std::vector<std::unique_ptr<r2::asset::pln::AssetHotReloadCommand>> mAssetCommands;
 
@@ -418,7 +426,7 @@ namespace r2
 		//	mAssetCommands.push_back(std::move(animationAssetCMD));
             mAssetCommands.push_back(std::move(shaderAssetCommand));
             mAssetCommands.push_back(std::move(soundAssetCommand));
-            mAssetCommands.push_back(std::move(gameAssetCommand));
+       //     mAssetCommands.push_back(std::move(gameAssetCommand));
 
 
             mAssetCommandHandler.Init(std::chrono::milliseconds(200), std::move(mAssetCommands));
@@ -426,6 +434,9 @@ namespace r2
             /*r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200),
                 assetCommand, soundCommand, shaderCommand, texturePackCommand, materialPackCommand);*/
 #endif
+
+
+
             
             mDisplaySize = noptrApp->GetAppResolution();
             draw::RendererBackend rendererBackend = noptrApp->GetRendererBackend();
@@ -455,8 +466,10 @@ namespace r2
                 texturePackPath,
                 appInitialTexturePackManifests,
                 noptrApp->GetSoundDefinitionPath().c_str(),
-                binaryModelManifestPaths
+                binaryModelManifestPaths,
+                noptrApp->GetLevelPackDataBinPath().c_str()
 #ifdef R2_ASSET_PIPELINE
+                , noptrApp->GetLevelPackDataJSONPath().c_str()
                 , rawModelManifestPaths
                 , engineMaterialPackManifestPathRaw.c_str()
                 , noptrApp->GetMaterialPackManifestsRawPaths()
@@ -1269,9 +1282,10 @@ namespace r2
 		const char* engineTexturePacksManifestPath,
 		const std::vector<std::string>& appTexturePacksManifestPaths,
 		const char* soundDefinitionPath,
-		const std::vector<std::string>& modelManifests
-
+		const std::vector<std::string>& modelManifests,
+        const char* appLevelPackBinManifestPath
 #ifdef R2_ASSET_PIPELINE
+        , const char* appLevelPackJSONManifestPath
 		, const std::vector<std::string>& rawModelManifests
 		, const char* rawEngineMaterialsPath
 		, const std::vector<std::string>& rawAppMaterialPacksManifests
@@ -1362,6 +1376,16 @@ namespace r2
             r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, appTexturePacksManifestAssetFile);
             ++i;
         }
+
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::ManifestAssetFile* levelPackManifestFile = r2::asset::lib::MakeLevelPackManifestAssetFile(*mAssetLib, appLevelPackBinManifestPath, appLevelPackJSONManifestPath, "");
+#else
+        r2::asset::ManifestAssetFile* levelPackManifestFile = r2::asset::lib::MakeLevelPackManifestAssetFile(*mAssetLib, appLevelPackBinManifestPath, "", "");
+#endif
+
+        levelPackManifestFile->SetReloadFilePathCallback(nullptr);
+
+        r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, levelPackManifestFile);
 
 #ifdef R2_ASSET_PIPELINE
         r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeSoundsManifestAssetFile(*mAssetLib, soundDefinitionPath, rawSoundDefinitionPath, rawSoundDefinitionWatchPath);

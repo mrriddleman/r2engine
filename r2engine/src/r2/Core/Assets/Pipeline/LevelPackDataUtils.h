@@ -28,9 +28,9 @@ namespace r2::asset::pln
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
 		const r2::Level& editorLevel);
-	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
-	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 
+	bool GenerateLevelPackDataFromDirectories(u32 version, const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
+	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 
 	bool SaveLevelPackData(u32 version, const std::vector<LevelGroup>& levelGroups, const std::string& binFilePath, const std::string& rawFilePath);
 
