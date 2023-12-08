@@ -40,8 +40,7 @@ namespace r2
 		,mLoadedLevels(nullptr)
 		,mLevelArena(nullptr)
 	{
-		r2::util::PathCpy(mBinOutputPath, "");
-		r2::util::PathCpy(mRawOutputPath, "");;
+
 	}
 
 	LevelManager::~LevelManager()
@@ -51,17 +50,9 @@ namespace r2
 	bool LevelManager::Init(
 		r2::mem::MemoryArea::Handle memoryAreaHandle,
 		const char* areaName,
-		u32 maxNumLevels,
-		const char* binLevelOutputPath,
-		const char* rawLevelOutputPath)
+		u32 maxNumLevels)
 	{
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "We need a valid memory area");
-
-		R2_CHECK(binLevelOutputPath != nullptr && strlen(binLevelOutputPath) > 0, "We don't have a proper path");
-		R2_CHECK(rawLevelOutputPath != nullptr && strlen(rawLevelOutputPath) > 0, "We don't have a proper path");
-
-		r2::fs::utils::SanitizeSubPath(binLevelOutputPath, mBinOutputPath);
-		r2::fs::utils::SanitizeSubPath(rawLevelOutputPath, mRawOutputPath);
 
 		r2::mem::utils::MemoryProperties memProperties;
 		memProperties.alignment = 16;
@@ -304,20 +295,6 @@ namespace r2
 		s32 index = -1;
 		return FindLoadedLevel(levelName, index);
 	}
-
-	//bool LevelManager::ExistsOnDisk(const char* levelURI)
-	//{
-	//	return ExistsOnDisk(STRING_ID(levelURI));
-	//}
-
-	//bool LevelManager::ExistsOnDisk(LevelName levelName)
-	//{
-	//	r2::asset::AssetLib& gameAssetManager = CENG.GetGameAssetManager();
-
-	//	const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
-
-	//	return gameAssetManager.HasAsset(levelAsset);
-	//}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
 	{
@@ -698,11 +675,4 @@ namespace r2
 
 		return memorySize;
 	}
-
-#if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-	void LevelManager::SaveNewLevelFile(const Level& editorLevel)
-	{
-		
-	}
-#endif
 }

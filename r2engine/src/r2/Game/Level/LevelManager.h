@@ -40,9 +40,7 @@ namespace r2
 		bool Init(
 			r2::mem::MemoryArea::Handle memoryAreaHandle,
 			const char* areaName,
-			u32 maxNumLevels,
-			const char* binLevelOutputPath,
-			const char* rawLevelOutputPath);
+			u32 maxNumLevels);
 		void Shutdown();
 
 		Level* MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName);
@@ -54,8 +52,7 @@ namespace r2
 		Level* GetLevel(LevelName levelName);
 
 		void UnloadLevel(const Level* level);
-		//bool ExistsOnDisk(const char* levelURI);
-		//bool ExistsOnDisk(LevelName levelName);
+
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
@@ -63,10 +60,6 @@ namespace r2
 		Level* ReloadLevel(LevelName levelName);
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
-
-#if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-		void SaveNewLevelFile(const Level& editorLevel);
-#endif
 		static u64 MemorySize(
 			u32 maxNumLevels,
 			u32 maxNumModels,
@@ -90,9 +83,6 @@ namespace r2
 		r2::mem::FreeListArena* mLevelArena;
 
 		r2::SArray<Level>* mLoadedLevels;
-
-		char mBinOutputPath[r2::fs::FILE_PATH_LENGTH];
-		char mRawOutputPath[r2::fs::FILE_PATH_LENGTH];
 	};
 }
 

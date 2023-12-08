@@ -507,8 +507,7 @@ namespace r2
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
-                mLevelManager->Init(engineMem.internalEngineMemoryHandle, "Level Manager", 1000,
-                    noptrApp->GetLevelPackDataBinPath().c_str(), noptrApp->GetLevelPackDataJSONPath().c_str());
+                mLevelManager->Init(engineMem.internalEngineMemoryHandle, "Level Manager", 1000);
             }
             
             //@TODO(Serge): don't use make unique!
@@ -617,16 +616,6 @@ namespace r2
         
 
         r2::draw::shadersystem::Shutdown();
-    //    r2::draw::matsys::ShutdownMaterialSystems();
-		
-		//const auto numParamPacks = r2::sarr::Size(*mMaterialParamPacksData);
-		//for (s32 i = static_cast<s32>(numParamPacks) - 1; i >= 0; --i)
-		//{
-		//	FREE(r2::sarr::At(*mMaterialParamPacksData, i), *MEM_ENG_PERMANENT_PTR);
-		//}
-		//FREE(mMaterialParamPacks, *MEM_ENG_PERMANENT_PTR);
-		//FREE(mMaterialParamPacksData, *MEM_ENG_PERMANENT_PTR);
-
 
         r2::mem::utils::MemBoundary assetLibBoundary = mAssetLib->mBoundary;
         r2::asset::lib::Shutdown(mAssetLib);
@@ -636,7 +625,6 @@ namespace r2
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
         mAssetCommandHandler.Shutdown();
-      //  r2::asset::pln::Shutdown();
 #endif
 
         
