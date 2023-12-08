@@ -39,11 +39,11 @@
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
-
+#include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Render/Renderer/Renderer.h"
-
+#include "r2/Core/Assets/AssetReference.h"
 //@TEST: for test code only - REMOVE!
 #include "r2/Core/Application.h"
 #include "r2/Core/File/PathUtils.h"
@@ -207,7 +207,32 @@ namespace r2
 	 
 	void Editor::Save()
 	{
-		CENG.GetLevelManager().SaveNewLevelFile(*mCurrentEditorLevel);
+		char binLevelPath[r2::fs::FILE_PATH_LENGTH];
+		char rawLevelPath[r2::fs::FILE_PATH_LENGTH];
+
+		const auto& application =  MENG.GetApplication();
+
+		std::string levelBinURI = std::string(mCurrentEditorLevel->GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(mCurrentEditorLevel->GetLevelName()) + ".rlvl";
+		std::string levelRawURI = std::string(mCurrentEditorLevel->GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(mCurrentEditorLevel->GetLevelName()) + ".json";
+
+		r2::fs::utils::AppendSubPath(application.GetLevelPackDataBinPath().c_str(), binLevelPath, levelBinURI.c_str());
+		r2::fs::utils::AppendSubPath(application.GetLevelPackDataJSONPath().c_str(), rawLevelPath, levelRawURI.c_str());
+
+		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(binLevelPath, r2::asset::LEVEL);
+
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+
+		//Write out the new level file
+		bool saved = r2::asset::pln::SaveLevelData(ecsWorld.GetECSCoordinator(), binLevelPath, rawLevelPath, *mCurrentEditorLevel);
+		R2_CHECK(saved, "We couldn't save the file: %s\n", binLevelPath);
+
+		//first check to see if we have asset for this
+		if (!r2::asset::lib::HasAsset(assetLib, newLevelAsset))
+		{
+			r2::asset::lib::ImportAsset(assetLib, r2::asset::CreateNewAssetReference(binLevelPath, rawLevelPath, r2::asset::LEVEL), r2::asset::LEVEL);
+		}
 	}
 
 	void Editor::LoadLevel(const std::string& filePathName)

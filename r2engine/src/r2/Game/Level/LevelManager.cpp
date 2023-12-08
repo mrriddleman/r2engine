@@ -17,7 +17,6 @@
 #include "r2/Render/Renderer/Renderer.h"
 
 #ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #include "r2/Core/Assets/AssetReference.h"
 #endif // R2_ASSET_PIPELINE
 
@@ -703,42 +702,7 @@ namespace r2
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
 	void LevelManager::SaveNewLevelFile(const Level& editorLevel)
 	{
-		char binLevelPath[r2::fs::FILE_PATH_LENGTH];
-		char rawLevelPath[r2::fs::FILE_PATH_LENGTH];
-
-		std::string levelBinURI = std::string(editorLevel.GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(editorLevel.GetLevelName()) + ".rlvl";
-		std::string levelRawURI = std::string(editorLevel.GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(editorLevel.GetLevelName()) + ".json";
-
-		r2::fs::utils::AppendSubPath(mBinOutputPath, binLevelPath, levelBinURI.c_str());
-		r2::fs::utils::AppendSubPath(mRawOutputPath, rawLevelPath, levelRawURI.c_str());
-
-		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(binLevelPath, r2::asset::LEVEL);
-
-		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
-
-		//GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-		//first check to see if we have asset for this
-		if (!r2::asset::lib::HasAsset(assetLib, newLevelAsset))
-		{
-			r2::asset::lib::ImportAsset(assetLib, r2::asset::CreateNewAssetReference(binLevelPath, rawLevelPath, r2::asset::LEVEL), r2::asset::LEVEL);
-
-
-		//	const r2::asset::FileList fileList = gameAssetManager.GetFileList();
-			
-			//make a new asset file for the asset cache
-			//r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
-
-			//r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
-		}
 		
-		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
-		
-		//Write out the new level file
-		bool saved = r2::asset::pln::SaveLevelData(
-			ecsWorld.GetECSCoordinator(), binLevelPath, rawLevelPath, editorLevel);
-
-		R2_CHECK(saved, "We couldn't save the file: %s\n", binLevelPath);
 	}
 #endif
 }
