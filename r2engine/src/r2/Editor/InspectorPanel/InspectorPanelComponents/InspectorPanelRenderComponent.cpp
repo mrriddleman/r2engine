@@ -532,9 +532,6 @@ namespace r2::edit
 			else
 			{
 				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelName);
-				//@TODO(Serge): we need to ensure that we have a new manifest for internal MODEL assets
-				//				currently it doesn't exist
-				TODO;
 
 				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::MODEL));
 				
