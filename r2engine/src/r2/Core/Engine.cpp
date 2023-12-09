@@ -130,11 +130,11 @@ namespace r2
             u32 numMaterialManifests = noptrApp->GetMaterialPackManifestsBinaryPaths().size();
             u32 numTextureManifets = noptrApp->GetTexturePackManifestsBinaryPaths().size();
             u32 numModelManifests = noptrApp->GetModelManifestBinaryPaths().size();
-            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets + numModelManifests + 1, 2); //+1 for sounds
+            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets + numModelManifests + 1 + 1, 3); //+1 for sounds +1 for level manifest
 
             r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
 
-            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numModelManifests + numMaterialManifests + 1 + numTextureManifets + 1 + 1, Kilobytes(512));
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numModelManifests + numMaterialManifests + 1 + numTextureManifets + 1 + 1 + 1 + 1, Kilobytes(512));
 
             R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
 
