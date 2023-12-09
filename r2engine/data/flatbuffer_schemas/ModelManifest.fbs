@@ -1,0 +1,17 @@
+include "AssetName.fbs";
+include "AssetRef.fbs";
+
+namespace flat;
+
+file_identifier "mdlm";
+file_extension "mdlm";
+
+table ModelsManifest
+{
+	version:uint;
+	assetName:AssetName;
+	meshes:[AssetRef];
+	models:[AssetRef];
+}
+
+root_type ModelsManifest;

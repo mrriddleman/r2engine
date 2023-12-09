@@ -42,6 +42,13 @@ namespace r2::asset::pln
 			MakeEngineModels(makeModels);
 		}
 
+		//create the manifest folder
+		auto makeModelManifest = ShouldMakeEngineModelManifest();
+		if (makeModelManifest)
+		{
+			MakeEngineModelManifest();
+		}
+
 		for (std::unique_ptr<AssetHotReloadCommand>& cmd : mAssetCommands)
 		{
 			cmd->Init(mDelay);
@@ -120,6 +127,13 @@ namespace r2::asset::pln
 		if (!std::filesystem::exists(modelsBinPath))
 		{
 			std::filesystem::create_directory(modelsBinPath);
+		}
+
+		std::filesystem::path modelsManifestBinPath = modelsBinPath / "manifest";
+
+		if (!std::filesystem::exists(modelsManifestBinPath))
+		{
+			std::filesystem::create_directory(modelsManifestBinPath);
 		}
 
 		std::filesystem::path texturesBinPath = R2_ENGINE_INTERNAL_TEXTURES_BIN;

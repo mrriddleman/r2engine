@@ -1226,24 +1226,7 @@ namespace r2::draw::renderer
 
 		CreateRenderPasses(*newRenderer);
 
-		r2::asset::FileList files = r2::asset::lib::MakeFileList(MAX_DEFAULT_MODELS);
-
-		for (const auto& file : std::filesystem::recursive_directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
-		{
-			if (std::filesystem::file_size(file.path()) <= 0 || 
-				((file.path().extension().string() != MODL_EXT) && (file.path().extension().string() != MESH_EXT)))
-			{
-				continue;
-			}
-
-			char filePath[r2::fs::FILE_PATH_LENGTH];
-
-			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), filePath);
-
-			r2::sarr::Push(*files, (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(filePath));
-		}
-
-		newRenderer->mModelCache = modlche::Create(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
+		newRenderer->mModelCache = modlche::Create(memoryAreaHandle, DefaultModelsMemorySize(), true, "Rendering Engine Default Models");
 		if (!newRenderer->mModelCache)
 		{
 			R2_CHECK(false, "We couldn't init the default engine models");
@@ -1304,14 +1287,6 @@ namespace r2::draw::renderer
 		newRenderer->mDefaultOutlineMaterialName.assetName.assetNameString = "outline";
 		newRenderer->mDefaultOutlineMaterialName.packName.assetNameString = engineMaterialPack->assetName()->stringName()->str();
 #endif
-
-//		newRenderer->mDefaultOutlineMaterialName = { 
-//			
-//#ifdef R2_ASSET_PIPELINE
-//			,"outline"
-//#endif
-//			},
-//			engineMaterialPack->assetName() };
 
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));

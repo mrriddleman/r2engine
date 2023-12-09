@@ -18,6 +18,7 @@
 #include "r2/Core/Assets/AssetFiles/RModelsManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/SoundManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/LevelPackManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/EngineModelManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -710,6 +711,14 @@ namespace r2::asset::lib
         bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::LEVEL_PACK);
         R2_CHECK(result, "Failed to initialize the LevelPackManifestAssetFile");
         return manifestFile;
+    }
+
+    ManifestAssetFile* MakeEngineModelManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
+    {
+        EngineModelManifestAssetFile* manifestFile = ALLOC(EngineModelManifestAssetFile, *s_arenaPtr);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::MODEL_MANIFEST);
+		R2_CHECK(result, "Failed to initialize the EngineModelManifestAssetFile");
+		return manifestFile;
     }
 
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize)

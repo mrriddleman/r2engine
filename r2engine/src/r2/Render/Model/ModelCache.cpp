@@ -10,20 +10,15 @@
 namespace r2::draw::modlche
 {
 	const u64 ALIGNMENT = 16;
+	const u32 FILE_CAPACITY = 16;
 
-	ModelCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
+	ModelCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, const char* areaName)
 	{
-		if (!files)
-		{
-			R2_CHECK(false, "Trying to Init() a model system with no files!");
-			return nullptr;
-		}
-
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize(r2::sarr::Capacity(*files), modelCacheSize);
+		u64 subAreaSize = MemorySize(FILE_CAPACITY, modelCacheSize);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enough space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes",
@@ -51,9 +46,9 @@ namespace r2::draw::modlche
 		newModelSystem->mSubAreaArena = modelArena;
 		
 		newModelSystem->mCacheModelReferences = cacheModelReferences;
-		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, r2::asset::AssetCache::TotalMemoryNeeded(r2::sarr::Capacity(*files), modelCacheSize, ALIGNMENT), ALIGNMENT);
-		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, r2::asset::AssetCache::TotalMemoryNeeded(FILE_CAPACITY, modelCacheSize, ALIGNMENT), ALIGNMENT);
+		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, FILE_CAPACITY * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, FILE_CAPACITY * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize);
 
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();

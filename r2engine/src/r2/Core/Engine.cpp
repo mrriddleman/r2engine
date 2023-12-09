@@ -1385,6 +1385,15 @@ namespace r2
         soundDefinitionFile->SetReloadFilePathCallback(r2::asset::pln::SoundHotReloadCommand::SoundManifestHotReloaded);
 #endif
 		r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, soundDefinitionFile);
+
+
+#ifdef R2_ASSET_PIPELINE
+		r2::asset::ManifestAssetFile* engineModelsManifestFile = r2::asset::lib::MakeEngineModelManifestAssetFile(*mAssetLib, (std::string(R2_ENGINE_INTERNAL_MODELS_MANIFEST_BIN) + std::string("/engine_models.mdlm")).c_str(), (std::string(R2_ENGINE_INTERNAL_MODELS_MANIFEST_RAW) + std::string("/engine_models.json")).c_str(), "");
+#else
+		r2::asset::ManifestAssetFile* engineModelsManifestFile = r2::asset::lib::MakeEngineModelManifestAssetFile(*mAssetLib, (std::string(R2_ENGINE_INTERNAL_MODELS_MANIFEST_BIN) + std::string("/engine_models.mdlm")).c_str(), "", "");
+#endif
+
+        r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, engineModelsManifestFile);
     }
     
     void Engine::OnEvent(evt::Event& e)

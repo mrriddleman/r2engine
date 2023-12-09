@@ -136,6 +136,7 @@ namespace r2::asset::lib
     ManifestAssetFile* MakeRModelsManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
     ManifestAssetFile* MakeSoundsManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
     ManifestAssetFile* MakeLevelPackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
+    ManifestAssetFile* MakeEngineModelManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
 
     FileList MakeFileList(u64 capacity);
     

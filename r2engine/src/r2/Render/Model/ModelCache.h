@@ -30,7 +30,7 @@ namespace r2::draw
 
 	namespace modlche
 	{
-		ModelCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName);
+		ModelCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, const char* areaName);
 		void Shutdown(ModelCache* system);
 		u64 MemorySize(u64 numAssets, u64 assetCapacityInBytes);
 

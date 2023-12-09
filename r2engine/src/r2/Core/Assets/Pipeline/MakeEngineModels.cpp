@@ -5,7 +5,9 @@
 #include "r2/Render/Model/Mesh_generated.h"
 #include "r2/Render/Model/Model_generated.h"
 #include "r2/Core/Assets/Asset.h"
-
+#include "r2/Render/Model/ModelManifest_generated.h"
+#include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
+#include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Core/File/PathUtils.h"
 #include <filesystem>
@@ -291,6 +293,24 @@ namespace r2::asset::pln
 		return makeMeshFuncs;
 	}
 
+	bool ShouldMakeEngineModelManifest()
+	{
+		std::filesystem::path engineModelManifestRawDir = R2_ENGINE_INTERNAL_MODELS_MANIFEST_RAW;
+		std::filesystem::path engineModelManifestBinDir = R2_ENGINE_INTERNAL_MODELS_MANIFEST_BIN;
+
+		if (!std::filesystem::exists(engineModelManifestRawDir / "engine_models.json"))
+		{
+			return true;
+		}
+
+		if (!std::filesystem::exists(engineModelManifestBinDir / "engine_models.mdlm"))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	void MakeEngineModels(const std::vector<MakeModlFunc>& makeModels)
 	{
 		std::string schemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
@@ -313,6 +333,109 @@ namespace r2::asset::pln
 		{
 			makeMeshFunc(meshSchemaPath, R2_ENGINE_INTERNAL_MODELS_BIN, R2_ENGINE_INTERNAL_MODELS_RAW + std::string("/"));
 		}
+	}
+
+	void MakeEngineModelManifest()
+	{
+		std::filesystem::path engineModelManifestRawDir = R2_ENGINE_INTERNAL_MODELS_MANIFEST_RAW;
+		std::filesystem::path engineModelManifestBinDir = R2_ENGINE_INTERNAL_MODELS_MANIFEST_BIN;
+
+		//@TODO(Serge): create the directories
+		if (!std::filesystem::exists(engineModelManifestRawDir))
+		{
+			std::filesystem::create_directories(engineModelManifestRawDir);
+		}
+
+		if (!std::filesystem::exists(engineModelManifestBinDir))
+		{
+			std::filesystem::create_directories(engineModelManifestBinDir);
+		}
+
+		std::filesystem::path engineModelManifestRawPath = engineModelManifestRawDir / "engine_models.json";
+		std::filesystem::path engineModelManifestBinPath = engineModelManifestBinDir / "engine_models.mdlm";
+
+		std::vector<flatbuffers::Offset<flat::AssetRef>> flatMeshes;
+		std::vector<flatbuffers::Offset<flat::AssetRef>> flatModels;
+
+		R2_CHECK(std::filesystem::exists(R2_ENGINE_INTERNAL_MODELS_BIN), "If this doesn't exist then none of this will work!");
+		R2_CHECK(std::filesystem::exists(R2_ENGINE_INTERNAL_MODELS_RAW), "If this doesn't exist then none of this will work!");
+
+		flatbuffers::FlatBufferBuilder builder;
+
+		char binFilePath[r2::fs::FILE_PATH_LENGTH];
+		char rawFilePath[r2::fs::FILE_PATH_LENGTH];
+		char fileName[r2::fs::FILE_PATH_LENGTH];
+
+		for (const auto& file : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 ||
+				((file.path().extension().string() != MESH_EXT) ))
+			{
+				continue;
+			}
+			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), binFilePath);	
+			
+			r2::asset::MakeAssetNameStringForFilePath(binFilePath, fileName, r2::asset::MESH);
+
+			auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(binFilePath, r2::asset::MESH), builder.CreateString(fileName));
+
+			std::filesystem::path rawPath = std::filesystem::path(R2_ENGINE_INTERNAL_MODELS_RAW) / (file.path().stem().string() + ".json");
+
+			r2::fs::utils::SanitizeSubPath(rawPath.string().c_str(), rawFilePath);
+
+			auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(binFilePath), builder.CreateString(rawFilePath));
+
+			flatMeshes.push_back(assetRef);
+		}
+
+		for (const auto& file : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 ||
+				((file.path().extension().string() != MODL_EXT)))
+			{
+				continue;
+			}
+			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), binFilePath);
+
+			r2::asset::MakeAssetNameStringForFilePath(binFilePath, fileName, r2::asset::MODEL);
+
+			auto assetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(binFilePath, r2::asset::MODEL), builder.CreateString(fileName));
+
+			std::filesystem::path rawPath = std::filesystem::path(R2_ENGINE_INTERNAL_MODELS_RAW) / (file.path().stem().string() + ".json");
+
+			r2::fs::utils::SanitizeSubPath(rawPath.string().c_str(), rawFilePath);
+
+			auto assetRef = flat::CreateAssetRef(builder, assetName, builder.CreateString(binFilePath), builder.CreateString(rawFilePath));
+
+			flatModels.push_back(assetRef);
+		}
+
+		//@TODO(Serge): UUID - maybe just make it once and hardcode it?
+		auto assetName = flat::CreateAssetName(builder, 0, STRING_ID("engine_models.mdlm"), builder.CreateString("engine_models.mdlm"));
+
+		//@TODO(Serge): version
+		auto modelsManifest = flat::CreateModelsManifest(builder, 1, assetName, builder.CreateVector(flatMeshes), builder.CreateVector(flatModels));
+
+		builder.Finish(modelsManifest);
+
+		byte* buf = builder.GetBufferPointer();
+		u32 size = builder.GetSize();
+
+		utils::WriteFile(engineModelManifestBinPath.string(), (char*)buf, size);
+
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char modelManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), modelManifestSchemaPath, "ModelManifest.fbs");
+
+		std::filesystem::path jsonPath = engineModelManifestRawPath;
+
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), modelManifestSchemaPath, engineModelManifestBinPath.string());
+
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(engineModelManifestBinPath.parent_path().string(), modelManifestSchemaPath, jsonPath.string());
+
+		R2_CHECK(generatedJSON && generatedBinary, "Should always work");
 	}
 
 	void MakeQuad(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)

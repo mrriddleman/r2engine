@@ -10,9 +10,11 @@ namespace r2::asset::pln
 
 	std::vector<MakeModlFunc> ShouldMakeEngineModels();
 	std::vector<MakeModlFunc> ShouldMakeEngineMeshes();
+	bool ShouldMakeEngineModelManifest();
 
 	void MakeEngineModels(const std::vector<MakeModlFunc>& makeModels);
 	void MakeEngineMeshes(const std::vector<MakeModlFunc>& makeMeshes);
+	void MakeEngineModelManifest();
 }
 
 #endif

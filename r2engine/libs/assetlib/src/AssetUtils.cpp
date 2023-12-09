@@ -158,6 +158,8 @@ namespace r2::asset
 			return 1;
 		case MESH:
 			return 1;
+		case MODEL_MANIFEST:
+			return 0;
 		case CUBEMAP_TEXTURE:
 			return 2;
 		case MATERIAL_PACK_MANIFEST:
