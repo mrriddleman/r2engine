@@ -375,6 +375,14 @@ namespace r2::asset::lib
         {
             return SOUND_DEFINTION;
         }
+        else if (type == MODEL || type == MESH)
+        {
+            return MODEL_MANIFEST;
+        }
+        else if (type == LEVEL || type == LEVEL_GROUP)
+        {
+            return LEVEL_PACK;
+        }
         else
         {
             R2_CHECK(false, "Unsupported asset type");
@@ -384,24 +392,69 @@ namespace r2::asset::lib
 
     bool HasAsset(AssetLib& assetLib, const char* path, r2::asset::AssetType type)
     {
-        auto manifestType = GetManifestTypeForAssetType(type);
+        r2::asset::Asset asset = r2::asset::Asset::MakeAssetFromFilePath(path, type);
 
-        u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+        return HasAsset(assetLib, asset);
+    }
 
-        if (manifestsCount == 0)
-        {
-            R2_CHECK(false, "Probably a bug here");
-            return false;
-        }
+    bool HasAsset(AssetLib& assetLib, const Asset& asset)
+    {
+        auto manifestType = GetManifestTypeForAssetType(asset.GetType());
 
-        r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
-        R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
 
-        GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+		if (manifestsCount == 0)
+		{
+			R2_CHECK(false, "Probably a bug here");
+			return false;
+		}
 
-        u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+		r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
 
-        auto asset = r2::asset::Asset::MakeAssetFromFilePath(path, type);
+		R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+		GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+		u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+
+        bool found = false;
+        
+		for (u32 i = 0; i < numManifestsForType; ++i)
+		{
+			auto* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, i);
+
+			if (manifestAssetFile->HasAsset(asset))
+			{
+                found = true;
+                break;
+			}
+		}
+
+        FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
+        return found;
+    }
+
+    r2::asset::AssetFile* GetAssetFileForAsset(AssetLib& assetLib, const Asset& asset)
+    {
+		auto manifestType = GetManifestTypeForAssetType(asset.GetType());
+
+		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+
+		if (manifestsCount == 0)
+		{
+			R2_CHECK(false, "Probably a bug here");
+			return false;
+		}
+
+		r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
+
+		R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+		GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+		u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+
+        r2::asset::AssetFile* assetFile = nullptr;
 
         for (u32 i = 0; i < numManifestsForType; ++i)
         {
@@ -409,32 +462,22 @@ namespace r2::asset::lib
 
             if (manifestAssetFile->HasAsset(asset))
             {
-                FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
-                return true;
+                assetFile = manifestAssetFile->GetAssetFile(asset);
+                break;
             }
         }
 
         FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
-
-        return false;
-    }
-
-    bool HasAsset(AssetLib& assetLib, const Asset& asset)
-    {
-        TODO;
-        return false;
-    }
-
-    r2::asset::AssetFile* GetAssetFileForAsset(AssetLib& assetLib, const Asset& asset)
-    {
-        TODO;
-        return nullptr;
+        return assetFile;
     }
 
 #ifdef R2_ASSET_PIPELINE
-	void ImportAssetFiles(AssetLib& assetLib, r2::asset::FileList fileList)
+	void ImportAssetFiles(AssetLib& assetLib, const std::vector<r2::asset::AssetReferenceAndType>& assetReferences)
 	{
-		TODO;
+		for (const auto& assetReferenceWithType : assetReferences)
+		{
+            ImportAsset(assetLib, assetReferenceWithType.assetReference, assetReferenceWithType.type);
+		}
 	}
 
 	bool ImportAsset(AssetLib& assetLib, const AssetReference& assetReference, r2::asset::AssetType type)

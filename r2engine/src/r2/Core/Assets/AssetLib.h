@@ -18,7 +18,9 @@
 #include <filesystem>
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
+#include "r2/Core/Assets/AssetReference.h"
 #endif
+
 
 namespace r2::asset
 {
@@ -125,7 +127,7 @@ namespace r2::asset::lib
 
     std::vector<r2::asset::AssetFile*> GetAllAssetFilesForType(AssetLib& assetLib, r2::asset::AssetType type);
 	//@Temporary
-	void ImportAssetFiles(AssetLib& assetLib, r2::asset::FileList fileList);
+	void ImportAssetFiles(AssetLib& assetLib, const std::vector<r2::asset::AssetReferenceAndType>& assetReferences);
 #endif
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);

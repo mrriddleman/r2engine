@@ -21,6 +21,7 @@
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
+#include "r2/Core/Assets/AssetReference.h"
 #endif
 
 #ifdef R2_EDITOR
@@ -114,7 +115,7 @@ namespace r2
         virtual u32 GetMaxNumECSSystems() const = 0;
         virtual u32 GetMaxNumECSEntities() const = 0;
         virtual u32 GetMaxNumComponents() const = 0;
-        virtual bool AddLooseAssetFiles(r2::SArray<r2::asset::AssetFile*>* fileList) const = 0;
+        
 
 		virtual std::string GetLevelPackDataBinPath() const = 0;
 		virtual std::string GetLevelPackDataJSONPath() const = 0;
@@ -127,6 +128,9 @@ namespace r2
         virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
 
 #ifdef R2_ASSET_PIPELINE
+        //@TEMPORARY
+        virtual bool AddLooseAssetFiles(std::vector<r2::asset::AssetReferenceAndType>& assetReferences) const = 0;
+
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;
         virtual std::string GetAssetCompilerTempPath() const = 0;

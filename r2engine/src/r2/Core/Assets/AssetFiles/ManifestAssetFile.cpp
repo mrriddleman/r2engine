@@ -105,6 +105,11 @@ namespace r2::asset
 	//	return false;
 	//}
 
+	r2::asset::AssetFile* ManifestAssetFile::GetAssetFile(const Asset& asset)
+	{
+		return nullptr;
+	}
+
 #ifdef R2_ASSET_PIPELINE
 	bool ManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
 	{
@@ -142,6 +147,8 @@ namespace r2::asset
 
 		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
 	}
+
+	
 
 #endif
 

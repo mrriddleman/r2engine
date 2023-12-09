@@ -23,12 +23,13 @@ namespace r2::asset
 		virtual u64 GetManifestFileHandle() const;
 		
 		virtual bool LoadManifest();
-		virtual bool UnloadManifest() ;
-		virtual const byte* GetManifestData() const ;
-		virtual const char* FilePath() const ;
+		virtual bool UnloadManifest();
+		virtual const byte* GetManifestData() const;
+		virtual const char* FilePath() const;
 		
-		virtual bool HasAsset(const Asset& asset) const ;
+		virtual bool HasAsset(const Asset& asset) const;
 		
+		virtual AssetFile* GetAssetFile(const Asset& asset);
 
 		//@NOTE(Serge): These shouldn't exist
 		//virtual bool AddAllFilePaths(FileList files);

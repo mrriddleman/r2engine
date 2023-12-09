@@ -56,6 +56,8 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
 //#include "r2/Core/Assets/Pipeline/AssetCommands/AnimationHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/LevelPackHotReloadCommand.h"
+
+#include "r2/Core/Assets/AssetReference.h"
 #endif
 
 
@@ -1226,13 +1228,13 @@ namespace r2
 
 #ifdef R2_ASSET_PIPELINE
         //@Temporary: remove this once we have things more stable
-        r2::asset::FileList looseFileList = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetFile*, 100);
+        std::vector<r2::asset::AssetReferenceAndType> assetReferences;
 
-		noptrApp->AddLooseAssetFiles(looseFileList);
+		noptrApp->AddLooseAssetFiles(assetReferences);
 
-        r2::asset::lib::ImportAssetFiles(*mAssetLib, looseFileList);
+        r2::asset::lib::ImportAssetFiles(*mAssetLib, assetReferences);
 
-        FREE(looseFileList, *MEM_ENG_SCRATCH_PTR);
+      
 #endif
 		
         auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");

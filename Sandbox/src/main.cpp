@@ -50,6 +50,7 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
+#include "r2/Core/Assets/AssetReference.h"
 #endif
 
 #include "r2/Audio/AudioEngine.h"
@@ -1418,40 +1419,7 @@ public:
         return r2::ecs::MAX_NUM_COMPONENTS;
     }
 
-    virtual bool AddLooseAssetFiles(r2::SArray<r2::asset::AssetFile*>* fileList) const override
-    {
-		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
-
-		r2::asset::RawAssetFile* batModelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)batModelFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
-
-		r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
-
-		r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenFile);
-
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
-
-		r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)sponzaFile);
-
-
-		return true;
-    }
+    
 
 	std::string GetLevelPackDataBinPath() const
 	{
@@ -1485,6 +1453,64 @@ public:
     }
 
 #ifdef R2_ASSET_PIPELINE
+
+	virtual bool AddLooseAssetFiles(std::vector<r2::asset::AssetReferenceAndType>& assetReferences) const override
+	{
+		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
+
+
+        std::filesystem::path modelDirRawPath = SANDBOX_MODELS_DIR_RAW;
+
+        r2::asset::AssetReferenceAndType microbat;
+        microbat.type = r2::asset::RMODEL;
+        microbat.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "MicroBat/micro_bat.fbx", r2::asset::RMODEL);
+        assetReferences.push_back(microbat);
+
+//		r2::asset::RawAssetFile* batModelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)batModelFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
+
+		r2::asset::AssetReferenceAndType skeleton;
+        skeleton.type = r2::asset::RMODEL;
+        skeleton.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Skeleton/skeleton_archer_allinone.fbx", r2::asset::RMODEL);
+		assetReferences.push_back(skeleton);
+
+	//	r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
+
+		r2::asset::AssetReferenceAndType ellen;
+        ellen.type = r2::asset::RMODEL;
+        ellen.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Ellen/EllenIdle.fbx", r2::asset::RMODEL);
+		assetReferences.push_back(ellen);
+
+	//	r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
+//
+		r2::asset::AssetReferenceAndType sponza;
+        sponza.type = r2::asset::RMODEL;
+        sponza.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Sponza/Sponza.gltf", r2::asset::RMODEL);
+		assetReferences.push_back(sponza);
+	//	r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)sponzaFile);
+
+
+		return true;
+	}
+
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {
         std::vector<std::string> assetWatchPaths = {
