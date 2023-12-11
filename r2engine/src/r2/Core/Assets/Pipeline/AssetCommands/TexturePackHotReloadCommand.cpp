@@ -116,9 +116,13 @@ namespace r2::asset::pln
 				//we can reload the texture with the gameassetmanager 
 				//now we have to figure out all of the materials this is used in
 				//once we figure that out, then we can reload the rendermaterials
-				if (type != DELETED)
+				if (type == CHANGED)
 				{
 					gameAssetManager.ReloadTextureInTexturePack(texturePackNameFromPath, textureNameFromPath);
+				}
+				else if (type == ADDED)
+				{
+					//@TODO(Serge): not sure yet...
 				}
 				else
 				{

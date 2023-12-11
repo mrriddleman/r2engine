@@ -26,6 +26,8 @@ namespace r2::asset
         virtual u64 NumAssets() = 0;
         virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) = 0;
         virtual u64 GetAssetHandle(u64 index) = 0;
+        //@TODO(Serge): UUID
+        //@TODO(Serge): maybe add the asset type also?
         virtual ~AssetFile() {}
         virtual const char* FilePath() const = 0;
         

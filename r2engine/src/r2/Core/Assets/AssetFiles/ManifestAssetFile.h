@@ -46,13 +46,21 @@ namespace r2::asset
 
 		virtual bool SaveManifest();
 		virtual void Reload();
+
+		FileList GetAssetFiles() const { return mAssetFiles; }
+
 #endif
 	protected:
 #ifdef R2_ASSET_PIPELINE
 		ReloadFilePathFunc mReloadFilePathFunc;
+		
 #endif
+		virtual void DestroyAssetFiles() = 0;
+
 		AssetCache* mnoptrAssetCache = nullptr;
 		AssetFile* mManifestAssetFile = nullptr;
+
+		FileList mAssetFiles = nullptr;
 		AssetCacheRecord mManifestCacheRecord;
 		r2::asset::AssetType mAssetType;
 		r2::asset::AssetHandle mManifestAssetHandle;

@@ -6,19 +6,25 @@
 
 namespace r2::asset
 {
-
+	 
 	bool ManifestAssetFile::Init(AssetCache* noptrAssetCache, const char* binPath, const char* rawPath, const char* watchPath, r2::asset::AssetType assetType)
 	{
 		mnoptrAssetCache = noptrAssetCache;
-		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
+		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, assetType);
 		mAssetType = assetType;
 		r2::util::PathCpy(mRawPath, rawPath);
 		r2::util::PathCpy(mWatchPath, watchPath);
+
 		return mManifestAssetFile != nullptr;
 	}
 
 	void ManifestAssetFile::Shutdown()
 	{
+		if (mAssetFiles != nullptr)
+		{
+			DestroyAssetFiles();
+		}
+
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord) ||
 			!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle))
 		{
@@ -45,15 +51,6 @@ namespace r2::asset
 			return false;
 		}
 
-		//bool foundAssetFile = mnoptrAssetCache->IsAssetLoaded(r2::asset::Asset(mManifestAssetFile->GetAssetHandle(0), mAssetType));
-
-		//if (!foundAssetFile)
-		//{
-		//	//@Temporary(Serge): add it to the file list - remove when we do the AssetCache refactor
-		//	FileList fileList = mnoptrAssetCache->GetFileList();
-		//	r2::sarr::Push(*fileList, (AssetFile*)mManifestAssetFile);
-		//}
-
 		mManifestAssetHandle = mnoptrAssetCache->LoadAsset(r2::asset::Asset::MakeAssetFromFilePath(FilePath(), mAssetType));
 
 		R2_CHECK(!r2::asset::IsInvalidAssetHandle(mManifestAssetHandle), "The assetHandle for %s is invalid!\n", FilePath());
@@ -75,6 +72,12 @@ namespace r2::asset
 
 		mManifestCacheRecord = {};
 		mManifestAssetHandle = {};
+
+		if (mAssetFiles != nullptr)
+		{
+			DestroyAssetFiles();
+		}
+		
 
 		return success;
 	}
@@ -146,6 +149,8 @@ namespace r2::asset
 		mManifestCacheRecord = mnoptrAssetCache->GetAssetBuffer(mManifestAssetHandle);
 
 		R2_CHECK(!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord), "Failed to get the asset cache record");
+
+		DestroyAssetFiles();
 	}
 
 	

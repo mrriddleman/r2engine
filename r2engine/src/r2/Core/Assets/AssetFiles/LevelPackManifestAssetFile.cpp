@@ -3,9 +3,11 @@
 #include "r2/Core/Assets/AssetFiles/LevelPackManifestAssetFile.h"
 #include "r2/Game/Level/LevelPack_generated.h"
 #include "r2/Core/Assets/AssetBuffer.h"
+#include "r2/Core/Assets/AssetLib.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include <filesystem>
+#include <glm/glm.hpp> //for max
 #endif
 
 namespace r2::asset
@@ -38,6 +40,7 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
 		FillLevelPackVector();
 #endif
+		FillLevelAssetFiles();
 
 		return success && !mLevelPackManifest;
 	}
@@ -98,6 +101,78 @@ namespace r2::asset
 		return false;
 	}
 
+	AssetFile* LevelPackManifestAssetFile::GetAssetFile(const Asset& asset)
+	{
+		R2_CHECK(mAssetFiles != nullptr, "We should always have mAssetFiles set for this to work!");
+		R2_CHECK(asset.GetType() == r2::asset::LEVEL, "This is the only type that is supported");
+
+		for (u32 i = 0; i < r2::sarr::Size(*mAssetFiles); ++i)
+		{
+			AssetFile* assetFile = r2::sarr::At(*mAssetFiles, i);
+			//@TODO(Serge): UUID
+			if (assetFile->GetAssetHandle(0) == asset.HashID())
+			{
+				return assetFile;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void LevelPackManifestAssetFile::DestroyAssetFiles()
+	{
+		s32 numFiles = r2::sarr::Size(*mAssetFiles);
+
+		for (s32 i = numFiles - 1; i >= 0; --i)
+		{
+			RawAssetFile* rawAssetFile = (RawAssetFile*)(r2::sarr::At(*mAssetFiles, i));
+
+			lib::FreeRawAssetFile(rawAssetFile);
+		}
+
+		lib::DestoryFileList(mAssetFiles);
+
+		mAssetFiles = nullptr;
+	}
+
+	void LevelPackManifestAssetFile::FillLevelAssetFiles()
+	{
+		R2_CHECK(mAssetFiles == nullptr, "We shouldn't have any asset files yet");
+		R2_CHECK(mLevelPackManifest != nullptr, "We haven't initialized the level pack manifest!");
+		u32 numLevelFiles = 0;
+
+		//calculate how many levels we have 
+		for (flatbuffers::uoffset_t i = 0; i < mLevelPackManifest->levelGroups()->size(); ++i)
+		{
+			const auto* group = mLevelPackManifest->levelGroups()->Get(i);
+			numLevelFiles += group->levels()->size();
+		}
+
+#ifdef R2_ASSET_PIPELINE
+		numLevelFiles = glm::max(1000u, numLevelFiles); //I dunno just make a lot so we don't run out
+#endif
+
+		mAssetFiles = lib::MakeFileList(numLevelFiles);
+
+		R2_CHECK(mAssetFiles != nullptr, "We couldn't create the asset files!");
+
+		for (flatbuffers::uoffset_t i = 0; i < mLevelPackManifest->levelGroups()->size(); ++i)
+		{
+			const auto* group = mLevelPackManifest->levelGroups()->Get(i);
+			
+			const auto* levels = group->levels();
+
+			flatbuffers::uoffset_t numLevelsInGroup = levels->size();
+
+			for (flatbuffers::uoffset_t j = 0; j < numLevelsInGroup; ++j)
+			{
+				r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(levels->Get(j)->binPath()->str().c_str(), r2::asset::LEVEL);
+
+				r2::sarr::Push(*mAssetFiles, (AssetFile*) levelFile);
+			}
+		}
+	}
+
 #ifdef R2_ASSET_PIPELINE
 	bool LevelPackManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
 	{
@@ -155,7 +230,8 @@ namespace r2::asset
 		ManifestAssetFile::Reload();
 
 		mLevelPackManifest = flat::GetLevelPackData(mManifestCacheRecord.GetAssetBuffer()->Data());
-
+		FillLevelAssetFiles();
+		
 		if (fillVector)
 		{
 			FillLevelPackVector();

@@ -23,10 +23,9 @@ namespace r2::asset
 		virtual bool LoadManifest() override;
 		virtual bool UnloadManifest() override;
 
-		//@NOTE(Serge): These shouldn't exist
-	//	virtual bool AddAllFilePaths(FileList files) override;
-
 		virtual bool HasAsset(const Asset& asset) const override;
+		virtual AssetFile* GetAssetFile(const Asset& asset) override;
+
 #ifdef R2_ASSET_PIPELINE
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;
 
@@ -35,9 +34,13 @@ namespace r2::asset
 
 		std::vector<AssetReference>& GetRModelAssetReferences();
 #endif
+	protected:
+		virtual void DestroyAssetFiles() override;
 
 	private:
 		const flat::RModelsManifest* mRModelManifest;
+
+		void FillAssetFiles();
 
 #ifdef R2_ASSET_PIPELINE
 		void ReloadManifestFile(bool fillVector);

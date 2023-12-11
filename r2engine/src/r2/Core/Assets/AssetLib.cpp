@@ -566,8 +566,43 @@ namespace r2::asset::lib
 
     std::vector<r2::asset::AssetFile*> GetAllAssetFilesForType(AssetLib& assetLib, r2::asset::AssetType type)
     {
-        TODO;
-        return {  };
+		auto manifestType = GetManifestTypeForAssetType(type);
+
+		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+
+        if (manifestsCount == 0)
+        {
+            R2_CHECK(false, "Probably a bug here");
+            return {};
+		}
+
+		r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
+
+		R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+		GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+		u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+       
+        std::vector<r2::asset::AssetFile*> assetFiles;
+
+        for (u32 i = 0; i < numManifestsForType; ++i)
+        {
+            const ManifestAssetFile* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, i);
+            FileList assetFilesInManifest = manifestAssetFile->GetAssetFiles();
+
+            if (!assetFilesInManifest)
+            {
+                continue;
+            }
+
+            for (u32 j = 0; j < r2::sarr::Size(*assetFilesInManifest); ++j)
+            {
+                assetFiles.push_back(r2::sarr::At(*assetFilesInManifest, j));
+            }
+        }
+
+        return assetFiles;
     }
 
 #endif
@@ -688,12 +723,36 @@ namespace r2::asset::lib
         return MAKE_SARRAY(*s_arenaPtr, AssetFile*, capacity);
     }
     
-    RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude)
+    void DestoryFileList(const FileList fileList)
+    {
+        FREE(fileList, *s_arenaPtr);
+    }
+
+    //RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude)
+    //{
+    //    RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, *s_arenaPtr);
+    //    
+    //    bool result = rawAssetFile->Init(path, numParentDirectoriesToInclude);
+    //    R2_CHECK(result, "Failed to initialize raw asset file");
+    //    return rawAssetFile;
+    //}
+
+    void FreeRawAssetFile(RawAssetFile* file)
+    {
+        if (file->IsOpen())
+        {
+            file->Close();
+        }
+       
+        FREE(file, *s_arenaPtr);
+    }
+
+    RawAssetFile* MakeRawAssetFile(const char* path, r2::asset::AssetType assetType)
     {
         RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, *s_arenaPtr);
-        
-        bool result = rawAssetFile->Init(path, numParentDirectoriesToInclude);
+        bool result = rawAssetFile->Init(path, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(assetType));
         R2_CHECK(result, "Failed to initialize raw asset file");
+        
         return rawAssetFile;
     }
 

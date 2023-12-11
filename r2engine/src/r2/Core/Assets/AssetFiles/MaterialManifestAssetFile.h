@@ -23,9 +23,9 @@ namespace r2::asset
 		virtual bool LoadManifest() override;
 		virtual bool UnloadManifest() override;
 
-	//	virtual bool AddAllFilePaths(FileList files) override;
-
 		virtual bool HasAsset(const Asset& asset) const override;
+		virtual AssetFile* GetAssetFile(const Asset& asset) override;
+
 #ifdef R2_ASSET_PIPELINE
 
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;
@@ -34,6 +34,8 @@ namespace r2::asset
 
 		std::vector<r2::mat::Material>& GetMaterials();
 #endif
+	protected:
+		virtual void DestroyAssetFiles() override;
 
 	private:
 

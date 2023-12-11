@@ -30,6 +30,8 @@ namespace r2::asset
 
 		mRModelManifest = flat::GetRModelsManifest(mManifestCacheRecord.GetAssetBuffer()->Data());
 
+		FillAssetFiles();
+
 #ifdef R2_ASSET_PIPELINE
 		FillRModelsVector();
 #endif
@@ -48,11 +50,6 @@ namespace r2::asset
 		return success;
 	}
 
-	//bool RModelsManifestAssetFile::AddAllFilePaths(FileList files)
-	//{
-	//	return true;
-	//}
-
 	bool RModelsManifestAssetFile::HasAsset(const Asset& asset) const
 	{
 		R2_CHECK(mRModelManifest != nullptr, "Should never happen");
@@ -68,6 +65,62 @@ namespace r2::asset
 		}
 
 		return false;
+	}
+
+	AssetFile* RModelsManifestAssetFile::GetAssetFile(const Asset& asset)
+	{
+		R2_CHECK(mAssetFiles != nullptr, "We should always have mAssetFiles set for this to work!");
+		R2_CHECK(asset.GetType() == r2::asset::RMODEL, "This is the only type that is supported");
+
+		for (u32 i = 0; i < r2::sarr::Size(*mAssetFiles); ++i)
+		{
+			AssetFile* assetFile = r2::sarr::At(*mAssetFiles, i);
+			//@TODO(Serge): UUID
+			if (assetFile->GetAssetHandle(0) == asset.HashID())
+			{
+				return assetFile;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void RModelsManifestAssetFile::DestroyAssetFiles()
+	{
+		s32 numFiles = r2::sarr::Size(*mAssetFiles);
+
+		for (s32 i = numFiles - 1; i >= 0; --i)
+		{
+			RawAssetFile* rawAssetFile = (RawAssetFile*)(r2::sarr::At(*mAssetFiles, i));
+
+			lib::FreeRawAssetFile(rawAssetFile);
+		}
+
+		lib::DestoryFileList(mAssetFiles);
+
+		mAssetFiles = nullptr;
+	}
+
+	void RModelsManifestAssetFile::FillAssetFiles()
+	{
+		R2_CHECK(mAssetFiles == nullptr, "We shouldn't have any asset files yet");
+		R2_CHECK(mRModelManifest != nullptr, "We haven't initialized the rmodel manifest!");
+		u32 numModelFiles = mRModelManifest->models()->size();
+
+#ifdef R2_ASSET_PIPELINE
+		numModelFiles = glm::max(2000u, numModelFiles); //I dunno just make a lot so we don't run out
+#endif
+
+		mAssetFiles = lib::MakeFileList(numModelFiles);
+
+		R2_CHECK(mAssetFiles != nullptr, "We couldn't create the asset files!");
+
+		for (flatbuffers::uoffset_t i = 0; i < mRModelManifest->models()->size(); ++i)
+		{
+			r2::asset::RawAssetFile* modelFile = r2::asset::lib::MakeRawAssetFile(mRModelManifest->models()->Get(i)->binPath()->str().c_str(), r2::asset::RMODEL);
+
+			r2::sarr::Push(*mAssetFiles, (AssetFile*)modelFile);
+		}
 	}
 
 #ifdef R2_ASSET_PIPELINE
@@ -121,6 +174,8 @@ namespace r2::asset
 		ManifestAssetFile::Reload();
 
 		mRModelManifest = flat::GetRModelsManifest(mManifestCacheRecord.GetAssetBuffer()->Data());
+
+		FillAssetFiles();
 
 		if (fillVector)
 		{

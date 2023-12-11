@@ -53,15 +53,22 @@ namespace r2::asset
 		return success;
 	}
 
-	//bool MaterialManifestAssetFile::AddAllFilePaths(FileList files)
-	//{
-	//	return true;
-	//}
-
 	bool MaterialManifestAssetFile::HasAsset(const Asset& asset) const
 	{
 		return false;
 	}
+
+	AssetFile* MaterialManifestAssetFile::GetAssetFile(const Asset& asset)
+	{
+		TODO;
+		return nullptr;
+	}
+
+	void MaterialManifestAssetFile::DestroyAssetFiles()
+	{
+		mAssetFiles = nullptr;
+	}
+
 
 #ifdef R2_ASSET_PIPELINE
 
@@ -116,6 +123,7 @@ namespace r2::asset
 
 	bool MaterialManifestAssetFile::AddAssetReference(const AssetReference& assetReference)
 	{
+		TODO;
 		return false;
 	}
 

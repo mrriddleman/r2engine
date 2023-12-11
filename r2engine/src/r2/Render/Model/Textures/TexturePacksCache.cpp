@@ -522,46 +522,46 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
-	{
-		for (u32 i = 0; i < texturePaths->size(); ++i)
-		{
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->str().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-		}
-	}
+	//void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
+	//{
+	//	for (u32 i = 0; i < texturePaths->size(); ++i)
+	//	{
+	//		r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->str().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+	//		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+	//	}
+	//}
 
-	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
-	{
-		AddAllTexturesFromTextureType(texturePack->textures(), fileList);
+	//void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
+	//{
+	//	AddAllTexturesFromTextureType(texturePack->textures(), fileList);
 
-		//AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->height(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-		//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->height(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
+	//	//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
 
-		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
-		{
-			for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
-			{
-				const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
+	//	if (texturePack->metaData() && texturePack->metaData()->mipLevels())
+	//	{
+	//		for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
+	//		{
+	//			const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
 
-				for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
-				{
-					r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::CUBEMAP_TEXTURE));
-					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-				}
-			}
-		}
-	}
+	//			for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
+	//			{
+	//				r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::CUBEMAP_TEXTURE));
+	//				r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+	//			}
+	//		}
+	//	}
+	//}
 
 	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{

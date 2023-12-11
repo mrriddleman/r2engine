@@ -28,12 +28,16 @@ namespace r2::asset
 
 		//	virtual bool AddAllFilePaths(FileList files) override;
 		virtual bool HasAsset(const Asset& asset) const override;
+		virtual AssetFile* GetAssetFile(const Asset& asset) override;
 
 #ifdef R2_ASSET_PIPELINE
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;
 		virtual bool SaveManifest() override;
 		virtual void Reload() override;
 #endif
+
+	protected:
+		virtual void DestroyAssetFiles() override;
 
 	private:
 #ifdef R2_ASSET_PIPELINE
@@ -42,6 +46,7 @@ namespace r2::asset
 
 		std::vector<pln::LevelGroup> mLevelPack;
 #endif
+		void FillLevelAssetFiles();
 
 		const flat::LevelPackData* mLevelPackManifest;
 

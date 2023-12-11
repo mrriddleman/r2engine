@@ -130,7 +130,12 @@ namespace r2::asset::lib
 	void ImportAssetFiles(AssetLib& assetLib, const std::vector<r2::asset::AssetReferenceAndType>& assetReferences);
 #endif
     
-    RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
+    //RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
+    RawAssetFile* MakeRawAssetFile(const char* path, r2::asset::AssetType assetType);
+
+    void FreeRawAssetFile(RawAssetFile* file);
+    //@TODO(Serge): maybe make a MakeRawAssetFile that will alloc an array?
+
     ZipAssetFile* MakeZipAssetFile(const char* path);  
 
     ManifestAssetFile* MakeTexturePackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
@@ -141,7 +146,8 @@ namespace r2::asset::lib
     ManifestAssetFile* MakeEngineModelManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath);
 
     FileList MakeFileList(u64 capacity);
-    
+    void DestoryFileList(const FileList fileList);
+
     //@TODO(Serge): implement helpers to create file lists easier
     //For example with a manifest or a directory 
 
