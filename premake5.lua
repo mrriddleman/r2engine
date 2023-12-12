@@ -462,7 +462,7 @@ project "r2Tests"
 
 	filter "configurations:Release"
 		runtime "Release"
-		symbols "Off"
+		symbols "On"
 		optimize "On"
 		staticruntime "off"
 
@@ -710,7 +710,7 @@ project "Sandbox"
 		defines "R2_RELEASE"
 		runtime "Release"
 		optimize "On"
-		symbols "Off"
+		symbols "On"
 		staticruntime "off"
 
 	filter "configurations:Publish"
