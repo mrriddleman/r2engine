@@ -238,7 +238,7 @@
         }
       ],
       packSize: 9018731,
-      totalNumberOfTextures: 6,
+      totalNumberOfTextures: 12,
       metaData: {
         type: "CUBEMAP",
         mipLevels: [
@@ -328,7 +328,7 @@
         }
       ],
       packSize: 3304132,
-      totalNumberOfTextures: 6,
+      totalNumberOfTextures: 12,
       metaData: {
         type: "CUBEMAP",
         mipLevels: [
@@ -681,7 +681,7 @@
         }
       ],
       packSize: 12071567,
-      totalNumberOfTextures: 36,
+      totalNumberOfTextures: 72,
       metaData: {
         type: "CUBEMAP",
         mipLevels: [
@@ -1508,9 +1508,9 @@
       }
     }
   ],
-  totalNumberOfTextures: 140,
+  totalNumberOfTextures: 188,
   totalTextureSize: 304901088,
-  maxTexturesInAPack: 69,
+  maxTexturesInAPack: 72,
   formatMetaData: [
     {
       format: "SRGBA8",

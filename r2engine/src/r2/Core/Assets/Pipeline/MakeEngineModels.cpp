@@ -1516,8 +1516,6 @@ namespace r2::asset::pln
 
 		std::vector<flatbuffers::Offset<flatbuffers::String>> meshPaths = { fbb.CreateString(sanitizedMeshName) };
 
-		printf("Mesh: %s, mesh asset name: %llu\n", sanitizedMeshName, STRING_ID(sanitizedMeshName));
-
 		//@TODO(Serge): UUID
 		auto materialAssetName = flat::CreateAssetName(fbb, 0, STRING_ID(materialName), fbb.CreateString(materialName));
 		auto materialPackAssetName = flat::CreateAssetName(fbb, 0, materialPackName, fbb.CreateString("engine_material_pack.mpak"));

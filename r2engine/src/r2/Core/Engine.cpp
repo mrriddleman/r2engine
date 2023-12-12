@@ -1373,9 +1373,9 @@ namespace r2
 #else
         r2::asset::ManifestAssetFile* levelPackManifestFile = r2::asset::lib::MakeLevelPackManifestAssetFile(*mAssetLib, appLevelPackBinManifestPath, "", "");
 #endif
-
+#ifdef R2_ASSET_PIPELINE
         levelPackManifestFile->SetReloadFilePathCallback(nullptr);
-
+#endif
         r2::asset::lib::RegisterAndLoadManifestFile(*mAssetLib, levelPackManifestFile);
 
 #ifdef R2_ASSET_PIPELINE

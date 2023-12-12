@@ -107,8 +107,13 @@ namespace r2::ecs
 				for (u32 j = 0; j < numMaterialOverrides; ++j)
 				{
 					const auto& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
+#ifdef R2_ASSET_PIPELINE
 					auto assetName =  flat::CreateAssetNameDirect(fbb, 0, materialOverride.assetName.hashID, materialOverride.assetName.assetNameString.c_str());
 					auto packAssetName = flat::CreateAssetNameDirect(fbb, 0, materialOverride.packName.hashID, materialOverride.packName.assetNameString.c_str());
+#else
+					auto assetName = flat::CreateAssetNameDirect(fbb, 0, materialOverride.assetName.hashID, "");
+					auto packAssetName = flat::CreateAssetNameDirect(fbb, 0, materialOverride.packName.hashID, "");
+#endif					
 					flat::MaterialNameBuilder overrideMaterialBuilder(fbb);
 					overrideMaterialBuilder.add_name(assetName);
 					overrideMaterialBuilder.add_materialPackName(packAssetName);

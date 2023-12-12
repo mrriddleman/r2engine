@@ -88,8 +88,6 @@ namespace r2::asset
 		
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; ++i)
 		{	
-
-			printf("Mesh: %s\n", flatModel->meshNames()->Get(i)->c_str());
 			r2::asset::Asset meshAsset{ flatModel->meshNames()->Get(i)->c_str(), r2::asset::MESH };
 			r2::asset::AssetHandle meshHandle = mnoptrAssetCache->LoadAsset(meshAsset);
 

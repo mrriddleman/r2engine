@@ -478,6 +478,7 @@ namespace r2::asset::pln::tex
 							}
 						}
 
+						numTexturesInPack++;
 						sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(path), mip->sides()->Get(i)->side()));
 					}
 
