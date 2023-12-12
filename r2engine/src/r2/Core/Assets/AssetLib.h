@@ -151,7 +151,7 @@ namespace r2::asset::lib
     //@TODO(Serge): implement helpers to create file lists easier
     //For example with a manifest or a directory 
 
-    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize);
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, u32 numFiles);
     void DestroyCache(r2::asset::AssetCache* cache);
    // r2::asset::AssetCache* GetAssetCache(s64 slot);
 

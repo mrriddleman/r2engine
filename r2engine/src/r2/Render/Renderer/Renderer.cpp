@@ -344,17 +344,17 @@ namespace
 
 		r2::SArray<r2::asset::Asset>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, MAX_DEFAULT_MODELS); 
 
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Quad.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cube.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cone.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/quad.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/cube.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/sphere.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/cone.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/cylinder.modl", r2::asset::MODEL));
 		
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("FullscreenTriangle.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/fullscreentriangle.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/skybox.modl", r2::asset::MODEL));
 		
 
-		r2::draw::modlche::LoadMeshes(renderer.mModelCache, *defaultModels, *renderer.mDefaultModelHandles);
+		r2::draw::modlche::LoadModels(renderer.mModelCache, *defaultModels, *renderer.mDefaultModelHandles);
 
 		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
 

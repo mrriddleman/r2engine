@@ -74,6 +74,10 @@ namespace r2::fs
             FREE(diskFile, *moptrFilePool);
         }
         
+#ifdef R2_DEBUG
+        printf("DiskFileStorageDevice::Open - Failed to open file: %s\n", path);
+#endif
+
         return nullptr;
     }
     

@@ -428,6 +428,7 @@ namespace r2
 		//	mAssetCommands.push_back(std::move(animationAssetCMD));
             mAssetCommands.push_back(std::move(shaderAssetCommand));
             mAssetCommands.push_back(std::move(soundAssetCommand));
+            mAssetCommands.push_back(std::move(levelPackAssetCommand));
        //     mAssetCommands.push_back(std::move(gameAssetCommand));
 
 

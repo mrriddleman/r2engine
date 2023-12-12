@@ -1,7 +1,7 @@
 {
-  name: 13326599839360439566,
+  name: 11674900783738203003,
   meshNames: [
-    "QuadMesh.mesh"
+    "models/quadmesh.mesh"
   ],
   materials: [
     {

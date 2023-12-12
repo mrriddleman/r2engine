@@ -71,10 +71,11 @@ namespace r2::asset
 
 		u32 offset = 0;
 		u32 size = mModelsManifest->models()->size();
+
 		if (asset.GetType() == r2::asset::MESH)
 		{
 			offset = mModelsManifest->models()->size();
-			size = mModelsManifest->meshes()->size();
+			size += mModelsManifest->meshes()->size();
 		}
 
 		for (u32 i = offset; i < size; ++i)
@@ -102,11 +103,15 @@ namespace r2::asset
 
 		for (u32 i = 0; i < mModelsManifest->models()->size(); ++i)
 		{
+			printf("Making AssetFile for: %s\n", mModelsManifest->models()->Get(i)->binPath()->str().c_str());
+
 			r2::sarr::Push(*mAssetFiles, (r2::asset::AssetFile*)lib::MakeRawAssetFile(mModelsManifest->models()->Get(i)->binPath()->str().c_str(), r2::asset::MODEL));
 		}
 
 		for (u32 i = 0; i < mModelsManifest->meshes()->size(); ++i)
 		{
+			printf("Making AssetFile for: %s\n", mModelsManifest->meshes()->Get(i)->binPath()->str().c_str());
+
 			r2::sarr::Push(*mAssetFiles, (r2::asset::AssetFile*)lib::MakeRawAssetFile(mModelsManifest->meshes()->Get(i)->binPath()->str().c_str(), r2::asset::MESH));
 		}
 	}

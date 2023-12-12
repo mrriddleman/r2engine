@@ -188,7 +188,7 @@ namespace r2
 
 		const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
 
-		if (!r2::asset::lib::HasAsset(assetLib, levelAsset))//gameAssetManager.HasAsset(levelAsset))
+		if (!r2::asset::lib::HasAsset(assetLib, levelAsset))
 		{
 			return nullptr;
 		}
@@ -215,7 +215,7 @@ namespace r2
 
 		newLevel.Init(
 			flatLevelData->version(),
-			flatLevelData->levelAsset()->binPath()->c_str(),
+			flatLevelData->levelAsset()->assetName()->stringName()->c_str(),
 			flatLevelData->groupAssetName()->stringName()->c_str(),
 			levelHandle,
 			modelAssets,

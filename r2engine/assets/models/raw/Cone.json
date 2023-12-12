@@ -1,7 +1,7 @@
 {
-  name: 6022177470417211338,
+  name: 13858930901549401663,
   meshNames: [
-    "ConeMesh.mesh"
+    "models/conemesh.mesh"
   ],
   materials: [
     {

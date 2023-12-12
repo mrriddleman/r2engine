@@ -49,7 +49,7 @@ namespace r2::draw::modlche
 		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, r2::asset::AssetCache::TotalMemoryNeeded(FILE_CAPACITY, modelCacheSize, ALIGNMENT), ALIGNMENT);
 		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, FILE_CAPACITY * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, FILE_CAPACITY * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize);
+		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize, FILE_CAPACITY);
 
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(meshLoader);

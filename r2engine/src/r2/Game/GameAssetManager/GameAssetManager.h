@@ -57,12 +57,12 @@ namespace r2
 			r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
 			R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
 
+			const u64 fileListCapacity = r2::asset::lib::MAX_NUM_GAME_ASSET_FILES;
+
 			auto areaBoundary = gameAssetManagerMemoryArea->AreaBoundary();
 			areaBoundary.alignment = 16;
 
-			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCacheSize);
-
-			const u64 fileListCapacity = r2::asset::lib::MAX_NUM_GAME_ASSET_FILES;
+			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCacheSize, fileListCapacity);
 
 			mCachedRecords = MAKE_SARRAY(arena, r2::asset::AssetCacheRecord, fileListCapacity);
 

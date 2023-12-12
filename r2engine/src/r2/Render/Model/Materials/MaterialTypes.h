@@ -13,7 +13,7 @@ namespace r2::mat
 
 		bool operator==(const MaterialName& materialName) const
 		{
-			return assetName == materialName.assetName && packName == materialName.packName;
+			return assetName.hashID == materialName.assetName.hashID && packName.hashID == materialName.packName.hashID;
 		}
 
 		bool operator<(const MaterialName& materialName) const

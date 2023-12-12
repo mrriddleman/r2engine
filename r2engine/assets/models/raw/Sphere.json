@@ -1,7 +1,7 @@
 {
-  name: 2314545531443511992,
+  name: 12080199459528992917,
   meshNames: [
-    "SphereMesh.mesh"
+    "models/spheremesh.mesh"
   ],
   materials: [
     {

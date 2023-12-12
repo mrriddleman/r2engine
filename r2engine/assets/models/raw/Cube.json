@@ -1,7 +1,7 @@
 {
-  name: 10676196883714289344,
+  name: 13055410393865925557,
   meshNames: [
-    "CubeMesh.mesh"
+    "models/cubemesh.mesh"
   ],
   materials: [
     {

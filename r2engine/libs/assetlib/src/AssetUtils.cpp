@@ -172,7 +172,7 @@ namespace r2::asset
 			return 0;
 		case LEVEL:
 			return 1;
-		case LEVEL_PACK:
+		case LEVEL_PACK_MANIFEST:
 			return 0;
 		case LEVEL_GROUP:
 			return 0;
@@ -193,5 +193,10 @@ namespace r2::asset
 		}
 
 		return 0;
+	}
+
+	bool IsManifestFile(AssetType assetType)
+	{
+		return assetType == MODEL_MANIFEST || assetType == MATERIAL_PACK_MANIFEST || assetType == TEXTURE_PACK_MANIFEST || assetType == LEVEL_PACK_MANIFEST || assetType == SOUND_DEFINTION || assetType == RMODEL_MANIFEST;
 	}
 }

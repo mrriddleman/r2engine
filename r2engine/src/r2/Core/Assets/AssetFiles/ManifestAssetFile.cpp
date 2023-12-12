@@ -12,6 +12,7 @@ namespace r2::asset
 		mnoptrAssetCache = noptrAssetCache;
 		mManifestAssetFile = (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(binPath, assetType);
 		mAssetType = assetType;
+
 		r2::util::PathCpy(mRawPath, rawPath);
 		r2::util::PathCpy(mWatchPath, watchPath);
 
@@ -23,6 +24,11 @@ namespace r2::asset
 		if (mAssetFiles != nullptr)
 		{
 			DestroyAssetFiles();
+		}
+
+		if (mManifestAssetFile)
+		{
+			lib::FreeRawAssetFile((r2::asset::RawAssetFile*)mManifestAssetFile);
 		}
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(mManifestCacheRecord) ||
@@ -40,7 +46,7 @@ namespace r2::asset
 
 	u64 ManifestAssetFile::GetManifestFileHandle() const
 	{
-		return r2::asset::GetAssetNameForFilePath(FilePath(), mAssetType);
+		return mManifestAssetFile->GetAssetHandle(0);
 	}
 
 	bool ManifestAssetFile::LoadManifest()
@@ -103,14 +109,14 @@ namespace r2::asset
 		return false;
 	}
 
-	//bool ManifestAssetFile::AddAllFilePaths(FileList files)
-	//{
-	//	return false;
-	//}
-
 	r2::asset::AssetFile* ManifestAssetFile::GetAssetFile(const Asset& asset)
 	{
 		return nullptr;
+	}
+
+	AssetFile* ManifestAssetFile::GetManifestAssetFile() const
+	{
+		return mManifestAssetFile;
 	}
 
 #ifdef R2_ASSET_PIPELINE

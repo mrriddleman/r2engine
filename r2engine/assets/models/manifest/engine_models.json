@@ -1,0 +1,115 @@
+{
+  version: 1,
+  assetName: {
+    assetName: 9198505255301173478,
+    stringName: "engine_models.mdlm"
+  },
+  meshes: [
+    {
+      assetName: {
+        assetName: 14861256565553372273,
+        stringName: "models/conemesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/ConeMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/ConeMesh.json"
+    },
+    {
+      assetName: {
+        assetName: 1910417264055787995,
+        stringName: "models/cubemesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/CubeMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/CubeMesh.json"
+    },
+    {
+      assetName: {
+        assetName: 13644555576601054026,
+        stringName: "models/cylindermesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/CylinderMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/CylinderMesh.json"
+    },
+    {
+      assetName: {
+        assetName: 14029056122359196991,
+        stringName: "models/fullscreentrianglemesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/FullscreenTriangleMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/FullscreenTriangleMesh.json"
+    },
+    {
+      assetName: {
+        assetName: 8659539997778874413,
+        stringName: "models/quadmesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/QuadMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/QuadMesh.json"
+    },
+    {
+      assetName: {
+        assetName: 17969583657012456635,
+        stringName: "models/spheremesh.mesh"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/SphereMesh.mesh",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/SphereMesh.json"
+    }
+  ],
+  models: [
+    {
+      assetName: {
+        assetName: 13858930901549401663,
+        stringName: "models/cone.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Cone.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Cone.json"
+    },
+    {
+      assetName: {
+        assetName: 13055410393865925557,
+        stringName: "models/cube.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Cube.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Cube.json"
+    },
+    {
+      assetName: {
+        assetName: 9223862974855753700,
+        stringName: "models/cylinder.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Cylinder.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Cylinder.json"
+    },
+    {
+      assetName: {
+        assetName: 11295464359302958505,
+        stringName: "models/fullscreentriangle.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/FullscreenTriangle.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/FullscreenTriangle.json"
+    },
+    {
+      assetName: {
+        assetName: 11674900783738203003,
+        stringName: "models/quad.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Quad.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Quad.json"
+    },
+    {
+      assetName: {
+        assetName: 8870793898742704040,
+        stringName: "models/skybox.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Skybox.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Skybox.json"
+    },
+    {
+      assetName: {
+        assetName: 12080199459528992917,
+        stringName: "models/sphere.modl"
+      },
+      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Sphere.modl",
+      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Sphere.json"
+    }
+  ]
+}

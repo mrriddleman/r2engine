@@ -1501,28 +1501,38 @@ namespace r2::asset::pln
 		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", DEFAULT_MATERIAL.c_str(), materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
-	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, u64 materialPackName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	void MakeModelInternal(const char* originalModelName, const char* meshName, const char* materialName, u64 materialPackName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 
-		const std::string filename = std::string(modelName) ;
-		const std::string filePath = std::string(meshName) + MESH_EXT;
+		const std::string modelNameWithExtension = std::string(originalModelName) + MODL_EXT;
+		const std::string meshNameWithExtension = std::string(meshName) + MESH_EXT;
 
-		std::vector<flatbuffers::Offset<flatbuffers::String>> meshPaths = { fbb.CreateString(filePath) };
+		const std::string modelBinaryPath = (std::filesystem::path(binaryParentDir) / modelNameWithExtension).string();
+		const std::string meshBinaryPath = (std::filesystem::path(binaryParentDir) / meshNameWithExtension).string();
+
+		char sanitizedMeshName[r2::fs::FILE_PATH_LENGTH];
+		r2::asset::MakeAssetNameStringForFilePath(meshBinaryPath.c_str(), sanitizedMeshName, r2::asset::MESH);
+
+		std::vector<flatbuffers::Offset<flatbuffers::String>> meshPaths = { fbb.CreateString(sanitizedMeshName) };
+
+		printf("Mesh: %s, mesh asset name: %llu\n", sanitizedMeshName, STRING_ID(sanitizedMeshName));
 
 		//@TODO(Serge): UUID
 		auto materialAssetName = flat::CreateAssetName(fbb, 0, STRING_ID(materialName), fbb.CreateString(materialName));
 		auto materialPackAssetName = flat::CreateAssetName(fbb, 0, materialPackName, fbb.CreateString("engine_material_pack.mpak"));
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = { flat::CreateMaterialName(fbb, materialAssetName, materialPackAssetName) };
 
-		auto model = flat::CreateModelDirect(fbb, STRING_ID(filename.c_str()), &meshPaths, &materialNames);
+		auto modelAssetName = r2::asset::GetAssetNameForFilePath(modelBinaryPath.c_str(), r2::asset::MODEL);
+
+		auto model = flat::CreateModelDirect(fbb, modelAssetName, &meshPaths, &materialNames);
 
 		fbb.Finish(model);
 
 		byte* buf = fbb.GetBufferPointer();
 		u32 size = fbb.GetSize();
 
-		r2::asset::pln::flathelp::GenerateJSONAndBinary(buf, size, schemaPath, binaryParentDir + filename + MODL_EXT, jsonParentDir + filename + JSON_EXT);
+		r2::asset::pln::flathelp::GenerateJSONAndBinary(buf, size, schemaPath, modelBinaryPath, jsonParentDir + std::string(originalModelName) + JSON_EXT);
 	}
 }
 #endif

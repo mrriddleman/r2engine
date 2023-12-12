@@ -1,7 +1,7 @@
 {
-  name: 17183674298746072604,
+  name: 11295464359302958505,
   meshNames: [
-    "FullscreenTriangleMesh.mesh"
+    "models/fullscreentrianglemesh.mesh"
   ],
   materials: [
     {

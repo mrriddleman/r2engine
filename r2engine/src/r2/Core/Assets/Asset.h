@@ -28,6 +28,9 @@ namespace r2::asset
 #ifdef R2_ASSET_CACHE_DEBUG
         inline const std::string& Name() const {return mName;}
 #endif
+
+
+        //@TODO(Serge): UUID - This should return our AssetName type not a hash
         inline u64 HashID() const {return mHashedPathID;}
         inline AssetType GetType() const { return mType; }
 

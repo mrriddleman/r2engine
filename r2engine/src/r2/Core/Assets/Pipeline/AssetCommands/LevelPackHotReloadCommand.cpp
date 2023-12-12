@@ -84,7 +84,7 @@ namespace r2::asset::pln
 			{
 				//generate both
 				//@TODO(Serge): version
-				bool success = r2::asset::pln::GenerateLevelPackDataFromDirectories(1, binaryPath.string(), rawPath.string(), binManifestDir, rawManifestDir);
+				bool success = r2::asset::pln::GenerateLevelPackDataFromDirectories(1, binaryPath.string(), rawPath.string(), std::filesystem::path(binManifestDir).parent_path().string(), std::filesystem::path(rawManifestDir).parent_path().string());
 
 				R2_CHECK(success, "Failed to generate the binary file: %s and the raw file: %s", binaryPath.string().c_str(), rawPath.string().c_str());
 			}

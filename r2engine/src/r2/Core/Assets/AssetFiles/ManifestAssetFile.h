@@ -30,7 +30,7 @@ namespace r2::asset
 		virtual bool HasAsset(const Asset& asset) const;
 		
 		virtual AssetFile* GetAssetFile(const Asset& asset);
-
+		AssetFile* GetManifestAssetFile() const;
 		//@NOTE(Serge): These shouldn't exist
 		//virtual bool AddAllFilePaths(FileList files);
 
@@ -64,6 +64,7 @@ namespace r2::asset
 		AssetCacheRecord mManifestCacheRecord;
 		r2::asset::AssetType mAssetType;
 		r2::asset::AssetHandle mManifestAssetHandle;
+		
 		char mRawPath[r2::fs::FILE_PATH_LENGTH];
 		char mWatchPath[r2::fs::FILE_PATH_LENGTH];
 	};

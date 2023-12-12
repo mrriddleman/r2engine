@@ -207,8 +207,8 @@ namespace r2::asset::pln
 		for (auto& groupDir : std::filesystem::directory_iterator(rawDir))
 		{
 			if (!std::filesystem::is_directory(groupDir) ||
-				std::filesystem::file_size(groupDir.path()) <= 0 ||
-				groupDir.path().filename() == ".DS_Store")
+				groupDir.path().filename() == ".DS_Store" ||
+				(std::filesystem::is_directory(groupDir) && groupDir.path().filename() == "manifests"))
 			{
 				continue;
 			}
@@ -252,12 +252,14 @@ namespace r2::asset::pln
 
 			auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(groupPath.string().c_str(), r2::asset::LEVEL_GROUP), builder.CreateString(groupPath.stem().string()));
 
-			flat::CreateLevelGroupData(builder, version, assetName, builder.CreateVector(levelsInGroup));
+			auto levelGroup = flat::CreateLevelGroupData(builder, version, assetName, builder.CreateVector(levelsInGroup));
+
+			flatLevelGroups.push_back(levelGroup);
 		}
 
 		std::filesystem::path levelPackPath = binFilePath;
 
-		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK), builder.CreateString(levelPackPath.filename().string()));
+		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK_MANIFEST), builder.CreateString(levelPackPath.filename().string()));
 
 		auto levelPackData = flat::CreateLevelPackData(builder, version, assetName, builder.CreateVector(flatLevelGroups));
 
@@ -306,7 +308,7 @@ namespace r2::asset::pln
 
 		std::filesystem::path levelPackPath = binFilePath;
 
-		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK), builder.CreateString(levelPackPath.filename().string()));
+		auto assetName = flat::CreateAssetName(builder, 0, r2::asset::Asset::GetAssetNameForFilePath(binFilePath.c_str(), r2::asset::LEVEL_PACK_MANIFEST), builder.CreateString(levelPackPath.filename().string()));
 
 		auto levelPackData = flat::CreateLevelPackData(builder, version, assetName, builder.CreateVector(flatLevelGroups));
 

@@ -20,7 +20,7 @@ namespace r2::asset
 		RMODEL,
 		RANIMATION,
 		LEVEL,
-		LEVEL_PACK,
+		LEVEL_PACK_MANIFEST,
 		LEVEL_GROUP,
 		MATERIAL,
 		TEXTURE_PACK,
@@ -33,6 +33,8 @@ namespace r2::asset
 	uint64_t GetAssetNameForFilePath(const char* filePath, AssetType assetType);
 	void MakeAssetNameStringForFilePath(const char* filePath, char* dst, AssetType assetType);
 	uint32_t GetNumberOfParentDirectoriesToIncludeForAssetType(AssetType assetType);
+	bool IsManifestFile(AssetType assetType);
+
 }
 
 #endif // __ASSET_UTILS_H__

@@ -111,7 +111,7 @@ namespace r2::asset::lib
         //R2_CHECK(fileList != nullptr, "Failed to create the fileList");
 
         //@TODO(Serge): remove the CreateAssetCache + MakeFileList stuff
-        newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, cacheSize);
+        newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, cacheSize, numManifests);
 
         R2_CHECK(newAssetLib->mAssetCache != nullptr, "Failed to create the AssetCache");
 
@@ -381,7 +381,7 @@ namespace r2::asset::lib
         }
         else if (type == LEVEL || type == LEVEL_GROUP)
         {
-            return LEVEL_PACK;
+            return LEVEL_PACK_MANIFEST;
         }
         else
         {
@@ -389,6 +389,9 @@ namespace r2::asset::lib
             return DEFAULT;
         }
     }
+
+
+
 
     bool HasAsset(AssetLib& assetLib, const char* path, r2::asset::AssetType type)
     {
@@ -399,6 +402,21 @@ namespace r2::asset::lib
 
     bool HasAsset(AssetLib& assetLib, const Asset& asset)
     {
+        if (IsManifestFile(asset.GetType()))
+        {
+            //look through our manifests and see which one it is
+            u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+            for (u32 i = 0; i < numManifests; ++i)
+            {
+                const auto* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+                if (manifestFile->GetManifestFileHandle() == asset.HashID() && manifestFile->GetManifestAssetType() == asset.GetType())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         auto manifestType = GetManifestTypeForAssetType(asset.GetType());
 
 		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
@@ -436,6 +454,24 @@ namespace r2::asset::lib
 
     r2::asset::AssetFile* GetAssetFileForAsset(AssetLib& assetLib, const Asset& asset)
     {
+
+		if (IsManifestFile(asset.GetType()))
+		{
+			//look through our manifests and see which one it is
+			u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+			for (u32 i = 0; i < numManifests; ++i)
+			{
+				const auto* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+				if (manifestFile->GetManifestFileHandle() == asset.HashID() && manifestFile->GetManifestAssetType() == asset.GetType())
+				{
+					return manifestFile->GetManifestAssetFile();
+				}
+			}
+			return nullptr;
+		}
+
+
+
 		auto manifestType = GetManifestTypeForAssetType(asset.GetType());
 
 		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
@@ -602,6 +638,7 @@ namespace r2::asset::lib
             }
         }
 
+        FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
         return assetFiles;
     }
 
@@ -810,7 +847,7 @@ namespace r2::asset::lib
     ManifestAssetFile* MakeLevelPackManifestAssetFile(AssetLib& assetLib, const char* binPath, const char* rawPath, const char* watchPath)
     {
         LevelPackManifestAssetFile* manifestFile = ALLOC(LevelPackManifestAssetFile, *s_arenaPtr);
-        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::LEVEL_PACK);
+        bool result = manifestFile->Init(assetLib.mAssetCache, binPath, rawPath, watchPath, r2::asset::LEVEL_PACK_MANIFEST);
         R2_CHECK(result, "Failed to initialize the LevelPackManifestAssetFile");
         return manifestFile;
     }
@@ -823,7 +860,7 @@ namespace r2::asset::lib
 		return manifestFile;
     }
 
-    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize)
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, u32 numFiles)
     {
         if (s_arenaPtr)
         {
@@ -843,7 +880,7 @@ namespace r2::asset::lib
 				return nullptr;
 			}*/
 
-            const auto memoryNeeded = r2::asset::AssetCache::TotalMemoryNeeded(MAX_NUM_GAME_ASSET_FILES, assetTotalSize, boundary.alignment);
+            const auto memoryNeeded = r2::asset::AssetCache::TotalMemoryNeeded(numFiles, assetTotalSize, boundary.alignment);
             
             R2_CHECK(boundary.size >= memoryNeeded, "Our boundary for this asset cache is not big enough. We need: %llu, but have: %llu, difference: %llu", memoryNeeded, boundary.size, static_cast<s64>(memoryNeeded) - static_cast<s64>(boundary.size));
 

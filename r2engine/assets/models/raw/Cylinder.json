@@ -1,7 +1,7 @@
 {
-  name: 15869509411863529423,
+  name: 9223862974855753700,
   meshNames: [
-    "CylinderMesh.mesh"
+    "models/cylindermesh.mesh"
   ],
   materials: [
     {
