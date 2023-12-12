@@ -57,16 +57,9 @@ namespace r2::asset
 
 namespace r2::asset::lib
 {
-   // r2::mem::utils::MemBoundary s_boundary;
-   // AssetCache** s_assetCaches = nullptr;
- //   FileList* s_filesForCaches = nullptr;
-    
     s64 s_numCaches = -1;
-//    r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
-#ifdef R2_ASSET_PIPELINE
-  //  r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_assetsBuiltQueue;
-  //  std::vector<AssetFilesBuiltListener> s_listeners;
 
+#ifdef R2_ASSET_PIPELINE
 
     bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& paths, pln::HotReloadType type);
 
@@ -77,12 +70,7 @@ namespace r2::asset::lib
 #else
     r2::mem::FreeListArena* s_arenaPtr = nullptr;
 #endif
-    
-    //const u64 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
-    //const u64 MAX_ASSET_CACHES = 1000;
-    
 
-    
     const u32 ALIGNMENT = 16;
 
     AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numManifests, u32 cacheSize)
@@ -100,17 +88,10 @@ namespace r2::asset::lib
 
         newAssetLib->mManifestFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numManifests);
 
-      //  newAssetLib->mGameFileList = MakeFileList(MAX_NUM_GAME_ASSET_FILES);
-
         u64 totalSize = AssetCache::TotalMemoryNeeded(numManifests, cacheSize, ALIGNMENT);
 
         newAssetLib->mAssetCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*stackArena, totalSize, ALIGNMENT, "Asset lib's asset cache");
 
-        //FileList fileList = MakeFileList(numManifests);
-
-        //R2_CHECK(fileList != nullptr, "Failed to create the fileList");
-
-        //@TODO(Serge): remove the CreateAssetCache + MakeFileList stuff
         newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, cacheSize, numManifests);
 
         R2_CHECK(newAssetLib->mAssetCache != nullptr, "Failed to create the AssetCache");
@@ -143,8 +124,6 @@ namespace r2::asset::lib
         DestroyCache(assetLib->mAssetCache);
 
         FREE(assetLib->mAssetCacheBoundary.location, *arena);
-
-      //  assetLib->mGameFileList = nullptr;
 
         FREE(assetLib->mManifestFiles, *arena);
 
@@ -182,13 +161,6 @@ namespace r2::asset::lib
             }
 
             ReloadManifestFileInternal(assetLib, *foundManifest, entry.changedPaths, entry.hotReloadType);
-        }
-
-        if (shouldRegenerateFiles)
-        {
-            //@TODO(Serge): figure out a better way to do this.
-			//hmm maybe dangerous, but, we need to update the files in the GameAssetManager somehow
-			//RegenerateAssetFilesFromManifests(assetLib);
         }
 #endif
     }
@@ -280,31 +252,6 @@ namespace r2::asset::lib
 
         r2::sarr::Clear(*fileList);
     }
-
-    //bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib)
-    //{
-    //    FileList fileList = assetLib.mGameFileList;
-
-    //    CloseAndFreeAllFilesInFileList(fileList);
-
-    //    const u32 numGameManifests = r2::sarr::Size(*assetLib.mManifestFiles);
-
-    //    for (u32 i = 0; i < numGameManifests; ++i)
-    //    {
-    //        ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
-
-    //        bool result = manifestFile->AddAllFilePaths(fileList);
-
-    //        R2_CHECK(result, "Failed to add the files");
-    //    }
-
-    //    return true;
-    //}
-
-    //FileList GetFileList(const AssetLib& assetLib)
-    //{
-    //    return assetLib.mGameFileList;
-    //}
 
     ManifestAssetFile* GetManifest(AssetLib& assetLib, u64 manifestAssetHandle)
     {
@@ -652,108 +599,17 @@ namespace r2::asset::lib
         s_arenaPtr = ALLOC_PARAMS(r2::mem::FreeListArena, *MEM_ENG_PERMANENT_PTR, boundary);
 #endif
         return s_arenaPtr != nullptr;
-        
-      //  s_assetCaches = ALLOC_ARRAY(r2::asset::AssetCache*[MAX_ASSET_CACHES], *s_arenaPtr);
-    //    s_filesForCaches = ALLOC_ARRAY(FileList[MAX_ASSET_CACHES], *s_arenaPtr);
-        
-       // for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
-       // {
-       //     s_assetCaches[i] = nullptr;
-       ////     s_filesForCaches[i] = nullptr;
-       // }
-        
-       // s_fileToAssetCacheMap = MAKE_SHASHMAP(*s_arenaPtr, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
-        
-    //    return s_assetCaches != nullptr;//&& s_fileToAssetCacheMap != nullptr;
     }
     
     void Update()
     {
-#ifdef R2_ASSET_PIPELINE
-        //if (s_assetCaches)// && s_fileToAssetCacheMap)
-        //{
-        //    std::vector<std::string> paths;
-        //    
-        //    if(s_assetsBuiltQueue.TryPop(paths))
-        //    {
-        //        for (r2::asset::lib::AssetFilesBuiltListener listener : s_listeners)
-        //        {
-        //            listener(paths);
-        //        }
-        //    }
-
-        //}
-#endif
     }
     
     void Shutdown()
     {
-      //  if (s_assetCaches)// && s_fileToAssetCacheMap)
-      //  {
-
-      //      for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
-      //      {
-      //          r2::asset::AssetCache* cache = s_assetCaches[i];
-      //          if (cache != nullptr)
-      //          {
-      //              FREE(cache, *s_arenaPtr);
-      //          }
-      //          
-      //  //        FileList fileList = s_filesForCaches[i];
-      //          
-      //          //if (fileList != nullptr)
-      //          //{
-      //          //    CloseAndFreeAllFilesInFileList(fileList);
-      //          //    
-      //          //    FREE(fileList, *s_arenaPtr);
-      //          //}
-      //      }
-      //      
-      // //     FREE(s_fileToAssetCacheMap, *s_arenaPtr);
-      //      FREE(s_assetCaches, *s_arenaPtr);
-      ////      FREE(s_filesForCaches, *s_arenaPtr);
-      //  }
-        
         FREE(s_arenaPtr, *MEM_ENG_PERMANENT_PTR);
         s_arenaPtr = nullptr;
     }
-    
-#ifdef R2_ASSET_PIPELINE
-  //  void PushFilesBuilt(std::vector<std::string> paths)
-  //  {
-  //      s_assetsBuiltQueue.Push(paths);
-  //  }
-  //  
-  //  void AddAssetFilesBuiltListener(AssetFilesBuiltListener func)
-  //  {
-  //      s_listeners.push_back(func);
-  //  }
-
-  //  void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list)
-  //  {
-  //      R2_CHECK(list != nullptr, "passed in a null list!");
-  //      const FileList fileList = cache.GetFileList();
-
-  //      R2_CHECK(fileList != nullptr, "The cache had an empty list?");
-  //      const auto numFiles = r2::sarr::Size(*cache.GetFileList());
-
-		//for (u64 i = 0; i < numFiles; ++i)
-		//{
-		//	AssetFile* file = r2::sarr::At(*fileList, i);
-
-		//	if (file->IsOpen())
-		//	{
-		//		file->Close();
-		//	}
-
-		//	FREE(file, *s_arenaPtr);
-		//}
-
-  //      FREE(fileList, *s_arenaPtr);
-
-  //      s_filesForCaches[cache.GetSlot()] = list;
-  //  }
-#endif
     
     FileList MakeFileList(u64 capacity)
     {
@@ -764,15 +620,6 @@ namespace r2::asset::lib
     {
         FREE(fileList, *s_arenaPtr);
     }
-
-    //RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude)
-    //{
-    //    RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, *s_arenaPtr);
-    //    
-    //    bool result = rawAssetFile->Init(path, numParentDirectoriesToInclude);
-    //    R2_CHECK(result, "Failed to initialize raw asset file");
-    //    return rawAssetFile;
-    //}
 
     void FreeRawAssetFile(RawAssetFile* file)
     {
@@ -865,20 +712,6 @@ namespace r2::asset::lib
         if (s_arenaPtr)
         {
 			s64 slot = ++s_numCaches;
-            /*
-			for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
-			{
-				if (s_assetCaches[i] == nullptr)
-				{
-					slot = i;
-					break;
-				}
-			}
-
-			if (slot == -1)
-			{
-				return nullptr;
-			}*/
 
             const auto memoryNeeded = r2::asset::AssetCache::TotalMemoryNeeded(numFiles, assetTotalSize, boundary.alignment);
             
@@ -888,18 +721,13 @@ namespace r2::asset::lib
             
             if (cache)
             {
-                bool created = cache->Init(/*files*/);
+                bool created = cache->Init();
                 R2_CHECK(created, "Failed to initialize asset cache for slot: %llu", slot);
                 if (!created)
                 {
                     FREE(cache, *s_arenaPtr);
                     return nullptr;
                 }
-                
-               // s_assetCaches[slot] = cache;
-             //   s_filesForCaches[slot] = files;
-
-             //   s_numCaches++;
             }
             
             return cache;
@@ -907,20 +735,6 @@ namespace r2::asset::lib
         
         return nullptr;
     }
-    
-    //r2::asset::AssetCache* GetAssetCache(s64 slot)
-    //{
-    //    if (s_assetCaches && (slot >= 0 && slot < static_cast<s64>(s_numCaches)))
-    //    {
-    //        //R2_CHECK(s_assetCaches[slot] != nullptr, "We don't have the proper cache for this slot!");
-    //        return s_assetCaches[slot];
-    //    }
-
-    //    R2_CHECK(s_assetCaches != nullptr, "We haven't initialized the asset caches yet!");
-    //    R2_CHECK(slot >= 0 && slot < static_cast<s64>(s_numCaches), "Passed in an invalid asset cache slot: %lli", slot);
-    //    return nullptr;
-    //}
-
 
     void DestroyCache(r2::asset::AssetCache* cache)
     {
@@ -928,31 +742,9 @@ namespace r2::asset::lib
         {
             s64 slot = cache->GetSlot();
             R2_CHECK(slot >= 0, "We don't have a proper asset cache slot!");
-       //     R2_CHECK(s_assetCaches[slot] == cache, "We don't have the proper cache for this slot!");
-            
             cache->Shutdown();
             
             FREE(cache, *s_arenaPtr);
-            
-         //   FileList fileList = s_filesForCaches[slot];
-          //  R2_CHECK(fileList != nullptr, "FileList should not be nullptr");
-          //  u64 numFiles = r2::sarr::Size(*fileList);
-            /*for (u64 i = 0; i < numFiles; ++i)
-            {
-                AssetFile* file = r2::sarr::At(*fileList, i);
-                
-                if (file->IsOpen())
-                {
-                    file->Close();
-                }
-
-                FREE(file, *s_arenaPtr);
-            }*/
-            
-           // FREE(fileList, *s_arenaPtr);
-            
-           // s_assetCaches[slot] = nullptr;
-            //s_filesForCaches[slot] = nullptr;
         }
     }
 }
