@@ -19,6 +19,7 @@
 #include "r2/Core/Assets/AssetFiles/SoundManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/LevelPackManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/EngineModelManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/SoundAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -629,6 +630,24 @@ namespace r2::asset::lib
         }
        
         FREE(file, *s_arenaPtr);
+    }
+
+    SoundAssetFile* MakeSoundAssetFile(const char* path)
+    {
+        SoundAssetFile* soundAssetFile = ALLOC(SoundAssetFile, *s_arenaPtr);
+        bool result = soundAssetFile->Init(path);
+        R2_CHECK(result, "Failed to initialize the sound asset file");
+        return soundAssetFile;
+    }
+
+    void FreeSoundAssetFile(SoundAssetFile* file)
+    {
+		if (file->IsOpen())
+		{
+			file->Close();
+		}
+
+		FREE(file, *s_arenaPtr);
     }
 
     RawAssetFile* MakeRawAssetFile(const char* path, r2::asset::AssetType assetType)

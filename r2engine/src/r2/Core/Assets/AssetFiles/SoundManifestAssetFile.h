@@ -33,6 +33,8 @@ namespace r2::asset
 	private:
 		const flat::SoundDefinitions* mSoundDefinitions;
 
+		void FillAssetFiles();
+
 #ifdef R2_ASSET_PIPELINE
 		void FillSoundDefinitionVector();
 		void ReloadManifestFile(bool fillVector);

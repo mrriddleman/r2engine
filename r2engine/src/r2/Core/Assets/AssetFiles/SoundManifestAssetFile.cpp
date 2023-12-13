@@ -4,6 +4,8 @@
 #include "r2/Audio/SoundDefinition_generated.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/Pipeline/SoundDefinitionUtils.h"
+#include "r2/Core/Assets/AssetLib.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace r2::asset 
 {
@@ -22,6 +24,7 @@ namespace r2::asset
 
 		R2_CHECK(mSoundDefinitions != nullptr, "mSoundDefinitions is nullptr?");
 
+		FillAssetFiles();
 #ifdef R2_ASSET_PIPELINE
 		FillSoundDefinitionVector();
 #endif
@@ -70,14 +73,67 @@ namespace r2::asset
 
 	AssetFile* SoundManifestAssetFile::GetAssetFile(const Asset& asset)
 	{
-		TODO;
+		for (u32 i = 0; i < r2::sarr::Size(*mAssetFiles); ++i)
+		{
+			AssetFile* assetFile = r2::sarr::At(*mAssetFiles, i);
+			//@TODO(Serge): UUID
+			if (assetFile->GetAssetHandle(0) == asset.HashID())
+			{
+				return assetFile;
+			}
+		}
+
 		return nullptr;
 	}
 
 	void SoundManifestAssetFile::DestroyAssetFiles()
 	{
-		TODO;
+		s32 numFiles = r2::sarr::Size(*mAssetFiles);
+
+		for (s32 i = numFiles - 1; i >= 0; --i)
+		{
+			SoundAssetFile* soundAssetFile = (SoundAssetFile*)(r2::sarr::At(*mAssetFiles, i));
+
+			lib::FreeSoundAssetFile(soundAssetFile);
+		}
+
+		lib::DestoryFileList(mAssetFiles);
+
 		mAssetFiles = nullptr;
+	}
+
+	void SoundManifestAssetFile::FillAssetFiles()
+	{
+		R2_CHECK(mAssetFiles == nullptr, "We shouldn't have any asset files yet");
+		R2_CHECK(mSoundDefinitions != nullptr, "We haven't initialized the sound manifest!");
+		u32 numSoundFiles = mSoundDefinitions->banks()->size() + 2;
+
+#ifdef R2_ASSET_PIPELINE
+		numSoundFiles = glm::max(2000u, numSoundFiles); //I dunno just make a lot so we don't run out
+#endif
+
+		mAssetFiles = lib::MakeFileList(numSoundFiles);
+
+		R2_CHECK(mAssetFiles != nullptr, "We couldn't create the asset files!");
+
+		char soundPath[r2::fs::FILE_PATH_LENGTH];
+
+		//add the master and strings bank
+		r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, mSoundDefinitions->masterBank()->binPath()->str().c_str(), soundPath);
+		r2::asset::SoundAssetFile* masterBankFile = lib::MakeSoundAssetFile(soundPath);
+		r2::sarr::Push(*mAssetFiles, (AssetFile*)masterBankFile);
+
+		r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, mSoundDefinitions->masterBankStrings()->binPath()->str().c_str(), soundPath);
+		r2::asset::SoundAssetFile* masterBankStringsFile = lib::MakeSoundAssetFile(soundPath);
+		r2::sarr::Push(*mAssetFiles, (AssetFile*)masterBankStringsFile);
+
+		for (flatbuffers::uoffset_t i = 0; i < mSoundDefinitions->banks()->size(); ++i)
+		{
+			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, mSoundDefinitions->banks()->Get(i)->binPath()->str().c_str(), soundPath);
+
+			r2::asset::SoundAssetFile* soundFile = lib::MakeSoundAssetFile(soundPath);
+			r2::sarr::Push(*mAssetFiles, (AssetFile*)soundFile);
+		}
 	}
 
 #ifdef R2_ASSET_PIPELINE
@@ -134,6 +190,8 @@ namespace r2::asset
 		mSoundDefinitions = flat::GetSoundDefinitions(mManifestCacheRecord.GetAssetBuffer()->Data());
 
 		R2_CHECK(mSoundDefinitions != nullptr, "mSoundDefinitions is nullptr?");
+
+		FillAssetFiles();
 
 		if (fillVector)
 		{

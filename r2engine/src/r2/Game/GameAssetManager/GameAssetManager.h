@@ -104,8 +104,6 @@ namespace r2
 			}
 		}
 
-		void Update();
-
 		static u64 MemorySizeForGameAssetManager(u32 numFiles, u32 alignment, u32 headerSize);
 		static u64 CacheMemorySize(u32 numAssets, u32 assetCapacity, u32 alignment, u32 headerSize, u32 boundsChecking, u32 lruCapacity, u32 mapCapacity);
 
@@ -138,7 +136,7 @@ namespace r2
 				return nullptr;
 			}
 
-			r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);//r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+			r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);
 
 			if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 			{

@@ -377,7 +377,7 @@ namespace r2::audio
                 int retrieved;
                 CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
 
-                printf("FMOD Path: %s\n", path);
+            //    printf("FMOD Path: %s\n", path);
             }
             //@TODO(Serge): now list all of the strings from the master strings bank
             

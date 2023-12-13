@@ -29,9 +29,6 @@ namespace r2
 		mTexturePacksCache = nullptr;
 	}
 
-	void GameAssetManager::Update()
-	{
-	}
 
 	u64 GameAssetManager::MemorySizeForGameAssetManager(u32 numFiles, u32 alignment, u32 headerSize)
 	{

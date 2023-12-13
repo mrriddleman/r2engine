@@ -26,6 +26,7 @@ namespace r2::asset
 {
     class AssetCache;
     class RawAssetFile;
+    class SoundAssetFile;
     class ZipAssetFile;
     class ManifestAssetFile;
 	
@@ -132,9 +133,12 @@ namespace r2::asset::lib
     
     //RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     RawAssetFile* MakeRawAssetFile(const char* path, r2::asset::AssetType assetType);
-
     void FreeRawAssetFile(RawAssetFile* file);
     //@TODO(Serge): maybe make a MakeRawAssetFile that will alloc an array?
+
+    SoundAssetFile* MakeSoundAssetFile(const char* path);
+    void FreeSoundAssetFile(SoundAssetFile* file);
+
 
     ZipAssetFile* MakeZipAssetFile(const char* path);  
 
