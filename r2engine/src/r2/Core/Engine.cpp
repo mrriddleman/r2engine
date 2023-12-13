@@ -586,6 +586,8 @@ namespace r2
     {
         mLevelManager->Shutdown();
 
+        mGameAssetManager->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
+
         mLayerStack.ShutdownAll();
 
         for (u32 i = 0; i < r2::draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES; ++i)
@@ -609,8 +611,8 @@ namespace r2
         
         FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
 
-        mGameAssetManager->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
-        FREE(mGameAssetManager, *MEM_ENG_PERMANENT_PTR);
+		
+		FREE(mGameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
         mECSWorld->Shutdown();
         FREE(mECSWorld, *MEM_ENG_PERMANENT_PTR);
@@ -1292,7 +1294,6 @@ namespace r2
 #endif
 	)
     {
-
         //@TODO(Serge): clean up this engine function - so bad!
 #ifdef R2_ASSET_PIPELINE
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeMaterialManifestAssetFile(*mAssetLib, engineMaterialsPath, rawEngineMaterialsPath, rawEngineMaterialsWatchPath);

@@ -402,13 +402,6 @@ namespace r2
 				//@TEMPORARY!!!! - we would need some other mechanism for adding/loading the bank, probably through the asset catalog tool or something
 				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND));
 
-				r2::audio::AudioEngine audioEngine;
-				char bankPath[r2::fs::FILE_PATH_LENGTH];
-				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::SOUNDS, "TestBank1.bank", bankPath);
-
-				audioEngine.LoadBank(bankPath, 0);
-
-
 
 			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
 			//	audioEmitterActionComponent.action = ecs::AEA_CREATE;
@@ -624,6 +617,10 @@ namespace r2
 	{
 		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();
 	
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		gameAssetManager.LoadAsset(r2::asset::Asset(soundBankAssetName, r2::asset::SOUND));
+
 		//@TODO(Serge): shouldn't the level be doing this?
 		if (r2::sarr::IndexOf(*soundBanks, soundBankAssetName) == -1)
 		{

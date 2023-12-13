@@ -582,8 +582,8 @@ namespace r2::edit
 		{
 
 			//@TODO(Serge): should the level/editor do this?
-			r2::audio::AudioEngine audioEngine;
-			audioEngine.LoadBank(path.string().c_str(), 0);
+			//r2::audio::AudioEngine audioEngine;
+			//audioEngine.LoadBank(path.string().c_str(), 0);
 
 
 			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND));

@@ -10,6 +10,7 @@
 #include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/SoundAssetLoader.h"
 
 #include "r2/Core/Memory/Memory.h"
 
@@ -76,6 +77,10 @@ namespace r2
 
 			r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
 			mAssetCache->RegisterAssetLoader(rmodelLoader);
+
+			r2::asset::SoundAssetLoader* soundLoader = (r2::asset::SoundAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::SoundAssetLoader>();
+			mAssetCache->RegisterAssetLoader(soundLoader);
+
 
 			mTexturePacksCache = draw::texche::Create<ARENA>(arena, numTextures, numTextureManifests, numTexturePacks, this);
 

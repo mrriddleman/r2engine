@@ -386,16 +386,13 @@ namespace r2
 
 		const auto* soundPaths = levelData->soundPaths();
 		const flatbuffers::uoffset_t numSoundPaths = soundPaths->size();
-		r2::audio::AudioEngine audioEngine;
 
 		char soundBankFilePath[r2::fs::FILE_PATH_LENGTH];
 		for (flatbuffers::uoffset_t i = 0; i < numSoundPaths; ++i)
 		{
-			const char* soundBankURI = soundPaths->Get(i)->stringName()->c_str();
-			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, soundBankURI, soundBankFilePath);
-			audioEngine.LoadBank(soundBankFilePath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
-
-			r2::sarr::Push(*soundBanks, r2::asset::GetAssetNameForFilePath(soundBankFilePath, r2::asset::SOUND));
+			const auto soundAssetName = soundPaths->Get(i)->assetName();
+			gameAssetManager.LoadAsset(r2::asset::Asset(soundAssetName, r2::asset::SOUND));
+			r2::sarr::Push(*soundBanks, soundAssetName);
 		}
 
 		f64 endSoundLoading = CENG.GetTicks();
@@ -627,11 +624,12 @@ namespace r2
 			gameAssetManager.UnloadTexturePack(r2::sarr::At(*texturePacksToUnload, i));
 		}
 
-		r2::audio::AudioEngine audioEngine;
+
 		const u32 numSoundBanksToUnload = r2::sarr::Size(*soundBanksToUnload);
 		for (u32 i = 0; i < numSoundBanksToUnload; ++i)
 		{
-			audioEngine.UnloadSoundBank(audioEngine.GetBankHandle(r2::sarr::At(*soundBanksToUnload, i)));
+			gameAssetManager.UnloadAsset(r2::sarr::At(*soundBanksToUnload, i));
+			
 		}
 
 		FREE(soundBanksToUnload, *MEM_ENG_SCRATCH_PTR);
