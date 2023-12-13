@@ -63,8 +63,6 @@ namespace r2::asset
 
 	u64 SoundAssetFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
 	{
-		auto bankHandle = r2::audio::AudioEngine::LoadBank(mPath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
-		memcpy(data, &bankHandle, sizeof(r2::audio::AudioEngine::BankHandle));
 		return sizeof(r2::audio::AudioEngine::BankHandle);
 	}
 

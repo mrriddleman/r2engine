@@ -9,9 +9,11 @@
 #define DefaultAssetLoader_h
 
 #include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
-
+#
 namespace r2::asset
 {
+    class AssetBuffer;
+
     class DefaultAssetLoader: public AssetLoader
     {
     public:
