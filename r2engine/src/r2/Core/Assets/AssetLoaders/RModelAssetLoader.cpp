@@ -506,4 +506,9 @@ namespace r2::asset
 		return true;
 	}
 
+	bool RModelAssetLoader::FreeAsset(const AssetBuffer& assetBuffer)
+	{
+		return true;
+	}
+
 }

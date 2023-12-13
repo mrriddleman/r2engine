@@ -33,4 +33,10 @@ namespace r2::asset
     {
         return true;
     }
+
+	bool DefaultAssetLoader::FreeAsset(const AssetBuffer& assetBuffer)
+	{
+        return true;
+	}
+
 }

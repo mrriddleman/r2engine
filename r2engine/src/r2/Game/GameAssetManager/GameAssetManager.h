@@ -77,8 +77,6 @@ namespace r2
 			r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
 			mAssetCache->RegisterAssetLoader(rmodelLoader);
 
-			mAssetCache->RegisterAssetFreedCallback(std::bind(&GameAssetManager::RemoveAssetCacheRecord, this, std::placeholders::_1));
-
 			mTexturePacksCache = draw::texche::Create<ARENA>(arena, numTextures, numTextureManifests, numTexturePacks, this);
 
 			R2_CHECK(mTexturePacksCache != nullptr, "Failed to make the texture packs cache");
@@ -180,7 +178,7 @@ namespace r2
 		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
 
 		void RegisterAssetLoader(r2::asset::AssetLoader* assetLoader);
-		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
+
 
 		//@TODO(Serge): really annoying we have two different interfaces - 1 for textures, 1 for everything else
 		//				we need a to figure out a way to consolidate these. I think we'd have to pack all the textures together into 1 

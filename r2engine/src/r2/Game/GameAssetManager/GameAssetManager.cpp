@@ -157,17 +157,6 @@ namespace r2
 		mAssetCache->RegisterAssetLoader(assetLoader);
 	}
 
-	void GameAssetManager::RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
-		}
-
-		mAssetCache->RegisterAssetFreedCallback(func);
-	}
-
 	void AddTexturePacksToTexturePackSet(const flat::Material* material, r2::SArray<u64>& texturePacks)
 	{
 		auto textureParams = material->shaderParams()->textureParams();

@@ -134,5 +134,11 @@ namespace r2::asset
 
 		return model != nullptr;
 	}
-	
+
+	bool ModelAssetLoader::FreeAsset(const AssetBuffer& assetBuffer)
+	{
+		return true;
+	}
+
+
 }

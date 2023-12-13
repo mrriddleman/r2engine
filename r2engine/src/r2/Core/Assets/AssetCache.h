@@ -79,7 +79,7 @@ namespace r2::asset
 
         s64 GetSlot() const {return mSlot;}
 
-        void RegisterAssetFreedCallback(AssetFreedCallback func);
+       
 
         static u64 TotalMemoryNeeded(u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
@@ -101,6 +101,8 @@ namespace r2::asset
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
 
+        AssetLoader* GetAssetLoader(r2::asset::AssetType type);
+
         bool IsLoaded(const Asset& asset);
 
         AssetBuffer* Load(const Asset& asset);
@@ -117,13 +119,10 @@ namespace r2::asset
         void RemoveFromLRU(AssetHandle handle);
 
         u64 MemoryHighWaterMark();
-	
 
         AssetList mAssetLRU;
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
-
-        AssetFreedCallbackList mAssetFreedCallbackList;
 
         DefaultAssetLoader* mDefaultLoader;
         s64 mSlot;

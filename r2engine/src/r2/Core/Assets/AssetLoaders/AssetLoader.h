@@ -24,6 +24,8 @@ namespace r2::asset
         virtual AssetType GetType() const = 0;
         virtual u64 GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking) = 0;
         virtual bool LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) = 0;
+        virtual bool FreeAsset(const AssetBuffer& assetBuffer) = 0;
+
         //virtual bool 
         virtual ~AssetLoader(){}
     };

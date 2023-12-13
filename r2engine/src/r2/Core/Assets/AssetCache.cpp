@@ -30,7 +30,6 @@ namespace r2::asset
         : mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
-        , mAssetFreedCallbackList(nullptr)
         , mDefaultLoader(nullptr)
         , mSlot(slot)
         , mAssetCacheArena(boundary)
@@ -51,7 +50,6 @@ namespace r2::asset
             mDefaultLoader = ALLOC(DefaultAssetLoader, mAssetCacheArena);
             mAssetLoaders = MAKE_SARRAY(mAssetCacheArena, AssetLoader*, lruCapacity);
             mAssetBufferPoolPtr = MAKE_POOL_ARENA(mAssetCacheArena, sizeof(AssetBuffer), alignof(AssetBuffer), lruCapacity);
-            mAssetFreedCallbackList = MAKE_SARRAY(mAssetCacheArena, AssetFreedCallback, lruCapacity);
         }
 
         return true;
@@ -86,14 +84,14 @@ namespace r2::asset
         FREE(mAssetMap, mAssetCacheArena);
         FREE(mAssetLoaders, mAssetCacheArena);
         FREE(mAssetBufferPoolPtr, mAssetCacheArena);
-        FREE(mAssetFreedCallbackList, mAssetCacheArena);
+
 
         mAssetLRU = nullptr;
         mAssetMap = nullptr;
         mAssetLoaders = nullptr;
         mDefaultLoader = nullptr;
         mAssetBufferPoolPtr = nullptr;
-        mAssetFreedCallbackList = nullptr;
+
     }
     
     AssetHandle AssetCache::LoadAsset(const Asset& asset)
@@ -245,7 +243,27 @@ namespace r2::asset
         r2::sarr::Push(*mAssetLoaders, optrAssetLoader);
     }
 
+
+
     //Private
+	AssetLoader* AssetCache::GetAssetLoader(r2::asset::AssetType type)
+	{
+        u64 numAssetLoaders = r2::sarr::Size(*mAssetLoaders);
+
+		AssetLoader* loader = nullptr;
+		for (u64 i = 0; i < numAssetLoaders; ++i)
+		{
+			AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
+			if (nextLoader->GetType() == type)
+			{
+				loader = nextLoader;
+				break;
+			}
+		}
+
+        return loader;
+	}
+
     bool AssetCache::IsLoaded(const Asset& asset)
     {
 		AssetBufferRef theDefault;
@@ -259,17 +277,7 @@ namespace r2::asset
 
     AssetBuffer* AssetCache::Load(const Asset& asset)
     {
-        u64 numAssetLoaders = r2::sarr::Size(*mAssetLoaders);
-        AssetLoader* loader = nullptr;
-		for (u64 i = 0; i < numAssetLoaders; ++i)
-		{
-			AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
-			if (nextLoader->GetType() == asset.GetType())
-			{
-				loader = nextLoader;
-				break;
-			}
-		}
+        AssetLoader* loader = GetAssetLoader(asset.GetType());
         
         if (loader == nullptr)
         {
@@ -474,17 +482,14 @@ namespace r2::asset
             
             if (assetBufferRef.mRefCount < 0)
             {
-
                 const Asset& theAsset = assetBufferRef.mAsset;
 
                 //Do this before we actually do the freeing
-				const auto numFreedCallbacks = r2::sarr::Size(*mAssetFreedCallbackList);
-
-				for (u32 i = 0; i < numFreedCallbacks; ++i)
-				{
-					auto callback = r2::sarr::At(*mAssetFreedCallbackList, i);
-					callback(handle);
-				}
+                AssetLoader* assetLoader = GetAssetLoader(theAsset.GetType());
+                if (assetLoader)
+                {
+                    assetLoader->FreeAsset(*assetBufferRef.mAssetBuffer);
+                }
 
                 FREE(assetBufferRef.mAssetBuffer->MutableData(), mAssetCacheArena);
                 
@@ -583,7 +588,6 @@ namespace r2::asset
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(DefaultAssetLoader), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetLoader*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Asset>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetFreedCallback>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +
             CalculateCacheSizeNeeded(assetCapacity, numAssets, alignment);
@@ -605,10 +609,6 @@ namespace r2::asset
         return initialAssetCapcity + (numAssets * (static_cast<u64>(headerSize) + static_cast<u64>(boundsChecking) + alignment));
     }
 
-    void AssetCache::RegisterAssetFreedCallback(AssetFreedCallback func)
-    {
-        r2::sarr::Push(*mAssetFreedCallbackList, func);
-    }
     
 #if R2_ASSET_CACHE_DEBUG
     //Debug stuff

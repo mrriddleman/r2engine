@@ -133,4 +133,9 @@ namespace r2::asset
 		return mesh != nullptr;
 	}
 
+	bool MeshAssetLoader::FreeAsset(const AssetBuffer& assetBuffer)
+	{
+		return true;
+	}
+
 }
