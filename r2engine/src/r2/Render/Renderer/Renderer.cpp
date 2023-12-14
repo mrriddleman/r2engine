@@ -371,7 +371,7 @@ namespace r2::draw::renderer
 	const Model* GetDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs(Renderer& renderer);
 	vb::GPUModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
-	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, u64 modelAssetName);
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, const r2::asset::AssetName& modelAssetName);
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer);
 	const tex::Texture* GetMissingTexture(Renderer* renderer);
 
@@ -469,7 +469,7 @@ namespace r2::draw::renderer
 	Camera* GetRenderCamera(Renderer& renderer);
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles(Renderer& renderer);
-	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName);
+	const r2::draw::Model* GetDefaultModel(Renderer& renderer, const r2::asset::AssetName& assetName);
 	EntityInstance ReadEntityInstanceAtMousePosition(Renderer& renderer, s32 x, s32 y);
 #endif
 
@@ -2796,7 +2796,7 @@ namespace r2::draw::renderer
 		return r2::sarr::At(*renderer.mEngineModelRefs, defaultModel);
 	}
 
-	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, u64 modelAssetName)
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, const r2::asset::AssetName& modelAssetName)
 	{
 		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
@@ -8783,9 +8783,9 @@ namespace r2::draw::renderer
 	//	return r2::draw::modlche::GetFileList(*renderer.mModelCache);
 	//}
 
-	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName)
+	const r2::draw::Model* GetDefaultModel(Renderer& renderer, const r2::asset::AssetName& assetName)
 	{
-		return r2::draw::modlche::GetModel(renderer.mModelCache, { assetName, renderer.mModelCache->mModelCache->GetSlot() });
+		return r2::draw::modlche::GetModel(renderer.mModelCache, { assetName.hashID, renderer.mModelCache->mModelCache->GetSlot() });
 	}
 
 	EntityInstance ReadEntityInstanceAtMousePosition(Renderer& renderer, s32 x, s32 y)
@@ -9146,7 +9146,7 @@ namespace r2::draw::renderer
 		return GetDefaultModelRef(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(u64 modelAssetName)
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(const r2::asset::AssetName& modelAssetName)
 	{
 		return GetModelRefHandleForModelAssetName(MENG.GetCurrentRendererRef(), modelAssetName);
 	}
@@ -9385,7 +9385,7 @@ namespace r2::draw::renderer
 	//	return GetModelFiles(MENG.GetCurrentRendererRef());
 	//}
 
-	const r2::draw::Model* GetDefaultModel(u64 assetName)
+	const r2::draw::Model* GetDefaultModel(const r2::asset::AssetName& assetName)
 	{
 		return GetDefaultModel(MENG.GetCurrentRendererRef(), assetName);
 	}

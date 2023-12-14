@@ -524,14 +524,14 @@ inline flatbuffers::Offset<DrawParameters> CreateDrawParameters(
 struct RenderComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RenderComponentDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ASSETMODELHASH = 4,
+    VT_ASSETMODEL = 4,
     VT_PRIMITIVETYPE = 6,
     VT_ISANIMATED = 8,
     VT_DRAWPARAMS = 10,
     VT_OVERRIDEMATERIALS = 12
   };
-  uint64_t assetModelHash() const {
-    return GetField<uint64_t>(VT_ASSETMODELHASH, 0);
+  const flat::AssetName *assetModel() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETMODEL);
   }
   uint32_t primitiveType() const {
     return GetField<uint32_t>(VT_PRIMITIVETYPE, 0);
@@ -547,7 +547,8 @@ struct RenderComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_ASSETMODELHASH) &&
+           VerifyOffset(verifier, VT_ASSETMODEL) &&
+           verifier.VerifyTable(assetModel()) &&
            VerifyField<uint32_t>(verifier, VT_PRIMITIVETYPE) &&
            VerifyField<uint8_t>(verifier, VT_ISANIMATED) &&
            VerifyOffset(verifier, VT_DRAWPARAMS) &&
@@ -563,8 +564,8 @@ struct RenderComponentDataBuilder {
   typedef RenderComponentData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_assetModelHash(uint64_t assetModelHash) {
-    fbb_.AddElement<uint64_t>(RenderComponentData::VT_ASSETMODELHASH, assetModelHash, 0);
+  void add_assetModel(flatbuffers::Offset<flat::AssetName> assetModel) {
+    fbb_.AddOffset(RenderComponentData::VT_ASSETMODEL, assetModel);
   }
   void add_primitiveType(uint32_t primitiveType) {
     fbb_.AddElement<uint32_t>(RenderComponentData::VT_PRIMITIVETYPE, primitiveType, 0);
@@ -592,23 +593,23 @@ struct RenderComponentDataBuilder {
 
 inline flatbuffers::Offset<RenderComponentData> CreateRenderComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetModelHash = 0,
+    flatbuffers::Offset<flat::AssetName> assetModel = 0,
     uint32_t primitiveType = 0,
     bool isAnimated = false,
     flatbuffers::Offset<flat::DrawParameters> drawParams = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> overrideMaterials = 0) {
   RenderComponentDataBuilder builder_(_fbb);
-  builder_.add_assetModelHash(assetModelHash);
   builder_.add_overrideMaterials(overrideMaterials);
   builder_.add_drawParams(drawParams);
   builder_.add_primitiveType(primitiveType);
+  builder_.add_assetModel(assetModel);
   builder_.add_isAnimated(isAnimated);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<RenderComponentData> CreateRenderComponentDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t assetModelHash = 0,
+    flatbuffers::Offset<flat::AssetName> assetModel = 0,
     uint32_t primitiveType = 0,
     bool isAnimated = false,
     flatbuffers::Offset<flat::DrawParameters> drawParams = 0,
@@ -616,7 +617,7 @@ inline flatbuffers::Offset<RenderComponentData> CreateRenderComponentDataDirect(
   auto overrideMaterials__ = overrideMaterials ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialName>>(*overrideMaterials) : 0;
   return flat::CreateRenderComponentData(
       _fbb,
-      assetModelHash,
+      assetModel,
       primitiveType,
       isAnimated,
       drawParams,

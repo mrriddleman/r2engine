@@ -124,9 +124,12 @@ namespace r2::ecs
 				overrideMaterialOffset = fbb.CreateVector(flatOverrideMaterials);
 			}
 
+			//@TODO(Serge): UUID
+			auto flatAssetModelName = flat::CreateAssetName(fbb, 0, renderComponent.assetModelName.hashID, fbb.CreateString(renderComponent.assetModelName.assetNameString));
+
 			flat::RenderComponentDataBuilder renderComponentBuilder(fbb);
 
-			renderComponentBuilder.add_assetModelHash(renderComponent.assetModelName);
+			renderComponentBuilder.add_assetModel(flatAssetModelName);
 			renderComponentBuilder.add_primitiveType(renderComponent.primitiveType);
 			renderComponentBuilder.add_isAnimated(renderComponent.isAnimated);
 			renderComponentBuilder.add_drawParams(flatDrawParams);
@@ -164,7 +167,7 @@ namespace r2::ecs
 			renderComponent.gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			renderComponent.optrMaterialOverrideNames = nullptr;
 
-			renderComponent.assetModelName = flatRenderComponent->assetModelHash();
+			r2::asset::MakeAssetNameFromFlatAssetName(flatRenderComponent->assetModel(), renderComponent.assetModelName);
 			renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelName);
 
 			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != renderComponent.gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");

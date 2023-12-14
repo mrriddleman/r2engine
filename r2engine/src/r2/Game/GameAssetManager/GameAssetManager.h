@@ -175,6 +175,12 @@ namespace r2
 			return GetAssetDataConst<T>({ assetName, GetAssetCacheSlot() });
 		}
 
+		template<typename T>
+		const T* GetAssetDataConst(r2::asset::AssetName assetName)
+		{
+			return GetAssetDataConst<T>({ assetName.hashID, GetAssetCacheSlot() });
+		}
+
 		u64 GetAssetDataSize(r2::asset::AssetHandle assetHandle);
 
 		void UnloadAsset(const r2::asset::AssetHandle& assetHandle);

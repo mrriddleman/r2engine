@@ -34,9 +34,11 @@ namespace r2::ecs
 		r2::SArray<flatbuffers::Offset<flat::SkeletalAnimationComponentData>>* skeletalAnimationComponents,
 		const SkeletalAnimationComponent& skeletalAnimationComponent)
 	{
+		auto flatAssetName = flat::CreateAssetName(fbb, 0, skeletalAnimationComponent.animModelAssetName.hashID, fbb.CreateString(skeletalAnimationComponent.animModelAssetName.assetNameString));
+
 		flat::SkeletalAnimationComponentDataBuilder skeletalAnimationComponentBuilder(fbb);
 
-		skeletalAnimationComponentBuilder.add_animModelAssetName(skeletalAnimationComponent.animModelAssetName);
+		skeletalAnimationComponentBuilder.add_animModelAssetName(flatAssetName);
 		skeletalAnimationComponentBuilder.add_startingAnimationIndex(skeletalAnimationComponent.startingAnimationIndex);
 		skeletalAnimationComponentBuilder.add_startTime(skeletalAnimationComponent.startTime);
 		skeletalAnimationComponentBuilder.add_shouldLoop(skeletalAnimationComponent.shouldLoop);
@@ -114,7 +116,7 @@ namespace r2::ecs
 
 	inline void DeSerializeSkeletalAnimationComponent(SkeletalAnimationComponent& skeletalAnimationComponent, const flat::SkeletalAnimationComponentData* flatSkeletalAnimationComponent)
 	{
-		skeletalAnimationComponent.animModelAssetName = flatSkeletalAnimationComponent->animModelAssetName();
+		r2::asset::MakeAssetNameFromFlatAssetName(flatSkeletalAnimationComponent->animModelAssetName(), skeletalAnimationComponent.animModelAssetName);
 		skeletalAnimationComponent.startingAnimationIndex = flatSkeletalAnimationComponent->startingAnimationIndex();
 		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flatSkeletalAnimationComponent->shouldUseSameTransformForAllInstances();
 		skeletalAnimationComponent.startTime = flatSkeletalAnimationComponent->startTime();
@@ -134,7 +136,10 @@ namespace r2::ecs
 			const flat::SkeletalAnimationComponentData* flatSkeletalAnimationComponent = componentVector->Get(i);
 
 			SkeletalAnimationComponent skeletalAnimationComponent;
-			skeletalAnimationComponent.animModelAssetName = 0;
+			skeletalAnimationComponent.animModelAssetName.hashID = 0;
+#ifdef R2_ASSET_PIPELINE
+			skeletalAnimationComponent.animModelAssetName.assetNameString= "";
+#endif
 			skeletalAnimationComponent.startingAnimationIndex = 0;
 			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 			skeletalAnimationComponent.animModel = nullptr;
@@ -181,7 +186,10 @@ namespace r2::ecs
 			for (size_t j = 0; j < numInstances; ++j)
 			{
 				SkeletalAnimationComponent skeletalAnimationComponent;
-				skeletalAnimationComponent.animModelAssetName = 0;
+				skeletalAnimationComponent.animModelAssetName.hashID = 0;
+#ifdef R2_ASSET_PIPELINE
+				skeletalAnimationComponent.animModelAssetName.assetNameString = "";
+#endif
 				skeletalAnimationComponent.startingAnimationIndex = 0;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 				skeletalAnimationComponent.animModel = nullptr;

@@ -4,12 +4,13 @@
 #include "r2/Render/Model/Materials/MaterialTypes.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
 #include "r2/Render/Renderer/RendererTypes.h"
+#include "r2/Core/Assets/AssetTypes.h"
 
 namespace r2::ecs
 {
 	struct RenderComponent
 	{
-		u64 assetModelName;
+		r2::asset::AssetName assetModelName;
 		u32 primitiveType;
 		b32 isAnimated; //@TODO(Serge): see if we can get rid of this
 		r2::draw::DrawParameters drawParameters;

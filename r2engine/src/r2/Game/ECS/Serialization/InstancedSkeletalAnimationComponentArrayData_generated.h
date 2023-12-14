@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "SkeletalAnimationComponentArrayData_generated.h"
 
 namespace flat {

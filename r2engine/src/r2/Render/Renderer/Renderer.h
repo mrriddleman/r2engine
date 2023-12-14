@@ -645,7 +645,7 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle UploadModel(const Model* model);
 	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(u64 modelAssetName);
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(const r2::asset::AssetName& modelAssetName);
 
 	void UnloadModel(const vb::GPUModelRefHandle& modelRefHandle);
 	void UnloadStaticModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);
@@ -768,7 +768,7 @@ namespace r2::draw::renderer
 
 #ifdef R2_EDITOR
 	//r2::asset::FileList GetModelFiles();
-	const r2::draw::Model* GetDefaultModel(u64 assetName);
+	const r2::draw::Model* GetDefaultModel(const r2::asset::AssetName& assetName);
 
 	struct EntityInstance
 	{

@@ -623,7 +623,7 @@ namespace r2
 		{
 			const r2::asset::AssetName& assetName = r2::sarr::At(*modelAssetsToUnload, i);
 
-			r2::draw::renderer::UnloadModel(r2::draw::renderer::GetModelRefHandleForModelAssetName(assetName.hashID));
+			r2::draw::renderer::UnloadModel(r2::draw::renderer::GetModelRefHandleForModelAssetName(assetName));
 
 			gameAssetManager.UnloadAsset(assetName);
 		}

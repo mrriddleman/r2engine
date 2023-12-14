@@ -6,6 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
+
 namespace flat {
 
 struct SkeletalAnimationComponentData;
@@ -23,8 +25,8 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
     VT_SHOULDLOOP = 10,
     VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES = 12
   };
-  uint64_t animModelAssetName() const {
-    return GetField<uint64_t>(VT_ANIMMODELASSETNAME, 0);
+  const flat::AssetName *animModelAssetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ANIMMODELASSETNAME);
   }
   uint32_t startingAnimationIndex() const {
     return GetField<uint32_t>(VT_STARTINGANIMATIONINDEX, 0);
@@ -40,7 +42,8 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_ANIMMODELASSETNAME) &&
+           VerifyOffset(verifier, VT_ANIMMODELASSETNAME) &&
+           verifier.VerifyTable(animModelAssetName()) &&
            VerifyField<uint32_t>(verifier, VT_STARTINGANIMATIONINDEX) &&
            VerifyField<uint32_t>(verifier, VT_STARTTIME) &&
            VerifyField<uint8_t>(verifier, VT_SHOULDLOOP) &&
@@ -53,8 +56,8 @@ struct SkeletalAnimationComponentDataBuilder {
   typedef SkeletalAnimationComponentData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_animModelAssetName(uint64_t animModelAssetName) {
-    fbb_.AddElement<uint64_t>(SkeletalAnimationComponentData::VT_ANIMMODELASSETNAME, animModelAssetName, 0);
+  void add_animModelAssetName(flatbuffers::Offset<flat::AssetName> animModelAssetName) {
+    fbb_.AddOffset(SkeletalAnimationComponentData::VT_ANIMMODELASSETNAME, animModelAssetName);
   }
   void add_startingAnimationIndex(uint32_t startingAnimationIndex) {
     fbb_.AddElement<uint32_t>(SkeletalAnimationComponentData::VT_STARTINGANIMATIONINDEX, startingAnimationIndex, 0);
@@ -82,15 +85,15 @@ struct SkeletalAnimationComponentDataBuilder {
 
 inline flatbuffers::Offset<SkeletalAnimationComponentData> CreateSkeletalAnimationComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t animModelAssetName = 0,
+    flatbuffers::Offset<flat::AssetName> animModelAssetName = 0,
     uint32_t startingAnimationIndex = 0,
     uint32_t startTime = 0,
     bool shouldLoop = false,
     bool shouldUseSameTransformForAllInstances = false) {
   SkeletalAnimationComponentDataBuilder builder_(_fbb);
-  builder_.add_animModelAssetName(animModelAssetName);
   builder_.add_startTime(startTime);
   builder_.add_startingAnimationIndex(startingAnimationIndex);
+  builder_.add_animModelAssetName(animModelAssetName);
   builder_.add_shouldUseSameTransformForAllInstances(shouldUseSameTransformForAllInstances);
   builder_.add_shouldLoop(shouldLoop);
   return builder_.Finish();

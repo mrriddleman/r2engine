@@ -222,6 +222,12 @@ namespace r2::ecs
 					}
 				}
 
+				//@HACK! - just so we don't crash if we didn't set any bones for our batch and we're animated
+				if (r2::sarr::Size(*mBatch.boneTransforms) == 0)
+				{
+					r2::sarr::Append(*mBatch.boneTransforms, *animationComponent->shaderBones);
+				}
+
 				shaderBoneTransforms = mBatch.boneTransforms;
 			}
 
@@ -305,6 +311,18 @@ namespace r2::ecs
 						{
 							SkeletalAnimationComponent& nextAnimationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent->instances, i);
 							r2::sarr::Append(*mBatch.boneTransforms, *nextAnimationComponent.shaderBones);
+						}
+					}
+				}
+
+				//@HACK! - just so we don't crash if we didn't set any bones for our batch and we're animated
+				if (r2::sarr::Size(*mBatch.boneTransforms) == 0)
+				{
+					for (s32 i = 0; i < instancedSkeletalAnimationComponent->numInstances; ++i)
+					{
+						if (r2::sarr::IndexOf(*selectionComponent.selectedInstances, i) == -1)
+						{
+							r2::sarr::Append(*mBatch.boneTransforms, *animationComponent->shaderBones);
 						}
 					}
 				}

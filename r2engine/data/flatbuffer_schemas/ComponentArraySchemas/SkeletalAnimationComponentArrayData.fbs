@@ -1,8 +1,10 @@
+include "../AssetName.fbs";
+
 namespace flat;
 
 table SkeletalAnimationComponentData
 {
-	animModelAssetName:ulong(hash:"fnv1a_64");
+	animModelAssetName:AssetName;
 	startingAnimationIndex:uint;
 	startTime:uint;
 	shouldLoop:bool;

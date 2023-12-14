@@ -352,7 +352,10 @@ namespace r2
 				AddModelToLevel(microbatAsset);
 
 				ecs::RenderComponent renderComponent;
-				renderComponent.assetModelName = microbatAsset.HashID();
+				renderComponent.assetModelName.hashID = microbatAsset.HashID();
+#ifdef R2_ASSET_PIPELINE
+				renderComponent.assetModelName.assetNameString = "micro_bat.rmdl";
+#endif
 				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;
@@ -367,7 +370,11 @@ namespace r2
 				
 
 				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
-				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
+
+				skeletalAnimationComponent.animModelAssetName.hashID = microbatAsset.HashID();
+#ifdef R2_ASSET_PIPELINE
+				skeletalAnimationComponent.animModelAssetName.assetNameString = "micro_bat.rmdl";
+#endif
 				skeletalAnimationComponent.animModel = microbatAnimModel;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 				skeletalAnimationComponent.startingAnimationIndex = 0; 
@@ -463,7 +470,10 @@ namespace r2
 					instancedSkeletalAnimationComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::SkeletalAnimationComponent, 2);
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
-					skeletalAnimationInstance1.animModelAssetName = microbatAsset.HashID();
+					skeletalAnimationInstance1.animModelAssetName.hashID = microbatAsset.HashID();
+#ifdef R2_ASSET_PIPELINE
+					skeletalAnimationInstance1.animModelAssetName.assetNameString = "micro_bat.rmdl";
+#endif
 					skeletalAnimationInstance1.animModel = microbatAnimModel;
 					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
 					skeletalAnimationInstance1.startingAnimationIndex = 1;
@@ -478,7 +488,10 @@ namespace r2
 
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
-					skeletalAnimationInstance2.animModelAssetName = microbatAsset.HashID();
+					skeletalAnimationInstance2.animModelAssetName.hashID = microbatAsset.HashID();
+#ifdef R2_ASSET_PIPELINE
+					skeletalAnimationInstance2.animModelAssetName.assetNameString = "micro_bat.rmdl";
+#endif
 					skeletalAnimationInstance2.animModel = microbatAnimModel;
 					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
 					skeletalAnimationInstance2.startingAnimationIndex = 2;

@@ -40,7 +40,7 @@ namespace r2::draw::vb
 	struct GPUModelRef
 	{
 		GPUModelRefHandle gpuModelRefHandle;
-		u64 assetName;
+		r2::asset::AssetName assetName;
 
 		r2::SArray<MeshEntry>* meshEntries;
 		
@@ -122,7 +122,7 @@ namespace r2::draw::vbsys
 	bool UnloadAllModelsFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
-	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, u64 modelAssetName);
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::asset::AssetName& modelAssetName);
 
 	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 

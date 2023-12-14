@@ -6,12 +6,13 @@
 #include "r2/Render/Animation/Animation.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Utils/Utils.h"
+#include "R2/Core/Assets/AssetTypes.h"
 
 namespace r2::ecs
 {
 	struct SkeletalAnimationComponent
 	{
-		u64 animModelAssetName;
+		r2::asset::AssetName animModelAssetName;
 		u32 startingAnimationIndex;
 		u32 startTime;
 		b32 shouldLoop;

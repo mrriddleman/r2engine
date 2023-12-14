@@ -269,7 +269,7 @@ namespace r2::draw::modlche
 
 		r2::draw::Model* model = (r2::draw::Model*)record.GetAssetBuffer()->MutableData();
 
-		model->assetName = handle.handle;
+		model->assetName.hashID = handle.handle;
 
 		return model;
 	}
@@ -290,7 +290,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->assetName, defaultRecord);
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->assetName.hashID, defaultRecord);
 
 		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{

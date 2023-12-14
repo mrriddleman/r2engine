@@ -1,4 +1,3 @@
-
 include "../AssetName.fbs";
 
 namespace flat;
@@ -57,7 +56,7 @@ table DrawParameters
 
 table RenderComponentData
 {
-	assetModelHash:ulong(hash:"fnv1a_64");
+	assetModel:AssetName;
 	primitiveType:uint;
 	isAnimated:bool;
 	drawParams:DrawParameters;

@@ -79,7 +79,7 @@ namespace r2::asset
 
 		void* startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
-		model->assetName = flatModel->name();
+		model->assetName.hashID = flatModel->name();
 		model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(numMeshes));

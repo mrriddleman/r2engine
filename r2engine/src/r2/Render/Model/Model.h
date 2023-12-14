@@ -55,7 +55,7 @@ namespace r2::draw
 
 	struct Model
 	{
-		u64 assetName = 0;
+		r2::asset::AssetName assetName;
         
         //these should be the same size
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;

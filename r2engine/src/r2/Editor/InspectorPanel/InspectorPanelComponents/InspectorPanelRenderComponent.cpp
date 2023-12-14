@@ -397,7 +397,7 @@ namespace r2::edit
 				}
 				r2::sarr::Clear(*nextAnimationComponent.shaderBones);
 
-				if (updateShaderBones && !useSameBoneTransformsForInstances)
+				if (updateShaderBones)
 				{
 					r2::ecs::SkeletalAnimationComponent& animationComponent = r2::sarr::At(*instancedAnimationComponent.instances, i);
 					r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
@@ -450,7 +450,7 @@ namespace r2::edit
 
 				r2::sarr::Push(*instancedAnimationComponent.instances, newSkeletalAnimationComponent);
 
-				if (updateShaderBones && !useSameBoneTransformsForInstances)
+				if (updateShaderBones)
 				{
 					r2::ecs::SkeletalAnimationComponent& animationComponent = newSkeletalAnimationComponent;
 					r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
@@ -492,6 +492,7 @@ namespace r2::edit
 		{
 			//nothing to do
 		}
+
 	}
 
 	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource()
@@ -567,7 +568,7 @@ namespace r2::edit
 
 							if (assetFilePath.extension().string() == ".modl")
 							{
-								renderModel = r2::draw::renderer::GetDefaultModel(assetHandle);
+								renderModel = r2::draw::renderer::GetDefaultModel({ assetHandle });
 							}
 							else
 							{

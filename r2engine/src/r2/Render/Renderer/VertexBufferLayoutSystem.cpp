@@ -888,7 +888,7 @@ namespace r2::draw::vbsys
 		return GetModelRefHandle(system, model.assetName);
 	}
 
-	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, u64 modelAssetName)
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::asset::AssetName& modelAssetName)
 	{
 		const auto& numLayouts = r2::sarr::Size(*system.mVertexBufferLayouts);
 
