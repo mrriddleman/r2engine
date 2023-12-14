@@ -76,7 +76,7 @@ namespace r2
 
 	r2::LevelName Level::GetLevelAssetName() const
 	{
-		return mLevelHandle.handle;
+		return mLevelHandle;
 	}
 
 	const char* Level::GetGroupName() const
@@ -86,7 +86,9 @@ namespace r2
 
 	LevelName Level::GetGroupHashName() const
 	{
-		return r2::asset::GetAssetNameForFilePath(mGroupName, r2::asset::LEVEL_GROUP);
+		LevelName groupName = r2::asset::MakeAssetNameFromPath(mGroupName, r2::asset::LEVEL_GROUP);
+
+		return groupName;
 	}
 
 	void Level::SetGroupName(const char* groupName)

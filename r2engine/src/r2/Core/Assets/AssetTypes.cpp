@@ -22,7 +22,7 @@ namespace r2::asset
 	bool AssetName::operator==(const AssetName& otherAssetName) const
 	{
 		return hashID == otherAssetName.hashID
-			//@TODO(Serge): add UUID
+			//@TODO(Serge): UUID
 //#ifdef R2_ASSET_PIPELINE
 //			&& assetNameString == otherAssetName.assetNameString
 //#endif
@@ -36,6 +36,18 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
 		outAssetName.assetNameString = flatAssetName->stringName()->str();
 #endif
+	}
+
+	AssetName MakeAssetNameFromPath(const char* path, r2::asset::AssetType type)
+	{
+		AssetName assetName;
+		assetName.hashID = r2::asset::GetAssetNameForFilePath(path, type);
+#ifdef R2_ASSET_PIPELINE
+		char name[r2::fs::FILE_PATH_LENGTH];
+		r2::asset::MakeAssetNameStringForFilePath(path, name, type);
+		assetName.assetNameString = name;
+#endif
+		return assetName;
 	}
 
 }

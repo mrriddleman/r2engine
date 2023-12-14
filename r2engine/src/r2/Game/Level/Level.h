@@ -14,9 +14,9 @@ namespace flat
 
 namespace r2
 {
-	using LevelName = u64;
-	using LevelHandle = r2::asset::AssetHandle;
-	const LevelName INVALID_LEVEL = 0;
+	using LevelName = r2::asset::AssetName;
+	using LevelHandle = r2::asset::AssetName;
+	const LevelName INVALID_LEVEL = {};
 
 	class Level
 	{

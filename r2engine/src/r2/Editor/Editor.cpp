@@ -34,6 +34,8 @@
 #endif
 #include "imgui.h"
 
+#include "r2/Game/Level/Level.h"
+#include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Engine.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Game/Level/LevelManager.h"
@@ -256,7 +258,7 @@ namespace r2
 		CreateNewLevel("NewGroup", "NewLevel");
 	}
 
-	void Editor::CreateNewLevel(const std::string& groupName, const std::string& levelName)
+	void Editor::CreateNewLevel(const std::string& groupName, const std::string& levelNameStr)
 	{
 		if (mCurrentEditorLevel)
 		{
@@ -268,13 +270,12 @@ namespace r2
 			mCurrentEditorLevel = nullptr;
 		}
 
-		std::filesystem::path levelURI = std::filesystem::path(groupName) / std::filesystem::path(levelName);
+		std::filesystem::path levelURI = std::filesystem::path(groupName) / std::filesystem::path(levelNameStr);
 		levelURI.replace_extension(".rlvl");
 
-		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelName.c_str(), groupName.c_str(), r2::asset::GetAssetNameForFilePath(levelURI.string().c_str(), r2::asset::LEVEL));
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI.string().c_str(), r2::asset::LEVEL);
 
-		
-		//r2::fs::utils::BuildPathFromCategory(fs::utils::LEVELS_BIN, levelURI.string().c_str(), );
+		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelNameStr.c_str(), groupName.c_str(), levelName);
 
 		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName(), "");
 

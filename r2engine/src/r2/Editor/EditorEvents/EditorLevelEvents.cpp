@@ -24,7 +24,7 @@ namespace r2::evt
 	std::string EditorLevelLoadedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorLevelLoadedEvent level: " << mLevel;
+		ss << "EditorLevelLoadedEvent level: " << mLevel.assetNameString;
 		return ss.str();
 	}
 
@@ -38,7 +38,7 @@ namespace r2::evt
 	std::string EditorNewLevelCreatedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorNewLevelCreatedEvent new level: " << mLevel;
+		ss << "EditorNewLevelCreatedEvent new level: " << mLevel.assetNameString;
 		return ss.str();
 	}
 
@@ -51,7 +51,7 @@ namespace r2::evt
 	std::string EditorSetEditorLevel::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorSetEditorLevel set to level: " << mLevel;
+		ss << "EditorSetEditorLevel set to level: " << mLevel.assetNameString;
 		return ss.str();
 	}
 
@@ -64,7 +64,7 @@ namespace r2::evt
 	std::string EditorLevelWillUnLoadEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorLevelWillUnLoadedEvent will unload level: " << mLevel;
+		ss << "EditorLevelWillUnLoadedEvent will unload level: " << mLevel.assetNameString;
 		return ss.str();
 	}
 

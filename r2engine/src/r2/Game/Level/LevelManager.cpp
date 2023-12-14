@@ -153,7 +153,7 @@ namespace r2
 
 		//@NOTE(Serge): sort of weird we're doing this but it's only when we make new levels for the editor
 		//				we may want to have this method only for R2_EDITOR/R2_ASSET_PIPELINE
-		newLevel.Init(1, levelNameStr, groupName, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, materials, soundBanks, entities);
+		newLevel.Init(1, levelNameStr, groupName, levelName, modelAssets, materials, soundBanks, entities);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -162,7 +162,9 @@ namespace r2
 
 	r2::Level* LevelManager::LoadLevel(const char* levelURI)
 	{
-		return LoadLevel(STRING_ID(levelURI));
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI, r2::asset::LEVEL);
+
+		return LoadLevel(levelName);
 	}
 
 	r2::Level* LevelManager::LoadLevel(LevelName levelName)
@@ -193,9 +195,9 @@ namespace r2
 			return nullptr;
 		}
 
-		LevelHandle levelHandle = gameAssetManager.LoadAsset(levelAsset);
+	//	LevelHandle levelHandle = gameAssetManager.LoadAsset(levelAsset);
 
-		const byte* levelData = gameAssetManager.GetAssetDataConst<byte>(levelHandle);
+		const byte* levelData = gameAssetManager.LoadAndGetAssetConst<byte>(levelAsset);
 
 		const flat::LevelData* flatLevelData = flat::GetLevelData(levelData);
 
@@ -217,7 +219,7 @@ namespace r2
 			flatLevelData->version(),
 			flatLevelData->levelAsset()->assetName()->stringName()->c_str(),
 			flatLevelData->groupAssetName()->stringName()->c_str(),
-			levelHandle,
+			levelName,
 			modelAssets,
 			texturePackAssets,
 			soundBanks,
@@ -287,7 +289,9 @@ namespace r2
 
 	Level* LevelManager::GetLevel(const char* levelURI)
 	{
-		return GetLevel(r2::asset::GetAssetNameForFilePath(levelURI, r2::asset::LEVEL));
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI, r2::asset::LEVEL);
+
+		return GetLevel(levelName);
 	}
 
 	Level* LevelManager::GetLevel(LevelName levelName)
@@ -302,14 +306,16 @@ namespace r2
 		return FindLoadedLevel(levelName, index) != nullptr;
 	}
 
-	bool LevelManager::IsLevelLoaded(const char* levelName)
+	bool LevelManager::IsLevelLoaded(const char* levelURI)
 	{
-		return IsLevelLoaded(r2::asset::GetAssetNameForFilePath(levelName, r2::asset::LEVEL));
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI, r2::asset::LEVEL);
+		return IsLevelLoaded(levelName);
 	}
 
 	Level* LevelManager::ReloadLevel(const char* levelURI)
 	{
-		return ReloadLevel(r2::asset::GetAssetNameForFilePath(levelURI, r2::asset::LEVEL));
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI, r2::asset::LEVEL);
+		return ReloadLevel(levelName);
 	}
 
 	Level* LevelManager::ReloadLevel(LevelName levelName)
@@ -333,7 +339,8 @@ namespace r2
 
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
 	{
-		return r2::asset::GetAssetNameForFilePath(levelPath, r2::asset::LEVEL);
+		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelPath, r2::asset::LEVEL);
+		return levelName;
 	}
 
 	Level* LevelManager::FindLoadedLevel(LevelName levelname, s32& index)

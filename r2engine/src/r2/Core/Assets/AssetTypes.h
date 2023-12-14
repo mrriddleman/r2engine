@@ -19,9 +19,9 @@ namespace r2::asset
 	struct AssetName
 	{
 		//UUID uuid;
-		u64 hashID;
+		u64 hashID = 0;
 #ifdef R2_ASSET_PIPELINE
-		std::string assetNameString;
+		std::string assetNameString = "";
 #endif
 
 		bool operator==(const AssetName& otherAssetName) const;
@@ -48,6 +48,8 @@ namespace r2::asset
 
 
 	void MakeAssetNameFromFlatAssetName(const flat::AssetName* flatAssetName, AssetName& outAssetName);
+	AssetName MakeAssetNameFromPath(const char* path, r2::asset::AssetType type);
+
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);
