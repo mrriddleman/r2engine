@@ -83,7 +83,7 @@ namespace r2
 
 		void OpenCreateNewLevelModal();
 
-		void AddSoundBankToLevel(u64 soundBankAssetName);
+		void AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name);
 		void AddMaterialToLevel(const r2::mat::MaterialName& materialName);
 		void AddModelToLevel(const r2::asset::Asset& modelAsset);
 

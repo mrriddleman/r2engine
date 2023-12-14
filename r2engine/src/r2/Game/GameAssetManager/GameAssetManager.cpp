@@ -95,6 +95,14 @@ namespace r2
 		UnloadAsset({ assethandle, mAssetCache->GetSlot() });
 	}
 
+	void GameAssetManager::UnloadAsset(const r2::asset::AssetName& assetName)
+	{
+		if (!mAssetCache)
+			return;
+
+		UnloadAsset({ assetName.hashID, mAssetCache->GetSlot() });
+	}
+
 	void GameAssetManager::UnloadAsset(const r2::asset::AssetHandle& assetHandle)
 	{
 		if (!mAssetCache || !mCachedRecords)

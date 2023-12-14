@@ -29,9 +29,9 @@ namespace r2
 			const char* levelName,
 			const char* groupName,
 			LevelHandle levelHandle,
-			r2::SArray<r2::asset::AssetHandle>* modelAssets,
+			r2::SArray<r2::asset::AssetName>* modelAssets,
 			r2::SArray<r2::mat::MaterialName>* materials,
-			r2::SArray<u64>* soundBanks,
+			r2::SArray<r2::asset::AssetName>* soundBanks,
 			r2::SArray<ecs::Entity>* entities);
 
 		void Shutdown();
@@ -49,9 +49,9 @@ namespace r2
 		u32 GetVersion() const;
 		void SetVersion(u32 version);
 
-		r2::SArray<r2::asset::AssetHandle>* GetModelAssets() const;
+		r2::SArray<r2::asset::AssetName>* GetModelAssets() const;
 		r2::SArray<r2::mat::MaterialName>* GetMaterials() const;
-		r2::SArray<u64>* GetSoundBankAssetNames() const;
+		r2::SArray<r2::asset::AssetName>* GetSoundBankAssetNames() const;
 		r2::SArray<ecs::Entity>* GetEntities() const;
 
 		void AddEntity(ecs::Entity e) const;
@@ -70,14 +70,9 @@ namespace r2
 		char mGroupName[r2::fs::FILE_PATH_LENGTH];
 
 		//we're going to add in arrays for each type of asset handle
-
-		//@TODO(Serge): this should be an AssetName SArray
-		r2::SArray<r2::asset::AssetHandle>* mModelAssets;
-		//we'll need to do something special for the materials/textures
+		r2::SArray<r2::asset::AssetName>* mModelAssets;
 		r2::SArray<r2::mat::MaterialName>* mMaterials;
-
-		//@TODO(Serge): this should be an AssetName SArray
-		r2::SArray<u64>* mSoundBanks;
+		r2::SArray<r2::asset::AssetName>* mSoundBanks;
 
 		r2::SArray<ecs::Entity>* mEntities;
 	};

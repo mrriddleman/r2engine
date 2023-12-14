@@ -524,56 +524,27 @@ namespace r2::edit
 			const r2::draw::Model* model = nullptr;
 			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			if (r2::asset::lib::HasAsset(assetLib, { renderComponent.assetModelName , r2::asset::RMODEL })) //gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL }))
+			if (r2::asset::lib::HasAsset(assetLib, { renderComponent.assetModelName , r2::asset::RMODEL })) 
 			{
 				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelName);
-				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::RMODEL)); //gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
+				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 			}
 			else
 			{
 				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelName);
 
 				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::MODEL));
-				
-
-				/*r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
-				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
-				for (u32 i = 0; i < numPrimitiveModels; ++i)
-				{
-					r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
-
-					if (assetFile->GetAssetHandle(0) == renderComponent.assetModelName)
-					{
-						currentModelAssetfile = assetFile;
-						break;
-					}
-				}*/
 			}
 
 			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
 
-			std::vector<r2::asset::AssetFile*> rModelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::RMODEL);//gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
+			std::vector<r2::asset::AssetFile*> rModelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::RMODEL);
 
 			//@TODO(Serge): remove the primitive model lines once we have refactored the r2::asset::MODEL stuff
 			{
 				std::vector<r2::asset::AssetFile*> modelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::MODEL);
 
 				rModelFiles.insert(rModelFiles.end(), modelFiles.begin(), modelFiles.end());
-
-				//r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
-				//const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
-				//for (u32 i = 0; i < numPrimitiveModels; ++i)
-				//{
-				//	r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
-				//	std::filesystem::path assetFilePath = assetFile->FilePath();
-
-				//	if (assetFilePath.extension().string() == ".modl" &&
-				//		(assetFilePath.stem().string() != "FullscreenTriangle" &&
-				//			assetFilePath.stem().string() != "Skybox"))
-				//	{
-				//		rModelFiles.push_back(assetFile);
-				//	}
-				//}
 			}
 
 

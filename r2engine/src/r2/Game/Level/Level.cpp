@@ -27,9 +27,9 @@ namespace r2
 		const char* levelName,
 		const char* groupName,
 		LevelHandle levelHandle,
-		r2::SArray<r2::asset::AssetHandle>* modelAssets,
+		r2::SArray<r2::asset::AssetName>* modelAssets,
 		r2::SArray<r2::mat::MaterialName>* materials,
-		r2::SArray<u64>* soundBanks,
+		r2::SArray<r2::asset::AssetName>* soundBanks,
 		r2::SArray<ecs::Entity>* entities)
 	{
 		
@@ -108,13 +108,13 @@ namespace r2
 	{
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(numModelAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetName>::MemorySize(numModelAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numTexturePacks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numSoundBanks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetName>::MemorySize(numSoundBanks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntities), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
 	}
 
-	r2::SArray<r2::asset::AssetHandle>* Level::GetModelAssets() const
+	r2::SArray<r2::asset::AssetName>* Level::GetModelAssets() const
 	{
 		return mModelAssets;
 	}
@@ -124,7 +124,7 @@ namespace r2
 		return mMaterials;
 	}
 
-	r2::SArray<u64>* Level::GetSoundBankAssetNames() const
+	r2::SArray<r2::asset::AssetName>* Level::GetSoundBankAssetNames() const
 	{
 		return mSoundBanks;
 	}

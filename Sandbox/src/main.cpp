@@ -959,7 +959,7 @@ public:
 				});
 
                 r2::audio::AudioEngine audioEngine;
-                if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
+              //  if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
                 {
                     mEventInstanceHandle = audioEngine.CreateEventInstance("event:/MyEvent");
                 }

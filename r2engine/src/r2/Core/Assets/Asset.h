@@ -18,7 +18,12 @@ namespace r2::asset
         
         Asset();
         Asset(const char* name, r2::asset::AssetType type);
+
+        //@TODO(Serge): get rid of this constructor
         Asset(u64 hash, r2::asset::AssetType type);
+        
+        Asset(const r2::asset::AssetName& assetName, r2::asset::AssetType type);
+
         Asset(const Asset& asset);
         Asset& operator=(const Asset& asset);
         
@@ -38,11 +43,13 @@ namespace r2::asset
         static u64 GetAssetNameForFilePath(const char* filePath, r2::asset::AssetType type);
 
     private:
+
+        //Replace all of this with AssetName
         #ifdef R2_ASSET_CACHE_DEBUG
         std::string mName; 
         #endif
-
         u64 mHashedPathID;
+
         AssetType mType;
     };
 

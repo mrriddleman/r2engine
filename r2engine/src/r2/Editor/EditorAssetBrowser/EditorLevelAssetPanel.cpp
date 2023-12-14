@@ -156,8 +156,8 @@ namespace r2::edit
 	void LevelAssetPanel::ShowLevelFiles(r2::Level& level, bool& wasActivated)
 	{
 		r2::SArray<r2::mat::MaterialName>* materialsNames = level.GetMaterials();
-		r2::SArray<r2::asset::AssetHandle>* modelAssets = level.GetModelAssets();
-		r2::SArray<u64>* soundAssets = level.GetSoundBankAssetNames();
+		r2::SArray<r2::asset::AssetName>* modelAssets = level.GetModelAssets();
+		r2::SArray<r2::asset::AssetName>* soundAssets = level.GetSoundBankAssetNames();
 
 		r2::GameAssetManager& gameAssetManager = MENG.GetGameAssetManager();
 		
@@ -197,9 +197,9 @@ namespace r2::edit
 		{
 			for (u32 i = 0; i < r2::sarr::Size(*modelAssets); ++i)
 			{
-				r2::asset::AssetHandle assetHandle = r2::sarr::At(*modelAssets, i);
+				r2::asset::AssetName assetName = r2::sarr::At(*modelAssets, i);
 
-				const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, r2::asset::RMODEL));//gameAssetManager.GetAssetFile(assetHandle);
+				const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetName, r2::asset::RMODEL));//gameAssetManager.GetAssetFile(assetHandle);
 
 				std::filesystem::path modelFilePath = modelAssetFile->FilePath();
 
@@ -227,7 +227,7 @@ namespace r2::edit
 		{
 			for (u32 i = 0; i < r2::sarr::Size(*soundAssets); ++i)
 			{
-				const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(r2::sarr::At(*soundAssets, i));
+				const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(r2::sarr::At(*soundAssets, i).hashID);
 
 				if (ImGui::TreeNodeEx(soundBankName, ImGuiTreeNodeFlags_Bullet))
 				{
@@ -292,16 +292,16 @@ namespace r2::edit
 
 	void LevelAssetPanel::ShowLevelModels(r2::Level& level, float thumbnailSize)
 	{
-		r2::SArray<r2::asset::AssetHandle>* modelAssets = level.GetModelAssets();
+		r2::SArray<r2::asset::AssetName>* modelAssets = level.GetModelAssets();
 		r2::GameAssetManager& gameAssetManager = MENG.GetGameAssetManager();
 
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
 		for (u32 i = 0; i < r2::sarr::Size(*modelAssets); ++i)
 		{
-			r2::asset::AssetHandle assetHandle = r2::sarr::At(*modelAssets, i);
+			r2::asset::AssetName assetName = r2::sarr::At(*modelAssets, i);
 
-			const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, r2::asset::RMODEL)); //gameAssetManager.GetAssetFile(assetHandle);
+			const r2::asset::AssetFile* modelAssetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetName, r2::asset::RMODEL)); //gameAssetManager.GetAssetFile(assetHandle);
 
 			std::filesystem::path modelFilePath = modelAssetFile->FilePath();
 
@@ -318,7 +318,7 @@ namespace r2::edit
 			{
 				LevelAssetContextMenuData data;
 				data.type = LACT_MODEL;
-				data.data = &assetHandle;
+				data.data = &assetName;
 
 				if (!ShowLevelAssetContextMenu(level, data))
 					ImGui::CloseCurrentPopup();
@@ -338,12 +338,12 @@ namespace r2::edit
 
 	void LevelAssetPanel::ShowLevelSounds(r2::Level& level, float thumbnailSize)
 	{
-		r2::SArray<u64>* soundAssets = level.GetSoundBankAssetNames();
+		r2::SArray<r2::asset::AssetName>* soundAssets = level.GetSoundBankAssetNames();
 
 		for (u32 i = 0; i < r2::sarr::Size(*soundAssets); ++i)
 		{
 			auto soundAsset = r2::sarr::At(*soundAssets, i);
-			std::string soundFileStemStr = r2::audio::GetSoundBankNameFromAssetName(soundAsset);
+			std::string soundFileStemStr = r2::audio::GetSoundBankNameFromAssetName(soundAsset.hashID);
 			
 
 

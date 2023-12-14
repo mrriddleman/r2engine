@@ -6,6 +6,11 @@
 #include <functional>
 #include "assetlib/AssetUtils.h"
 
+namespace flat
+{
+	struct AssetName;
+}
+
 namespace r2::asset
 {
 	const u64 INVALID_ASSET_HANDLE = 0;
@@ -42,6 +47,7 @@ namespace r2::asset
 	using FileHandle = s64;
 
 
+	void MakeAssetNameFromFlatAssetName(const flat::AssetName* flatAssetName, AssetName& outAssetName);
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);

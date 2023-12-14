@@ -399,8 +399,9 @@ namespace r2
 
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterComponent>(theNewEntity, audioEmitterComponent);
 
+
 				//@TEMPORARY!!!! - we would need some other mechanism for adding/loading the bank, probably through the asset catalog tool or something
-				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND));
+				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND), "TestBank1.bank");
 
 
 			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
@@ -583,12 +584,15 @@ namespace r2
 
 		auto* modelAssets = mCurrentEditorLevel->GetModelAssets();
 		
-		r2::asset::AssetHandle modelAssetHandle = { modelHandle.handle, gameAssetManager.GetAssetCacheSlot() };
+		r2::asset::AssetName modelAssetName;
+		modelAssetName.hashID = modelAsset.HashID();
+
+		//r2::asset::AssetHandle modelAssetHandle = { modelHandle.handle, gameAssetManager.GetAssetCacheSlot() };
 		
-		if (r2::sarr::IndexOf(*modelAssets, modelAssetHandle) == -1)
+		if (r2::sarr::IndexOf(*modelAssets, modelAssetName) == -1)
 		{
 			//@NOTE(Serge): may want to load here - dunno yet
-			r2::sarr::Push(*modelAssets, modelAssetHandle);
+			r2::sarr::Push(*modelAssets, modelAssetName);
 		}
 
 		const u32 numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
@@ -613,18 +617,25 @@ namespace r2
 		}
 	}
 
-	void Editor::AddSoundBankToLevel(u64 soundBankAssetName)
+	void Editor::AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name)
 	{
 		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();
 	
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		gameAssetManager.LoadAsset(r2::asset::Asset(soundBankAssetName, r2::asset::SOUND));
+
+		r2::asset::AssetName soundBankName;
+		soundBankName.hashID = soundBankAssetName;
+		soundBankName.assetNameString = name;
+
+		gameAssetManager.LoadAsset(r2::asset::Asset(soundBankName, r2::asset::SOUND));
+
+
 
 		//@TODO(Serge): shouldn't the level be doing this?
-		if (r2::sarr::IndexOf(*soundBanks, soundBankAssetName) == -1)
+		if (r2::sarr::IndexOf(*soundBanks, soundBankName) == -1)
 		{
-			r2::sarr::Push(*soundBanks, soundBankAssetName);
+			r2::sarr::Push(*soundBanks, soundBankName);
 		}
 	}
 }

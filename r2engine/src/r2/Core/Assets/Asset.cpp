@@ -36,12 +36,21 @@ namespace r2::asset
         mType = type;
     }
 
-    Asset::Asset(u64 hash, r2::asset::AssetType type)
-        : mHashedPathID(hash)
-        , mType(type)
+	Asset::Asset(u64 hash, r2::asset::AssetType type)
+		: mHashedPathID(hash)
+		, mType(type)
+	{
+#ifdef R2_ASSET_CACHE_DEBUG
+		mName[0] = '\0';
+#endif
+	}
+
+    Asset::Asset(const r2::asset::AssetName& assetName, r2::asset::AssetType type)
+        :mHashedPathID(assetName.hashID)
+        ,mType(type)
     {
 #ifdef R2_ASSET_CACHE_DEBUG
-        mName[0] = '\0';
+        mName = assetName.assetNameString;
 #endif
     }
     

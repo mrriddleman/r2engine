@@ -180,6 +180,8 @@ namespace r2
 		void UnloadAsset(const r2::asset::AssetHandle& assetHandle);
 		void UnloadAsset(const u64 assethandle);
 
+		void UnloadAsset(const r2::asset::AssetName& assetName);
+
 		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
 
 		void RegisterAssetLoader(r2::asset::AssetLoader* assetLoader);

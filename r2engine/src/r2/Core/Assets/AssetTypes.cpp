@@ -1,5 +1,6 @@
 #include "r2pch.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Assets/AssetName_generated.h"
 
 namespace r2::asset
 {
@@ -22,10 +23,19 @@ namespace r2::asset
 	{
 		return hashID == otherAssetName.hashID
 			//@TODO(Serge): add UUID
-#ifdef R2_ASSET_PIPELINE
-			&& assetNameString == otherAssetName.assetNameString
-#endif
+//#ifdef R2_ASSET_PIPELINE
+//			&& assetNameString == otherAssetName.assetNameString
+//#endif
 			;
+	}
+
+	void MakeAssetNameFromFlatAssetName(const flat::AssetName* flatAssetName, AssetName& outAssetName)
+	{
+		//@TODO(Serge): UUID
+		outAssetName.hashID = flatAssetName->assetName();
+#ifdef R2_ASSET_PIPELINE
+		outAssetName.assetNameString = flatAssetName->stringName()->str();
+#endif
 	}
 
 }

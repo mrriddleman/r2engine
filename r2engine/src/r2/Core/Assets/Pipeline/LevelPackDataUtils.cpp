@@ -64,13 +64,13 @@ namespace r2::asset::pln
 	}
 
 	//@TODO(Serge): r2::SArray<r2::asset::AssetHandle> should be r2::SArray<flat::AssetName>
-	std::vector<flatbuffers::Offset<flat::AssetName>> MakeAssetNamesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const r2::SArray<r2::asset::AssetHandle>* assetHandles)
+	std::vector<flatbuffers::Offset<flat::AssetName>> MakeAssetNamesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const r2::SArray<r2::asset::AssetName>* assetNames)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
-		std::vector<flatbuffers::Offset<flat::AssetName>> assetNames;
+		std::vector<flatbuffers::Offset<flat::AssetName>> flatAssetNames;
 
-		size_t numFiles = r2::sarr::Size(*assetHandles);
+		size_t numFiles = r2::sarr::Size(*assetNames);
 
 		char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
 		char assetNameStr[r2::fs::FILE_PATH_LENGTH];
@@ -78,11 +78,11 @@ namespace r2::asset::pln
 		for (size_t i = 0; i < numFiles; ++i)
 		{
 
-			const auto assetHandle = r2::sarr::At(*assetHandles, i);
+			const auto assetName = r2::sarr::At(*assetNames, i);
 
 			//This shouldn't really exist - should just get the AssetName and use that
 			{
-				const r2::asset::AssetFile* assetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetHandle.handle, assetType));//gameAssetManager.GetAssetFile(assetHandle);
+				const r2::asset::AssetFile* assetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(assetName, assetType));//gameAssetManager.GetAssetFile(assetHandle);
 
 				std::filesystem::path filePath = assetFile->FilePath();
 
@@ -93,36 +93,36 @@ namespace r2::asset::pln
 
 			
 			//@TODO(Serge): UUID
-			auto assetName = flat::CreateAssetName(builder, 0, assetHandle.handle, builder.CreateString(assetNameStr));
+			auto flatAssetName = flat::CreateAssetName(builder, 0, assetName.hashID, builder.CreateString(assetNameStr));
 
-			assetNames.push_back(assetName);
+			flatAssetNames.push_back(flatAssetName);
 		}
-
-		return assetNames;
+		
+		return flatAssetNames;
 	}
 
 	//@TODO(Serge): r2::SArray<u64> should be r2::SArray<flat::AssetName>
-	std::vector<flatbuffers::Offset<flat::AssetName>> MakePackReferencesFromSoundBankAssetNames(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<u64>* soundBankAssetNames)
+	std::vector<flatbuffers::Offset<flat::AssetName>> MakePackReferencesFromSoundBankAssetNames(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<r2::asset::AssetName>* soundBankAssetNames)
 	{
-		std::vector<flatbuffers::Offset<flat::AssetName>> assetNames = {};
+		std::vector<flatbuffers::Offset<flat::AssetName>> flatAssetNames = {};
 
 		size_t numSoundBanks = r2::sarr::Size(*soundBankAssetNames);
 
 		for (size_t i = 0; i < numSoundBanks; ++i)
 		{
-			u64 assetBankName = r2::sarr::At(*soundBankAssetNames, i);
-			const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(assetBankName);
+			r2::asset::AssetName assetBankName = r2::sarr::At(*soundBankAssetNames, i);
+			const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(assetBankName.hashID);
 
 			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
 
 			r2::fs::utils::SanitizeSubPath(soundBankName, sanitizedFilePathURI);
 
-			auto assetName = flat::CreateAssetName(builder, 0, assetBankName, builder.CreateString(sanitizedFilePathURI));
+			auto assetName = flat::CreateAssetName(builder, 0, assetBankName.hashID, builder.CreateString(sanitizedFilePathURI));
 
-			assetNames.push_back(assetName);
+			flatAssetNames.push_back(assetName);
 		}
 
-		return assetNames;
+		return flatAssetNames;
 	}
 
 	bool SaveLevelData(

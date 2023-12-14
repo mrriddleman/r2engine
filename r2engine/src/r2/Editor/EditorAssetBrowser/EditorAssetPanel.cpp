@@ -586,7 +586,7 @@ namespace r2::edit
 			//audioEngine.LoadBank(path.string().c_str(), 0);
 
 
-			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND));
+			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND), path.stem().string());
 		}
 	}
 

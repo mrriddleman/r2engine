@@ -492,10 +492,9 @@ namespace r2::edit
 
 						//@NOTE(Serge): for now we don't want to list all our textures, just show what the texture is
 						//@TODO(Serge): be able to modify this later
-						r2::asset::AssetHandle textureAssetHandle = { textureParam.value.hashID, gameAssetManager.GetAssetCacheSlot() };
-
+						
 						//@TODO(Serge): this might be wrong for cubemaps?
-						const r2::asset::AssetFile* assetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(textureAssetHandle.handle, r2::asset::TEXTURE));//gameAssetManager.GetAssetFile(textureAssetHandle);
+						const r2::asset::AssetFile* assetFile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(textureParam.value, r2::asset::TEXTURE));//gameAssetManager.GetAssetFile(textureAssetHandle);
 						if (assetFile)
 						{
 							const char* textureAssetFilePath = assetFile->FilePath();
