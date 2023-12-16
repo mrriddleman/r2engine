@@ -305,13 +305,13 @@ namespace r2::draw::texche
 
 		for (; iter != r2::shashmap::End(*texturePacksCache.mLoadedTexturePacks); ++iter)
 		{
-			s32 manifestIndex = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, iter->value.packName, invalidIndex);
+			s32 manifestIndex = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, iter->value.packName.hashID, invalidIndex);
 
 			if (manifestIndex == packManifestIndex)
 			{
 				for (u32 i = 0; i < manifest->texturePacks()->size(); ++i)
 				{
-					if (manifest->texturePacks()->Get(i)->assetName()->assetName() == iter->value.packName)
+					if (manifest->texturePacks()->Get(i)->assetName()->assetName() == iter->value.packName.hashID)
 					{
 						iter->value.metaData = manifest->texturePacks()->Get(i)->metaData();
 						break;
@@ -406,7 +406,7 @@ namespace r2::draw::texche
 
 		LoadedTexturePack loadedTexturePack;
 		
-		loadedTexturePack.packName = texturePack->assetName()->assetName();
+		r2::asset::MakeAssetNameFromFlatAssetName(texturePack->assetName(), loadedTexturePack.packName);
 		loadedTexturePack.metaData = texturePack->metaData();
 
 		if (loadedTexturePack.metaData->type() == flat::TextureType_TEXTURE)
@@ -421,7 +421,7 @@ namespace r2::draw::texche
 			LoadCubemap(texturePacksCache, loadedTexturePack, texturePack);
 		}
 
-		r2::shashmap::Set(*texturePacksCache.mLoadedTexturePacks, loadedTexturePack.packName, loadedTexturePack);
+		r2::shashmap::Set(*texturePacksCache.mLoadedTexturePacks, loadedTexturePack.packName.hashID, loadedTexturePack);
 
 		return true;
 	}
@@ -502,7 +502,7 @@ namespace r2::draw::texche
 
 		LoadedTexturePack& resultTexturePack = r2::shashmap::Get(*texturePacksCache.mLoadedTexturePacks, texturePackName, defaultLoadedTexturePack);
 
-		if (resultTexturePack.packName != defaultLoadedTexturePack.packName)
+		if (!(resultTexturePack.packName == defaultLoadedTexturePack.packName))
 		{
 			return true;
 		}
