@@ -11,15 +11,8 @@
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/SoundAssetLoader.h"
-
 #include "r2/Core/Memory/Memory.h"
-
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
-
-#ifdef R2_ASSET_PIPELINE
-#include <string>
-#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
-#endif
 
 #include <cstdio>
 
@@ -48,17 +41,18 @@ namespace r2
 		bool Init(
 			ARENA& arena,
 			r2::mem::MemoryArea::Handle assetMemoryHandle,
-			u32 numTextures,
-			u32 numTextureManifests,
-			u32 numTexturePacks,
+			r2::mem::MemoryArea::SubArea::Handle assetSubMemoryHandle,
 			u32 assetCacheSize)
 		{
+			mMemoryAreaHandle = assetMemoryHandle;
+			mMemorySubeAreaHandle = assetSubMemoryHandle;
+
 			r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
 			R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
 
 			const u64 fileListCapacity = r2::asset::lib::MAX_NUM_GAME_ASSET_FILES;
 
-			auto areaBoundary = gameAssetManagerMemoryArea->AreaBoundary();
+			auto areaBoundary = gameAssetManagerMemoryArea->SubAreaBoundary(mMemorySubeAreaHandle);
 			areaBoundary.alignment = 16;
 
 			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCacheSize, fileListCapacity);
@@ -81,18 +75,12 @@ namespace r2
 			r2::asset::SoundAssetLoader* soundLoader = (r2::asset::SoundAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::SoundAssetLoader>();
 			mAssetCache->RegisterAssetLoader(soundLoader);
 
-
-			mTexturePacksCache = draw::texche::Create<ARENA>(arena, numTextures, numTextureManifests, numTexturePacks, this);
-
-			R2_CHECK(mTexturePacksCache != nullptr, "Failed to make the texture packs cache");
-
 			return mAssetCache != nullptr;
 		}
 
 		template<class ARENA>
 		void Shutdown(ARENA& arena)
 		{
-			r2::draw::texche::Shutdown<ARENA>(arena, mTexturePacksCache);
 
 			FreeAllAssets();
 
@@ -192,38 +180,17 @@ namespace r2
 
 		void RegisterAssetLoader(r2::asset::AssetLoader* assetLoader);
 
-
-		//@TODO(Serge): really annoying we have two different interfaces - 1 for textures, 1 for everything else
-		//				we need a to figure out a way to consolidate these. I think we'd have to pack all the textures together into 1 
-		//				file for this to work
-		bool AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest);
-		bool UpdateTexturePacksManifest(u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
-		
-		bool LoadMaterialTextures(const flat::Material* material);
-		bool LoadMaterialTextures(const flat::MaterialPack* materialPack);
-		
-		bool UnloadTexturePack(u64 texturePackName);
-		
-		bool GetTexturesForFlatMaterial(const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
-		bool GetTexturesForMaterialPack(const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
-
-		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);
-		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialPack* materialParamsPack, u64 materialName);
-
-#if defined(R2_ASSET_PIPELINE) || defined(R2_EDITOR)
-
-		bool ReloadTextureInTexturePack(u64 texturePackName, u64 textureName);
-		bool ReloadTexturePack(u64 texturePackName);
-#endif
 		s64 GetAssetCacheSlot() const;
 
 	private:
 
 		void FreeAllAssets();
-		void GetTexturesForMaterialnternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
-
+		
 		r2::asset::AssetCacheRecord FindAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);
 		void RemoveAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);
+
+		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
+		r2::mem::MemoryArea::SubArea::Handle mMemorySubeAreaHandle;
 
 		r2::asset::AssetCache* mAssetCache;
 
@@ -232,9 +199,6 @@ namespace r2
 		//				be a corruption when you try to get the asset. We could make our own (for this class) kind of asset handle
 		//				that would just index into an array or something but keep it simple for now.
 		r2::SArray<r2::asset::AssetCacheRecord>* mCachedRecords;
-
-		r2::draw::TexturePacksCache* mTexturePacksCache;
-
 	};
 }
 

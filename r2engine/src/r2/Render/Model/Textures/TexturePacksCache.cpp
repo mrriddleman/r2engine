@@ -10,13 +10,19 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TexturePackMetaData_generated.h"
+#include "R2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Core/Assets/AssetRef_generated.h"
 #include "r2/Utils/Hash.h"
 #include <algorithm>
 
+namespace
+{
+	const u64 EMPTY_TEXTURE_PACK_NAME = STRING_ID("");
+}
+
 namespace r2::draw
 {
-	u64 TexturePacksCache::MemorySize(u32 numTextures, u32 numManifests, u32 numTexturePacks)
+	u64 TexturePacksCache::MemorySize(u32 textureCapacity, u32 numTextures, u32 numManifests, u32 numTexturePacks)
 	{
 		u64 memorySize = 0;
 
@@ -30,6 +36,19 @@ namespace r2::draw
 
 		const u32 ALIGNMENT = 16;
 
+		/*
+				r2::mem::StackArena* mArena;
+
+		r2::SArray<TexturePackManifestEntry>* mTexturePackManifests;
+		r2::SHashMap<LoadedTexturePack>* mLoadedTexturePacks;
+		r2::SHashMap<s32>* mPackNameToTexturePackManifestEntryMap;
+		r2::SHashMap<s32>* mManifestNameToTexturePackManifestEntryMap;
+
+		r2::mem::FreeListArena* mTexturePackArena;
+
+		r2::asset::AssetCache* mAssetCache;
+		*/
+
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(TexturePacksCache), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), ALIGNMENT, stackHeaderSize, boundsChecking);
@@ -39,7 +58,8 @@ namespace r2::draw
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(tex::Texture), ALIGNMENT, freeListHeaderSize, boundsChecking) * numTextures;
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier()), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(numManifests * r2::SHashMap<u32>::LoadFactorMultiplier()), ALIGNMENT, stackHeaderSize, boundsChecking);
-
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::asset::AssetCache::TotalMemoryNeeded(numTextures, textureCapacity, ALIGNMENT, numTextures, numTextures), ALIGNMENT, stackHeaderSize, boundsChecking);
+		
 		return memorySize;
 	}
 }
@@ -50,11 +70,106 @@ namespace r2::draw::texche
 	const TexturePacksManifestHandle TexturePacksManifestHandle::Invalid = { -1 };
 
 	const u32 ALIGNMENT = 16;
-	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList);
+
 	bool LoadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
 	bool UnloadTexturePack(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
 	bool LoadCubemap(TexturePacksCache& texturePacksCache, LoadedTexturePack& loadedTexturePack, const flat::TexturePack* texturePack);
 	void UnloadCubemap(TexturePacksCache& texturePacksCache, LoadedTexturePack& loadedTexturePack);
+
+	r2::draw::TexturePacksCache* Create(r2::mem::utils::MemBoundary memBoundary, u32 textureCapacity, u32 numTextures, u32 numManifests, u32 numTexturePacks)
+	{
+		r2::mem::StackArena* texturePacksCacheArena = EMPLACE_STACK_ARENA_IN_BOUNDARY(memBoundary);
+
+		R2_CHECK(texturePacksCacheArena != nullptr, "We couldn't emplace the stack arena - no way to recover!");
+
+		TexturePacksCache* newTexturePacksCache = ALLOC(TexturePacksCache, *texturePacksCacheArena);
+		
+		R2_CHECK(newTexturePacksCache != nullptr, "We couldn't create the TexturePacksCache object");
+
+		newTexturePacksCache->mMemoryBoundary = memBoundary;
+
+		newTexturePacksCache->mArena = texturePacksCacheArena;
+
+		newTexturePacksCache->mTexturePackManifests = MAKE_SARRAY(*texturePacksCacheArena, TexturePackManifestEntry, numManifests);
+
+		R2_CHECK(newTexturePacksCache->mTexturePackManifests != nullptr, "We couldn't create the texture pack manifests array");
+
+		newTexturePacksCache->mLoadedTexturePacks = MAKE_SHASHMAP(*texturePacksCacheArena, LoadedTexturePack, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
+
+		R2_CHECK(newTexturePacksCache->mLoadedTexturePacks != nullptr, "We couldn't create the mLoadedTexturePacks hashmap");
+
+		newTexturePacksCache->mPackNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
+
+		R2_CHECK(newTexturePacksCache->mPackNameToTexturePackManifestEntryMap != nullptr, "We couldn't create the mPackNameToTexturePackManifestEntryMap");
+
+		newTexturePacksCache->mManifestNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numManifests * r2::SHashMap<u32>::LoadFactorMultiplier());
+
+		R2_CHECK(newTexturePacksCache->mManifestNameToTexturePackManifestEntryMap != nullptr, "We couldn't create the mManifestNameToTexturePackManifestEntryMap");
+
+		//first we need to calculate how big this arena is
+		u32 freelistArenaSize = sizeof(r2::SArray<tex::Texture>) * numTexturePacks + sizeof(tex::Texture) * numTextures;
+
+		newTexturePacksCache->mTexturePackArena = MAKE_FREELIST_ARENA(*texturePacksCacheArena, freelistArenaSize, r2::mem::FIND_BEST);
+
+		R2_CHECK(newTexturePacksCache->mTexturePackArena != nullptr, "We couldn't create the the texture pack arena");
+
+		const auto memoryNeeded = r2::asset::AssetCache::TotalMemoryNeeded(numTextures, textureCapacity, memBoundary.alignment);
+
+		auto boundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*texturePacksCacheArena, memoryNeeded, ALIGNMENT, "TexturePack's AssetCache");
+		newTexturePacksCache->mAssetCacheBoundary = boundary;
+
+		newTexturePacksCache->mAssetCache = r2::asset::lib::CreateAssetCache(boundary, textureCapacity, numTextures);
+
+		return newTexturePacksCache;
+	}
+
+	void Shutdown(TexturePacksCache* texturePacksCache)
+	{
+		if (!texturePacksCache)
+		{
+			return;
+		}
+
+		r2::mem::utils::MemBoundary texturePacksCacheBoundary = texturePacksCache->mMemoryBoundary;
+
+		r2::mem::StackArena* texturePacksCacheArena = texturePacksCache->mArena;
+
+		const u32 numTexturePackManifests = r2::sarr::Size(*texturePacksCache->mTexturePackManifests);
+
+		for (u32 i = 0; i < numTexturePackManifests; ++i)
+		{
+			const auto& entry = r2::sarr::At(*texturePacksCache->mTexturePackManifests, i);
+
+			if (entry.flatTexturePacksManifest != nullptr)
+			{
+				UnloadAllTexturePacks(*texturePacksCache, { static_cast<s32>(i) });
+			}
+		}
+
+		r2::sarr::Clear(*texturePacksCache->mTexturePackManifests);
+		r2::shashmap::Clear(*texturePacksCache->mLoadedTexturePacks);
+		r2::shashmap::Clear(*texturePacksCache->mPackNameToTexturePackManifestEntryMap);
+		r2::shashmap::Clear(*texturePacksCache->mManifestNameToTexturePackManifestEntryMap);
+
+
+		r2::asset::lib::DestroyCache(texturePacksCache->mAssetCache);
+		FREE(texturePacksCache->mAssetCacheBoundary.location, *texturePacksCacheArena);
+
+
+		FREE(texturePacksCache->mTexturePackArena, *texturePacksCacheArena);
+
+		FREE(texturePacksCache->mManifestNameToTexturePackManifestEntryMap, *texturePacksCacheArena);
+
+		FREE(texturePacksCache->mPackNameToTexturePackManifestEntryMap, *texturePacksCacheArena);
+
+		FREE(texturePacksCache->mLoadedTexturePacks, *texturePacksCacheArena);
+
+		FREE(texturePacksCache->mTexturePackManifests, *texturePacksCacheArena);
+
+		FREE(texturePacksCache, *texturePacksCacheArena);
+
+		FREE_EMPLACED_ARENA(texturePacksCacheArena);
+	}
 
 	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& numCubemaps, u32& cacheSize)
 	{
@@ -100,7 +215,7 @@ namespace r2::draw::texche
 	TexturePacksManifestHandle AddTexturePacksManifestFile(TexturePacksCache& texturePacksCache, u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest)
 	{
 		//add the texturePacksManifestFilePath file 
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mTexturePackManifests == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mTexturePackManifests == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the cache yet");
 			return TexturePacksManifestHandle::Invalid;
@@ -149,7 +264,7 @@ namespace r2::draw::texche
 
 	bool UpdateTexturePacksManifest(TexturePacksCache& texturePacksCache, u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mTexturePackManifests == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mTexturePackManifests == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the cache yet");
 			return false;
@@ -216,16 +331,13 @@ namespace r2::draw::texche
 	{
 		for (u32 i = 0; i < paths->size(); ++i)
 		{
-
 			const flatbuffers::String* texturePath = paths->Get(i)->binPath();
-			//  //paths->Get(i);
 
 			r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePath->c_str(), r2::asset::TEXTURE);
 
 			tex::Texture newTexture;
-			//newTexture.type = type;
 
-			newTexture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
+			newTexture.textureAssetHandle = texturePacksCache.mAssetCache->LoadAsset(textureAsset);
 
 			R2_CHECK(!r2::asset::IsInvalidAssetHandle(newTexture.textureAssetHandle), "We couldn't load the texture: %s!", texturePath->c_str());
 
@@ -243,7 +355,7 @@ namespace r2::draw::texche
 
 			for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
 			{
-				texturePacksCache.mnoptrGameAssetManager->UnloadAsset(loadedTexturePack.cubemap.mips[m].sides[i].textureAssetHandle);
+				texturePacksCache.mAssetCache->FreeAsset(loadedTexturePack.cubemap.mips[m].sides[i].textureAssetHandle);
 
 				loadedTexturePack.cubemap.mips[m].sides[i].textureAssetHandle = {};
 			}
@@ -271,8 +383,8 @@ namespace r2::draw::texche
 				r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(side->textureName()->c_str(), r2::asset::CUBEMAP_TEXTURE);
 
 				r2::draw::tex::Texture texture;
-				//texture.type = tex::TextureType::Diffuse;
-				texture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
+
+				texture.textureAssetHandle = texturePacksCache.mAssetCache->LoadAsset(textureAsset);
 
 				R2_CHECK(!r2::asset::IsInvalidAssetHandle(texture.textureAssetHandle), "We couldn't load the texture: %s!", side->textureName()->c_str());
 
@@ -303,17 +415,6 @@ namespace r2::draw::texche
 			
 			//now load all of the textures of this pack
 			LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->textures());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->anisotropy());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoat());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatNormal());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->clearCoatRoughness());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->detail());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->emissive());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->height());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->metallic());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->normal());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->occlusion());
-			//LoadTextures(texturePacksCache, loadedTexturePack, texturePack, texturePack->roughness());
 		}
 		else if (loadedTexturePack.metaData->type() == flat::TextureType_CUBEMAP)
 		{
@@ -432,7 +533,7 @@ namespace r2::draw::texche
 
 	bool UnloadAllTexturePacks(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return false;
@@ -471,9 +572,15 @@ namespace r2::draw::texche
 		return UnloadTexturePack(texturePacksCache, { index }, texturePackName);
 	}
 
+	bool UnloadTexture(TexturePacksCache& texturePacksCache, const tex::Texture& texture)
+	{
+		texturePacksCache.mAssetCache->FreeAsset(texture.textureAssetHandle);
+		return true;
+	}
+
 	bool UnloadTexturePack(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return false;
@@ -506,7 +613,7 @@ namespace r2::draw::texche
 				{
 					const tex::Texture& texture = r2::sarr::At(*resultTexturePack.textures, i);
 
-					texturePacksCache.mnoptrGameAssetManager->UnloadAsset(texture.textureAssetHandle);
+					texturePacksCache.mAssetCache->FreeAsset(texture.textureAssetHandle);
 				}
 
 				FREE(resultTexturePack.textures, *texturePacksCache.mTexturePackArena);
@@ -522,50 +629,9 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	//void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flat::AssetRef>>* texturePaths, r2::asset::FileList fileList)
-	//{
-	//	for (u32 i = 0; i < texturePaths->size(); ++i)
-	//	{
-	//		r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->binPath()->str().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
-	//		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-	//	}
-	//}
-
-	//void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
-	//{
-	//	AddAllTexturesFromTextureType(texturePack->textures(), fileList);
-
-	//	//AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->height(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-	//	//AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
-
-	//	if (texturePack->metaData() && texturePack->metaData()->mipLevels())
-	//	{
-	//		for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
-	//		{
-	//			const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
-
-	//			for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
-	//			{
-	//				r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::CUBEMAP_TEXTURE));
-	//				r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-	//			}
-	//		}
-	//	}
-	//}
-
 	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return false;
@@ -619,139 +685,6 @@ namespace r2::draw::texche
 			}
 		}
 
-		/*const auto* albedos = texturePack->albedo();
-
-		for (flatbuffers::uoffset_t i = 0; i < albedos->size(); ++i)
-		{
-			std::string albedoString = albedos->Get(i)->c_str();
-			if (r2::asset::Asset::GetAssetNameForFilePath(albedoString.c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* metallics = texturePack->metallic();
-
-		for (flatbuffers::uoffset_t i = 0; i < metallics->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(metallics->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* roughnesses = texturePack->roughness();
-
-		for (flatbuffers::uoffset_t i = 0; i < roughnesses->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(roughnesses->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* normals = texturePack->normal();
-
-		for (flatbuffers::uoffset_t i = 0; i < normals->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(normals->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* aos = texturePack->occlusion();
-
-		for (flatbuffers::uoffset_t i = 0; i < aos->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(aos->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* emissives = texturePack->emissive();
-
-		for (flatbuffers::uoffset_t i = 0; i < emissives->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(emissives->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* anisotropies = texturePack->anisotropy();
-
-		for (flatbuffers::uoffset_t i = 0; i < anisotropies->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(anisotropies->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* clearCoats = texturePack->clearCoat();
-
-		for (flatbuffers::uoffset_t i = 0; i < clearCoats->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoats->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* clearCoatNormals = texturePack->clearCoatNormal();
-
-		for (flatbuffers::uoffset_t i = 0; i < clearCoatNormals->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoatNormals->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* clearCoatRoughnesses = texturePack->clearCoatRoughness();
-
-		for (flatbuffers::uoffset_t i = 0; i < clearCoatRoughnesses->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(clearCoatRoughnesses->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* details = texturePack->detail();
-
-		for (flatbuffers::uoffset_t i = 0; i < details->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(details->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		const auto* heights = texturePack->height();
-
-		for (flatbuffers::uoffset_t i = 0; i < heights->size(); ++i)
-		{
-			if (r2::asset::Asset::GetAssetNameForFilePath(heights->Get(i)->c_str(), r2::asset::TEXTURE) == textureName)
-			{
-				found = true;
-				break;
-			}
-		}*/
-
 		return found;
 	}
 
@@ -795,7 +728,6 @@ namespace r2::draw::texche
 			return false;
 		}
 
-		//tex::TextureType textureType;
 		if (foundPack->metaData()->type() == flat::TextureType_TEXTURE)
 		{
 			//get the type in case we have never loaded this texture
@@ -809,7 +741,7 @@ namespace r2::draw::texche
 			{
 				const auto& texture = r2::sarr::At(*loadedTexturePack.textures, i);
 
-				if (texture.textureAssetHandle.handle == textureName)// && texture.type == textureType)
+				if (texture.textureAssetHandle.handle == textureName)
 				{
 					foundTexture = &texture;
 					foundIndex = i;
@@ -822,7 +754,7 @@ namespace r2::draw::texche
 			if (foundInFlatTexturePack && foundTexture)
 			{
 				//we have the texture and it's in the manifest - just reload
-				auto handle = texturePacksCache.mnoptrGameAssetManager->ReloadAsset(textureAsset);
+				auto handle = texturePacksCache.mAssetCache->ReloadAsset(textureAsset);
 
 				R2_CHECK(!r2::asset::IsInvalidAssetHandle(handle), "We couldn't reload the asset");
 			}
@@ -830,9 +762,8 @@ namespace r2::draw::texche
 			{
 				//we have the texture in the manifest, not loaded - added new texture
 				tex::Texture newTexture;
-			//	newTexture.type = textureType;
 
-				newTexture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
+				newTexture.textureAssetHandle = texturePacksCache.mAssetCache->LoadAsset(textureAsset);
 
 				R2_CHECK(!r2::asset::IsInvalidAssetHandle(newTexture.textureAssetHandle), "We couldn't load the asset");
 
@@ -841,7 +772,7 @@ namespace r2::draw::texche
 			else if (!foundInFlatTexturePack && foundTexture)
 			{
 				//we have the texture but it's not in the manifest - removed the texture
-				texturePacksCache.mnoptrGameAssetManager->UnloadAsset(foundTexture->textureAssetHandle);
+				texturePacksCache.mAssetCache->FreeAsset(foundTexture->textureAssetHandle);
 
 				r2::sarr::RemoveAndSwapWithLastElement(*loadedTexturePack.textures, index);
 			}
@@ -855,7 +786,6 @@ namespace r2::draw::texche
 			bool foundInPack = false;
 			for (flatbuffers::uoffset_t i = 0; i < foundPack->textures()->size(); ++i)
 			{
-				//if (STRING_ID(foundPack->albedo()->Get(i)->c_str()) == textureName)
 				if(foundPack->textures()->Get(i)->assetName()->assetName() == textureName)
 				{
 					foundInPack = true;
@@ -890,7 +820,7 @@ namespace r2::draw::texche
 
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return nullptr;
@@ -921,7 +851,7 @@ namespace r2::draw::texche
 
 	const tex::Texture* GetTextureFromTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return nullptr;
@@ -969,7 +899,7 @@ namespace r2::draw::texche
 
 	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
-		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
 			return nullptr;
@@ -997,5 +927,292 @@ namespace r2::draw::texche
 
 		return &resultTexturePack.cubemap;
 	}
+
+	void AddTexturePacksToTexturePackSet(const flat::Material* material, r2::SArray<u64>& texturePacks)
+	{
+		auto textureParams = material->shaderParams()->textureParams();
+
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
+		{
+			u64 texturePackName = textureParams->Get(i)->texturePack()->assetName();
+
+			if (EMPTY_TEXTURE_PACK_NAME == texturePackName)
+			{
+				continue;
+			}
+
+			bool found = false;
+			for (u32 j = 0; j < r2::sarr::Size(texturePacks); ++j)
+			{
+				if (r2::sarr::At(texturePacks, j) == texturePackName)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				r2::sarr::Push(texturePacks, texturePackName);
+			}
+		}
+	}
+
+	bool LoadMaterialTextures(TexturePacksCache& texturePacksCache, const flat::Material* material)
+	{
+		if (material == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		auto textureParams = material->shaderParams()->textureParams();
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, textureParams->size());
+		AddTexturePacksToTexturePackSet(material, *texturePacks);
+		draw::texche::LoadTexturePacks(texturePacksCache, *texturePacks);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	bool LoadMaterialTextures(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialPack)
+	{
+		if (materialPack == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		u32 numTexturePacks = materialPack->pack()->size() * draw::tex::NUM_TEXTURE_TYPES;
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, numTexturePacks);
+
+		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
+		{
+			const flat::Material* materialParams = materialPack->pack()->Get(i);
+			AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+		}
+
+		draw::texche::LoadTexturePacks(texturePacksCache, *texturePacks);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	void GetTexturesForMaterialnternal(TexturePacksCache& texturePacksCache, r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+
+		for (u32 i = 0; i < r2::sarr::Size(*texturePacks); ++i)
+		{
+			const u64 texturePackName = r2::sarr::At(*texturePacks, i);
+
+			bool isCubemap = r2::draw::texche::IsTexturePackACubemap(texturePacksCache, texturePackName);
+
+			if (!isCubemap && textures != nullptr)
+			{
+				const r2::SArray<r2::draw::tex::Texture>* texturePackTextures = r2::draw::texche::GetTexturesForTexturePack(texturePacksCache, texturePackName);
+				R2_CHECK(texturePackTextures != nullptr, "");
+				r2::sarr::Append(*textures, *texturePackTextures);
+			}
+			else if (isCubemap && cubemaps != nullptr)
+			{
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(texturePacksCache, texturePackName);
+
+				R2_CHECK(cubemap != nullptr, "");
+
+				r2::sarr::Push(*cubemaps, *cubemap);
+			}
+			else
+			{
+				R2_CHECK(false, "hmm");
+			}
+		}
+	}
+
+	const void* GetTextureData(TexturePacksCache& texturePacksCache, const r2::draw::tex::Texture& texture)
+	{
+		r2::asset::AssetCacheRecord assetCacheRecord = texturePacksCache.mAssetCache->GetAssetBuffer(texture.textureAssetHandle);
+
+		R2_CHECK(assetCacheRecord.GetAssetBuffer()->IsLoaded(), "Not loaded?");
+
+		const void* textureData = reinterpret_cast<const void*>(assetCacheRecord.GetAssetBuffer()->Data());
+
+		texturePacksCache.mAssetCache->ReturnAssetBuffer(assetCacheRecord);
+
+		return textureData;
+	}
+
+	u64 GetTextureDataSize(TexturePacksCache& texturePacksCache, const r2::draw::tex::Texture& texture)
+	{
+		r2::asset::AssetCacheRecord assetCacheRecord = texturePacksCache.mAssetCache->GetAssetBuffer(texture.textureAssetHandle);
+
+		R2_CHECK(assetCacheRecord.GetAssetBuffer()->IsLoaded(), "Not loaded?");
+
+		auto textureSize = assetCacheRecord.GetAssetBuffer()->Size();
+
+		texturePacksCache.mAssetCache->ReturnAssetBuffer(assetCacheRecord);
+
+		return textureSize;
+	}
+
+	bool GetTexturesForFlatMaterial(TexturePacksCache& texturePacksCache, const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+		//for this method specifically, we only want to get the specific textures of this material, no others from the packs
+		if (material == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		auto textureParams = material->shaderParams()->textureParams();
+
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
+		{
+			if (textureParams->Get(i)->value()->assetName() == EMPTY_TEXTURE_PACK_NAME)
+			{
+				continue;
+			}
+
+			if (!r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(i)->texturePack()->assetName()))
+			{
+				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(texturePacksCache, textureParams->Get(i)->texturePack()->assetName(), textureParams->Get(i)->value()->assetName());
+
+				if (texture)
+				{
+					r2::sarr::Push(*textures, *texture);
+				}
+			}
+			else
+			{
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(texturePacksCache, textureParams->Get(i)->texturePack()->assetName());
+
+				R2_CHECK(cubemap != nullptr, "Should never be nullptr");
+
+				r2::sarr::Push(*cubemaps, *cubemap);
+			}
+		}
+
+		return true;
+	}
+
+	bool GetTexturesForMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+		if (materialPack == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, materialPack->pack()->size() * draw::tex::NUM_TEXTURE_TYPES);
+
+		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
+		{
+			const flat::Material* material = materialPack->pack()->Get(i);
+			AddTexturePacksToTexturePackSet(material, *texturePacks);
+		}
+
+		GetTexturesForMaterialnternal(texturePacksCache, texturePacks, textures, cubemaps);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialPack, u64 materialName)
+	{
+		s32 materialParamsPackIndex = -1;
+		s32 materialTexParamsIndex = -1;
+		u64 textureName = 0;
+
+		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
+		{
+			const flat::Material* material = materialPack->pack()->Get(i);
+			if (material->assetName()->assetName() == materialName)
+			{
+				const auto* textureParams = material->shaderParams()->textureParams();
+				const auto numTextureParams = textureParams->size();
+
+				for (u32 j = 0; j < numTextureParams; ++j)
+				{
+					if (textureParams->Get(j)->propertyType() == flat::ShaderPropertyType_ALBEDO)
+					{
+						materialParamsPackIndex = i;
+						materialTexParamsIndex = j;
+						textureName = textureParams->Get(j)->value()->assetName();
+						break;
+					}
+				}
+
+				if (materialParamsPackIndex != -1)
+				{
+					break;
+				}
+			}
+		}
+
+		if (materialParamsPackIndex == -1 || materialTexParamsIndex == -1)
+		{
+			return nullptr;
+		}
+
+		const r2::SArray<r2::draw::tex::Texture>* textures = draw::texche::GetTexturesForTexturePack(texturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePack()->assetName());
+
+		const auto numTextures = r2::sarr::Size(*textures);
+
+		for (u32 i = 0; i < numTextures; ++i)
+		{
+			const draw::tex::Texture& texture = r2::sarr::At(*textures, i);
+			if (texture.textureAssetHandle.handle == textureName)
+			{
+				return &texture;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialPack, u64 materialName)
+	{
+		s32 materialParamsPackIndex = -1;
+		s32 materialTexParamsIndex = -1;
+
+		for (flatbuffers::uoffset_t i = 0; i < materialPack->pack()->size(); ++i)
+		{
+			const flat::Material* material = materialPack->pack()->Get(i);
+			if (material->assetName()->assetName() == materialName)
+			{
+				const auto* textureParams = material->shaderParams()->textureParams();
+				const auto numTextureParams = textureParams->size();
+
+				for (u32 j = 0; j < numTextureParams; ++j)
+				{
+					if (textureParams->Get(j)->propertyType() == flat::ShaderPropertyType_ALBEDO)
+					{
+						materialParamsPackIndex = i;
+						materialTexParamsIndex = j;
+						break;
+					}
+				}
+
+				if (materialParamsPackIndex != -1)
+				{
+					break;
+				}
+			}
+		}
+
+		if (materialParamsPackIndex == -1 || materialTexParamsIndex == -1)
+		{
+			return nullptr;
+		}
+
+		return r2::draw::texche::GetCubemapTextureForTexturePack(texturePacksCache, materialPack->pack()->Get(materialParamsPackIndex)->shaderParams()->textureParams()->Get(materialTexParamsIndex)->texturePack()->assetName());
+	}
+
+	
+
+	
 
 }

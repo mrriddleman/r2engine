@@ -5,6 +5,7 @@
 
 #include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -127,6 +128,8 @@ namespace r2::edit
 	void EditMaterial(r2::mat::Material& material, bool& windowOpen)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
+
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
 		static float CONTENT_WIDTH = 600;
@@ -850,7 +853,7 @@ namespace r2::edit
 
 			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName.assetName.hashID);
 
-			bool result = gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
+			bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, flatMaterial, textures, cubemaps); // gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");
 
 			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
@@ -868,7 +871,8 @@ namespace r2::edit
 
 			if (isLoaded)
 			{
-				gameAssetManager.LoadMaterialTextures(flatMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
+				r2::draw::texche::LoadMaterialTextures(texturePacksCache, flatMaterial);
+				//gameAssetManager.LoadMaterialTextures(flatMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
 				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, flatMaterial, texturesToUse, cubemapTextureToUse, true);
 				R2_CHECK(result, "This should always work");
 			}

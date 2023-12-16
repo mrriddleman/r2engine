@@ -2,7 +2,7 @@
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Containers/SHashMap.h"
-#include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Math/MathUtils.h"
 #include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
@@ -198,10 +198,11 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 
-		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		//r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
-		const void* imageData = gameAssetManager.GetAssetDataConst<void>(texture.textureAssetHandle);
-		u64 dataSize = gameAssetManager.GetAssetDataSize(texture.textureAssetHandle);
+		const void* imageData = r2::draw::texche::GetTextureData(texturePacksCache, texture);
+		u64 dataSize = r2::draw::texche::GetTextureDataSize(texturePacksCache, texture);
 
 		texGPUHandle.assetName = texture.textureAssetHandle.handle;
 		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(imageData, dataSize, anisotropy, wrapMode, minFilter, magFilter);
@@ -233,12 +234,18 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 
-		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 		r2::draw::tex::TextureFormat textureFormat;
 		{
-			const void* imageData = gameAssetManager.GetAssetDataConst<void>(cubemap.mips[0].sides[0].textureAssetHandle);
-			u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[0].sides[0].textureAssetHandle);
+
+			
+
+			const void* imageData = r2::draw::texche::GetTextureData(texturePacksCache, cubemap.mips[0].sides[0]);
+			u64 dataSize = r2::draw::texche::GetTextureDataSize(texturePacksCache, cubemap.mips[0].sides[0]);
+
+		//	const void* imageData = gameAssetManager.GetAssetDataConst<void>(.textureAssetHandle);
+		//	u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[0].sides[0].textureAssetHandle);
 
 			//@TODO(Serge): This is weird the gameAssetManager should have resolved the memory asset file stuff already and we just need to upload the data with the format
 			r2::asset::MemoryAssetFile memoryAssetFile{ imageData, dataSize };
@@ -276,8 +283,8 @@ namespace r2::draw::texsys
 		{
 			for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 			{
-				const void* imageData = gameAssetManager.GetAssetDataConst<void>(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
-				u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
+				const void* imageData = r2::draw::texche::GetTextureData(texturePacksCache, cubemap.mips[mipLevel].sides[i]);//gameAssetManager.GetAssetDataConst<void>(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
+				u64 dataSize = r2::draw::texche::GetTextureDataSize(texturePacksCache, cubemap.mips[mipLevel].sides[i]);//gameAssetManager.GetAssetDataSize(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
 				tex::UploadCubemapPageToGPU(texGPUHandle.gpuHandle, imageData, dataSize, mipLevel, i, anisotropy, wrapMode, minFilter, magFilter);
 			}
 		}

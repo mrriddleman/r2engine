@@ -176,6 +176,7 @@ namespace r2
             }
             
             mBoundary.size = boundarySize;
+            mBoundary.alignment = 16;
             mCurrentNext = mBoundary.location;
             mInitialized = true;
             
@@ -207,6 +208,7 @@ namespace r2
                 subArea.mBoundary.size = sizeInBytes;
                 subArea.mMemoryAreaHandle = mMemoryAreaHandle;
                 subArea.mSubAreaHandle = static_cast<SubArea::Handle>(mSubAreas.size());
+                subArea.mBoundary.alignment = 16;
 
                 std::stringstream ss;
                 if (subAreaName.size() > 0)

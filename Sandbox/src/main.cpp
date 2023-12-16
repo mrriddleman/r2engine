@@ -404,6 +404,7 @@ public:
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         
         r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+        r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 		//mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
 		//mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
@@ -454,7 +455,8 @@ public:
 
 		const flat::MaterialPack* gameMaterialPack = flat::GetMaterialPack(materialManifestData);
 
-		gameAssetManager.LoadMaterialTextures(gameMaterialPack);
+        r2::draw::texche::LoadMaterialTextures(texturePacksCache, gameMaterialPack);
+		//gameAssetManager.LoadMaterialTextures(gameMaterialPack);
 
 		u32 totalNumberOfTextures = 0;
 		u32 totalNumberOfTexturePacks = 0;
@@ -465,26 +467,15 @@ public:
 		r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
 		r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-		gameAssetManager.GetTexturesForMaterialPack(gameMaterialPack, gameTextures, gameCubemaps);
+        r2::draw::texche::GetTexturesForMaterialPack(texturePacksCache, gameMaterialPack, gameTextures, gameCubemaps);
+
+		//gameAssetManager.GetTexturesForMaterialPack(gameMaterialPack, gameTextures, gameCubemaps);
 
         r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 		r2::draw::rmat::UploadMaterialTextureParamsArray(*renderMaterialCache, gameMaterialPack, gameTextures, gameCubemaps);
 
 		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
-
-
-        //auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
-        //mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
-
-
-        //auto skeletonHandle = gameAssetManager.LoadAsset(r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
-        //mSkeletonModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(skeletonHandle);
-
-        //auto ellenHandle = gameAssetManager.LoadAsset(r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
-        //mEllenModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(ellenHandle);
-
-        //mSelectedAnimModel = mSkeletonModel;
 
         auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
         mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
@@ -501,7 +492,7 @@ public:
         r2::util::Random randomizer;
         
         //color grading
-        const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
+        const r2::draw::tex::Texture* colorGradingLUT = r2::draw::texche::GetAlbedoTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("ColorGradingLUT")); //gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
 
         r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
         r2::draw::renderer::SetColorGradingContribution(0.2);
@@ -557,7 +548,7 @@ public:
         r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
-            const auto* prefilteredCubemap = gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
+            const auto* prefilteredCubemap = r2::draw::texche::GetCubemapTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("NewportPrefiltered"));//gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
             s32 numMips = prefilteredCubemap->numMipLevels;
 
             r2::draw::renderer::AddSkyLight(
@@ -1405,7 +1396,12 @@ public:
     virtual u32 GetAssetMemorySize() const override
     {
         //@TODO(Serge): calculate this much later
-        return Megabytes(300);
+        return Megabytes(50);
+    }
+
+    virtual u32 GetTextureMemorySize() const override
+    {
+        return Megabytes(250);
     }
 
     virtual u32 GetMaxNumECSSystems() const override

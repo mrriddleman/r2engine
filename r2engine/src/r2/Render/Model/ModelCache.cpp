@@ -82,7 +82,7 @@ namespace r2::draw::modlche
 
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
-
+		
 		FREE(system, *arena);
 
 		FREE_EMPLACED_ARENA(arena);

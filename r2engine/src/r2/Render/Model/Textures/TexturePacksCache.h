@@ -7,23 +7,18 @@
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Render/Model/Textures/Texture.h"
 
-
-namespace r2
-{
-	class GameAssetManager;
-}
-
 namespace flat
 {
 	struct TexturePacksManifest;
 	struct TexturePackMetaData;
+	struct Material;
+	struct MaterialPack;
 }
 
 namespace r2::draw
 {
 	struct LoadedTexturePack
 	{
-
 		u64 packName = 0;
 		const flat::TexturePackMetaData* metaData = nullptr;
 		r2::SArray<r2::draw::tex::Texture>* textures = nullptr;
@@ -48,9 +43,9 @@ namespace r2::draw
 
 		r2::mem::FreeListArena* mTexturePackArena;
 
-		r2::GameAssetManager* mnoptrGameAssetManager;
-
-		static u64 MemorySize(u32 numTextures, u32 numTextureManifests, u32 numTexturePacks);
+		r2::asset::AssetCache* mAssetCache;
+		r2::mem::utils::MemBoundary mAssetCacheBoundary;
+		static u64 MemorySize(u32 textureCapacity, u32 numTextures, u32 numTextureManifests, u32 numTexturePacks);
 	};
 }
 
@@ -62,98 +57,11 @@ namespace r2::draw::texche
 		static const TexturePacksManifestHandle Invalid;
 	};
 
-	template<class ARENA>
-	TexturePacksCache* Create(ARENA& arena, u32 numTextures, u32 numManifests, u32 numTexturePacks, r2::GameAssetManager* gameAssetManager)
-	{
-		u64 subAreaSize = TexturePacksCache::MemorySize(numTextures, numManifests, numTexturePacks);
-
-		r2::mem::utils::MemBoundary memBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(arena, subAreaSize, 16, "TexturePacksCacheMemBoundary");
-
-		r2::mem::StackArena* texturePacksCacheArena = EMPLACE_STACK_ARENA_IN_BOUNDARY(memBoundary);
-
-		R2_CHECK(texturePacksCacheArena != nullptr, "We couldn't emplace the stack arena - no way to recover!");
-
-		TexturePacksCache* newTexturePacksCache = ALLOC(TexturePacksCache, *texturePacksCacheArena);
-
-		R2_CHECK(newTexturePacksCache != nullptr, "We couldn't create the TexturePacksCache object");
-
-		newTexturePacksCache->mMemoryBoundary = memBoundary;
-
-		newTexturePacksCache->mArena = texturePacksCacheArena;
-
-		newTexturePacksCache->mTexturePackManifests = MAKE_SARRAY(*texturePacksCacheArena, TexturePackManifestEntry, numManifests);
-
-		R2_CHECK(newTexturePacksCache->mTexturePackManifests != nullptr, "We couldn't create the texture pack manifests array");
-
-		newTexturePacksCache->mLoadedTexturePacks = MAKE_SHASHMAP(*texturePacksCacheArena, LoadedTexturePack, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
-
-		R2_CHECK(newTexturePacksCache->mLoadedTexturePacks != nullptr, "We couldn't create the mLoadedTexturePacks hashmap");
-
-		newTexturePacksCache->mPackNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
-
-		R2_CHECK(newTexturePacksCache->mPackNameToTexturePackManifestEntryMap != nullptr, "We couldn't create the mPackNameToTexturePackManifestEntryMap");
-
-		newTexturePacksCache->mManifestNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numManifests * r2::SHashMap<u32>::LoadFactorMultiplier());
-
-		R2_CHECK(newTexturePacksCache->mManifestNameToTexturePackManifestEntryMap != nullptr, "We couldn't create the mManifestNameToTexturePackManifestEntryMap");
-
-		//first we need to calculate how big this arena is
-		u32 freelistArenaSize = sizeof(r2::SArray<tex::Texture>) * numTexturePacks + sizeof(tex::Texture) * numTextures;
-
-		newTexturePacksCache->mTexturePackArena = MAKE_FREELIST_ARENA(*texturePacksCacheArena, freelistArenaSize, r2::mem::FIND_BEST);
-
-		R2_CHECK(newTexturePacksCache->mTexturePackArena != nullptr, "We couldn't create the the texture pack arena");
-
-		newTexturePacksCache->mnoptrGameAssetManager = gameAssetManager;
-
-		return newTexturePacksCache;
-	}
-
-	template<class ARENA>
-	void Shutdown(ARENA& arena, TexturePacksCache* texturePacksCache)
-	{
-		if (!texturePacksCache)
-		{
-			return;
-		}
-
-		r2::mem::utils::MemBoundary texturePacksCacheBoundary = texturePacksCache->mMemoryBoundary;
-
-		r2::mem::StackArena* texturePacksCacheArena = texturePacksCache->mArena;
-
-		const u32 numTexturePackManifests = r2::sarr::Size(*texturePacksCache->mTexturePackManifests);
-
-		for (u32 i = 0; i < numTexturePackManifests; ++i)
-		{
-			const auto& entry = r2::sarr::At(*texturePacksCache->mTexturePackManifests, i);
-
-			if (entry.flatTexturePacksManifest != nullptr )
-			{
-				UnloadAllTexturePacks(*texturePacksCache, { static_cast<s32>(i) });
-			}
-		}
-
-		r2::sarr::Clear(*texturePacksCache->mTexturePackManifests);
-		r2::shashmap::Clear(*texturePacksCache->mLoadedTexturePacks);
-		r2::shashmap::Clear(*texturePacksCache->mPackNameToTexturePackManifestEntryMap);
-		r2::shashmap::Clear(*texturePacksCache->mManifestNameToTexturePackManifestEntryMap);
-
-		FREE(texturePacksCache->mTexturePackArena, *texturePacksCacheArena);
-
-		FREE(texturePacksCache->mManifestNameToTexturePackManifestEntryMap, *texturePacksCacheArena);
-
-		FREE(texturePacksCache->mPackNameToTexturePackManifestEntryMap, *texturePacksCacheArena);
-
-		FREE(texturePacksCache->mLoadedTexturePacks, *texturePacksCacheArena);
-
-		FREE(texturePacksCache->mTexturePackManifests, *texturePacksCacheArena);
-
-		FREE(texturePacksCache, *texturePacksCacheArena);
-
-		FREE_EMPLACED_ARENA(texturePacksCacheArena);
-
-		FREE(texturePacksCacheBoundary.location, arena);
-	}
+	
+	TexturePacksCache* Create(r2::mem::utils::MemBoundary memBoundary, u32 textureCapacity, u32 numTextures, u32 numManifests, u32 numTexturePacks);
+	
+	void Shutdown(TexturePacksCache* texturePacksCache);
+	
 
 	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& numCubemaps, u32& cacheSize);
 
@@ -166,6 +74,7 @@ namespace r2::draw::texche
 
 	bool UnloadAllTexturePacks(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
 	bool UnloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	bool UnloadTexture(TexturePacksCache& texturePacksCache, const tex::Texture& texture);
 
 	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName);
 
@@ -175,6 +84,20 @@ namespace r2::draw::texche
 	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	const tex::Texture* GetTextureFromTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
 	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+
+	bool LoadMaterialTextures(TexturePacksCache& texturePacksCache, const flat::Material* material);
+	bool LoadMaterialTextures(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialPack);
+
+	bool GetTexturesForFlatMaterial(TexturePacksCache& texturePacksCache, const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+	bool GetTexturesForMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+
+	const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);
+	const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);
+	
+	void GetTexturesForMaterialnternal(TexturePacksCache& texturePacksCache, r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+
+	const void* GetTextureData(TexturePacksCache& texturePacksCache, const r2::draw::tex::Texture& texture);
+	u64 GetTextureDataSize(TexturePacksCache& texturePacksCache, const r2::draw::tex::Texture& texture);
 }
 
 #endif // __TEXTURE_PACKS_CACHE_H__

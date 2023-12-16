@@ -15,6 +15,8 @@
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
+
 
 namespace r2::asset::pln
 {
@@ -70,8 +72,9 @@ namespace r2::asset::pln
 		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(manifestData);
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
-		gameAssetManager.UpdateTexturePacksManifest(r2::asset::Asset::GetAssetNameForFilePath(manifestFilePath.c_str(), r2::asset::TEXTURE_PACK_MANIFEST), texturePacksManifest);
+		r2::draw::texche::UpdateTexturePacksManifest(texturePacksCache, r2::asset::Asset::GetAssetNameForFilePath(manifestFilePath.c_str(), r2::asset::TEXTURE_PACK_MANIFEST), texturePacksManifest);
 
 		//I guess try to find the path in question
 
@@ -118,7 +121,7 @@ namespace r2::asset::pln
 				//once we figure that out, then we can reload the rendermaterials
 				if (type == CHANGED)
 				{
-					gameAssetManager.ReloadTextureInTexturePack(texturePackNameFromPath, textureNameFromPath);
+					r2::draw::texche::ReloadTextureInTexturePack(texturePacksCache, texturePackNameFromPath, textureNameFromPath);
 				}
 				else if (type == ADDED)
 				{
@@ -126,7 +129,8 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					gameAssetManager.UnloadAsset(textureNameFromPath);
+					r2::draw::texche::UnloadTexture(texturePacksCache, { {textureNameFromPath, texturePacksCache.mAssetCache->GetSlot()} });
+					//gameAssetManager.UnloadAsset(textureNameFromPath);
 				}
 
 				for (u32 i = 0; i < numMaterialManifests; ++i)
@@ -148,7 +152,7 @@ namespace r2::asset::pln
 
 				if (type == CHANGED)
 				{
-					gameAssetManager.ReloadTexturePack(texturePackNameFromPath);
+					r2::draw::texche::ReloadTexturePack(texturePacksCache, texturePackNameFromPath);
 				}
 				else if (type == ADDED)
 				{
@@ -156,7 +160,7 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					gameAssetManager.UnloadTexturePack(texturePackNameFromPath);
+					r2::draw::texche::UnloadTexturePack(texturePacksCache, texturePackNameFromPath);
 				}
 
 				for (u32 i = 0; i < numMaterialManifests; ++i)
@@ -178,7 +182,9 @@ namespace r2::asset::pln
 
 			for (const flat::Material* material : materialsToReload)
 			{
-				bool result = gameAssetManager.GetTexturesForFlatMaterial(material, textures, cubemaps);
+
+				bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, material, textures, cubemaps);
+
 				R2_CHECK(result, "Should never be false");
 
 				r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;

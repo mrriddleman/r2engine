@@ -35,6 +35,7 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
@@ -93,6 +94,7 @@ namespace r2
         , mResolution({0,0})
         , mCurrentRendererBackend(r2::draw::RendererBackend::OpenGL)
         , mGameAssetManager(nullptr)
+        , mTexturePacksCache(nullptr)
         , mLevelManager(nullptr)
         , mECSWorld(nullptr)
         , mAssetLib(nullptr)
@@ -586,6 +588,8 @@ namespace r2
     {
         mLevelManager->Shutdown();
 
+        r2::draw::texche::Shutdown(mTexturePacksCache);
+
         mGameAssetManager->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
 
         mLayerStack.ShutdownAll();
@@ -607,18 +611,13 @@ namespace r2
                 CloseGameController(i);
             }
         }
-
         
         FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
-
 		
 		FREE(mGameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
         mECSWorld->Shutdown();
         FREE(mECSWorld, *MEM_ENG_PERMANENT_PTR);
-      //  mECSCoordinator->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
-       // FREE(mECSCoordinator, *MEM_ENG_PERMANENT_PTR);
-        
 
         r2::draw::shadersystem::Shutdown();
 
@@ -626,14 +625,11 @@ namespace r2
         r2::asset::lib::Shutdown(mAssetLib);
         FREE(assetLibBoundary.location, *MEM_ENG_PERMANENT_PTR);
 
-
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
         mAssetCommandHandler.Shutdown();
 #endif
 
-        
-        
         FREE((byte*)mAssetLibMemBoundary.location, *MEM_ENG_PERMANENT_PTR);
     }
     
@@ -912,6 +908,11 @@ namespace r2
     LevelManager& Engine::GetLevelManager() const
     {
         return *mLevelManager;
+    }
+
+    r2::draw::TexturePacksCache& Engine::GetTexturePacksCache() const
+    {
+        return *mTexturePacksCache;
     }
 
     GameAssetManager& Engine::GetGameAssetManager() const
@@ -1227,8 +1228,6 @@ namespace r2
 
 		mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
-	//	r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
-
 #ifdef R2_ASSET_PIPELINE
         //@Temporary: remove this once we have things more stable
         std::vector<r2::asset::AssetReferenceAndType> assetReferences;
@@ -1236,28 +1235,32 @@ namespace r2
 		noptrApp->AddLooseAssetFiles(assetReferences);
 
         r2::asset::lib::ImportAssetFiles(*mAssetLib, assetReferences);
-
-      
 #endif
 		
         auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
-
+        
         u32 gameAssetCacheSize = noptrApp->GetAssetMemorySize();
+        u32 gameTextureCacheSize = noptrApp->GetTextureMemorySize();
 
-   //     r2::asset::FileList gameFileList = r2::asset::lib::GetFileList(*mAssetLib);
+        auto totalGameAssetCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, gameAssetCacheSize, ALIGNMENT, std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u), std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u));
 
-     //   u32 numFiles = r2::sarr::Capacity(*gameFileList);
-        auto totalCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, gameAssetCacheSize, ALIGNMENT, std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u), std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u));
-		memoryArea->Init(totalCacheAmount, 0);
+        auto totalTextureCacheAmount = r2::draw::TexturePacksCache::MemorySize(gameTextureCacheSize, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
 
-		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks, gameAssetCacheSize);
+		memoryArea->Init(totalGameAssetCacheAmount + totalTextureCacheAmount, 0);
+
+        auto gameAssetsSubAreaHandle = memoryArea->AddSubArea(totalGameAssetCacheAmount, "Game Assets Sub Area");
+        auto gameTexturesSubAreaHandle = memoryArea->AddSubArea(totalTextureCacheAmount, "Game Textures Sub Area");
+
+		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, gameAssetsSubAreaHandle, gameAssetCacheSize);
+
+        mTexturePacksCache = r2::draw::texche::Create(memoryArea->SubAreaBoundary(gameTexturesSubAreaHandle), gameTextureCacheSize, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
 
         const auto engineTexturePacksManifestHandle = r2::asset::Asset::GetAssetNameForFilePath(engineTexturePackManifestPath, r2::asset::TEXTURE_PACK_MANIFEST);
 
         const byte* engineTexturePacksData = r2::asset::lib::GetManifestData(*mAssetLib, engineTexturePacksManifestHandle);
 
-        mGameAssetManager->AddTexturePacksManifest(engineTexturePacksManifestHandle, flat::GetTexturePacksManifest(engineTexturePacksData));
+        r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, engineTexturePacksManifestHandle, flat::GetTexturePacksManifest(engineTexturePacksData));
 
 		for (u32 i = 0; i < textureManifests.size(); ++i)
 		{
@@ -1265,7 +1268,7 @@ namespace r2
 
 			const byte* appTexturePacksData = r2::asset::lib::GetManifestData(*mAssetLib, appTexturePacksManifestHandle);
 
-			mGameAssetManager->AddTexturePacksManifest(appTexturePacksManifestHandle, flat::GetTexturePacksManifest(appTexturePacksData));
+            r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, appTexturePacksManifestHandle, flat::GetTexturePacksManifest(appTexturePacksData));
 		}
     }
 

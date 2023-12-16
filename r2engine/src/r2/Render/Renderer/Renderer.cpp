@@ -1241,6 +1241,7 @@ namespace r2::draw::renderer
 
 		
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 		asset::AssetLib& assetLib = CENG.GetAssetLib();
 
@@ -1252,7 +1253,7 @@ namespace r2::draw::renderer
 
 		const flat::MaterialPack* engineMaterialPack = flat::GetMaterialPack(materialManifestData);
 
-		gameAssetManager.LoadMaterialTextures(engineMaterialPack);
+		texche::LoadMaterialTextures(texturePacksCache, engineMaterialPack);
 
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
@@ -1267,11 +1268,11 @@ namespace r2::draw::renderer
 		r2::SArray<r2::draw::tex::Texture>* engineTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
 		r2::SArray<r2::draw::tex::CubemapTexture>* engineCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-		gameAssetManager.GetTexturesForMaterialPack(engineMaterialPack, engineTextures, engineCubemaps);
+		texche::GetTexturesForMaterialPack(texturePacksCache, engineMaterialPack, engineTextures, engineCubemaps);
 
 		//We want these to be set before we upload them since they might use the missing texture in UploadMaterialTextureParamsArray()
-		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("MissingTexture"));
-		newRenderer->mBlueNoiseTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
+		newRenderer->mMissingTexture = *texche::GetAlbedoTextureForMaterialName(texturePacksCache, engineMaterialPack, STRING_ID("MissingTexture")); //gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("MissingTexture"));
+		newRenderer->mBlueNoiseTexture = *texche::GetAlbedoTextureForMaterialName(texturePacksCache, engineMaterialPack, STRING_ID("BlueNoise64"));//gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
 
 		newRenderer->mRenderMaterialCache->mMissingTexture = newRenderer->mMissingTexture;
 

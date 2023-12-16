@@ -19,7 +19,7 @@ namespace r2::asset
 	struct AssetName
 	{
 		//UUID uuid;
-		u64 hashID = 0;
+		u64 hashID = INVALID_ASSET_HANDLE;
 #ifdef R2_ASSET_PIPELINE
 		std::string assetNameString = "";
 #endif

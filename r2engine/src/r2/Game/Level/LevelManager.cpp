@@ -22,6 +22,7 @@
 
 #include "r2/Core/Engine.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include <filesystem>
 
 namespace r2
@@ -371,6 +372,7 @@ namespace r2
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 		const auto* modelFiles = levelData->modelFilePaths();
 
@@ -456,7 +458,7 @@ namespace r2
 			//Load from disk
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
-				bool result = gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialsToLoad, i));
+				bool result = r2::draw::texche::LoadMaterialTextures(texturePacksCache, r2::sarr::At(*materialsToLoad, i));//gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialsToLoad, i));
 				R2_CHECK(result, "Should always work");
 			}
 
@@ -471,7 +473,7 @@ namespace r2
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
 				const flat::Material* material = r2::sarr::At(*materialsToLoad, i);
-				bool result = gameAssetManager.GetTexturesForFlatMaterial(material, gameTextures, gameCubemaps);
+				bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, material, gameTextures, gameCubemaps);//gameAssetManager.GetTexturesForFlatMaterial(material, gameTextures, gameCubemaps);
 				R2_CHECK(result, "Should always work");
 
 				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
@@ -617,6 +619,7 @@ namespace r2
 
 		//now we have the assets to unload
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::draw::TexturePacksCache& tetxurePacksCache = CENG.GetTexturePacksCache();
 
 		const u32 numModelsToUnload = r2::sarr::Size(*modelAssetsToUnload);
 		for (u32 i = 0; i < numModelsToUnload; ++i)
@@ -631,7 +634,8 @@ namespace r2
 		const u32 numTexturePacksToUnload = r2::sarr::Size(*texturePacksToUnload);
 		for (u32 i = 0; i < numTexturePacksToUnload; ++i)
 		{
-			gameAssetManager.UnloadTexturePack(r2::sarr::At(*texturePacksToUnload, i));
+			r2::draw::texche::UnloadTexturePack(tetxurePacksCache, r2::sarr::At(*texturePacksToUnload, i));
+		//	gameAssetManager.UnloadTexturePack(r2::sarr::At(*texturePacksToUnload, i));
 		}
 
 

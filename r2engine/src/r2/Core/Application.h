@@ -112,6 +112,7 @@ namespace r2
         virtual std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const;
        
         virtual u32 GetAssetMemorySize() const = 0;
+        virtual u32 GetTextureMemorySize() const = 0;
         virtual u32 GetMaxNumECSSystems() const = 0;
         virtual u32 GetMaxNumECSEntities() const = 0;
         virtual u32 GetMaxNumComponents() const = 0;

@@ -79,7 +79,7 @@ namespace r2::asset
 
         s64 GetSlot() const {return mSlot;}
 
-       
+        const r2::mem::utils::MemBoundary& GetMemoryBoundary() { return mMemoryBoundary; }
 
         static u64 TotalMemoryNeeded(u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);

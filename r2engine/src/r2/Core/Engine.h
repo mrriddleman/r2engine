@@ -24,6 +24,7 @@
 namespace r2::draw
 {
     struct Renderer;
+    struct TexturePacksCache;
 }
 
 namespace r2::ecs
@@ -108,6 +109,8 @@ namespace r2
         const Application& GetApplication() const;
         
         LevelManager& GetLevelManager() const;
+        r2::draw::TexturePacksCache& GetTexturePacksCache() const;
+
         GameAssetManager& GetGameAssetManager() const;
         r2::ecs::ECSWorld& GetECSWorld();
         r2::asset::AssetLib& GetAssetLib() const;
@@ -325,6 +328,8 @@ namespace r2
 
 
 		r2::GameAssetManager* mGameAssetManager;
+        r2::draw::TexturePacksCache* mTexturePacksCache;
+
 		r2::LevelManager* mLevelManager;
         r2::ecs::ECSWorld* mECSWorld;
         r2::asset::AssetLib* mAssetLib;

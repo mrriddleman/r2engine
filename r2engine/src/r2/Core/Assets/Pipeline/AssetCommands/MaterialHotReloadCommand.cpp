@@ -7,6 +7,8 @@
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
+
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
@@ -159,10 +161,11 @@ namespace r2::asset::pln
 		{
 			//load the material params again
 			r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+			r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
 			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::NUM_TEXTURE_TYPES);
-			bool result = gameAssetManager.GetTexturesForFlatMaterial(foundMaterial, textures, cubemaps);
+			bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, foundMaterial, textures, cubemaps); 
 			R2_CHECK(result, "This should always work");
 
 			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
@@ -180,7 +183,8 @@ namespace r2::asset::pln
 
 			if (isLoaded)
 			{
-				gameAssetManager.LoadMaterialTextures(foundMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
+				r2::draw::texche::LoadMaterialTextures(texturePacksCache, foundMaterial);
+				//gameAssetManager.LoadMaterialTextures(foundMaterial); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
 				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterial, texturesToUse, cubemapTextureToUse, true);
 				R2_CHECK(result, "This should always work");
 			}
