@@ -28,6 +28,8 @@ namespace r2::asset::pln
 		void AddRawModelManifestPaths(const std::vector<std::string>& rawManifestPaths);
 
 		virtual AssetHotReloadCommandType GetAssetHotReloadCommandType() const override { return AHRCT_MODEL_ASSET; }
+		virtual void HandleAssetBuildRequest(const AssetBuildRequest& request) override;
+
 	private:
 
 

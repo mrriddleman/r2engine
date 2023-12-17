@@ -544,33 +544,49 @@ namespace r2::edit
 		if (ImGui::Selectable("Build Model"))
 		{
 			std::filesystem::path preferredPath = path;
-			preferredPath = preferredPath.make_preferred();
+//			preferredPath = preferredPath.make_preferred();
 
-			auto binAssetPath = FindBinAssetPathFromRawAsset(path);
+			//auto binAssetPath = FindBinAssetPathFromRawAsset(path);
 
-			std::filesystem::path materialManifestPath = "";
+			//std::filesystem::path materialManifestPath = "";
 
-			if (std::filesystem::relative(binAssetPath, mAppBinDirectory) != "")
-			{
-				//get the app's material manifest
-				materialManifestPath = MENG.GetApplication().GetMaterialPacksManifestsBinaryPaths().at(0);
-			}
-			else
-			{
-				//else get r2's
-				char materialsPath[r2::fs::FILE_PATH_LENGTH];
-				r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
+			//if (std::filesystem::relative(binAssetPath, mAppBinDirectory) != "")
+			//{
+			//	//get the app's material manifest
+			//	materialManifestPath = MENG.GetApplication().GetMaterialPacksManifestsBinaryPaths().at(0);
+			//}
+			//else
+			//{
+			//	//else get r2's
+			//	char materialsPath[r2::fs::FILE_PATH_LENGTH];
+			//	r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
 
-				materialManifestPath = materialsPath;
-			}
+			//	materialManifestPath = materialsPath;
+			//}
 
-			materialManifestPath = materialManifestPath.make_preferred();
+			/*
+			
+				request.commandType = asset::pln::AHRCT_TEXTURE_ASSET;
+				request.paths.push_back(path);
+				request.reloadType = metaJSONExists? asset::pln::CHANGED : asset::pln::ADDED;
 
+				r2::asset::pln::AssetCommandHandler& assetCommandHandler = MENG.GetAssetCommandHandler();
+				assetCommandHandler.RequestAssetBuild(request);
+			*/
+			r2::asset::pln::AssetCommandHandler& assetCommandHandler = MENG.GetAssetCommandHandler();
+			r2::asset::pln::AssetBuildRequest request;
+			request.commandType = asset::pln::AHRCT_MODEL_ASSET;
+			request.paths.push_back(preferredPath.make_preferred().string());
+			request.reloadType = asset::pln::ADDED;
 
-			//@TODO(Serge): put in the hotreload pipeline for threading
-			int result = r2::asset::pln::assetconvert::RunModelConverter(preferredPath.string(), binAssetPath.make_preferred().parent_path().string(), materialManifestPath.string());
+			assetCommandHandler.RequestAssetBuild(request);
 
-			R2_CHECK(result == 0, "?");
+			//materialManifestPath = materialManifestPath.make_preferred();
+
+			////@TODO(Serge): put in the hotreload pipeline for threading
+			//int result = r2::asset::pln::assetconvert::RunModelConverter(preferredPath.string(), binAssetPath.make_preferred().parent_path().string(), materialManifestPath.string());
+
+			//R2_CHECK(result == 0, "?");
 		}
 	}
 

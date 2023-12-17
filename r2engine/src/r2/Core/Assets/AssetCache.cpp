@@ -312,20 +312,20 @@ namespace r2::asset
         R2_CHECK(result, "We don't have enough room to fit %s!\n", theAssetFile->FilePath());
         
         byte* rawAssetBuffer = ALLOC_BYTESN(mAssetCacheArena, rawAssetSize, alignof(size_t));
-        
+		
+        if (rawAssetBuffer == nullptr)
+		{
+#ifdef R2_ASSET_CACHE_DEBUG
+			R2_CHECK(false, "Failed to get the raw data from the asset: %s\n", asset.Name().c_str());
+#endif
+			return nullptr;
+		}
+
         R2_CHECK(rawAssetBuffer != nullptr, "failed to allocate asset handle: %lli of size: %llu", handle, rawAssetSize);
         
         mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
 
         theAssetFile->LoadRawAsset(asset, rawAssetBuffer, (u32)rawAssetSize);
-        
-        if (rawAssetBuffer == nullptr)
-        {
-#ifdef R2_ASSET_CACHE_DEBUG
-            R2_CHECK(false, "Failed to get the raw data from the asset: %s\n", asset.Name().c_str());
-#endif
-            return nullptr;
-        }
 
         AssetBuffer* assetBuffer = nullptr;
         
@@ -382,13 +382,10 @@ namespace r2::asset
 				
             if (!success)
 			{
-                
                 R2_CHECK(false, "Failed to load asset for path: %s\n", theAssetFile->FilePath());
 				theAssetFile->Close();
 				return nullptr;
 			}
-
-			
 
 			FREE(rawAssetBuffer, mAssetCacheArena);
         }

@@ -8,6 +8,10 @@
 #ifndef PathUtils_h
 #define PathUtils_h
 
+#ifdef R2_ASSET_PIPELINE
+#include <filesystem>
+#endif
+
 namespace r2::fs::utils
 {
     enum Directory: u32
@@ -67,6 +71,11 @@ namespace r2::fs::utils
     bool SanitizeSubPath(const char* rawSubPath, char* result);
 
     bool GetRelativePath(const char* basePath, const char* path, char* result, const char delim = PATH_SEPARATOR);
+
+#ifdef R2_ASSET_PIPELINE
+    bool HasParentInPath(const std::filesystem::path& path, const std::filesystem::path& parent);
+
+#endif
 
 }
 

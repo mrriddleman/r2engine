@@ -480,4 +480,22 @@ namespace r2::fs::utils
         r2::util::PathNCpy(result, path, startingIndex + 2);
         return true;
     }
+
+#ifdef R2_ASSET_PIPELINE
+    bool HasParentInPath(const std::filesystem::path& path, const std::filesystem::path& parent)
+    {
+        std::filesystem::path nextPath = path.parent_path();
+
+        while (nextPath != "")
+        {
+            if (nextPath == parent)
+            {
+                return true;
+            }
+            nextPath = nextPath.parent_path();
+        }
+
+        return false;
+    }
+#endif
 }

@@ -78,6 +78,52 @@ namespace r2::asset::pln
 		mRawModelManifestPaths.insert(mRawModelManifestPaths.end(), rawManifestPaths.begin(), rawManifestPaths.end());
 	}
 
+	void ModelHotReloadCommand::HandleAssetBuildRequest(const AssetBuildRequest& request)
+	{
+		//first thing we need to do is figure out where it belongs
+		const u64 numWatchPaths = mRawModelDirectories.size();
+
+		R2_CHECK(request.paths.size() == 1, "For now just one");
+
+		std::filesystem::path modelPathToBuild = request.paths[0];
+		std::filesystem::path inputDirPath;
+		std::filesystem::path binaryModelDirectory;
+		std::filesystem::path materialManifestPath;
+		bool found = false;
+
+		for (u64 i = 0; i < numWatchPaths; ++i)
+		{
+			inputDirPath = mRawModelDirectories[i];
+			inputDirPath.make_preferred();
+
+			binaryModelDirectory = mBinaryModelDirectories[i];
+			binaryModelDirectory.make_preferred();
+
+			materialManifestPath = mMaterialManifestPaths[i];
+			materialManifestPath.make_preferred();
+
+			if (r2::fs::utils::HasParentInPath(modelPathToBuild, inputDirPath))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		
+		if (found)
+		{
+			//now we need to figure out the proper output dir
+			std::filesystem::path lexicallyRelPath = modelPathToBuild.lexically_relative(inputDirPath).parent_path();
+
+			int result = pln::assetconvert::RunModelConverter(modelPathToBuild.string(), (binaryModelDirectory / lexicallyRelPath).string(), materialManifestPath.string());
+
+			R2_CHECK(result == 0, "Failed to create the rmdl files of: %s\n", modelPathToBuild.string().c_str());
+
+
+		}
+
+	}
+
 	std::filesystem::path ModelHotReloadCommand::GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir)
 	{
 		std::vector<std::filesystem::path> pathsSeen;
