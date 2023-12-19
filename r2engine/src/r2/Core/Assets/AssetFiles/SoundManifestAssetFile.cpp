@@ -46,14 +46,18 @@ namespace r2::asset
 
 	bool SoundManifestAssetFile::HasAsset(const Asset& asset) const
 	{
+		auto assetAssetName = asset.HashID();
+		auto masterBankAssetName = mSoundDefinitions->masterBank()->assetName()->assetName();
 		//@TODO(Serge): UUID
-		if (mSoundDefinitions->masterBank()->assetName()->assetName() == asset.HashID())
+		if (masterBankAssetName == assetAssetName)
 		{
 			return true;
 		}
 
 		//@TODO(Serge): UUID
-		if (mSoundDefinitions->masterBankStrings()->assetName()->assetName() == asset.HashID());
+		auto stringsBankAssetName = mSoundDefinitions->masterBankStrings()->assetName()->assetName();
+		
+		if (stringsBankAssetName == assetAssetName)
 		{
 			return true;
 		}
@@ -61,7 +65,8 @@ namespace r2::asset
 		//@TODO(Serge): UUID
 		for (flatbuffers::uoffset_t i = 0; i < mSoundDefinitions->banks()->size(); ++i)
 		{
-			if (mSoundDefinitions->banks()->Get(i)->assetName()->assetName() == asset.HashID())
+			auto nextBankAssetName = mSoundDefinitions->banks()->Get(i)->assetName()->assetName();
+			if (nextBankAssetName == assetAssetName)
 			{
 				return true;
 			}
@@ -153,9 +158,15 @@ namespace r2::asset
 
 		if (!hasAssetReference)
 		{
+
+
 			r2::asset::AssetReference newSoundDefinition = assetReference;
+			
 			//@TODO(Serge): maybe move this to the EditorAssetPanel?
-			std::filesystem::path filePathURI = newSoundDefinition.binPath.lexically_relative(std::filesystem::path(mRawPath).parent_path());
+
+
+
+			std::filesystem::path filePathURI = newSoundDefinition.binPath.filename();
 
 			newSoundDefinition.binPath = filePathURI;
 			newSoundDefinition.rawPath = filePathURI;

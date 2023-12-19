@@ -172,7 +172,7 @@ namespace r2::asset::pln::audio
         bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), soundDefinitionSchemaPath, binFilePath);
         
         bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, jsonPath.string());
-        
+
         return generatedJSON && generatedBinary;
     }
 }

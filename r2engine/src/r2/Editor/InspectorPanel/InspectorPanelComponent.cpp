@@ -112,7 +112,6 @@ namespace r2::edit
 
 		bool open = ImGui::TreeNodeEx(nodeName.c_str(), flags, "%s", nodeName.c_str());
 
-
 		const bool shouldDisableComponentDelete = mComponentDataSource->ShouldDisableRemoveComponentButton();
 		if (shouldDisableComponentDelete)
 		{
@@ -125,14 +124,15 @@ namespace r2::edit
 		ImGui::PushItemWidth(50);
 		ImGui::SameLine(size.x - 50);
 
+		bool wasDeleted = false;
 		if (ImGui::SmallButton("Delete"))
 		{
 			mComponentDataSource->DeleteComponent(coordinator, theEntity);
 			open = false;
+			wasDeleted = true;
 		}
 
 		ImGui::PopItemWidth();
-		
 
 		if (shouldDisableComponentDelete)
 		{
@@ -144,7 +144,10 @@ namespace r2::edit
 		{
 			void* componentData = mComponentDataSource->GetComponentData(coordinator, theEntity);
 			mComponentDataSource->DrawComponentData(componentData, coordinator, theEntity);
+		}
 
+		if (open || wasDeleted)
+		{
 			ImGui::TreePop();
 		}
 

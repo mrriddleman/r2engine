@@ -242,7 +242,7 @@ namespace r2::audio
         if(gAudioEngineInitialize && s_soundDefsBuiltQueue.TryPop(paths))
         {
             //TODO(Serge): could be smarter and only unload the sounds that were actually modified
-            AudioEngine audio;
+            //AudioEngine audio;
 
           //  audio.StopAllChannels();
 
@@ -554,7 +554,6 @@ namespace r2::audio
             {
                 return static_cast<BankHandle>(i);
             }
-            
         }
 
         BankHandle result = FindNextAvailableBankHandle();

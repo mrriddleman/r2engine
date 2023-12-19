@@ -559,15 +559,45 @@ namespace r2::edit
 	{
 		ContextMenuTitle("Sound Bank");
 
-		if (ImGui::Selectable("Import To Level"))
+		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		char filePath[r2::fs::FILE_PATH_LENGTH];
+		r2::util::PathCpy(filePath, path.string().c_str());
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(filePath, sanitizedPath);
+
+		bool isImportedToGame = r2::asset::lib::HasAsset(assetLib, sanitizedPath, r2::asset::SOUND);
+
+		std::string contextMenuLabel = "Import To Game";
+
+		//first check to see if we have it in the game yet
+		if (isImportedToGame)
 		{
+			contextMenuLabel = "Import To Level";
+		}
 
-			//@TODO(Serge): should the level/editor do this?
-			//r2::audio::AudioEngine audioEngine;
-			//audioEngine.LoadBank(path.string().c_str(), 0);
+		if (ImGui::Selectable(contextMenuLabel.c_str()))
+		{
+			if (isImportedToGame)
+			{
+				mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND), path.stem().string());
+			}
+			else
+			{
+				//add the new file to the level
 
+				//auto binAssetPath = FindBinAssetPathFromRawAsset(sanitizedPath);
 
-			mnoptrEditor->AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath(path.string().c_str(), r2::asset::SOUND), path.stem().string());
+				//if (binAssetPath != "")
+				//{
+				//	//sanitize the paths
+				//	char sanitizedBinPath[r2::fs::FILE_PATH_LENGTH];
+
+				//	r2::fs::utils::SanitizeSubPath(binAssetPath.string().c_str(), sanitizedBinPath);
+
+					r2::asset::lib::ImportAsset(assetLib, r2::asset::CreateNewAssetReference(sanitizedPath, sanitizedPath, r2::asset::SOUND), r2::asset::SOUND);
+				//}
+			}			
 		}
 	}
 
