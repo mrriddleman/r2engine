@@ -115,6 +115,10 @@ namespace r2::audio
 
         r2::audio::AudioEngine::BankHandle mMasterBank = r2::audio::AudioEngine::InvalidBank;
         r2::audio::AudioEngine::BankHandle mMasterStringsBank = r2::audio::AudioEngine::InvalidBank;
+
+#ifdef R2_ASSET_PIPELINE
+        std::unordered_map<r2::audio::AudioEngine::BankHandle, std::string> mLoadedBankPaths;
+#endif
     };
 
     u64 Implementation::MemorySize(u32 maxNumBanks, u32 maxNumEvents, u32 headerSize, u32 boundsCheckingSize)
@@ -317,19 +321,29 @@ namespace r2::audio
 
             r2::SArray<char*>* loadedBanks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, numBankSlots);
 
-            for (u32 i = 0; i < numBankSlots; ++i)
+            
+#ifdef R2_ASSET_PIPELINE
+            for (const auto& iter : gImpl->mLoadedBankPaths)
             {
-                FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, i);
-                
-                if (bank)
-                {
-                    char* path = ALLOC_ARRAYN(char, r2::fs::FILE_PATH_LENGTH, *MEM_ENG_SCRATCH_PTR);
-                    int retrieved;
-                    CheckFMODResult( bank->getPath(path, r2::fs::FILE_PATH_LENGTH, &retrieved) );
+                char* path = ALLOC_ARRAYN(char, r2::fs::FILE_PATH_LENGTH, *MEM_ENG_SCRATCH_PTR);
+                strcpy(path, iter.second.c_str());
+                r2::sarr::Push(*loadedBanks, path);
+            } 
+#else
+			for (u32 i = 0; i < numBankSlots; ++i)
+			{
+				FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, i);
 
-                    r2::sarr::Push(*loadedBanks, path);
-                }
+				if (bank)
+				{
+					char* path = ALLOC_ARRAYN(char, r2::fs::FILE_PATH_LENGTH, *MEM_ENG_SCRATCH_PTR);
+					int retrieved;
+					CheckFMODResult(bank->getPath(path, r2::fs::FILE_PATH_LENGTH, &retrieved));
+
+					r2::sarr::Push(*loadedBanks, path);
+				}
             }
+#endif
 
             StopAllEvents(false);
 
@@ -355,64 +369,33 @@ namespace r2::audio
             const u32 numPaths = r2::sarr::Size(*loadedBanks);
             for (u32 i = 0; i < numPaths; ++i)
             {
-                char* loadedBank = r2::sarr::At(*loadedBanks, i);
+                const char* loadedBank = r2::sarr::At(*loadedBanks, i);
 
+#ifdef R2_ASSET_PIPELINE
+                const char* bankPath = loadedBank;
+#else
 				char bankPath[r2::fs::FILE_PATH_LENGTH];
 				BuildBankFilePathFromFMODPath(loadedBank, bankPath, r2::fs::FILE_PATH_LENGTH);
-
+#endif
                 LoadBank(bankPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             }
 
-            FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
+        //    FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
 
-            R2_CHECK(stringsBank != nullptr, "?");
+         //   R2_CHECK(stringsBank != nullptr, "?");
 
-            int stringsCount = 0;
-            CheckFMODResult(stringsBank->getStringCount(&stringsCount));
+          //  int stringsCount = 0;
+        //    CheckFMODResult(stringsBank->getStringCount(&stringsCount));
 
-            for (int i = 0; i < stringsCount; ++i)
-            {
-                FMOD_GUID guid;
-                char path[fs::FILE_PATH_LENGTH];
-                int retrieved;
-                CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
-
-            //    printf("FMOD Path: %s\n", path);
-            }
-            //@TODO(Serge): now list all of the strings from the master strings bank
-            
-            //for (u32 i = 0; i < size; ++i)
+            //for (int i = 0; i < stringsCount; ++i)
             //{
-            //    const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
-            //        
-            //    SoundDefinition soundDef;
-            //    r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
-            //    soundDef.minDistance = def->minDistance();
-            //    soundDef.maxDistance = def->maxDistance();
-            //    soundDef.defaultVolume = def->defaultVolume();
-            //    soundDef.defaultPitch = def->pitch();
-            //    soundDef.loadOnRegister = def->loadOnRegister();
-            //        
-            //    if (def->loop())
-            //    {
-            //        soundDef.flags |= LOOP;
-            //    }
-            //        
-            //    if (def->is3D())
-            //    {
-            //        soundDef.flags |= IS_3D;
-            //    }
-            //        
-            //    if (def->stream())
-            //    {
-            //        soundDef.flags |= STREAM;
-            //    }
-            //    AudioEngine audio;
-            //    soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
-            // //   SoundID soundID = audio.RegisterSound(soundDef);    
+            //    FMOD_GUID guid;
+            //    char path[fs::FILE_PATH_LENGTH];
+            //    int retrieved;
+            //    CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
+
+            ////    printf("FMOD Path: %s\n", path);
             //}
-                
-            //free all of the temp data
 
             const s32 numLoadedBanks = r2::sarr::Size(*loadedBanks);
 
@@ -562,11 +545,16 @@ namespace r2::audio
 
         FMOD::Studio::Bank* loadedBank;
 
+
         CheckFMODResult(gImpl->mStudioSystem->loadBankFile(path, flags, &loadedBank));
 
         R2_CHECK(loadedBank->isValid(), "?");
 
         r2::sarr::At(*gImpl->mLoadedBanks, result) = loadedBank;
+
+#ifdef R2_ASSET_PIPELINE
+        gImpl->mLoadedBankPaths[result] = path;
+#endif
 
         return result;
     }
@@ -651,7 +639,9 @@ namespace r2::audio
         }
         
         r2::sarr::At(*gImpl->mLoadedBanks, bankHandle) = nullptr;
-
+#ifdef R2_ASSET_PIPELINE
+        gImpl->mLoadedBankPaths.erase(bankHandle);
+#endif
         return true;
     }
     
@@ -754,6 +744,10 @@ namespace r2::audio
         r2::sarr::Clear(*gImpl->mLoadedBanks);
         FMOD::Studio::Bank* emptyBank = nullptr;
         r2::sarr::Fill(*gImpl->mLoadedBanks, emptyBank);
+
+#ifdef R2_ASSET_PIPELINE
+        gImpl->mLoadedBankPaths.clear();
+#endif
     }
 
     bool AudioEngine::LoadSampleDataForBank(BankHandle bankHandle)

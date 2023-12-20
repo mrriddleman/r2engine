@@ -13,7 +13,7 @@
 
 namespace r2::asset::pln::audio
 {
-    bool GenerateSoundDefinitionsFromJson(const std::string& soundDefinitionFilePath);
+    bool GenerateSoundDefinitionsFromJson(const std::string& outputDir, const std::string& soundDefinitionFilePath);
     bool GenerateSoundDefinitionsFromDirectories(u32 version, const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories);
     
     bool SaveSoundDefinitionsManifestAssetReferencesToManifestFile(u32 version, const std::vector<r2::asset::AssetReference>& assetReferences, const std::string& binFilePath, const std::string& rawFilePath);

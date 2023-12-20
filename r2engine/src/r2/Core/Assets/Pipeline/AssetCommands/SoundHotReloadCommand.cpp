@@ -95,10 +95,11 @@ namespace r2::asset::pln
 	{
 		if (std::filesystem::path(changedPath).extension() == ".json")
 		{
-			bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(changedPath);
-			R2_CHECK(result, "Failed to generate sound definitions from: %s", changedPath.c_str());
+			std::filesystem::path p = mSoundDefinitionBinFilePath;
+			std::string definitionDir = p.parent_path().string();
 
-		//	mSoundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(mSoundDefinitionBinFilePath);
+			bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(definitionDir, changedPath);
+			R2_CHECK(result, "Failed to generate sound definitions from: %s", changedPath.c_str());
 
 			mCallRebuiltSoundDefinitions = true;
 		}
@@ -128,7 +129,7 @@ namespace r2::asset::pln
 			{
 				if (r2::asset::pln::audio::FindSoundDefinitionFile(std::filesystem::path(mSoundDefinitionRawFilePath).parent_path().string(), soundDefinitionFile, false))
 				{
-					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(soundDefinitionFile))
+					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(definitionDir, soundDefinitionFile))
 					{
 						R2_CHECK(false, "Failed to generate sound definition file from json!");
 						return;

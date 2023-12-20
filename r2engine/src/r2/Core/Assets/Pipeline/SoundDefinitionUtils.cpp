@@ -23,7 +23,7 @@ namespace r2::asset::pln::audio
     const std::string JSON_EXT = ".json";
     const std::string SDEF_EXT = ".sdef";
     
-    bool GenerateSoundDefinitionsFromJson(const std::string& soundDefinitionFilePath)
+    bool GenerateSoundDefinitionsFromJson(const std::string& outputDir, const std::string& soundDefinitionFilePath)
     {
         std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
         
@@ -31,9 +31,7 @@ namespace r2::asset::pln::audio
         
         r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), soundDefinitionSchemaPath, SOUND_DEFINITION_NAME_FBS.c_str());
         
-        std::filesystem::path p = soundDefinitionFilePath;
-        
-        return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, soundDefinitionFilePath);
+        return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, soundDefinitionSchemaPath, soundDefinitionFilePath);
     }
     
 	bool GenerateSoundDefinitionsFromDirectories(u32 version, const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories)

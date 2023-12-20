@@ -486,7 +486,7 @@ namespace r2::fs::utils
     {
         std::filesystem::path nextPath = path.parent_path();
 
-        while (nextPath != "")
+        while (nextPath != "" && nextPath != nextPath.root_path())
         {
             if (nextPath == parent)
             {
