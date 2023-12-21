@@ -618,7 +618,8 @@ namespace r2::edit
 								renderComponent.drawParameters.layer = draw::DL_WORLD;
 							}
 
-							bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+							//bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+							renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
 							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, theEntity, 0, renderComponent);
 						}
