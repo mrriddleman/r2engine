@@ -229,10 +229,17 @@ namespace r2::asset
 
 		const auto flatMaterialNames = modelData->materials();
 
+		printf("Model Name: %s\n", model->assetName.assetNameString.c_str());
 		for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 		{
 			const auto* flatMaterialName = flatMaterialNames->Get(i);
 			R2_CHECK(flatMaterialName->materialPackName() != 0, "The material pack name should never be nullptr");
+
+			//@TestCode
+			printf("Material Asset Name String: %s\n", flatMaterialName->name()->stringName()->c_str());
+			printf("Material Asset Name Hash: %llu\n", flatMaterialName->name()->assetName());
+
+
 			r2::sarr::Push(*model->optrMaterialNames, r2::mat::MakeMaterialNameFromFlatMaterial(flatMaterialName));
 		}
 

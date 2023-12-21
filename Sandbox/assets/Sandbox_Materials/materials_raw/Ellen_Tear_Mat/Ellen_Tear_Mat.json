@@ -1,7 +1,7 @@
 {
   assetName:{
-  assetName: 16041279221578763100,
-  stringName: "EllenDefault",
+  assetName:"Ellen_Tear_Mat",
+  stringName:"Ellen_Tear_Mat",
   },
   shaderEffectPasses: {
     shaderEffectPasses: [
@@ -98,115 +98,115 @@
     ],
     textureParams: [
       {
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "NORMAL",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "EMISSION",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "METALLIC",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "ROUGHNESS",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "HEIGHT",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       },
       {
         propertyType: "ANISOTROPY",
-        value:
-        { 
+        value: 
+        {
           assetName:14695981039346656837,
           stringName: ""
         },
         packingType: "RGBA",
         texturePack:
         {
-          assetName: 14695981039346656837,
+          assetName:14695981039346656837,
           stringName: ""
-        },
+        }
       }
     ],
     stringParams: [

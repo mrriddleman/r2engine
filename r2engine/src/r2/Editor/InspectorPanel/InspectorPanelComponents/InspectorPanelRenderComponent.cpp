@@ -320,7 +320,16 @@ namespace r2::edit
 
 			updateShaderBones = true;
 			
-			
+			if (hasDebugBoneComponent)
+			{
+				r2::ecs::DebugBoneComponent& debugBoneComponent = coordinator->GetComponent<r2::ecs::DebugBoneComponent>(entity);
+
+				ECS_WORLD_FREE(ecsWorld, debugBoneComponent.debugBones);
+
+				debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+
+				r2::sarr::Clear(*debugBoneComponent.debugBones);
+			}
 		}
 		else if (!renderComponent.isAnimated && hasSkeletalAnimationComponent)
 		{
@@ -397,12 +406,24 @@ namespace r2::edit
 				}
 				r2::sarr::Clear(*nextAnimationComponent.shaderBones);
 
+
+				auto* instancedDebugBoneComponent = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity);
+
+				if (instancedDebugBoneComponent)
+				{
+					auto& debugComponentInstance = r2::sarr::At(*instancedDebugBoneComponent->instances, i);
+					ECS_WORLD_FREE(ecsWorld, debugComponentInstance.debugBones);
+
+					debugComponentInstance.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+
+					r2::sarr::Clear(*debugComponentInstance.debugBones);
+
+				}
+
 				if (updateShaderBones)
 				{
 					r2::ecs::SkeletalAnimationComponent& animationComponent = r2::sarr::At(*instancedAnimationComponent.instances, i);
 					r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
-
-					auto* instancedDebugBoneComponent = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity);
 
 					if (instancedDebugBoneComponent)
 					{

@@ -601,6 +601,9 @@ namespace r2
 		r2::asset::AssetName modelAssetName;
 		modelAssetName.hashID = modelAsset.HashID();
 
+
+		//@TODO(Serge): we should probably also upload the model if we need to
+
 		//r2::asset::AssetHandle modelAssetHandle = { modelHandle.handle, gameAssetManager.GetAssetCacheSlot() };
 		
 		if (r2::sarr::IndexOf(*modelAssets, modelAssetName) == -1)

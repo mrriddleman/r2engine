@@ -1485,12 +1485,12 @@ public:
 	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonFile);
 
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
+		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
 
-		r2::asset::AssetReferenceAndType ellen;
-        ellen.type = r2::asset::RMODEL;
-        ellen.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Ellen/EllenIdle.fbx", r2::asset::RMODEL);
-		assetReferences.push_back(ellen);
+		//r2::asset::AssetReferenceAndType ellen;
+  //      ellen.type = r2::asset::RMODEL;
+  //      ellen.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Ellen/EllenIdle.fbx", r2::asset::RMODEL);
+		//assetReferences.push_back(ellen);
 
 	//	r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 

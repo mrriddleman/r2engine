@@ -1320,6 +1320,11 @@ namespace r2::assets::assetlib
 		pack_model(assetFile, metaDataBuf, metaDataSize, modelData, modelDataSize);
 
 
+		if (!std::filesystem::exists(outputPath))
+		{
+			std::filesystem::create_directories(outputPath);
+		}
+
 		fs::path filenamePath = inputFilePath.filename();
 
 		fs::path outputFilePath = outputPath / filenamePath.replace_extension(RMDL_EXTENSION);
