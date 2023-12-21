@@ -20,13 +20,16 @@ namespace r2::mat
 			return nullptr;
 		}
 
-		const auto numMaterialParams = materialPack->pack()->size();
+		const auto* materialsInPack = materialPack->pack();
+
+		const auto numMaterialParams = materialsInPack->size();
 
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
 		{
-			if (materialPack->pack()->Get(i)->assetName()->assetName() == materialName)
+			const auto* flatMaterial = materialsInPack->Get(i);
+			if (flatMaterial->assetName()->assetName() == materialName)
 			{
-				return materialPack->pack()->Get(i);
+				return flatMaterial;
 			}
 		}
 
