@@ -551,6 +551,231 @@ namespace r2::assets::assetlib
 		}
 	}
 
+	void PrintAllTexturesOfType(aiMaterial* material, aiTextureType type, const std::string& label)
+	{
+		auto numTexturesOfType = material->GetTextureCount(type);
+		printf("----------------------------------------------------------------------------\n\n");
+		printf("%s: %u\n", label.c_str(), numTexturesOfType);
+		for (unsigned int i = 0; i < numTexturesOfType; ++i)
+		{
+			aiString path;
+			aiTextureMapping textureMapping;
+			unsigned int uvIndex;
+			ai_real blend;
+			aiTextureOp textureOP;
+			aiTextureMapMode textureMapMode;
+
+			material->GetTexture(type, i, &path, &textureMapping, &uvIndex, &blend, &textureOP, &textureMapMode);
+			printf("Texture index: %u\n", i);
+			printf("Texture Path: %s\n", path.C_Str());
+			std::string textureMappingStr = "";
+			switch (textureMapping)
+			{
+			case aiTextureMapping_UV:
+				textureMappingStr = "UV";
+				break;
+			case aiTextureMapping_SPHERE:
+				textureMappingStr = "Sphere";
+				break;
+			case aiTextureMapping_CYLINDER:
+				textureMappingStr = "Cylinder";
+				break;
+			case aiTextureMapping_BOX:
+				textureMappingStr = "Box";
+				break;
+			case aiTextureMapping_PLANE:
+				textureMappingStr = "Plane";
+				break;
+			case aiTextureMapping_OTHER:
+				textureMappingStr = "Other";
+				break;
+			default:
+				break;
+			}
+			printf("Texture Mapping: %s\n", textureMappingStr.c_str());
+			printf("Texture UV Index: %u\n", uvIndex);
+			printf("Texture Blend: %f\n", blend);
+			std::string textureOpStr = "";
+			switch (textureOP)
+			{
+			case aiTextureOp_Multiply:
+				textureOpStr = "Multiply";
+				break;
+			case aiTextureOp_Add:
+				textureOpStr = "Add";
+				break;
+			case aiTextureOp_Subtract:
+				textureOpStr = "Subtract";
+				break;
+			case aiTextureOp_Divide:
+				textureOpStr = "Divide";
+				break;
+			case aiTextureOp_SmoothAdd:
+				textureOpStr = "Smooth Add";
+				break;
+			case aiTextureOp_SignedAdd:
+				textureOpStr = "Signed Add";
+				break;
+			default:
+				textureOpStr = "Not Specified";
+				break;
+			}
+
+			printf("Texture Op: %s\n", textureOpStr.c_str());
+			std::string textureMapModeStr = "";
+			switch (textureMapMode)
+			{
+			case aiTextureMapMode_Wrap:
+				textureMapModeStr = "Wrap";
+				break;
+			case aiTextureMapMode_Clamp:
+				textureMapModeStr = "Clamp";
+				break;
+			case aiTextureMapMode_Decal:
+				textureMapModeStr = "Decal";
+				break;
+			case aiTextureMapMode_Mirror:
+				textureMapModeStr = "Mirror";
+				break;
+			default:
+				break;
+
+			}
+			printf("Texture Wrap Mode: %s\n\n", textureMapModeStr.c_str());
+			printf("----------------------------------------------------------------------------\n");
+		}
+	}
+
+	void PrintAllAssimpMaterialInformation(aiMaterial* material)
+	{
+		printf("===========================================================================\n\n");
+		printf("Material Name: %s\n", material->GetName().C_Str());
+
+		PrintAllTexturesOfType(material, aiTextureType_AMBIENT, "Num Ambient Textures");
+		PrintAllTexturesOfType(material, aiTextureType_AMBIENT_OCCLUSION, "Num Ambient Occlusion Textures");
+		PrintAllTexturesOfType(material, aiTextureType_DIFFUSE, "Num Diffuse Textures");
+		PrintAllTexturesOfType(material, aiTextureType_DIFFUSE_ROUGHNESS, "Num Diffuse Roughness Textures");
+		PrintAllTexturesOfType(material, aiTextureType_DISPLACEMENT, "Num Displacement Textures");
+		PrintAllTexturesOfType(material, aiTextureType_EMISSION_COLOR, "Num Emission Color Textures");
+		PrintAllTexturesOfType(material, aiTextureType_EMISSIVE, "Num Emissive Textures");
+		PrintAllTexturesOfType(material, aiTextureType_HEIGHT, "Num Height Textures");
+		PrintAllTexturesOfType(material, aiTextureType_LIGHTMAP, "Num Light Map Textures");
+		PrintAllTexturesOfType(material, aiTextureType_METALNESS, "Num Metalness Textures");
+		PrintAllTexturesOfType(material, aiTextureType_NORMALS, "Num Normal Map Textures");
+		PrintAllTexturesOfType(material, aiTextureType_OPACITY, "Num Opacity Textures");
+		PrintAllTexturesOfType(material, aiTextureType_REFLECTION, "Num Reflection Textures");
+		PrintAllTexturesOfType(material, aiTextureType_SHININESS, "Num Shininess Textures");
+		PrintAllTexturesOfType(material, aiTextureType_SPECULAR, "Num Specular Textures");
+		PrintAllTexturesOfType(material, aiTextureType_UNKNOWN, "Num Unknown Textures");
+
+		printf("Material Properties: \n");
+
+		for (unsigned int p = 0; p < material->mNumProperties; ++p)
+		{
+			auto* aiProperty = material->mProperties[p];
+
+			//This will skip all of the textures - if semantic != 0 then it's a texture property which we already did above
+			if (aiProperty->mSemantic != 0)
+			{
+				continue;
+			}
+
+			int intValue = -1;
+			ai_real realValue;
+			double doubleValue;
+			aiString stringValue;
+			aiColor3D color3DValue;
+			aiColor4D color4DValue;
+			aiUVTransform uvTransform;
+
+			std::string propertyTypeStr = "Completely Unknown";
+
+			switch (aiProperty->mType)
+			{
+			case aiPTI_Float:
+			{
+				propertyTypeStr = "Float";
+
+				unsigned int numValues = aiProperty->mDataLength / sizeof(ai_real);
+				ai_real* values = (ai_real*)aiProperty->mData;
+
+				if (numValues == 1)
+				{
+					printf("Float property: %s, value: %f\n", aiProperty->mKey.C_Str(), *values);
+				}
+				else if (numValues == 2)
+				{
+					printf("Vec2 Property: %s, value - x: %f, y: %f\n", aiProperty->mKey.C_Str(), values[0], values[1]);
+				}
+				else if (numValues == 3)
+				{
+					printf("Color 3D Property: %s, value - r: %f, g: %f, b: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
+				}
+				else if (numValues == 4)
+				{
+					printf("Color 4D Property: %s, value - r: %f, g: %f, b: %f, a: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
+				}
+			}
+				break;
+			case aiPTI_Double:
+
+				propertyTypeStr = "Double";
+				material->Get<double>(aiProperty->mKey.C_Str(), 0, 0, doubleValue);
+				printf("Float Property: %s, value: %f\n", aiProperty->mKey.C_Str(), doubleValue);
+
+				break;
+			case aiPTI_String: 
+
+				propertyTypeStr = "String";
+				material->Get(aiProperty->mKey.C_Str(), 0, 0, stringValue);
+				printf("String Property: %s, value: %s\n", aiProperty->mKey.C_Str(), stringValue.C_Str());
+
+				break;
+			case aiPTI_Integer:
+			{
+				propertyTypeStr = "Integer";
+				
+				unsigned int numValues = aiProperty->mDataLength / sizeof(int);
+				int* values = (int*)aiProperty->mData;
+
+				if (numValues == 1)
+				{
+					printf("Int property: %s, value: %i\n", aiProperty->mKey.C_Str(), *values);
+				}
+				else if (numValues == 2)
+				{
+					printf("Int2 Property: %s, value - x: %i, y: %i\n", aiProperty->mKey.C_Str(), values[0], values[1]);
+				}
+				else if (numValues == 3)
+				{
+					printf("Int3 Property: %s, value - r: %i, g: %i, b: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
+				}
+				else if (numValues == 4)
+				{
+					printf("Int4 Property: %s, value - r: %i, g: %i, b: %i, a: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
+				}
+			}
+				break;
+			case aiPTI_Buffer:
+			{
+				propertyTypeStr = "Buffer";
+
+				if (std::string(aiProperty->mKey.C_Str()) == "$mat.twosided")
+				{
+					bool twoSided =  (bool)*aiProperty->mData;
+					printf("Buffer Property type: %s - %i\n", aiProperty->mKey.C_Str(), twoSided);
+				}
+			}
+				break;
+			default:
+				printf("Property type: %s - UNKNOWN\n", aiProperty->mKey.C_Str());
+				break;
+			}
+		}
+
+		printf("===========================================================================\n\n");
+	}
+
 	void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene)
 	{
 		Mesh nextMesh;
@@ -609,6 +834,13 @@ namespace r2::assets::assetlib
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 			assert(material != nullptr && "Material is null!");
+
+			//@TEMPORARY - We're going to look at all the material params and see what gets packaged into them
+
+			PrintAllAssimpMaterialInformation(material);
+
+
+
 			if (material)
 			{
 
