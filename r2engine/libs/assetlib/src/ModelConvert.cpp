@@ -1335,9 +1335,12 @@ namespace r2::assets::assetlib
 			animationsMetaData.push_back(metaData);
 		}
 
+		//@TODO(Serge): UUID
+		auto modelAssetName = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(model.modelName.c_str(), r2::asset::RMODEL), builder.CreateString(model.modelName));
+
 		auto modelMetaDataOffset = flat::CreateRModelMetaData(
 			builder,
-			STRING_ID(model.modelName.c_str()),
+			modelAssetName,
 			builder.CreateVector(meshInfos),
 			&flatBounds,
 			numMeshes,
@@ -1536,9 +1539,11 @@ namespace r2::assets::assetlib
 			flatAnimations.push_back(flatAnimationData);
 		}
 
+		auto modelAssetName2 = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(model.modelName.c_str(), r2::asset::RMODEL), builder.CreateString(model.modelName));
+
 		const auto rmodel = flat::CreateRModel(
 			dataBuilder,
-			STRING_ID(model.modelName.c_str()),
+			modelAssetName2,
 			&flatGlobalInverseTransform,
 			dataBuilder.CreateVector(flatMaterialNames),
 			dataBuilder.CreateVector(flatMeshes),

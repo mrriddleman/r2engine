@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "Mesh_generated.h"
 #include "RAnimationMetaData_generated.h"
 
@@ -486,7 +487,7 @@ inline flatbuffers::Offset<MeshInfo> CreateMeshInfoDirect(
 struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RModelMetaDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MODELNAME = 4,
+    VT_MODELASSETNAME = 4,
     VT_MESHINFOS = 6,
     VT_MODELBOUNDS = 8,
     VT_NUMMESHES = 10,
@@ -499,11 +500,11 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ORIGINALPATH = 24,
     VT_ANIMATIONMETADATA = 26
   };
-  uint64_t modelName() const {
-    return GetField<uint64_t>(VT_MODELNAME, 0);
+  const flat::AssetName *modelAssetName() const {
+    return GetPointer<const flat::AssetName *>(VT_MODELASSETNAME);
   }
-  bool mutate_modelName(uint64_t _modelName) {
-    return SetField<uint64_t>(VT_MODELNAME, _modelName, 0);
+  flat::AssetName *mutable_modelAssetName() {
+    return GetPointer<flat::AssetName *>(VT_MODELASSETNAME);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::MeshInfo>> *meshInfos() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MeshInfo>> *>(VT_MESHINFOS);
@@ -573,7 +574,8 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_MODELNAME) &&
+           VerifyOffset(verifier, VT_MODELASSETNAME) &&
+           verifier.VerifyTable(modelAssetName()) &&
            VerifyOffset(verifier, VT_MESHINFOS) &&
            verifier.VerifyVector(meshInfos()) &&
            verifier.VerifyVectorOfTables(meshInfos()) &&
@@ -600,8 +602,8 @@ struct RModelMetaDataBuilder {
   typedef RModelMetaData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_modelName(uint64_t modelName) {
-    fbb_.AddElement<uint64_t>(RModelMetaData::VT_MODELNAME, modelName, 0);
+  void add_modelAssetName(flatbuffers::Offset<flat::AssetName> modelAssetName) {
+    fbb_.AddOffset(RModelMetaData::VT_MODELASSETNAME, modelAssetName);
   }
   void add_meshInfos(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MeshInfo>>> meshInfos) {
     fbb_.AddOffset(RModelMetaData::VT_MESHINFOS, meshInfos);
@@ -650,7 +652,7 @@ struct RModelMetaDataBuilder {
 
 inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t modelName = 0,
+    flatbuffers::Offset<flat::AssetName> modelAssetName = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MeshInfo>>> meshInfos = 0,
     const flat::Bounds *modelBounds = 0,
     uint32_t numMeshes = 0,
@@ -663,7 +665,6 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
     flatbuffers::Offset<flatbuffers::String> originalPath = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData = 0) {
   RModelMetaDataBuilder builder_(_fbb);
-  builder_.add_modelName(modelName);
   builder_.add_animationMetaData(animationMetaData);
   builder_.add_originalPath(originalPath);
   builder_.add_skeletonMetaData(skeletonMetaData);
@@ -674,13 +675,14 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
   builder_.add_numMeshes(numMeshes);
   builder_.add_modelBounds(modelBounds);
   builder_.add_meshInfos(meshInfos);
+  builder_.add_modelAssetName(modelAssetName);
   builder_.add_isAnimatedModel(isAnimatedModel);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t modelName = 0,
+    flatbuffers::Offset<flat::AssetName> modelAssetName = 0,
     const std::vector<flatbuffers::Offset<flat::MeshInfo>> *meshInfos = nullptr,
     const flat::Bounds *modelBounds = 0,
     uint32_t numMeshes = 0,
@@ -697,7 +699,7 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
   auto animationMetaData__ = animationMetaData ? _fbb.CreateVector<flatbuffers::Offset<flat::RAnimationMetaData>>(*animationMetaData) : 0;
   return flat::CreateRModelMetaData(
       _fbb,
-      modelName,
+      modelAssetName,
       meshInfos__,
       modelBounds,
       numMeshes,

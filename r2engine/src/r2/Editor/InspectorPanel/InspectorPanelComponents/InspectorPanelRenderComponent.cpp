@@ -2,6 +2,7 @@
 #ifdef R2_EDITOR
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelRenderComponent.h"
+#include "r2/Editor/Editor.h"
 
 #include "r2/Core/Engine.h"
 #include "r2/Core/File/PathUtils.h"
@@ -519,13 +520,15 @@ namespace r2::edit
 	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource()
 		:InspectorPanelComponentDataSource("Render Component", 0, 0)
 		, mOpenMaterialsWindow(false)
+		, mnoptrEditor(nullptr)
 		, mMaterialToEdit{}
 	{
 
 	}
 
-	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator)
 		: InspectorPanelComponentDataSource("Render Component", coordinator->GetComponentType<ecs::RenderComponent>(), coordinator->GetComponentTypeHash<ecs::RenderComponent>())
+		, mnoptrEditor(noptrEditor)
 		, mOpenMaterialsWindow(false)
 		, mMaterialToEdit{}
 	{
@@ -539,6 +542,9 @@ namespace r2::edit
 
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		const r2::Level& currentEditorLevel = mnoptrEditor->GetEditorLevelConst();
+
 
 		{
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();

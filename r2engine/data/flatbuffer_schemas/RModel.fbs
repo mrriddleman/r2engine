@@ -1,5 +1,5 @@
 include "Mesh.fbs";
-include "Model.fbs";
+include "AssetName.fbs";
 include "RAnimation.fbs";
 
 namespace flat;
@@ -71,7 +71,7 @@ table AnimationData
 
 table RModel
 {
-	name:ulong (hash:"fnv1a_64");
+	assetName:AssetName;
 	globalInverseTransform:Matrix4;
 	materials:[MaterialName];
 	meshes:[RMesh];

@@ -4,13 +4,18 @@
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 
+namespace r2
+{
+	class Editor;
+}
+
 namespace r2::edit
 {
 	class InspectorPanelRenderComponentDataSource : public InspectorPanelComponentDataSource
 	{
 	public:
 		InspectorPanelRenderComponentDataSource();
-		InspectorPanelRenderComponentDataSource(r2::ecs::ECSCoordinator* coordinator);
+		InspectorPanelRenderComponentDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator);
 
 		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
 
@@ -29,7 +34,7 @@ namespace r2::edit
 	private:
 
 		
-
+		r2::Editor* mnoptrEditor;
 
 		bool mOpenMaterialsWindow;
 		r2::mat::MaterialName mMaterialToEdit;

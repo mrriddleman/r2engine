@@ -223,7 +223,7 @@ namespace r2::asset
 
 		model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
 
-		model->assetName.hashID = metaData->modelName();
+		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 
 		//materials
 

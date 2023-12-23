@@ -55,7 +55,7 @@ namespace r2::edit
 		std::shared_ptr<InspectorPanelDebugBoneComponentDataSource> debugBonesDataSource = std::make_shared<InspectorPanelDebugBoneComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelDebugRenderDataSource> debugRenderDataSource = std::make_shared<InspectorPanelDebugRenderDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelHierarchyComponentDataSource> hierarchyDataSource = std::make_shared<InspectorPanelHierarchyComponentDataSource>(editor, coordinator);
-		std::shared_ptr<InspectorPanelRenderComponentDataSource> renderDataSource = std::make_shared<InspectorPanelRenderComponentDataSource>(coordinator);
+		std::shared_ptr<InspectorPanelRenderComponentDataSource> renderDataSource = std::make_shared<InspectorPanelRenderComponentDataSource>(editor, coordinator);
 		std::shared_ptr<InspectorPanelSkeletonAnimationComponentDataSource> skeletalAnimationDataSource = std::make_shared<InspectorPanelSkeletonAnimationComponentDataSource>(coordinator);
 
 		InspectorPanelComponentWidget transformComponentWidget = InspectorPanelComponentWidget(sortOrder++, transformDataSource );

@@ -1,4 +1,5 @@
 include "Mesh.fbs";
+include "AssetName.fbs";
 include "RAnimationMetaData.fbs";
 
 namespace flat;
@@ -61,7 +62,7 @@ table MeshInfo
 
 table RModelMetaData
 {
-	modelName:ulong (hash:"fnv1a_64");
+	modelAssetName:AssetName;
 	meshInfos:[MeshInfo];
 	modelBounds:Bounds;
 	numMeshes:uint;
