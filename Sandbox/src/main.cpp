@@ -1396,12 +1396,12 @@ public:
     virtual u32 GetAssetMemorySize() const override
     {
         //@TODO(Serge): calculate this much later
-        return Megabytes(10);
+        return Megabytes(50);
     }
 
     virtual u32 GetTextureMemorySize() const override
     {
-        return Megabytes(250);
+        return Megabytes(300);
     }
 
     virtual u32 GetMaxNumECSSystems() const override

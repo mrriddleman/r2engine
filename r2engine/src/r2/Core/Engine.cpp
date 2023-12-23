@@ -1245,7 +1245,8 @@ namespace r2
 
         auto totalGameAssetCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, gameAssetCacheSize, ALIGNMENT, std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u), std::max(r2::asset::lib::MAX_NUM_GAME_ASSET_FILES, 1024u));
 
-        auto totalTextureCacheAmount = r2::draw::TexturePacksCache::MemorySize(gameTextureCacheSize, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
+        //@TODO(Serge): figure out why in R2_RELEASE or R2_PUBLISH we really need this extra 100KB
+        auto totalTextureCacheAmount = Kilobytes(100) + r2::draw::TexturePacksCache::MemorySize(gameTextureCacheSize, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
 
 		memoryArea->Init(totalGameAssetCacheAmount + totalTextureCacheAmount, 0);
 

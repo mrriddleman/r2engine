@@ -78,7 +78,11 @@ namespace r2::asset
 
 	void SoundAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
 	{
+#ifdef R2_ASSET_PIPELINE
 		strcpy(name, mAssetName.assetNameString.c_str());
+#endif
+
+
 	}
 
 	u64 SoundAssetFile::GetAssetHandle(u64 index)

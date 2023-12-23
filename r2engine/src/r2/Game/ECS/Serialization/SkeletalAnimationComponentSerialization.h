@@ -34,7 +34,12 @@ namespace r2::ecs
 		r2::SArray<flatbuffers::Offset<flat::SkeletalAnimationComponentData>>* skeletalAnimationComponents,
 		const SkeletalAnimationComponent& skeletalAnimationComponent)
 	{
+#ifdef R2_ASSET_PIPELINE
 		auto flatAssetName = flat::CreateAssetName(fbb, 0, skeletalAnimationComponent.animModelAssetName.hashID, fbb.CreateString(skeletalAnimationComponent.animModelAssetName.assetNameString));
+#else
+		auto flatAssetName = flat::CreateAssetName(fbb, 0, skeletalAnimationComponent.animModelAssetName.hashID, fbb.CreateString(""));
+#endif
+		
 
 		flat::SkeletalAnimationComponentDataBuilder skeletalAnimationComponentBuilder(fbb);
 

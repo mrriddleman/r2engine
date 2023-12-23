@@ -125,8 +125,11 @@ namespace r2::ecs
 			}
 
 			//@TODO(Serge): UUID
+#ifdef R2_ASSET_PIPELINE
 			auto flatAssetModelName = flat::CreateAssetName(fbb, 0, renderComponent.assetModelName.hashID, fbb.CreateString(renderComponent.assetModelName.assetNameString));
-
+#else
+			auto flatAssetModelName = flat::CreateAssetName(fbb, 0, renderComponent.assetModelName.hashID, fbb.CreateString(""));
+#endif
 			flat::RenderComponentDataBuilder renderComponentBuilder(fbb);
 
 			renderComponentBuilder.add_assetModel(flatAssetModelName);
