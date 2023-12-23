@@ -81,6 +81,8 @@ namespace r2
 		void LoadLevelData(Level& level, const flat::LevelData* levelData);
 		void UnLoadLevelData(const Level& level);
 
+		
+
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
 		u32 mMaxNumLevels;

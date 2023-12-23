@@ -370,7 +370,6 @@ namespace r2
 
 		f64 start = CENG.GetTicks();
 
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
@@ -387,7 +386,7 @@ namespace r2
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(modelAssetName, r2::asset::RMODEL);
 			r2::sarr::Push(*modelAssets, modelAssetName);
-			const r2::draw::Model* model = gameAssetManager.LoadAndGetAssetConst<r2::draw::Model>(modelAsset);//GetAssetDataConst<r2::draw::Model>(modelHandle);
+			const r2::draw::Model* model = gameAssetManager.LoadAndGetAssetConst<r2::draw::Model>(modelAsset);
 			r2::draw::renderer::UploadModel(model);
 		}
 
@@ -450,7 +449,6 @@ namespace r2
 				r2::sarr::Push(*materialsToLoad, material);
 
 				r2::sarr::Push(*materials, materialName);
-				//r2::mat::GetAllTexturePacksForMaterial(materialParams, textureAssets);
 			}
 
 			materialGatherEnd = CENG.GetTicks();
@@ -458,7 +456,7 @@ namespace r2
 			//Load from disk
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
-				bool result = r2::draw::texche::LoadMaterialTextures(texturePacksCache, r2::sarr::At(*materialsToLoad, i));//gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialsToLoad, i));
+				bool result = r2::draw::texche::LoadMaterialTextures(texturePacksCache, r2::sarr::At(*materialsToLoad, i));
 				R2_CHECK(result, "Should always work");
 			}
 
@@ -473,7 +471,7 @@ namespace r2
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
 				const flat::Material* material = r2::sarr::At(*materialsToLoad, i);
-				bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, material, gameTextures, gameCubemaps);//gameAssetManager.GetTexturesForFlatMaterial(material, gameTextures, gameCubemaps);
+				bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, material, gameTextures, gameCubemaps);
 				R2_CHECK(result, "Should always work");
 
 				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
@@ -635,15 +633,12 @@ namespace r2
 		for (u32 i = 0; i < numTexturePacksToUnload; ++i)
 		{
 			r2::draw::texche::UnloadTexturePack(tetxurePacksCache, r2::sarr::At(*texturePacksToUnload, i));
-		//	gameAssetManager.UnloadTexturePack(r2::sarr::At(*texturePacksToUnload, i));
 		}
-
 
 		const u32 numSoundBanksToUnload = r2::sarr::Size(*soundBanksToUnload);
 		for (u32 i = 0; i < numSoundBanksToUnload; ++i)
 		{
 			gameAssetManager.UnloadAsset(r2::sarr::At(*soundBanksToUnload, i));
-			
 		}
 
 		FREE(soundBanksToUnload, *MEM_ENG_SCRATCH_PTR);
@@ -735,15 +730,52 @@ namespace r2
 
 	void LevelManager::ImportMaterialToLevel(Level* level, const r2::mat::MaterialName& materialName)
 	{
-		//@TODO(Serge): Do we have to actually load all of the textures and stuff?
-		//				Or should the level do that?
-
-		//@TODO(Serge): shouldn't the level be doing this?
 		auto* materials = level->GetMaterials();
-		if (r2::sarr::IndexOf(*materials, materialName) == -1)
+
+		if (r2::sarr::IndexOf(*materials, materialName) != -1)
 		{
-			r2::sarr::Push(*materials, materialName);
+			return;
 		}
+
+		r2::sarr::Push(*materials, materialName);
+
+		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
+		
+		//Upload all the material textures
+		const flat::Material* material = r2::mat::GetMaterialForMaterialName(materialName);
+
+		R2_CHECK(material != nullptr, "This should never be nullptr");
+
+		u32 numTexturesTotal = material->shaderParams()->textureParams()->size();
+		bool result = r2::draw::texche::LoadMaterialTextures(texturePacksCache, material);
+
+		r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, numTexturesTotal);
+		r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, numTexturesTotal);
+
+		r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+
+		result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, material, gameTextures, gameCubemaps);
+		R2_CHECK(result, "Should always work");
+
+		r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
+		if (r2::sarr::Size(*gameTextures) > 0)
+		{
+			texturesToUse = gameTextures;
+		}
+
+		r2::draw::tex::CubemapTexture* cubemapTexture = nullptr;
+		if (r2::sarr::Size(*gameCubemaps) > 0)
+		{
+			cubemapTexture = &r2::sarr::At(*gameCubemaps, 0);
+		}
+
+		r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, material, texturesToUse, cubemapTexture, false);
+
+		r2::sarr::Clear(*gameTextures);
+		r2::sarr::Clear(*gameCubemaps);
+		
+		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
+		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 	}
 #endif
 }
