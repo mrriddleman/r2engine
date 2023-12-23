@@ -127,11 +127,14 @@ namespace r2::asset::lib
     //void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list);
 
     std::vector<r2::asset::AssetFile*> GetAllAssetFilesForType(AssetLib& assetLib, r2::asset::AssetType type);
+
+    std::vector<r2::asset::AssetName> GetAllAssetNamesForType(AssetLib& assetLib, r2::asset::AssetType type);
+
 	//@Temporary
 	void ImportAssetFiles(AssetLib& assetLib, const std::vector<r2::asset::AssetReferenceAndType>& assetReferences);
 #endif
     
-    //RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
+
     RawAssetFile* MakeRawAssetFile(const char* path, r2::asset::AssetType assetType);
     void FreeRawAssetFile(RawAssetFile* file);
     //@TODO(Serge): maybe make a MakeRawAssetFile that will alloc an array?

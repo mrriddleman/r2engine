@@ -36,6 +36,8 @@ namespace r2::asset
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;
 		virtual bool SaveManifest() override;
 		virtual void Reload() override;
+
+		virtual std::vector<r2::asset::AssetName> GetAssetNames() const override;
 #endif
 	protected:
 		virtual void DestroyAssetFiles() override;

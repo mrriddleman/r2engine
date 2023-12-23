@@ -42,6 +42,7 @@ namespace r2::mat
 namespace r2::asset
 {
 	class Asset;
+	struct AssetName;
 }
 
 namespace r2
@@ -85,7 +86,7 @@ namespace r2
 
 		void AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name);
 		void AddMaterialToLevel(const r2::mat::MaterialName& materialName);
-		void AddModelToLevel(const r2::asset::Asset& modelAsset);
+		void AddModelToLevel(const r2::asset::AssetName& modelAsset);
 
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }

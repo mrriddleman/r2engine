@@ -14,6 +14,7 @@
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
 
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Game/Level/Level.h"
 
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/RendererTypes.h"
@@ -550,56 +551,53 @@ namespace r2::edit
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 			
 			const r2::draw::Model* model = nullptr;
-			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			if (r2::asset::lib::HasAsset(assetLib, { renderComponent.assetModelName , r2::asset::RMODEL })) 
+			std::string currentModelAssetName = renderComponent.assetModelName.assetNameString;
+
+
+			r2::SArray<r2::asset::AssetName>* modelLevelAssetNames = currentEditorLevel.GetModelAssets();
+			R2_CHECK(modelLevelAssetNames != nullptr, "Should never happen");
+
+			std::vector<r2::asset::AssetName> modelAssetNames;
+
+			const auto numLevelModelAssetNames = r2::sarr::Size(*modelLevelAssetNames);
+
+			for (u32 i = 0; i < numLevelModelAssetNames; ++i)
 			{
-				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelName);
-				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::RMODEL));
+				modelAssetNames.push_back(r2::sarr::At(*modelLevelAssetNames, i));
 			}
-			else
-			{
-				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelName);
-
-				currentModelAssetfile = r2::asset::lib::GetAssetFileForAsset(assetLib, r2::asset::Asset(model->assetName, r2::asset::MODEL));
-			}
-
-			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
-
-			std::vector<r2::asset::AssetFile*> rModelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::RMODEL);
 
 			//@TODO(Serge): remove the primitive model lines once we have refactored the r2::asset::MODEL stuff
 			{
-				std::vector<r2::asset::AssetFile*> modelFiles = r2::asset::lib::GetAllAssetFilesForType(assetLib, r2::asset::MODEL);
+				std::vector<r2::asset::AssetName> modelFiles = r2::asset::lib::GetAllAssetNamesForType(assetLib, r2::asset::MODEL);
 
-				rModelFiles.insert(rModelFiles.end(), modelFiles.begin(), modelFiles.end());
+				modelAssetNames.insert(modelAssetNames.end(), modelFiles.begin(), modelFiles.end());
 			}
 
 
 			ImGui::Text("Render model:");
 			ImGui::SameLine();
-			if (ImGui::BeginCombo("##label rendermodel", modelFileName.c_str()))
+			if (ImGui::BeginCombo("##label rendermodel", currentModelAssetName.c_str()))
 			{
-				for (u32 i = 0; i < rModelFiles.size(); ++i)
+				for (u32 i = 0; i < modelAssetNames.size(); ++i)
 				{
-					r2::asset::AssetFile* assetFile = rModelFiles[i];
-					std::string nextModelFileName = GetModelNameForAssetFile(assetFile);
+					const r2::asset::AssetName& modelAssetName = modelAssetNames[i];
 
-					if (ImGui::Selectable(nextModelFileName.c_str(), nextModelFileName == modelFileName))
+					if (ImGui::Selectable(modelAssetName.assetNameString.c_str(), modelAssetName.assetNameString == currentModelAssetName))
 					{
-						if (nextModelFileName != modelFileName)
+						if (modelAssetName.assetNameString != currentModelAssetName)
 						{
-							std::filesystem::path assetFilePath = assetFile->FilePath();
-							auto assetHandle = assetFile->GetAssetHandle(0);
+							std::filesystem::path assetFilePath = modelAssetName.assetNameString;
+							//auto assetHandle = assetFile->GetAssetHandle(0);
 							const r2::draw::Model* renderModel = nullptr;
 
 							if (assetFilePath.extension().string() == ".modl")
 							{
-								renderModel = r2::draw::renderer::GetDefaultModel({ assetHandle });
+								renderModel = r2::draw::renderer::GetDefaultModel({ modelAssetName.hashID });
 							}
 							else
 							{
-								renderModel = gameAssetManager.GetAssetData<r2::draw::Model>(assetHandle);
+								renderModel = gameAssetManager.GetAssetData<r2::draw::Model>(modelAssetName.hashID);
 							}
 
 							R2_CHECK(renderModel != nullptr, "Should never happen");
@@ -608,10 +606,10 @@ namespace r2::edit
 
 							renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelName);
 
-							if (!r2::draw::renderer::IsModelRefHandleValid(renderComponent.gpuModelRefHandle))
-							{
-								renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(renderModel);
-							}
+							//if (!r2::draw::renderer::IsModelRefHandleValid(renderComponent.gpuModelRefHandle))
+							//{
+							//	renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(renderModel);
+							//}
 
 							renderComponent.isAnimated = renderModel->optrBoneInfo != nullptr;
 

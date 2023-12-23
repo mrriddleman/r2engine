@@ -48,7 +48,7 @@ namespace r2::asset
 		virtual void Reload();
 
 		FileList GetAssetFiles() const { return mAssetFiles; }
-
+		virtual std::vector<r2::asset::AssetName> GetAssetNames() const { TODO; return {}; }
 #endif
 	protected:
 #ifdef R2_ASSET_PIPELINE

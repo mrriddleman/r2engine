@@ -147,6 +147,23 @@ namespace r2::asset
 		FillAssetFiles();
 	}
 
+	std::vector<r2::asset::AssetName> EngineModelManifestAssetFile::GetAssetNames() const
+	{
+		std::vector<r2::asset::AssetName> assetNames = {};
+
+		const auto* models = mModelsManifest->models();
+
+		for (flatbuffers::uoffset_t i = 0; i < models->size(); ++i)
+		{
+			r2::asset::AssetName assetName;
+			r2::asset::MakeAssetNameFromFlatAssetName(models->Get(i)->assetName(), assetName);
+
+			assetNames.push_back(assetName);
+		}
+
+		return assetNames;
+	}
+
 #endif
 
 }

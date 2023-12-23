@@ -33,6 +33,8 @@ namespace r2::asset
 		virtual void Reload() override;
 
 		std::vector<AssetReference>& GetRModelAssetReferences();
+
+		virtual std::vector<r2::asset::AssetName> GetAssetNames() const override;
 #endif
 	protected:
 		virtual void DestroyAssetFiles() override;

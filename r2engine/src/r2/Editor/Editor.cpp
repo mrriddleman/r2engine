@@ -343,19 +343,27 @@ namespace r2
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
-				AddModelToLevel(microbatAsset);
+
 				r2::asset::AssetName modelAssetName;
 				modelAssetName.hashID = microbatAsset.HashID();
+#ifdef R2_ASSET_PIPELINE
+				modelAssetName.assetNameString = "micro_bat.rmdl";
+#endif
+				AddModelToLevel(modelAssetName);
 
 				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelAssetName);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(modelAssetName);
+
+				
+
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(microbatAnimModel->assetName);
+
+
 
 				ecs::RenderComponent renderComponent;
-				renderComponent.assetModelName.hashID = microbatAsset.HashID();
-#ifdef R2_ASSET_PIPELINE
-				renderComponent.assetModelName.assetNameString = "micro_bat.rmdl";
-#endif
+				renderComponent.assetModelName = microbatAnimModel->assetName;
+
+
 				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;
@@ -587,13 +595,10 @@ namespace r2
 		}
 	}
 
-	void Editor::AddModelToLevel(const r2::asset::Asset& modelAsset)
+	void Editor::AddModelToLevel(const r2::asset::AssetName& modelAsset)
 	{
-		r2::asset::AssetName modelAssetName;
-		modelAssetName.hashID = modelAsset.HashID();
-
 		auto& levelManager = CENG.GetLevelManager();
-		levelManager.ImportModelToLevel(mCurrentEditorLevel, modelAssetName);
+		levelManager.ImportModelToLevel(mCurrentEditorLevel, modelAsset);
 	}
 
 	void Editor::AddMaterialToLevel(const r2::mat::MaterialName& materialName)

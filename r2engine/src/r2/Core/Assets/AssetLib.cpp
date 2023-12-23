@@ -590,6 +590,41 @@ namespace r2::asset::lib
         return assetFiles;
     }
 
+    std::vector<r2::asset::AssetName> GetAllAssetNamesForType(AssetLib& assetLib, r2::asset::AssetType type)
+    {
+		auto manifestType = GetManifestTypeForAssetType(type);
+
+		u32 manifestsCount = GetManifestCountForType(assetLib, manifestType);
+
+		if (manifestsCount == 0)
+		{
+			R2_CHECK(false, "Probably a bug here");
+			return {};
+		}
+
+		r2::SArray<ManifestAssetFile*>* manifestAssetFilesForType = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ManifestAssetFile*, manifestsCount);
+
+		R2_CHECK(manifestAssetFilesForType != nullptr, "Should never happen");
+
+		GetManifestFilesForType(assetLib, manifestType, manifestAssetFilesForType);
+
+		u32 numManifestsForType = r2::sarr::Size(*manifestAssetFilesForType);
+
+        std::vector<r2::asset::AssetName> assetNames;
+
+        for (u32 i = 0; i < numManifestsForType; ++i)
+        {
+            const ManifestAssetFile* manifestAssetFile = r2::sarr::At(*manifestAssetFilesForType, i);
+
+            auto nextAssetNames = manifestAssetFile->GetAssetNames();
+
+            assetNames.insert(assetNames.end(), nextAssetNames.begin(), nextAssetNames.end());
+        }
+
+        FREE(manifestAssetFilesForType, *MEM_ENG_SCRATCH_PTR);
+        return assetNames;
+    }
+
 #endif
 
     bool Init(const r2::mem::utils::MemBoundary& boundary)

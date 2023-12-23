@@ -169,6 +169,18 @@ namespace r2::asset
 		return mRModelAssetReferences;
 	}
 
+	std::vector<r2::asset::AssetName> RModelsManifestAssetFile::GetAssetNames() const
+	{
+		std::vector<r2::asset::AssetName> assetNames = {};
+
+		for (const auto& assetRef : mRModelAssetReferences)
+		{
+			assetNames.push_back(assetRef.assetName);
+		}
+
+		return assetNames;
+	}
+
 	void RModelsManifestAssetFile::ReloadManifestFile(bool fillVector)
 	{
 		ManifestAssetFile::Reload();

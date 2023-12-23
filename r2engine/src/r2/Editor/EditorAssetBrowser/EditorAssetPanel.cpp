@@ -511,8 +511,7 @@ namespace r2::edit
 		{
 			if (isImportedToGame)
 			{
-				auto modelAsset = r2::asset::Asset::MakeAssetFromFilePath(sanitizedPath, r2::asset::RMODEL);
-				mnoptrEditor->AddModelToLevel(modelAsset);
+				mnoptrEditor->AddModelToLevel(r2::asset::MakeAssetNameFromPath(sanitizedPath, r2::asset::RMODEL));
 			}
 			else
 			{
