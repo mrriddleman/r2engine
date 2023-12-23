@@ -398,15 +398,7 @@ namespace r2::edit
 					return true;
 				}
 			}
-
-
 		}
-
-
-		//@TODO(Serge): we need to figure out based on the path which folder we're in. If it's a directory
-		//				then set the menu to be the proper menu for that directory type.
-		//				If it's a specific kind of file, then we set the menu to be the proper menu for that file type.
-
 
 		return false;
 

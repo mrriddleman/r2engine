@@ -687,4 +687,63 @@ namespace r2
 
 		return memorySize;
 	}
+
+#ifdef R2_ASSET_PIPELINE
+	void LevelManager::ImportSoundToLevel(Level* level, const r2::asset::AssetName& assetName)
+	{
+		auto* soundBanks = level->GetSoundBankAssetNames();
+		if (r2::sarr::IndexOf(*soundBanks, assetName) != -1)
+		{
+			return;
+		}
+		
+		r2::sarr::Push(*soundBanks, assetName);
+		
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		gameAssetManager.LoadAsset(r2::asset::Asset(assetName, r2::asset::SOUND));
+	}
+
+	void LevelManager::ImportModelToLevel(Level* level, const r2::asset::AssetName& assetName)
+	{
+		auto* modelAssets = level->GetModelAssets();
+
+		//already in the level don't care
+		if (r2::sarr::IndexOf(*modelAssets, assetName) != -1)
+		{
+			return;
+		}
+
+		r2::sarr::Push(*modelAssets, assetName);
+		
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(r2::asset::Asset(assetName, r2::asset::RMODEL));
+
+		const auto* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+
+		r2::draw::renderer::UploadModel(model);
+
+		const u32 numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
+
+		for (u32 i = 0; i < numMaterialNames; ++i)
+		{
+			r2::mat::MaterialName materialName = r2::sarr::At(*model->optrMaterialNames, i);
+			ImportMaterialToLevel(level, materialName);
+		}
+	}
+
+	void LevelManager::ImportMaterialToLevel(Level* level, const r2::mat::MaterialName& materialName)
+	{
+		//@TODO(Serge): Do we have to actually load all of the textures and stuff?
+		//				Or should the level do that?
+
+		//@TODO(Serge): shouldn't the level be doing this?
+		auto* materials = level->GetMaterials();
+		if (r2::sarr::IndexOf(*materials, materialName) == -1)
+		{
+			r2::sarr::Push(*materials, materialName);
+		}
+	}
+#endif
 }

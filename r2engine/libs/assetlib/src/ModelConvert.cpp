@@ -21,6 +21,7 @@
 #include "assetlib/AssetUtils.h"
 #include "assetlib/AnimationConvert.h"
 #include "AssetName_generated.h"
+#include <assimp/pbrmaterial.h>
 
 #define MAX_BONE_WEIGHTS 4
 
@@ -667,6 +668,8 @@ namespace r2::assets::assetlib
 		PrintAllTexturesOfType(material, aiTextureType_SHININESS, "Num Shininess Textures");
 		PrintAllTexturesOfType(material, aiTextureType_SPECULAR, "Num Specular Textures");
 		PrintAllTexturesOfType(material, aiTextureType_UNKNOWN, "Num Unknown Textures");
+		
+		
 
 		printf("Material Properties: \n");
 

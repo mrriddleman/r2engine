@@ -343,13 +343,13 @@ namespace r2
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
-				r2::draw::ModelHandle microbatModelHandle = gameAssetManager.LoadAsset(microbatAsset);
-
-				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(microbatModelHandle);
-
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadModel(microbatAnimModel);
-
 				AddModelToLevel(microbatAsset);
+				r2::asset::AssetName modelAssetName;
+				modelAssetName.hashID = microbatAsset.HashID();
+
+				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelAssetName);
+
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(modelAssetName);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelName.hashID = microbatAsset.HashID();
@@ -589,71 +589,27 @@ namespace r2
 
 	void Editor::AddModelToLevel(const r2::asset::Asset& modelAsset)
 	{
-		//@TODO(Serge): shouldn't the level be doing this?
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-		r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-
-		const auto* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-
-		auto* modelAssets = mCurrentEditorLevel->GetModelAssets();
-		
 		r2::asset::AssetName modelAssetName;
 		modelAssetName.hashID = modelAsset.HashID();
 
-
-		//@TODO(Serge): we should probably also upload the model if we need to
-
-		//r2::asset::AssetHandle modelAssetHandle = { modelHandle.handle, gameAssetManager.GetAssetCacheSlot() };
-		
-		if (r2::sarr::IndexOf(*modelAssets, modelAssetName) == -1)
-		{
-			//@NOTE(Serge): may want to load here - dunno yet
-			r2::sarr::Push(*modelAssets, modelAssetName);
-		}
-
-		const u32 numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
-
-		for (u32 i = 0; i < numMaterialNames; ++i)
-		{
-			r2::mat::MaterialName materialName =r2::sarr::At(*model->optrMaterialNames, i);
-			AddMaterialToLevel(materialName);
-		}
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportModelToLevel(mCurrentEditorLevel, modelAssetName);
 	}
 
 	void Editor::AddMaterialToLevel(const r2::mat::MaterialName& materialName)
 	{
-		//@TODO(Serge): Do we have to actually load all of the textures and stuff?
-		//				Or should the level do that?
-
-		//@TODO(Serge): shouldn't the level be doing this?
-		auto* materials = mCurrentEditorLevel->GetMaterials();
-		if (r2::sarr::IndexOf(*materials, materialName) == -1)
-		{
-			r2::sarr::Push(*materials, materialName);
-		}
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportMaterialToLevel(mCurrentEditorLevel, materialName);
 	}
 
 	void Editor::AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name)
 	{
-		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();
-	
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-
 		r2::asset::AssetName soundBankName;
 		soundBankName.hashID = soundBankAssetName;
 		soundBankName.assetNameString = name;
 
-		gameAssetManager.LoadAsset(r2::asset::Asset(soundBankName, r2::asset::SOUND));
-
-
-
-		//@TODO(Serge): shouldn't the level be doing this?
-		if (r2::sarr::IndexOf(*soundBanks, soundBankName) == -1)
-		{
-			r2::sarr::Push(*soundBanks, soundBankName);
-		}
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportSoundToLevel(mCurrentEditorLevel, soundBankName);
 	}
 }
 

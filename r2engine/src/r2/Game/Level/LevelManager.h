@@ -69,6 +69,12 @@ namespace r2
 			u32 maxNumEntities,
 			const r2::mem::utils::MemoryProperties& memProperties);
 
+#ifdef R2_ASSET_PIPELINE
+		void ImportSoundToLevel(Level* level, const r2::asset::AssetName& assetName);
+		void ImportModelToLevel(Level* level, const r2::asset::AssetName& assetName);
+		void ImportMaterialToLevel(Level* level, const r2::mat::MaterialName& materialName);
+#endif
+
 	private:
 		
 		Level* FindLoadedLevel(LevelName levelname, s32& index);
