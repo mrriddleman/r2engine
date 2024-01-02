@@ -215,10 +215,10 @@ struct BatchRenderOffsets
 	{
 		glm::vec4 cameraPosTimeW;
 		glm::vec4 exposureNearFar;
-	//	glm::vec4 cascadePlanes; //depricated
 		glm::vec4 shadowMapSizes;
 		glm::vec4 fovAspectResXResY;
-		u64 frame;
+		u32 frame; //might be a problem - dunno yet
+		u32 padding;
 		glm::vec2 clusterScaleBias;
 		glm::uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 		glm::vec4 jitter;

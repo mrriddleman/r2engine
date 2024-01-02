@@ -10,6 +10,7 @@
 
 layout(location = 0) out vec4 oBlurColor;
 
+//@TODO(Serge): clean this up - don't want to use uint64_t if we don't have to
 #ifdef GL_NV_gpu_shader5
 uniform uint64_t textureContainerToBlur;
 #else 

@@ -166,6 +166,15 @@ vec4 SampleCubemapRGBA(CubemapAddress tex, vec3 texCoords)
 #endif
 }
 
+vec4 SampleCubemapPageRGBA(CubemapAddress tex, vec3 texCoords, float page)
+{
+#ifdef GL_NV_gpu_shader5
+	return texture(samplerCubeArray(tex.container), vec4(texCoords, page));
+#else
+	return texture(tex.container, vec4(texCoords, page));
+#endif
+}
+
 vec4 SampleCubemapLodRGBA(CubemapAddress tex, vec3 texCoords, float lod)
 {
 #ifdef GL_NV_gpu_shader5

@@ -19,11 +19,11 @@ float InterleavedGradientNoise(vec2 screenPosition)
   	return fract(magic.z * fract(dot(screenPosition, magic.xy)));
 }
 
-float Sample3DShadowMapDepth(Tex2DAddress shadowSurface, vec3 pos, vec3 offset, float page)
+float Sample3DShadowMapDepth(CubemapAddress shadowSurface, vec3 pos, vec3 offset, float page)
 {
-	vec4 coord = vec4(pos + offset, page);
+	//vec4 coord = vec4(pos + offset, page);
 	//@TODO(Serge): another tricky case
-	float shadowSample = texture(samplerCubeArray(shadowSurface.container), coord).r;
+	float shadowSample = SampleCubemapPageRGBA(shadowSurface, pos + offset, page).r;//texture(samplerCubeArray(shadowSurface.container), coord).r;
 	return shadowSample;
 }
 

@@ -13,7 +13,7 @@ vec3 sampleOffsetDirections[20] = vec3[]
    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
 );   
 
-float PointLightShadowCalculation(Tex2DAddress shadowTex, vec3 fragPos, vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
+float PointLightShadowCalculation(CubemapAddress shadowTex, vec3 fragPos, vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
 {
 	vec3 V = viewPos - fragPos;
 	float viewDistance = length(V);

@@ -9,7 +9,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
-    uint64_t frame;
+    uint frame;
+    uint vectors_padding;
     vec2 clusterScaleBias;
     uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
     vec4 jitter;
