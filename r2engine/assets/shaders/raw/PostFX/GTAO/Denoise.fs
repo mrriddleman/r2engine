@@ -1,5 +1,6 @@
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
 
 #define INV_SQRT_OF_2PI 0.39894228040143267793994605993439  // 1.0/SQRT_OF_2PI
@@ -18,29 +19,13 @@ in VS_OUT
 } fs_in;
 
 
-vec2 SampleTexture(Tex2DAddress inputTexture, ivec2 uv, ivec2 uvOffset)
-{
-	ivec3 texCoord = ivec3(uv.x + uvOffset.x, uv.y + uvOffset.y, inputTexture.page);
-	return texelFetch(sampler2DArray(inputTexture.container), texCoord, 0).rg;
-}
 
-vec2 SampleTextureF(Tex2DAddress tex, vec2 uv, vec2 offset)
-{
-	vec3 texCoord = vec3(uv + offset, tex.page);
-	return texture(sampler2DArray(tex.container), texCoord).rg;
-}
-
-vec4 GatherOffset(Tex2DAddress tex, vec2 uv, ivec2 offset)
-{
-	vec3 texCoord = vec3(uv, tex.page);
-	return textureGatherOffset(sampler2DArray(tex.container), texCoord, offset);
-}
 
 vec2 BasicBlur()
 {
 	//@TODO(Serge): This is kinda bad since we're hard coding the ao texture - would be nice to not have to do that
 	//				Instead - we would need to pass a Tex2DAddress uniform 
-	vec2 center = SampleTexture(ambientOcclusionSurface, ivec2(gl_FragCoord.xy), ivec2(0));
+	vec2 center = TexelFetchLodOffset(ambientOcclusionSurface, ivec2(gl_FragCoord.xy), ivec2(0), 0);
 	float rampMaxInv = 1.0 / (center.y * 0.1);
 
 	float totalAO = 0.0;
@@ -52,7 +37,7 @@ vec2 BasicBlur()
 		{
 			//@TODO(Serge): This is kinda back since we're hard coding the ao texture - would be nice to not have to do that
 			//				Instead - we would need to pass a Tex2DAddress uniform 
-			vec2 S = SampleTexture(ambientOcclusionSurface, ivec2(gl_FragCoord.xy), ivec2(i, j));
+			vec2 S = TexelFetchLodOffset(ambientOcclusionSurface, ivec2(gl_FragCoord.xy), ivec2(i, j), 0);
 
 			float weight = clamp(1.0 - (abs(S.y - center.y) * rampMaxInv), 0.0, 1.0);
 			totalAO += S.x * weight;

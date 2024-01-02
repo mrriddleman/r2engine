@@ -6,8 +6,11 @@
 
 vec4 SampleCubemapMaterialDiffuse(in Material m, vec3 uv)
 {
-	Tex2DAddress addr = m.albedo.texture;
-	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
+	//Tex2DAddress addr = m.albedo.texture;
+
+	//sampler2DArray temp2DArray = (sampler2DArray)addr.container;
+
+	return SampleCubemapRGBA(m.cubemap.texture, uv);//textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
 }
 
 vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
@@ -16,7 +19,7 @@ vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 
 	vec3 coord = MakeTextureCoord(addr, uv);
 
-	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
+	float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
 	float modifier = GetTextureModifier(addr);
 
@@ -29,7 +32,7 @@ vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec3 uv)
 
 	vec3 coord = vec3(uv.rg, addr.page);
 
-	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
+	float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
 	float modifier = GetTextureModifier(addr);
 
@@ -48,7 +51,7 @@ vec4 SampleMaterialEmission(in Material m, vec3 uv)
 
 	vec3 coord = vec3(uv.rg,addr.page);
 
-	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
+	float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
 	float modifier = GetTextureModifier(addr);
 
@@ -90,9 +93,7 @@ vec4 SampleMaterialAO(in Material m, vec3 uv)
 
 float SampleAOSurface(vec2 uv)
 {
-	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionTemporalDenoiseSurface[0].page);
-
-	return  texelFetch(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord, 0).r;
+	return TexelFetch(ambientOcclusionTemporalDenoiseSurface[0], ivec2(uv), 0).r;
 }
 
 vec4 SampleDetail(in Material m, vec3 uv)
@@ -138,7 +139,7 @@ float SampleMaterialHeight(in Material m, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.height.color.r + modifier * (1.0 - SampleTexture(addr, vec3(uv.rg, addr.page), 0).r);//texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
+	return (1.0 - modifier) * m.height.color.r + modifier * (1.0 - SampleTexture(addr, vec3(uv.rg, addr.page), 0).r);
 }
 
 vec3 SampleAnisotropyDirection(mat3 TBN, vec3 tangent, in Material m, vec3 uv)

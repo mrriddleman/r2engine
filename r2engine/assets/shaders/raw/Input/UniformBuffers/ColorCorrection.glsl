@@ -77,9 +77,8 @@ vec4 ApplyColorGrading(vec4 color)
 	float cell = floor(color.b * maxColor);
 
 	vec2 lutPos = vec2(cell / cg_numSwatches + xOffset, yOffset);
-
-	ivec3 lutCoord = ivec3(lutPos.r, lutPos.g, cg_lut.page );
-	vec4 lutColor = texture(sampler2DArray(cg_lut.container), lutCoord);
+	
+	vec4 lutColor = SampleTextureIRGBA(cg_lut, lutPos.rg);
 
 	return mix(color, lutColor, cg_contribution);
 }

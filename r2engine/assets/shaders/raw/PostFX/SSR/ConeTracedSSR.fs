@@ -1,7 +1,7 @@
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
-//#define NUM_FRUSTUM_SPLITS 4
 
 layout(location = 0) out vec4 oOutputColor;
 
@@ -12,80 +12,6 @@ layout(location = 0) out vec4 oOutputColor;
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Input/UniformBuffers/SSRParams.glsl"
-// struct Tex2DAddress
-// {
-// 	uint64_t  container;
-// 	float page;
-// 	int channel;
-// };
-
-// layout (std140, binding = 0) uniform Matrices
-// {
-// 	mat4 projection;
-// 	mat4 view;
-// 	mat4 skyboxView;
-// 	mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-// 	mat4 inverseProjection;
-// 	mat4 inverseView;
-// 	mat4 vpMatrix;
-// 	mat4 prevProjection;
-// 	mat4 prevView;
-// 	mat4 prevVPMatrix;
-// };
-
-// layout (std140, binding = 1) uniform Vectors
-// {
-// 	vec4 cameraPosTimeW;
-// 	vec4 exposureNearFar;
-// 	vec4 cascadePlanes;
-// 	vec4 shadowMapSizes;
-// 	vec4 fovAspectResXResY;
-// 	uint64_t frame;
-// 	vec2 clusterScaleBias;
-// 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-// 	vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
-// };
-
-// layout (std140, binding = 2) uniform Surfaces
-// {
-// 	Tex2DAddress gBufferSurface;
-// 	Tex2DAddress shadowsSurface;
-// 	Tex2DAddress compositeSurface;
-// 	Tex2DAddress zPrePassSurface;
-// 	Tex2DAddress pointLightShadowsSurface;
-// 	Tex2DAddress ambientOcclusionSurface;
-// 	Tex2DAddress ambientOcclusionDenoiseSurface;
-// 	Tex2DAddress zPrePassShadowsSurface[2];
-// 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-// 	Tex2DAddress normalSurface;
-// 	Tex2DAddress specularSurface;
-// 	Tex2DAddress ssrSurface;
-// 	Tex2DAddress convolvedGBUfferSurface[2];
-// 	Tex2DAddress ssrConeTracedSurface;
-// 	Tex2DAddress bloomDownSampledSurface;
-// 	Tex2DAddress bloomBlurSurface;
-// 	Tex2DAddress bloomUpSampledSurface;
-// };
-
-// layout (std140, binding = 4) uniform SSRParams
-// {
-// 	float ssr_stride;
-// 	float ssr_zThickness;
-// 	int ssr_rayMarchIterations;
-// 	float ssr_strideZCutoff;
-	
-// 	Tex2DAddress ssr_ditherTexture;
-	
-// 	float ssr_ditherTilingFactor;
-// 	int ssr_roughnessMips;
-// 	int ssr_coneTracingSteps;
-// 	float ssr_maxFadeDistance;
-	
-// 	float ssr_fadeScreenStart;
-// 	float ssr_fadeScreenEnd;
-// 	float ssr_maxDistance;
-// };
-
 
 vec3 F_Schlick(const vec3 F0, float F90, float VoH)
 {
@@ -123,7 +49,7 @@ float IsoscelesTriangleInscribedCircleRadius(float a, float h) {
 }
 
 vec4 ConeSampleWeightedColor(vec2 samplePos, float mipChannel, float gloss) {
-    vec3 sampleColor = textureLod(sampler2DArray(convolvedGBUfferSurface[0].container), vec3(samplePos, convolvedGBUfferSurface[0].page), mipChannel).rgb;
+    vec3 sampleColor = SampleTextureLodRGBA(convolvedGBUfferSurface[0], samplePos, mipChannel).rgb;
     return vec4(sampleColor * gloss, gloss);
 }
 
@@ -143,16 +69,14 @@ vec3 DecodeNormal(vec2 enc)
 
 vec3 LoadNormal(vec2 uv)
 {
-	vec3 coord = vec3(uv.r, uv.g, normalSurface.page );
-	vec2 normal = texture(sampler2DArray(normalSurface.container), coord).rg;
+	vec2 normal = SampleTextureRGBA(normalSurface, uv).rg;
 
 	return DecodeNormal(normal);
 }
 
 float SampleTextureF(Tex2DAddress tex, vec2 uv, vec2 offset)
 {
-	vec3 texCoord = vec3(uv + offset, tex.page);
-	return texture(sampler2DArray(tex.container), texCoord).r;
+	return SampleTextureR(tex, uv + offset); 
 }
 
 vec3 GetWorldPosition(vec2 uv)
@@ -213,7 +137,7 @@ float LuminanceFromRGB(vec3 rgb) {
 void main()
 {
 	vec2 uv = fs_in.texCoords.xy;
-	vec4 rayHitInfo = texture(sampler2DArray(ssrSurface.container), vec3(uv, ssrSurface.page));
+	vec4 rayHitInfo = SampleTextureRGBA(ssrSurface, uv);
 
 	if(rayHitInfo.a <= 0.0f)
 	{
@@ -244,7 +168,7 @@ void main()
 		H = normalize(normal + V);
 	}
 
-	vec4 specular = texture(sampler2DArray(specularSurface.container), vec3(uv, specularSurface.page));
+	vec4 specular = SampleTextureRGBA(specularSurface, uv);
 	vec3 F0 = specular.rgb;
 
 	vec3 Ks = F_Schlick(F0, 1.0f, max(dot(V, H), 0.0));
@@ -309,7 +233,7 @@ vec3 TraceCones(float gloss, vec4 rayHitInfo)
 
 	float glossMult = gloss;
 
-	vec2 texSize = vec2(textureSize(sampler2DArray(convolvedGBUfferSurface[0].container), 0));
+	vec2 texSize = TextureSize(convolvedGBUfferSurface[0], 0);
 
 	for(int i = 0; i < ssr_coneTracingSteps; ++i)
 	{

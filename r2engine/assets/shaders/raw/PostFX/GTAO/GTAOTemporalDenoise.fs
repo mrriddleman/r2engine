@@ -1,7 +1,8 @@
 //Taken from: https://github.com/krzysztofmarecki/OpenGL/blob/master/OpenGL/src/shaders/gtaoTemporalDenoiser.frag
 
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
 
 #define RATE_OF_CHANGE 0.5
@@ -22,14 +23,7 @@ in VS_OUT
 
 float SampleTextureF(Tex2DAddress tex, vec2 uv, vec2 offset)
 {
-	vec3 texCoord = vec3(uv + offset, tex.page);
-	return texture(sampler2DArray(tex.container), texCoord).r;
-}
-
-vec4 GatherOffset(Tex2DAddress tex, vec2 uv, ivec2 offset)
-{
-	vec3 texCoord = vec3(uv, tex.page);
-	return textureGatherOffset(sampler2DArray(tex.container), texCoord, offset);
+	return SampleTextureR(tex, uv + offset);
 }
 
 float VsDepthFromCsDepth(float clipSpaceDepth, float near) {

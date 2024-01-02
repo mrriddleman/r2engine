@@ -1,5 +1,6 @@
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
 
 // #define NUM_FRUSTUM_SPLITS 4
@@ -17,64 +18,6 @@ uniform float uNumSteps = 4;
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 
-// struct Tex2DAddress
-// {
-// 	uint64_t  container;
-// 	float page;
-// 	int channel;
-// };
-
-// layout (std140, binding = 0) uniform Matrices
-// {
-//     mat4 projection;
-//     mat4 view;
-//     mat4 skyboxView;
-//     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-//     mat4 invProjection;
-//    	mat4 inverseView;
-//     mat4 vpMatrix;
-//     mat4 prevProjection;
-//     mat4 prevView;
-//     mat4 prevVPMatrix;
-// };
-
-// layout (std140, binding = 1) uniform Vectors
-// {
-//     vec4 cameraPosTimeW;
-//     vec4 exposureNearFar;
-//     vec4 cascadePlanes;
-//     vec4 shadowMapSizes;
-//     vec4 fovAspectResXResY;
-//     uint64_t frame;
-//    	vec2 clusterScaleBias;
-// 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-// 	vec4 jitter;
-// };
-
-
-// //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-// layout (std140, binding = 2) uniform Surfaces
-// {
-// 	Tex2DAddress gBufferSurface;
-// 	Tex2DAddress shadowsSurface;
-// 	Tex2DAddress compositeSurface;
-// 	Tex2DAddress zPrePassSurface;
-// 	Tex2DAddress pointLightShadowsSurface;
-// 	Tex2DAddress ambientOcclusionSurface;
-// 	Tex2DAddress ambientOcclusionDenoiseSurface;
-// 	Tex2DAddress zPrePassShadowsSurface[2];
-// 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-// 	Tex2DAddress normalSurface;
-// 	Tex2DAddress specularSurface;
-// 	Tex2DAddress ssrSurface;
-// 	Tex2DAddress convolvedGBUfferSurface[2];
-// 	Tex2DAddress ssrConeTracedSurface;
-// 	Tex2DAddress bloomDownSampledSurface;
-// 	Tex2DAddress bloomBlurSurface;
-// 	Tex2DAddress bloomUpSampledSurface;
-// };
-
-
 in VS_OUT
 {
 	vec3 normal;
@@ -82,16 +25,11 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-
-
 vec3 GetViewSpacePos(vec2 uv)
 {
 	uv *= vec2(1.0 / fovAspectResXResY.z, 1.0 / fovAspectResXResY.w);
 
-	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowsSurface[0].page);
-	//vec4 depth4 = textureGather(sampler2DArray(zPrePassShadowSurface.container), texCoord);
-	float depth = texture(sampler2DArray(zPrePassShadowsSurface[0].container), texCoord).r;
-	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
+	float depth = SampleTextureR(zPrePassShadowsSurface[0], uv);
 
 	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
 	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;

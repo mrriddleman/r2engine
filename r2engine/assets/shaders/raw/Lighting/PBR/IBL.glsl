@@ -7,22 +7,21 @@
 
 vec4 SampleMaterialPrefilteredRoughness(SkyLight theSkylight, vec3 uv, float roughnessValue)
 {
-	Tex2DAddress addr = theSkylight.prefilteredRoughnessTexture;
+	CubemapAddress addr = theSkylight.prefilteredRoughnessTexture;
 	//z is up so we rotate this... not sure if this is right?
-	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.b, -uv.g, addr.page), roughnessValue);
+	return SampleCubemapLodRGBA(addr, vec3(uv.r, uv.b, -uv.g), roughnessValue);
 }
 
 vec4 SampleLUTDFG(SkyLight theSkylight, vec2 uv)
 {
-	Tex2DAddress addr = theSkylight.lutDFGTexture;
-	return texture(sampler2DArray(addr.container), vec3(uv, addr.page));
+	return SampleTextureRGBA(theSkylight.lutDFGTexture, uv);
 }
 
 vec4 SampleSkylightDiffuseIrradiance(SkyLight theSkylight, vec3 uv)
 {
-	Tex2DAddress addr = theSkylight.diffuseIrradianceTexture;
+	CubemapAddress addr = theSkylight.diffuseIrradianceTexture;
 	//z is up so we rotate this... not sure if this is right?
-	return texture(samplerCubeArray(addr.container), vec4(uv.r, uv.b, -uv.g, addr.page));
+	return SampleCubemapRGBA(addr, vec3(uv.r, uv.b, -uv.g));
 }
 
 void EvalClearCoatIBL(

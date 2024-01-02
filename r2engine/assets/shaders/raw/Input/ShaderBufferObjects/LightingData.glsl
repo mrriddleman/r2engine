@@ -49,8 +49,8 @@ struct SpotLight
 struct SkyLight
 {
 	LightProperties lightProperties;
-	Tex2DAddress diffuseIrradianceTexture;
-	Tex2DAddress prefilteredRoughnessTexture;
+	CubemapAddress diffuseIrradianceTexture;
+	CubemapAddress prefilteredRoughnessTexture;
 	Tex2DAddress lutDFGTexture;
 //	int numPrefilteredRoughnessMips;
 };

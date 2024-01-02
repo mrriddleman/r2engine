@@ -1,15 +1,19 @@
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
 
 layout (location = 0) out vec4 FragColor;
 
 #include "Input/UniformBuffers/Surfaces.glsl"
 
+#ifdef GL_NV_gpu_shader5
 uniform uint64_t inputTextureContainer;
+#else
+uniform sampler2DArray inputTextureContainer;
+#endif
 uniform float inputTexturePage;
 uniform float inputTextureLod;
-
 
 in VS_OUT
 {
@@ -18,15 +22,12 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-vec4 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords);
-
 void main()
 {
-	FragColor = SampleTexture(inputTextureContainer, inputTexturePage, fs_in.texCoords.xy);
-}
+	Tex2DAddress addr;
+	addr.container = inputTextureContainer;
+	addr.page = inputTexturePage;
+	addr.channel = 0;
 
-vec4 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords)
-{
-	vec3 coord = vec3(texCoords.x, texCoords.y, texturePage);
-	return textureLod(sampler2DArray(textureContainer), coord, inputTextureLod);
+	FragColor = SampleTextureLodRGBA(addr, fs_in.texCoords.xy, inputTextureLod);
 }

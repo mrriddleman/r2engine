@@ -5,10 +5,8 @@
 
 namespace r2::draw::light
 {
-	s64 s_lightSystemID = -1;
-	
+	s64 s_lightSystemID = -1;	
 }
-
 
 namespace r2::draw::light
 {
@@ -640,8 +638,8 @@ namespace r2::draw::lightsys
 	{
 		SkyLight skyLight;
 
-		skyLight.diffuseIrradianceTexture = diffuseMaterialHandle.albedo.texture;
-		skyLight.prefilteredRoughnessTexture = prefilteredMaterialHandle.albedo.texture;
+		skyLight.diffuseIrradianceTexture = diffuseMaterialHandle.cubemap.texture;
+		skyLight.prefilteredRoughnessTexture = prefilteredMaterialHandle.cubemap.texture;
 		skyLight.lutDFGTexture = lutDFGHandle.albedo.texture;
 
 		return AddSkyLight(system, skyLight, numMips);

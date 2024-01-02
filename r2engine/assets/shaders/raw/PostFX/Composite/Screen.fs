@@ -1,5 +1,6 @@
 #version 450 core
-
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_bindless_texture : require
 #extension GL_NV_gpu_shader5 : enable
 
 layout (location = 0) out vec4 FragColor;
@@ -44,21 +45,17 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	// vec3 testCoord = vec3(uv.r, uv.g, zPrePassSurface.page);
-	// float testColor = textureLod(sampler2DArray(zPrePassSurface.container), testCoord, 0).r;
+
+	// float testColor = SampleTextureR(zPrePassSurface, uv.rg);
 
 	// //float testColor = SampleMSTexel(msaa2XZPrePassSurface, ivec2(gl_FragCoord.xy), 0).r;
 
 	// return vec4(vec3(LinearizeDepth(testColor, exposureNearFar.y, exposureNearFar.z)), 1);
 
-	vec3 bloomCoord = vec3(uv.r, uv.g, bloomUpSampledSurface.page);
-	vec3 bloomColor = textureLod(sampler2DArray(bloomUpSampledSurface.container), bloomCoord, 0).rgb;
 
-	vec3 ssrCoord = vec3(uv.r, uv.g, ssrConeTracedSurface.page );
-	vec4 ssrSurfaceColor = texture(sampler2DArray(ssrConeTracedSurface.container), ssrCoord).rgba;
-
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
+	vec3 bloomColor = SampleTexture(bloomUpSampledSurface, uv.rg);
+	vec4 ssrSurfaceColor = SampleTextureRGBA(ssrConeTracedSurface, uv.rg);
+	vec4 gbufferSurfaceColor = SampleTextureRGBA(gBufferSurface, uv.rg);
  
 
 	//vec3 editorPickingCoord = vec3(uv.r, uv.g, editorPickingSurface.page);

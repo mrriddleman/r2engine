@@ -9,21 +9,30 @@ struct RenderMaterialParam
 	vec4 color;
 };
 
+struct CubemapRenderMaterialParam
+{
+	CubemapAddress texture;
+	vec4 color;
+};
+
 struct Material
 {
 	RenderMaterialParam albedo;
 	RenderMaterialParam normalMap;
 	RenderMaterialParam emission;
 	RenderMaterialParam metallic;
+
 	RenderMaterialParam roughness;
 	RenderMaterialParam ao;
 	RenderMaterialParam height;
 	RenderMaterialParam anisotropy;
-	RenderMaterialParam detail;
 
+	RenderMaterialParam detail;
 	RenderMaterialParam clearCoat;
 	RenderMaterialParam clearCoatRoughness;
 	RenderMaterialParam clearCoatNormal;
+
+	CubemapRenderMaterialParam cubemap;
 
 	int 	doubleSided;
 	float 	heightScale;

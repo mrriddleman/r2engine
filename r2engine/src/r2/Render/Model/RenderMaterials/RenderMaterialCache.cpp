@@ -813,36 +813,36 @@ namespace r2::draw::rmat
 		else
 		{
 
-		gpuRenderMaterial->albedo.texture = texsys::GetTextureAddress(*cubemapTexture);
+			gpuRenderMaterial->cubemap.texture = texsys::GetTextureAddress(*cubemapTexture);
 
-		const u32 numAssetHandles = cubemapTexture->numMipLevels * tex::CubemapSide::NUM_SIDES;
+			const u32 numAssetHandles = cubemapTexture->numMipLevels * tex::CubemapSide::NUM_SIDES;
 
-		r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
+			r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
 
-		if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName()))
-		{
-			textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, numAssetHandles);
-
-			r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
-		}
-		else
-		{
-			r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
-
-			textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), defaultTextureAssetHandles);
-
-			R2_CHECK(r2::sarr::Capacity(*textureAssetHandles) >= numAssetHandles, "Since this is a cubemap this must be true");
-		}
-
-		r2::sarr::Clear(*textureAssetHandles);
-
-		for (u32 m = 0; m < cubemapTexture->numMipLevels; ++m)
-		{
-			for (u32 s = 0; s < tex::NUM_SIDES; ++s)
+			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName()))
 			{
-				r2::sarr::Push(*textureAssetHandles, cubemapTexture->mips[m].sides[s].textureAssetHandle);
+				textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, numAssetHandles);
+
+				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
 			}
-		}
+			else
+			{
+				r2::SArray<r2::asset::AssetHandle>* defaultTextureAssetHandles = nullptr;
+
+				textureAssetHandles = r2::shashmap::Get(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), defaultTextureAssetHandles);
+
+				R2_CHECK(r2::sarr::Capacity(*textureAssetHandles) >= numAssetHandles, "Since this is a cubemap this must be true");
+			}
+
+			r2::sarr::Clear(*textureAssetHandles);
+
+			for (u32 m = 0; m < cubemapTexture->numMipLevels; ++m)
+			{
+				for (u32 s = 0; s < tex::NUM_SIDES; ++s)
+				{
+					r2::sarr::Push(*textureAssetHandles, cubemapTexture->mips[m].sides[s].textureAssetHandle);
+				}
+			}
 			
 			
 		}

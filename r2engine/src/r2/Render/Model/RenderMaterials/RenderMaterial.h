@@ -19,15 +19,18 @@ namespace r2::draw
 		RenderMaterialParam normalMap;
 		RenderMaterialParam emission;
 		RenderMaterialParam metallic;
+
 		RenderMaterialParam roughness;
 		RenderMaterialParam ao;
 		RenderMaterialParam height;
 		RenderMaterialParam anisotropy;
-		RenderMaterialParam detail;
 
+		RenderMaterialParam detail;
 		RenderMaterialParam clearCoat;
 		RenderMaterialParam clearCoatRoughness;
 		RenderMaterialParam clearCoatNormal;
+
+		RenderMaterialParam cubemap;
 
 		b32 doubleSided = false;
 		f32 heightScale = 0.0f;

@@ -263,8 +263,7 @@ struct BatchRenderOffsets
 	};
 
 	struct AAShaderParams
-	{
-		
+	{	
 		float mFXAALumaThreshold = 0.5f;
 		float mFXAALumaMulReduce = 1.0f / 8.0f;
 		float mFXAALumaMinReduce = 1.0f / 128.0f;

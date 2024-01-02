@@ -39,9 +39,7 @@ uint GetDepthSlice(float z, vec2 nearFar, vec2 scaleBias)
 
 uint GetClusterIndex(vec2 pixelCoord, vec2 resolution, vec2 nearFar, vec2 scaleBias, uvec4 tileSizes, Tex2DAddress zTexture)
 {
-	vec3 texCoord = vec3(pixelCoord / resolution, zTexture.page);
-
-	float z =  texture(sampler2DArray(zTexture.container), texCoord).r;
+	float z = SampleTextureR(zTexture,pixelCoord / resolution); 
 
 	uint clusterZVal = GetDepthSlice(z, nearFar, scaleBias);
 
