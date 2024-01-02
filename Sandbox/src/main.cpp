@@ -495,7 +495,7 @@ public:
         const r2::draw::tex::Texture* colorGradingLUT = r2::draw::texche::GetAlbedoTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("ColorGradingLUT")); //gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
 
         r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
-        r2::draw::renderer::SetColorGradingContribution(0.2);
+        r2::draw::renderer::SetColorGradingContribution(0.05);
         r2::draw::renderer::EnableColorGrading(true);
 
         //float startingX = 10.0f;
@@ -599,7 +599,7 @@ public:
 			}*/
 
 
-			for (int i = 0; i < 50; ++i)
+			/*for (int i = 0; i < 50; ++i)
 			{
 				r2::draw::PointLight pointLight;
 
@@ -621,7 +621,7 @@ public:
 				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0); 
 
 				r2::draw::renderer::AddPointLight(pointLight);
-			}
+			}*/
 
         }
 

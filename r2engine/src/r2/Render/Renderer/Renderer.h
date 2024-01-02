@@ -31,8 +31,8 @@ namespace r2::draw
 		float brightness = 0.0f;
 		float saturation = 1.0f;
 		float gamma = 1.0f / 2.2f;
-		float filmGrainStrength = 0.05f;
 
+		float filmGrainStrength = 0.02f;
 		float mColorGradingHalfColX = 0.0f;
 		float mColorGradingHalfColY = 0.0f;
 		float mNumColorGradingSwatches = 1.0f;
@@ -40,6 +40,9 @@ namespace r2::draw
 		
 
 		f32 mColorGradingContribution = 0.0f;
+		f32 temperature = 0.2f;
+		f32 tint = 0.2f;
+		f32 unused = 0.0f;
 	};
 
 	struct MaterialBatch

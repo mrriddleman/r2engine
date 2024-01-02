@@ -30,17 +30,21 @@ vec3 Uncharted2ToneMapping(vec3 color);
 
 void main()
 {
-	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
+	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords) * exposureNearFar.x;
 
-	vec3 colorCorrectedColor = ApplyContrastAndBrightness(sampledColor.rgb, cc_contrast, cc_brightness);
+	vec4 colorCorrectedColor = vec4(ApplyFilmGrain(sampledColor.rgb, fs_in.texCoords.xy), sampledColor.a);
 
-	colorCorrectedColor = ApplySaturation(colorCorrectedColor, cc_saturation);
+	colorCorrectedColor.rgb = ApplyWhiteBalance(colorCorrectedColor.rgb);
 
-	colorCorrectedColor = ACESFitted(colorCorrectedColor);
-
-	colorCorrectedColor = ApplyFilmGrain(colorCorrectedColor, fs_in.texCoords.xy);
+	colorCorrectedColor.rgb = ApplyContrastAndBrightness(colorCorrectedColor.rgb, cc_contrast, cc_brightness);
 	
-	FragColor = ApplyColorGrading( vec4(colorCorrectedColor, sampledColor.a) );
+	colorCorrectedColor.rgb = ApplyColorGrading(colorCorrectedColor ).rgb ;
+
+	colorCorrectedColor.rgb = ApplySaturation(colorCorrectedColor.rgb, cc_saturation);
+	
+	colorCorrectedColor.rgb = ACESFitted(colorCorrectedColor.rgb);
+	
+	FragColor = colorCorrectedColor;
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -73,7 +77,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
  // }
 	
 
-	return vec4(mix(gbufferSurfaceColor.rgb + Saturate(ssrSurfaceColor.rgb), bloomColor, bloomFilterRadiusIntensity.z) , gbufferSurfaceColor.a);
+	return vec4(mix(gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z) , gbufferSurfaceColor.a);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)
