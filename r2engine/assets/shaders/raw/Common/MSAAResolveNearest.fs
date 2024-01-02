@@ -9,7 +9,11 @@
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Common/CommonFunctions.glsl"
 
+#ifdef GL_NV_gpu_shader5
 uniform uint64_t inputTextureContainer;
+#else
+uniform sampler2DArray inputTextureContainer;
+#endif
 uniform float inputTexturePage;
 uniform float inputTextureLod;
 

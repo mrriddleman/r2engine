@@ -10,56 +10,11 @@ layout (location = 4) in vec4 BoneWeights;
 layout (location = 5) in ivec4 BoneIDs;
 layout (location = 6) in uint DrawID;
 
-#define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
-
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 inverseProjection;
-    mat4 inverseView;
-	mat4 vpMatrix;
-	mat4 prevProjection;
-	mat4 prevView;
-	mat4 prevVPMatrix;
-};
-
-layout (std140, binding = 0) buffer Models
-{
-	mat4 models[];
-};
-
-struct BoneTransform
-{
-	mat4 globalInv;
-	mat4 transform;
-	mat4 invBinPose;
-};
-
-layout (std430, binding = 2) buffer BoneTransforms
-{
-	BoneTransform bonesXForms[];
-};
-
-layout (std140, binding = 3) buffer BoneTransformOffsets
-{
-	ivec4 boneOffsets[];
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter;
-};
-
+//#define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/ShaderBufferObjects/ModelData.glsl"
+#include "Input/ShaderBufferObjects/BoneTransformData.glsl"
 
 out VS_OUT
 {

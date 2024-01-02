@@ -8,7 +8,11 @@ layout (location = 1) out vec4 FragColor1;
 
 #include "Common/Texture.glsl"
 
+#ifdef GL_NV_gpu_shader5
 uniform uint64_t inputTextureContainer;
+#else
+uniform sampler2DArray inputTextureContainer;
+#endif
 uniform float inputTexturePage;
 uniform float inputTextureLod;
 

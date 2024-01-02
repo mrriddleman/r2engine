@@ -618,7 +618,7 @@ public:
 				pointLight.lightProperties.intensity = 100.0;
 				pointLight.lightProperties.fallOff = 0.1;
 
-				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
+				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0); 
 
 				r2::draw::renderer::AddPointLight(pointLight);
 			}
