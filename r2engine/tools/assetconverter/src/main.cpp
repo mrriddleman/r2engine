@@ -227,9 +227,9 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-m", "--material" }, &arguments.materialParamsManifestPath, "Material Params Manifest Path");
 	args.Parse(agrc, argv);
 
-	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
-	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
-	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\Sponza\\Sponza.gltf";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\Sponza";
+	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
 
 	if (arguments.inputDir.empty())
 	{

@@ -483,8 +483,6 @@ public:
 
         glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
 
-        sponzaModelMatrix = sponzaModelMatrix * mSponzaModel->globalInverseTransform;
-
         sponzaModelMatrix = glm::rotate(sponzaModelMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
 
         r2::sarr::Push(*modelMats, sponzaModelMatrix);

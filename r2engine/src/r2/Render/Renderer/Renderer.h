@@ -40,8 +40,8 @@ namespace r2::draw
 		
 
 		f32 mColorGradingContribution = 0.0f;
-		f32 temperature = 0.2f;
-		f32 tint = 0.2f;
+		f32 temperature = 0.1f;
+		f32 tint = 0.1f;
 		f32 unused = 0.0f;
 	};
 

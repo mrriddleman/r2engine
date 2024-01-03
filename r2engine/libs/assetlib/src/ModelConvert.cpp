@@ -23,6 +23,10 @@
 #include "AssetName_generated.h"
 #include <assimp/pbrmaterial.h>
 
+#include <fastgltf/glm_element_traits.hpp>
+#include <fastgltf/parser.hpp>
+#include <fastgltf/tools.hpp>
+
 #define MAX_BONE_WEIGHTS 4
 
 namespace fs = std::filesystem;
@@ -100,7 +104,7 @@ namespace r2::assets::assetlib
 		uint64_t hashName = 0;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
-		MaterialName materialName;
+
 		int materialIndex = -1;
 	};
 
@@ -109,21 +113,38 @@ namespace r2::assets::assetlib
 		fs::path binaryMaterialPath;
 		std::string modelName;
 		std::string originalPath;
+		std::string animationParentDirectory;
+		glm::mat4 globalInverseTransform;
 
 		std::vector<MaterialName> materialNames;
 		std::vector<Mesh> meshes;
-
-		glm::mat4 globalInverseTransform;
+		
 		std::vector<BoneData> boneData;
 		std::vector<BoneInfo> boneInfo;
+		std::vector<Animation> animations;
 
 		std::unordered_map<uint64_t, int> boneMapping;
 
 		Skeleton skeleton;
+	};
 
-		std::string animationParentDirectory;
+	struct Sampler
+	{
+		uint32_t samplerIndex;
+		std::string name;
 
-		std::vector<Animation> animations;
+		flat::MinTextureFilter minFilter;
+		flat::MagTextureFilter magFilter;
+		flat::TextureWrapMode wrapS;
+		flat::TextureWrapMode wrapT;
+		flat::TextureWrapMode wrapR;
+	};
+
+	struct Texture
+	{
+		std::string name;
+		size_t samplerIndex;
+		size_t imageIndex;
 	};
 
 	std::unordered_map<std::string, uint32_t> mBoneNecessityMap;
@@ -146,6 +167,30 @@ namespace r2::assets::assetlib
 
 	void ProcessMaterial(const std::string& modelName, aiMaterial* aiMaterial);
 	
+
+	glm::mat4 TransformToMat4(const Transform& t)
+	{
+		// First, extract the rotation basis of the transform
+		glm::vec3 x = t.rotation * glm::vec3(1, 0, 0);
+		glm::vec3 y = t.rotation * glm::vec3(0, 1, 0);
+		glm::vec3 z = t.rotation * glm::vec3(0, 0, 1);
+
+		// Next, scale the basis vectors
+		x = x * t.scale.x;
+		y = y * t.scale.y;
+		z = z * t.scale.z;
+
+		// Extract the position of the transform
+		glm::vec3 p = t.position;
+
+		// Create matrix
+		return glm::mat4(
+			glm::vec4(x, 0), // X basis (& Scale)
+			glm::vec4(y, 0), // Y basis (& scale)
+			glm::vec4(z, 0), // Z basis (& scale)
+			glm::vec4(p, 1));  // Position
+
+	}
 
 	glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)
 	{
@@ -259,6 +304,446 @@ namespace r2::assets::assetlib
 		return transform;
 	}
 
+	flat::MagTextureFilter GetMagFilterFromFastGLTF(fastgltf::Filter filter)
+	{
+		switch (filter)
+		{
+		case fastgltf::Filter::Nearest:
+			return flat::MagTextureFilter_NEAREST;
+		case fastgltf::Filter::Linear:
+			return flat::MagTextureFilter_LINEAR;
+		default:
+			return flat::MagTextureFilter_NEAREST;
+		};
+	}
+
+	flat::MinTextureFilter GetMinFilterFromFastGLTF(fastgltf::Filter filter)
+	{
+		switch (filter)
+		{
+		case fastgltf::Filter::Linear:
+			return flat::MinTextureFilter_LINEAR;
+		case fastgltf::Filter::LinearMipMapLinear:
+			return flat::MinTextureFilter_LINEAR_MIPMAP_LINEAR;
+		case fastgltf::Filter::LinearMipMapNearest:
+			return flat::MinTextureFilter_LINEAR_MIPMAP_NEAREST;
+		case fastgltf::Filter::Nearest:
+			return flat::MinTextureFilter_NEAREST;
+		case fastgltf::Filter::NearestMipMapLinear:
+			return flat::MinTextureFilter_NEAREST_MIPMAP_LINEAR;
+		case fastgltf::Filter::NearestMipMapNearest:
+			return flat::MinTextureFilter_NEAREST_MIPMAP_NEAREST;
+		default:
+			return flat::MinTextureFilter_NEAREST;
+		}
+	}
+
+	flat::TextureWrapMode GetWrapModeFromFastGLTF(fastgltf::Wrap wrapMode)
+	{
+		switch (wrapMode)
+		{
+		case fastgltf::Wrap::ClampToEdge:
+			return flat::TextureWrapMode_CLAMP_TO_EDGE;
+			break;
+		case fastgltf::Wrap::MirroredRepeat:
+			return flat::TextureWrapMode_MIRRORED_REPEAT;
+			break;
+		case fastgltf::Wrap::Repeat:
+			return flat::TextureWrapMode_REPEAT;
+			break;
+		default:
+			return flat::TextureWrapMode_REPEAT;
+			break;
+		}
+	}
+
+	Sampler ExtractSampler(size_t samplerIndex, const fastgltf::Sampler& fastgltfSampler)
+	{
+		Sampler newSampler;
+		 
+		newSampler.minFilter = GetMinFilterFromFastGLTF( fastgltfSampler.minFilter.value_or(fastgltf::Filter::Nearest));
+		newSampler.magFilter = GetMagFilterFromFastGLTF( fastgltfSampler.magFilter.value_or(fastgltf::Filter::Nearest));
+		newSampler.wrapS = GetWrapModeFromFastGLTF(fastgltfSampler.wrapS);
+		newSampler.wrapT = GetWrapModeFromFastGLTF(fastgltfSampler.wrapT);
+		newSampler.wrapR = newSampler.wrapS;
+		newSampler.name = fastgltfSampler.name;
+		newSampler.samplerIndex = samplerIndex;
+
+		return newSampler;
+	}
+
+	MaterialName GetMaterialNameFromMaterialPack(const flat::MaterialPack* materialPack, const std::string& materialName, const std::filesystem::path& path)
+	{
+		MaterialName result;
+
+		//first do a simple thing which is to look for the material name in the materialPack
+		const auto materials = materialPack->pack();
+		const auto numMaterials = materials->size();
+
+		std::string materialNameToCheck = materialName;
+
+		std::transform(materialNameToCheck.begin(), materialNameToCheck.end(), materialNameToCheck.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+
+		for (flatbuffers::uoffset_t i = 0; i < numMaterials; ++i)
+		{
+			const flat::Material* material = materials->Get(i);
+
+			//set all lowercase
+			std::string materialAssetName = material->assetName()->stringName()->str();
+			std::transform(materialAssetName.begin(), materialAssetName.end(), materialAssetName.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
+			if (materialAssetName == materialNameToCheck)
+			{
+				result.name = material->assetName()->assetName();
+				result.materialNameStr = material->assetName()->stringName()->str();
+				result.materialPackName = materialPack->assetName()->assetName();
+				result.materialPackNameStr = materialPack->assetName()->stringName()->str();
+
+				return result;
+			}
+		}
+
+		bool found = false;
+		std::filesystem::path diffuseTexturePath = path;
+
+		diffuseTexturePath.make_preferred();
+
+		fs::path diffuseTextureName = diffuseTexturePath.filename();
+
+		diffuseTextureName.replace_extension(".rtex");
+		std::string diffuseTextureNameStr = diffuseTextureName.string();
+
+		std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+
+
+		//now look into all the materials and find the material that matches this texture name
+		for (flatbuffers::uoffset_t i = 0; i < numMaterials && !found; ++i)
+		{
+			const flat::Material* material = materials->Get(i);
+
+			const auto* textureParams = material->shaderParams()->textureParams();
+
+			for (flatbuffers::uoffset_t t = 0; t < textureParams->size() && !found; ++t)
+			{
+				const flat::ShaderTextureParam* texParam = textureParams->Get(t);
+
+				if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
+				{
+					auto packNameStr = texParam->texturePack()->stringName()->str();
+
+					std::string textureNameWithParents = packNameStr + "/albedo/" + diffuseTextureNameStr;
+
+					auto textureNameID = STRING_ID(textureNameWithParents.c_str());
+
+					if (textureNameID == texParam->value()->assetName())
+					{
+						result.name = material->assetName()->assetName();
+						result.materialNameStr = material->assetName()->stringName()->str();
+						result.materialPackName = materialPack->assetName()->assetName();
+						result.materialPackNameStr = materialPack->assetName()->stringName()->str();
+						found = true;
+						break;
+					}
+				}
+			}
+		}
+
+		assert(found && "Couldn't find it");
+
+		return result;
+	}
+
+	bool ConvertGLTFModel(const std::filesystem::path& inputFilePath,
+		const std::filesystem::path& parentOutputDir,
+		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
+		const std::filesystem::path& animationParentDirectory,
+		const std::string& extension)
+	{
+		fastgltf::Parser parser{};
+
+		constexpr auto gltfOptions = 
+			fastgltf::Options::DontRequireValidAssetMember |
+			fastgltf::Options::AllowDouble |
+			fastgltf::Options::LoadGLBBuffers |
+			fastgltf::Options::DecomposeNodeMatrices |
+			fastgltf::Options::LoadExternalBuffers;
+
+		fastgltf::GltfDataBuffer data;
+		data.loadFromFile(inputFilePath);
+
+		fastgltf::Asset gltf;
+
+		auto type = fastgltf::determineGltfFileType(&data);
+		if (type == fastgltf::GltfType::glTF)
+		{
+			auto load = parser.loadGLTF(&data, inputFilePath.parent_path(), gltfOptions);
+			if (load)
+			{
+				gltf = std::move(load.get());
+			}
+			else
+			{
+				printf("Failed to load glTF file: %s\n", inputFilePath.string().c_str());
+				return false;
+			}
+		}
+		else if (type == fastgltf::GltfType::GLB)
+		{
+			auto load = parser.loadBinaryGLTF(&data, inputFilePath.parent_path(), gltfOptions);
+			if (load)
+			{
+				gltf = std::move(load.get());
+			}
+			else
+			{
+				printf("Failed to load glTF file: %s\n", inputFilePath.string().c_str());
+				return false;
+			}
+		}
+		else
+		{
+			printf("Failed to determine glTF container for path: %s\n", inputFilePath.string().c_str());
+			return false;
+		}
+
+		Model model;
+		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
+		model.originalPath = inputFilePath.string();
+		model.animationParentDirectory = animationParentDirectory.string();
+		model.globalInverseTransform = glm::mat4(1.0f); //@TODO(Serge): need to calculate for realz
+
+		char modelAssetName[256];
+
+
+
+
+		std::filesystem::path dstModelPath = inputFilePath;
+		dstModelPath.replace_extension(RMDL_EXTENSION);
+		r2::asset::MakeAssetNameStringForFilePath(dstModelPath.string().c_str(), modelAssetName, r2::asset::RMODEL);
+
+		model.modelName = modelAssetName;
+
+
+		assert(gltf.meshes.size() == 1 && "Right now we only support 1 gltf mesh which we call a model per file");
+
+		std::vector<Sampler> samplers;
+		std::vector<std::filesystem::path> images;
+		std::vector<Texture> textures;
+
+		//load samplers
+		for (size_t i = 0; i < gltf.samplers.size(); ++i)
+		{
+			const fastgltf::Sampler& sampler = gltf.samplers[i];
+			samplers.push_back(ExtractSampler(i, sampler));
+		}
+
+		for (size_t i = 0; i < gltf.images.size(); ++i)
+		{
+			auto uri = std::get<fastgltf::sources::URI>(gltf.images[i].data).uri;
+			std::filesystem::path imagePath = uri.fspath();
+			images.push_back(imagePath);
+		}
+
+		for (size_t i = 0; i < gltf.textures.size(); ++i)
+		{
+			const fastgltf::Texture& fastgltfTexture = gltf.textures[i];
+
+			Texture newTexture;
+			newTexture.imageIndex = fastgltfTexture.imageIndex.value();
+			newTexture.samplerIndex = fastgltfTexture.samplerIndex.value();
+			newTexture.name = fastgltfTexture.name;
+
+			textures.push_back(newTexture);
+		}
+
+		//@Temporary: we're going to map our already existing materials to the gltf material
+		{
+			DiskAssetFile diskFile;
+
+			bool openResult = diskFile.OpenForRead(binaryMaterialParamPacksManifestFile.string().c_str());
+
+			assert(openResult && "Couldn't open the file!");
+
+			auto fileSize = diskFile.Size();
+
+			char* materialManifestData = new char[fileSize];
+
+			auto readSize = diskFile.Read(materialManifestData, fileSize);
+
+			assert(readSize == fileSize && "Didn't read whole file");
+
+			const auto materialManifest = flat::GetMaterialPack(materialManifestData);
+
+			for (size_t i = 0; i < gltf.materials.size(); ++i)
+			{
+				const fastgltf::Material& fastgltfMaterial = gltf.materials[i];
+
+				//@TODO(Serge): extract the materials
+
+				//@Temporary: for testing purposes, we're just going to try to find the pre-existing materials from the material pack
+				std::filesystem::path imagePath = "";
+				if (fastgltfMaterial.pbrData.baseColorTexture.has_value())
+				{
+					imagePath = images[textures[fastgltfMaterial.pbrData.baseColorTexture.value().textureIndex].imageIndex];
+				}
+
+				model.materialNames.push_back(GetMaterialNameFromMaterialPack(materialManifest, fastgltfMaterial.name.c_str(), imagePath));
+			}
+
+			//@Temporary
+			delete[] materialManifestData;
+		}
+		
+		//@TODO(Serge): support animated models
+		assert(gltf.animations.size() == 0 && gltf.skins.size() == 0 && "We don't support animated models quite yet");
+
+
+		std::unordered_map<size_t, Transform> meshLocalTransforms;
+
+		//go through all of the nodes to setup the correct transformations
+		for (fastgltf::Node& node : gltf.nodes)
+		{
+			if (node.meshIndex.has_value())
+			{
+				Transform localTransform;
+
+				fastgltf::Node::TRS fastgltfTRS = std::get<fastgltf::Node::TRS>(node.transform);
+
+				glm::vec3 tl(fastgltfTRS.translation[0], fastgltfTRS.translation[1], fastgltfTRS.translation[2]);
+				glm::quat rot(fastgltfTRS.rotation[3], fastgltfTRS.rotation[0], fastgltfTRS.rotation[1], fastgltfTRS.rotation[2]);
+				glm::vec3 sc(fastgltfTRS.scale[0], fastgltfTRS.scale[1], fastgltfTRS.scale[2]);
+
+				localTransform.position = tl;
+				localTransform.rotation = rot;
+				localTransform.scale = sc;
+
+				meshLocalTransforms[node.meshIndex.value()] = localTransform;
+			}
+		}
+
+		for (size_t i = 0; i < gltf.meshes.size(); ++i)
+		{
+			const fastgltf::Mesh& fastgltfMesh = gltf.meshes[i];
+			assert(fastgltfMesh.primitives.size() > 0 && "Empty Mesh?");
+			
+			glm::mat4 localTransformMat = TransformToMat4(meshLocalTransforms[i]);
+
+			for (size_t p = 0; p < fastgltfMesh.primitives.size(); ++p)
+			{
+				const fastgltf::Primitive& primitive = fastgltfMesh.primitives[p];
+
+				Mesh nextMesh;
+
+				nextMesh.materialIndex = primitive.materialIndex.value();
+				nextMesh.hashName = r2::asset::GetAssetNameForFilePath(fastgltfMesh.name.c_str(), r2::asset::MESH);
+
+				//load all of the indices
+				{
+					fastgltf::Accessor& indexaccessor = gltf.accessors[primitive.indicesAccessor.value()];
+					nextMesh.indices.reserve(nextMesh.indices.size() + indexaccessor.count);
+
+					fastgltf::iterateAccessor<std::uint32_t>(gltf, indexaccessor, [&](std::uint32_t idx)
+					{
+						nextMesh.indices.push_back(idx);
+					});
+				}
+
+				//load vertex positions
+				{
+					fastgltf::Accessor& posAccessor = gltf.accessors[primitive.findAttribute("POSITION")->second];
+					nextMesh.vertices.resize(nextMesh.vertices.size() + posAccessor.count);
+
+					fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, posAccessor, [&](glm::vec3 v, size_t index)
+						{
+							Vertex newVertex;
+							//We apply the local transform directly to the mesh - not sure if that's an issue but why would it be?
+							newVertex.position = localTransformMat * glm::vec4(v, 1.0);
+							newVertex.normal = glm::vec3(0, 0, 1);
+							newVertex.tangent = glm::vec3(1, 0, 0);
+							newVertex.texCoords = glm::vec3(0);
+
+							nextMesh.vertices[index] = newVertex;
+						});
+				}
+
+				//load vertex normals
+				{
+					auto normals = primitive.findAttribute("NORMAL");
+					if (normals != primitive.attributes.end())
+					{
+						fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*normals).second],
+							[&](glm::vec3 v, size_t index) {
+								nextMesh.vertices[index].normal = v;
+							});
+					}
+					else
+					{
+						printf("NORMAL attribute not found!\n");
+					}
+				}
+
+				//load tangents
+				{
+					auto tangents = primitive.findAttribute("TANGENT");
+					if (tangents != primitive.attributes.end())
+					{
+						fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*tangents).second],
+							[&](glm::vec3 v, size_t index) {
+								nextMesh.vertices[index].tangent = v;
+							});
+					}
+					else
+					{
+						printf("TANGENT attribute not found!\n");
+					}
+				}
+
+				//load texture coordinates
+				{
+					auto uv = primitive.findAttribute("TEXCOORD_0");
+					if (uv != primitive.attributes.end())
+					{
+						fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
+							[&](glm::vec2 v, size_t index)
+							{
+								nextMesh.vertices[index].texCoords = glm::vec3(v.x, v.y, float(primitive.materialIndex.value()));
+							});
+					}
+					else
+					{
+						printf("TEXCOORD_0 attribute not found!\n");
+					}
+				}
+
+				//load texture coordinates 1
+				{
+					//auto uv = primitive.findAttribute("TEXCOORD_1");
+					//if (uv != primitive.attributes.end())
+					//{
+					//	fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
+					//		[&](glm::vec2 v, size_t index)
+					//		{
+					//			//@NOTE(Serge): not being used but we're extracting them anyways
+					//			//nextMesh.vertices[index].texCoords1 = glm::vec3(v.x, v.y, 0);
+					//		});
+					//}
+					//else
+					//{
+					//	printf("TEXCOORD_1 attribute not found!\n");
+					//}
+				}
+				
+				model.meshes.push_back(nextMesh);
+			}
+		}
+
+
+		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
+	}
+
 	bool ConvertModel(
 		const std::filesystem::path& inputFilePath,
 		const std::filesystem::path& parentOutputDir,
@@ -269,6 +754,11 @@ namespace r2::assets::assetlib
 		mJoints.clear();
 		mBoneNecessityMap.clear();
 		mBoneMap.clear();
+
+		if (inputFilePath.extension().string() == ".gltf" || inputFilePath.extension().string() == ".glb")
+		{
+			return ConvertGLTFModel(inputFilePath, parentOutputDir, binaryMaterialParamPacksManifestFile, animationParentDirectory, extension);
+		}
 
 		Assimp::Importer import;
 
@@ -1029,7 +1519,6 @@ namespace r2::assets::assetlib
 		assert(materialName.name != 0 && "We should have a proper material");
 		assert(materialName.materialPackName != 0 && "We should have a proper material");
 
-		nextMesh.materialName = materialName;
 		nextMesh.materialIndex = materialIndex;
 
 		for (uint32_t i = 0; i < mesh->mNumVertices; ++i)

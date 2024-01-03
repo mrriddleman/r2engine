@@ -388,7 +388,7 @@ namespace r2::assets::assetlib
 		}
 		else
 		{
-			stbi_set_flip_vertically_on_load(true);
+		//	stbi_set_flip_vertically_on_load(true);
 			imageData = stbi_load(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
 			textureFormat = flat::TextureFormat_RGBA8;
 

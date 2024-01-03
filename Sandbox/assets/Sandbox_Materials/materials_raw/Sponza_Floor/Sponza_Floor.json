@@ -68,7 +68,7 @@
       },
       {
         propertyType: "REFLECTANCE",
-        value: 2.4
+        value: 1.0
       },
       {
         propertyType: "AMBIENT_OCCLUSION",
