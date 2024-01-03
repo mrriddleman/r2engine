@@ -6,6 +6,7 @@ libIncludeDirs["lz4"] = "../../vendor/lz4/include"
 libIncludeDirs["flatbuffers"] = "../../vendor/flatbuffers/include"
 libIncludeDirs["stb"] = "../../vendor/stb"
 libIncludeDirs["glm"] = "../../vendor/glm"
+libIncludeDirs["fastgltf"] = "../../vendor/fastgltf"
 
 flatcPath, err = os.realpath('.')
 
@@ -21,7 +22,8 @@ project "assetlib"
 	{
 		"include/assetlib/*.h",
 		"src/*.cpp",
-		"../../vendor/stb/*.cpp"
+		"../../vendor/stb/*.cpp",
+		"../../vendor/fastgltf/*.cpp"
 	}
 
 	includedirs
@@ -36,7 +38,8 @@ project "assetlib"
 		"%{libIncludeDirs.lz4}",
 		"%{libIncludeDirs.flatbuffers}",
 		"%{libIncludeDirs.stb}",
-		"%{libIncludeDirs.glm}"
+		"%{libIncludeDirs.glm}",
+		"%{libIncludeDirs.fastgltf}"
 	}
 
 	links
