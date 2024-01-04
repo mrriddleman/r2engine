@@ -634,6 +634,7 @@ namespace r2::assets::assetlib
 			for (size_t p = 0; p < fastgltfMesh.primitives.size(); ++p)
 			{
 				const fastgltf::Primitive& primitive = fastgltfMesh.primitives[p];
+				assert(primitive.type == fastgltf::PrimitiveType::Triangles && "We only support Triangles at the moment!");
 
 				Mesh nextMesh;
 
@@ -654,7 +655,7 @@ namespace r2::assets::assetlib
 				//load vertex positions
 				{
 					fastgltf::Accessor& posAccessor = gltf.accessors[primitive.findAttribute("POSITION")->second];
-					nextMesh.vertices.resize(nextMesh.vertices.size() + posAccessor.count);
+					nextMesh.vertices.resize(posAccessor.count);
 
 					fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, posAccessor, [&](glm::vec3 v, size_t index)
 						{
@@ -676,7 +677,10 @@ namespace r2::assets::assetlib
 					{
 						fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*normals).second],
 							[&](glm::vec3 v, size_t index) {
-								nextMesh.vertices[index].normal = v;
+								
+								nextMesh.vertices[index].normal = glm::normalize(v);
+
+						//		printf("Normal value - x: %f, y: %f, z: %f\n", nextMesh.vertices[index].normal.x, nextMesh.vertices[index].normal.y, nextMesh.vertices[index].normal.z);
 							});
 					}
 					else
@@ -690,9 +694,15 @@ namespace r2::assets::assetlib
 					auto tangents = primitive.findAttribute("TANGENT");
 					if (tangents != primitive.attributes.end())
 					{
-						fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*tangents).second],
-							[&](glm::vec3 v, size_t index) {
-								nextMesh.vertices[index].tangent = v;
+
+
+						auto tangentsCount = gltf.accessors[(*tangents).second].count;
+						
+						fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[(*tangents).second],
+							[&](glm::vec4 v, size_t index) {
+								nextMesh.vertices[index].tangent = glm::normalize(v);
+
+							//	printf("Tangent value - x: %f, y: %f, z: %f\n", nextMesh.vertices[index].tangent.x, nextMesh.vertices[index].tangent.y, nextMesh.vertices[index].tangent.z);
 							});
 					}
 					else
@@ -709,7 +719,7 @@ namespace r2::assets::assetlib
 						fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
 							[&](glm::vec2 v, size_t index)
 							{
-								nextMesh.vertices[index].texCoords = glm::vec3(v.x, v.y, float(primitive.materialIndex.value()));
+								nextMesh.vertices[index].texCoords = glm::vec3(v.x, v.y, primitive.materialIndex.value());
 							});
 					}
 					else
@@ -718,24 +728,6 @@ namespace r2::assets::assetlib
 					}
 				}
 
-				//load texture coordinates 1
-				{
-					//auto uv = primitive.findAttribute("TEXCOORD_1");
-					//if (uv != primitive.attributes.end())
-					//{
-					//	fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
-					//		[&](glm::vec2 v, size_t index)
-					//		{
-					//			//@NOTE(Serge): not being used but we're extracting them anyways
-					//			//nextMesh.vertices[index].texCoords1 = glm::vec3(v.x, v.y, 0);
-					//		});
-					//}
-					//else
-					//{
-					//	printf("TEXCOORD_1 attribute not found!\n");
-					//}
-				}
-				
 				model.meshes.push_back(nextMesh);
 			}
 		}
@@ -1330,7 +1322,7 @@ namespace r2::assets::assetlib
 
 			//@TEMPORARY - We're going to look at all the material params and see what gets packaged into them
 
-			PrintAllAssimpMaterialInformation(material);
+		//	PrintAllAssimpMaterialInformation(material);
 
 
 
