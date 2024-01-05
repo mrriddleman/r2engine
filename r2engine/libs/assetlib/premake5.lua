@@ -29,6 +29,7 @@ project "assetlib"
 	includedirs
 	{
 		"include",
+		"include/assetlib",
 		"../../src/r2/Render/Model/Textures",
 		"../../src/r2/Render/Model",
 		"../../src/r2/Render/Model/Shader",
@@ -58,7 +59,9 @@ project "assetlib"
 		flags {"MultiProcessorCompile"}
 		defines
 		{
-			'FLATC="%{flatcPath}"'
+			'FLATC="%{flatcPath}"',
+			'R2_FLATC="'..os.getcwd()..'/../../vendor/flatbuffers/bin/Windows/flatc.exe"',
+			'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.getcwd()..'/../../data/flatbuffer_schemas"',
 		}
 
 		sysincludedirs

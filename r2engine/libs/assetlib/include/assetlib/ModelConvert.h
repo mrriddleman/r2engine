@@ -10,7 +10,10 @@ namespace r2::assets::assetlib
 		const std::filesystem::path& parentOutputDir,
 		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
 		const std::filesystem::path& animationParentDirectory,
-		const std::string& extension);
+		const std::filesystem::path& rawMaterialsParentDirectory,
+		const std::filesystem::path& engineTexturePacksManifestFile,
+		const std::filesystem::path& texturePacksManifestFile,
+		bool forceRebuild);
 }
 
 #endif

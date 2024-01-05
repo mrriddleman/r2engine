@@ -9,7 +9,8 @@ file_extension "mtrl";
 enum eTransparencyType : uint8
 {
 	OPAQUE = 0,
-	TRANSPARENT
+	TRANSPARENT,
+	MASK
 }
 
 table Material

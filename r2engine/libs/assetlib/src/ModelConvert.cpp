@@ -15,6 +15,8 @@
 #include "assetlib/DiskAssetFile.h"
 #include "Materials/MaterialPack_generated.h"
 #include "Shader/ShaderParams_generated.h"
+
+#include "Textures/TexturePackManifest_generated.h"
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
@@ -31,6 +33,8 @@
 
 namespace fs = std::filesystem;
 
+
+
 namespace r2::assets::assetlib
 {
 	const std::string RMDL_EXTENSION = ".rmdl";
@@ -40,6 +44,25 @@ namespace r2::assets::assetlib
 	bool NearEq(float x, float y)
 	{
 		return fabsf(x - y) < EPSILON;
+	}
+
+	bool WriteFile(const std::string& filePath, char* data, size_t size)
+	{
+		std::fstream fs;
+		fs.open(filePath, std::fstream::out | std::fstream::binary );
+		if (fs.good())
+		{
+			fs.write((const char*)data, size);
+
+			assert(fs.good()&& "Failed to write out the buffer!");
+			if (!fs.good())
+			{
+				return false;
+			}
+		}
+
+		fs.close();
+		return true;
 	}
 
 	struct MaterialName
@@ -145,6 +168,132 @@ namespace r2::assets::assetlib
 		std::string name;
 		size_t samplerIndex;
 		size_t imageIndex;
+	};
+
+	template<typename T>
+	struct ShaderParameter
+	{
+		flat::ShaderPropertyType propertyType;
+		T value;
+	};
+
+	struct AssetName
+	{
+		//@TODO(Serge): UUID
+		uint64_t assetNameHash;
+		std::string assetNameString;
+	};
+
+	struct TextureShaderParam
+	{
+		AssetName textureAssetName;
+		flat::ShaderPropertyPackingType packingType;
+		AssetName texturePackAssetName;
+		size_t samplerIndex;
+		float anisotropicFiltering;
+	};
+
+	struct ShaderStageParam
+	{
+		AssetName shader;
+		AssetName shaderStageName;
+		std::string value;
+	};
+
+	struct ShaderParams
+	{
+		std::vector<ShaderParameter<uint64_t>> ulongShaderParams;
+		std::vector<ShaderParameter<float>> floatShaderParams;
+		std::vector<ShaderParameter<bool>> boolShaderParams;
+		std::vector<ShaderParameter<glm::vec4>> colorShaderParams;
+		std::vector<ShaderParameter<std::string>> stringShaderParams;
+		std::vector<ShaderParameter<TextureShaderParam>> textureShaderParams;
+		std::vector<ShaderParameter<ShaderStageParam>> shaderStageParams;
+	};
+
+	struct ShaderEffect
+	{
+		AssetName assetName;
+		AssetName staticShader;
+		AssetName dynamicShader;
+		flat::eVertexLayoutType staticVertexLayout;
+		flat::eVertexLayoutType dynamicVertexLayout;
+	};
+
+	struct ShaderEffectPasses
+	{
+		std::vector<ShaderEffect> shaderEffects;
+		ShaderParams defaultShaderParams;
+	};
+
+	//@TODO(Serge): UUID for all of the shader effects
+	static ShaderEffect forwardOpaqueShaderEffect = {
+		{STRING_ID("forward_opaque_shader_effect"), "forward_opaque_shader_effect"},
+		{STRING_ID("Sandbox"), "Sandbox"},
+		{STRING_ID("AnimModel"), "AnimModel"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	static ShaderEffect forwardTransparentShaderEffect = {
+		{STRING_ID("forward_transparent_shader_effect"), "forward_transparent_shader_effect"},
+		{STRING_ID("TransparentModel"), "TransparentModel"},
+		{STRING_ID("TransparentAnimModel"), "TransparentAnimModel"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	static ShaderEffect depthShaderEffect = {
+		{STRING_ID("depth_shader_effect"), "depth_shader_effect"},
+		{STRING_ID("StaticDepth"), "StaticDepth"},
+		{STRING_ID("DynamicDepth"), "DynamicDepth"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	static ShaderEffect directionShadowEffect = {
+		{STRING_ID("direction_shadow_effect"), "direction_shadow_effect"},
+		{STRING_ID("StaticShadowDepth"), "StaticShadowDepth"},
+		{STRING_ID("DynamicShaderDepth"), "DynamicShaderDepth"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	static ShaderEffect pointShadowEffect = {
+		{STRING_ID("point_shadow_effect"), "point_shadow_effect"},
+		{STRING_ID("PointLightStaticShadowDepth"), "PointLightStaticShadowDepth"},
+		{STRING_ID("PointLightDynamicShadowDepth"), "PointLightDynamicShadowDepth"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	static ShaderEffect spotLightShadowEffect = {
+		{STRING_ID("spotlight_shadow_effect"), "spotlight_shadow_effect"},
+		{STRING_ID("SpotLightStaticShadowDepth"), "SpotLightStaticShadowDepth"},
+		{STRING_ID("SpotLightDynamicShadowDepth"), "SpotLightDynamicShadowDepth"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
+	//All of the names of the ShaderEffectPasses we have created
+	namespace
+	{
+		const std::string OPAQUE_FORWARD_PASS = "OPAQUE_FORWARD_PASS";
+		const std::string TRANSPARENT_FORWARD_PASS = "TRANSPARENT_FORWARD_PASS";
+	}
+
+	static std::unordered_map<std::string, ShaderEffectPasses> g_shaderEffectPassesMap =
+	{
+		{OPAQUE_FORWARD_PASS, {{forwardOpaqueShaderEffect, {}, depthShaderEffect, directionShadowEffect, pointShadowEffect, spotLightShadowEffect}, {}}},
+		{TRANSPARENT_FORWARD_PASS, {{{}, forwardTransparentShaderEffect, {}, {}, {}, {}}, {}}}
+	};
+
+	struct MaterialData
+	{
+		MaterialName materialName;
+		flat::eTransparencyType transparencyType;
+		ShaderEffectPasses shaderEffectPasses;
+		ShaderParams shaderParams;
 	};
 
 	std::unordered_map<std::string, uint32_t> mBoneNecessityMap;
@@ -372,9 +521,8 @@ namespace r2::assets::assetlib
 		return newSampler;
 	}
 
-	MaterialName GetMaterialNameFromMaterialPack(const flat::MaterialPack* materialPack, const std::string& materialName, const std::filesystem::path& path)
+	bool FindMaterialByMaterialName(const flat::MaterialPack* materialPack, const std::string& materialName, MaterialName& result)
 	{
-		MaterialName result;
 
 		//first do a simple thing which is to look for the material name in the materialPack
 		const auto materials = materialPack->pack();
@@ -390,10 +538,11 @@ namespace r2::assets::assetlib
 			const flat::Material* material = materials->Get(i);
 
 			//set all lowercase
+
 			std::string materialAssetName = material->assetName()->stringName()->str();
 			std::transform(materialAssetName.begin(), materialAssetName.end(), materialAssetName.begin(),
 				[](unsigned char c) { return std::tolower(c); });
-
+			//@TODO(Serge): UUID
 			if (materialAssetName == materialNameToCheck)
 			{
 				result.name = material->assetName()->assetName();
@@ -401,9 +550,23 @@ namespace r2::assets::assetlib
 				result.materialPackName = materialPack->assetName()->assetName();
 				result.materialPackNameStr = materialPack->assetName()->stringName()->str();
 
-				return result;
+				return true;
 			}
 		}
+
+		return false;
+	}
+
+	MaterialName GetMaterialNameFromMaterialPack(const flat::MaterialPack* materialPack, const std::string& materialName, const std::filesystem::path& path)
+	{
+		MaterialName result;
+		if (FindMaterialByMaterialName(materialPack, materialName, result))
+		{
+			return result;
+		}
+
+		const auto materials = materialPack->pack();
+		const auto numMaterials = materials->size();
 
 		bool found = false;
 		std::filesystem::path diffuseTexturePath = path;
@@ -456,11 +619,767 @@ namespace r2::assets::assetlib
 		return result;
 	}
 
+	void PopulateShaderEffectPasses(MaterialData& materialData)
+	{
+
+		//@TODO(Serge): add more sophisticated material mapping - we don't really have many shader effect passes setup yet so keep it simple for now
+
+		if (materialData.transparencyType == flat::eTransparencyType_OPAQUE || 
+			materialData.transparencyType == flat::eTransparencyType_MASK) //for now we use the same ones
+		{
+			materialData.shaderEffectPasses = g_shaderEffectPassesMap[OPAQUE_FORWARD_PASS];
+		}
+		else if (materialData.transparencyType == flat::eTransparencyType_TRANSPARENT)
+		{
+			materialData.shaderEffectPasses = g_shaderEffectPassesMap[TRANSPARENT_FORWARD_PASS];
+		}
+		else
+		{
+			assert(false && "Should never happen");
+		}
+	}
+
+	bool BuildShaderTextureParam(
+		ShaderParameter<TextureShaderParam>& outTextureShaderParam,
+		const Texture& texture,
+		size_t samplerIndex,
+		const flat::TexturePacksManifest* engineTexturePacksManifest,
+		const flat::TexturePacksManifest* texturePacksManifest,
+		bool replaceWithMissingTexture)
+	{
+		std::filesystem::path textureFileName = texture.name;
+
+		outTextureShaderParam.value.samplerIndex = samplerIndex;
+		outTextureShaderParam.value.anisotropicFiltering = 0.0f; //@TODO(Serge): dunno where to get this from yet
+
+		//we need to find the texture in the texturePacksManifest - if replaceWithMissingTexture is true, then replace it with that instead
+		const auto numTexturePacks = texturePacksManifest->texturePacks()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			const flat::TexturePack* texturePack = texturePacksManifest->texturePacks()->Get(i);
+
+			const auto* texturesInTexturePack = texturePack->textures();
+			const auto numTexturesInPack = texturesInTexturePack->size();
+
+			for (flatbuffers::uoffset_t j = 0; j < numTexturesInPack; ++j)
+			{
+				const auto textureInPack = texturesInTexturePack->Get(j);
+				std::filesystem::path rawPath = textureInPack->rawPath()->str();
+
+				if (rawPath.filename() == textureFileName)
+				{
+					//we found it in our packs - populate the outTextureShaderParam
+
+					//@TODO(Serge): UUID
+					outTextureShaderParam.value.texturePackAssetName.assetNameHash = texturePack->assetName()->assetName();
+					outTextureShaderParam.value.texturePackAssetName.assetNameString = texturePack->assetName()->stringName()->str();
+
+					//@TODO(Serge): UUID
+					outTextureShaderParam.value.textureAssetName.assetNameHash = textureInPack->assetName()->assetName();
+					outTextureShaderParam.value.textureAssetName.assetNameString = textureInPack->assetName()->stringName()->str();
+
+					return true;
+				}
+			}
+		}
+
+		if (replaceWithMissingTexture)
+		{
+			const auto numEngineTexturePacks = engineTexturePacksManifest->texturePacks()->size();
+
+			for (flatbuffers::uoffset_t i = 0; i < numEngineTexturePacks; ++i)
+			{
+				const flat::TexturePack* texturePack = engineTexturePacksManifest->texturePacks()->Get(i);
+
+				const auto* texturesInTexturePack = texturePack->textures();
+				const auto numTexturesInPack = texturesInTexturePack->size();
+
+				//@NOTE(Serge): hardcoding this for simplicity - don't think this will ever change... if it does then this needs to change
+				if (texturePack->assetName()->stringName()->str() == "MissingTexture")
+				{
+					//@TODO(Serge): UUID
+					outTextureShaderParam.value.texturePackAssetName.assetNameHash = texturePack->assetName()->assetName();
+					outTextureShaderParam.value.texturePackAssetName.assetNameString = texturePack->assetName()->stringName()->str();
+
+					const auto* missingTextureAssetRef = texturePack->textures()->Get(0);
+					//@TODO(Serge): UUID
+					outTextureShaderParam.value.textureAssetName.assetNameHash = missingTextureAssetRef->assetName()->assetName();
+					outTextureShaderParam.value.textureAssetName.assetNameString = missingTextureAssetRef->assetName()->stringName()->str();
+
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	int RunSystemCommand(const char* command)
+	{
+		int result = system(command);
+		if (result != 0)
+		{
+			printf("Failed to run command: %s\n\n with result: %i\n", command, result);
+		}
+
+		return result;
+	}
+
+	const char PATH_SEPARATOR = '/';
+	bool SanitizeSubPath(const char* rawSubPath, char* result)
+	{
+		size_t startingIndex = 0;
+		//@TODO(Serge): do in a loop
+		if (strlen(rawSubPath) > 2) {
+			if (rawSubPath[0] == '.' && rawSubPath[1] == '.')
+			{
+				startingIndex = 2;
+			}
+			else if (rawSubPath[0] == '.' && rawSubPath[1] != '.')
+			{
+				startingIndex = 1;
+			}
+		}
+
+		size_t len = strlen(rawSubPath);
+		size_t resultIndex = 0;
+		for (; startingIndex < len; startingIndex++)
+		{
+			if (PATH_SEPARATOR != '\\' && rawSubPath[startingIndex] == '\\')
+			{
+				result[resultIndex] = PATH_SEPARATOR;
+			}
+			else
+			{
+				result[resultIndex] = rawSubPath[startingIndex];
+			}
+
+			++resultIndex;
+		}
+
+		result[resultIndex] = '\0';
+
+		return true;
+	}
+
+	bool GenerateFlatbufferJSONFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath)
+	{
+		char command[2048];
+		std::string flatc = R2_FLATC;
+
+		std::filesystem::path flatCEXEPath = flatc;
+		flatCEXEPath = flatCEXEPath.lexically_normal();
+
+		char sanitizedFlatCEXEPath[256];
+
+		SanitizeSubPath(flatCEXEPath.string().c_str(), sanitizedFlatCEXEPath);
+
+		char sanitizedSourcePath[256];
+
+		SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
+#ifdef R2_PLATFORM_WINDOWS
+		sprintf_s(command, Kilobytes(2), "%s -t -o %s %s -- %s --raw-binary", sanitizedFlatCEXEPath, outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+#else
+		sprintf(command, "%s -t -o %s %s -- %s --raw-binary", sanitizedFlatCEXEPath, outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+#endif
+		return RunSystemCommand(command) == 0;
+	}
+
+	bool ExtractMaterialDataFromFastGLTF(
+		const std::string& meshName,
+		size_t materialIndex,
+		const fastgltf::Material& fastgltfMaterial,
+		const flat::MaterialPack* materialPack,
+		MaterialData& materialData,
+		const std::vector<Texture>& textures,
+		const flat::TexturePacksManifest* engineTexturePacksManifest,
+		const flat::TexturePacksManifest* texturePacksManifest,
+		bool forceRebuild)
+	{
+		//build the new material
+		std::string materialNameString = fastgltfMaterial.name.c_str();
+
+		if (materialNameString.empty())
+		{
+			char materialNameToUse[256];
+
+			std::filesystem::path meshPathName = meshName;
+
+			MakeAssetNameStringForFilePath(meshPathName.stem().string().c_str(), materialNameToUse, r2::asset::MATERIAL);
+			materialNameString = std::string(materialNameToUse) + "_material_" + std::to_string(materialIndex);
+		}
+
+		if (!forceRebuild && FindMaterialByMaterialName(materialPack, materialNameString, materialData.materialName))
+		{
+			//False here means it's not a new material - it came from materialPack
+			return false;
+		}
+
+		//@TODO(Serge): UUID
+		materialData.materialName.materialNameStr = materialNameString;
+		materialData.materialName.name = STRING_ID(materialNameString.c_str());
+		materialData.materialName.materialPackNameStr = materialPack->assetName()->stringName()->str();
+		materialData.materialName.materialPackName = materialPack->assetName()->assetName();
+
+		if (fastgltfMaterial.alphaMode == fastgltf::AlphaMode::Opaque)
+		{
+			materialData.transparencyType = flat::eTransparencyType_OPAQUE;
+		}
+		else if (fastgltfMaterial.alphaMode == fastgltf::AlphaMode::Blend)
+		{
+			materialData.transparencyType = flat::eTransparencyType_TRANSPARENT;
+		}
+		else
+		{
+			materialData.transparencyType = flat::eTransparencyType_OPAQUE; //this should be mask but...
+		}
+		
+		ShaderParameter<float> alphaCutoffParam;
+
+		alphaCutoffParam.propertyType = flat::ShaderPropertyType_ALPHA_CUTOFF;
+		alphaCutoffParam.value = fastgltfMaterial.alphaCutoff;
+
+		materialData.shaderParams.floatShaderParams.push_back(alphaCutoffParam);
+
+		//first go with the PBR stuff
+		ShaderParameter<glm::vec4> baseColorFactorParam;
+		baseColorFactorParam.propertyType = flat::ShaderPropertyType_ALBEDO;
+		baseColorFactorParam.value = glm::vec4(fastgltfMaterial.pbrData.baseColorFactor[0], fastgltfMaterial.pbrData.baseColorFactor[1], fastgltfMaterial.pbrData.baseColorFactor[2], fastgltfMaterial.pbrData.baseColorFactor[3]);
+		materialData.shaderParams.colorShaderParams.push_back(baseColorFactorParam);
+
+		ShaderParameter<float> metallicFactorParam;
+		metallicFactorParam.propertyType = flat::ShaderPropertyType_METALLIC;
+		metallicFactorParam.value = fastgltfMaterial.pbrData.metallicFactor;
+		materialData.shaderParams.floatShaderParams.push_back(metallicFactorParam);
+
+		ShaderParameter<float> roughnessFactorParam;
+		roughnessFactorParam.propertyType = flat::ShaderPropertyType_ROUGHNESS;
+		roughnessFactorParam.value = fastgltfMaterial.pbrData.roughnessFactor;
+		materialData.shaderParams.floatShaderParams.push_back(roughnessFactorParam);
+
+		if (fastgltfMaterial.pbrData.baseColorTexture.has_value())
+		{
+			//we have a texture 
+			const auto& baseTextureInfo = fastgltfMaterial.pbrData.baseColorTexture.value();
+
+			const Texture& texture = textures[baseTextureInfo.textureIndex];
+
+			ShaderParameter<TextureShaderParam> textureShaderParam;
+			bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, true);
+			assert(created && "If we have a baseColorTexture then this should always return true");
+			//set the property type and packing type directly here
+			textureShaderParam.propertyType = flat::ShaderPropertyType_ALBEDO;
+			textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+			materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+		}
+
+		if (fastgltfMaterial.pbrData.metallicRoughnessTexture.has_value())
+		{
+			const auto& metallicRoughnessTextureInfo = fastgltfMaterial.pbrData.metallicRoughnessTexture.value();
+
+			const Texture& texture = textures[metallicRoughnessTextureInfo.textureIndex];
+
+			ShaderParameter<TextureShaderParam> textureShaderParam;
+			bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+			if (created)
+			{
+				textureShaderParam.propertyType = flat::ShaderPropertyType_METALLIC;
+				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_B;
+
+				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+
+				textureShaderParam.propertyType = flat::ShaderPropertyType_ROUGHNESS;
+				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_G;
+
+				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+			}
+			else
+			{
+				printf("Material Creation - Metallic Roughness Texture - Error with creating the metallic roughness textures shader params - probably couldn't find the texture name in the pack!\n");
+			}
+		}
+
+		if (fastgltfMaterial.normalTexture.has_value())
+		{
+			const auto& normalTextureInfo = fastgltfMaterial.normalTexture.value();
+
+			const Texture& texture = textures[normalTextureInfo.textureIndex];
+
+			ShaderParameter<TextureShaderParam> textureShaderParam;
+			bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+			if (created)
+			{
+				textureShaderParam.propertyType = flat::ShaderPropertyType_NORMAL;
+				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+			}
+			else
+			{
+				printf("Material Creation - Normal Texture - Error with creating the normal texture shader params - probably couldn't find the texture name in the pack!\n");
+			}
+		}
+
+		if (fastgltfMaterial.occlusionTexture.has_value())
+		{
+			const auto& occlusionTextureInfo = fastgltfMaterial.occlusionTexture.value();
+
+			const Texture& texture = textures[occlusionTextureInfo.textureIndex];
+
+			ShaderParameter<TextureShaderParam> textureShaderParam;
+			bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+			if (created)
+			{
+				textureShaderParam.propertyType = flat::ShaderPropertyType_AMBIENT_OCCLUSION;
+				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_R;
+
+				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+			}
+			else
+			{
+				printf("Material Creation - Occlusion Texture - Error with creating the normal texture shader params - probably couldn't find the texture name in the pack!\n");
+			}
+		}
+
+		if (fastgltfMaterial.emissiveTexture.has_value())
+		{
+			const auto& emissiveTextureInfo = fastgltfMaterial.emissiveTexture.value();
+
+			const Texture& texture = textures[emissiveTextureInfo.textureIndex];
+
+			ShaderParameter<TextureShaderParam> textureShaderParam;
+			bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+			if (created)
+			{
+				textureShaderParam.propertyType = flat::ShaderPropertyType_EMISSION;
+				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+			}
+			else
+			{
+				printf("Material Creation - Emissive Texture - Error with creating the emissive texture shader params - probably couldn't find the texture name in the pack!\n");
+			}
+		}
+		
+		if (fastgltfMaterial.anisotropy)
+		{
+			ShaderParameter<float> anisotropyStrengthParam;
+			anisotropyStrengthParam.propertyType = flat::ShaderPropertyType_ANISOTROPY;
+			anisotropyStrengthParam.value = fastgltfMaterial.anisotropy->anisotropyStrength;
+
+			materialData.shaderParams.floatShaderParams.push_back(anisotropyStrengthParam);
+
+			ShaderParameter<float> anisotropyRotationParam;
+			anisotropyRotationParam.propertyType = flat::ShaderPropertyType_ANISOTROPY_DIRECTION;
+			anisotropyRotationParam.value = fastgltfMaterial.anisotropy->anisotropyRotation;
+
+			materialData.shaderParams.floatShaderParams.push_back(anisotropyRotationParam);
+
+			if (fastgltfMaterial.anisotropy->anisotropyTexture.has_value())
+			{
+				const auto& anisotropyTextureInfo = fastgltfMaterial.anisotropy->anisotropyTexture.value();
+
+				const Texture& texture = textures[anisotropyTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_ANISOTROPY;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - Anisotropy Texture - Error with creating the anisotropy texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+		}
+
+		if (fastgltfMaterial.clearcoat)
+		{
+			ShaderParameter<float> clearCoatFactorParam;
+			clearCoatFactorParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT;
+			clearCoatFactorParam.value = fastgltfMaterial.clearcoat->clearcoatFactor;
+
+			materialData.shaderParams.floatShaderParams.push_back(clearCoatFactorParam);
+
+			ShaderParameter<float> clearCoatRoughnessFactorParam;
+			clearCoatRoughnessFactorParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS;
+			clearCoatRoughnessFactorParam.value = fastgltfMaterial.clearcoat->clearcoatRoughnessFactor;
+
+			materialData.shaderParams.floatShaderParams.push_back(clearCoatRoughnessFactorParam);
+
+			
+			if (fastgltfMaterial.clearcoat->clearcoatTexture.has_value())
+			{
+				const auto& clearcoatTextureInfo = fastgltfMaterial.clearcoat->clearcoatTexture.value();
+
+				const Texture& texture = textures[clearcoatTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - ClearCoat Texture - Error with creating the clearcoat texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+
+			if (fastgltfMaterial.clearcoat->clearcoatNormalTexture.has_value())
+			{
+				const auto& clearcoatNormalTextureInfo = fastgltfMaterial.clearcoat->clearcoatNormalTexture.value();
+
+				const Texture& texture = textures[clearcoatNormalTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT_NORMAL;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - ClearCoat Normal Texture - Error with creating the clearcoat normal texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+
+			if (fastgltfMaterial.clearcoat->clearcoatRoughnessTexture.has_value())
+			{
+				const auto& clearcoatTextureInfo = fastgltfMaterial.clearcoat->clearcoatRoughnessTexture.value();
+
+				const Texture& texture = textures[clearcoatTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_G;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - ClearCoat Roughness Texture - Error with creating the clearcoat Roughness texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+		}
+
+		if (fastgltfMaterial.sheen)
+		{
+			ShaderParameter<glm::vec4> sheenColorParam;
+			sheenColorParam.propertyType = flat::ShaderPropertyType_SHEEN_COLOR;
+			sheenColorParam.value = glm::vec4(fastgltfMaterial.sheen->sheenColorFactor[0], fastgltfMaterial.sheen->sheenColorFactor[1], fastgltfMaterial.sheen->sheenColorFactor[2], 1.0f);
+
+			materialData.shaderParams.colorShaderParams.push_back(sheenColorParam);
+
+			ShaderParameter<float> sheenRoughnessFactorParam;
+			sheenRoughnessFactorParam.propertyType = flat::ShaderPropertyType_SHEEN_ROUGHNESS;
+			sheenRoughnessFactorParam.value = fastgltfMaterial.sheen->sheenRoughnessFactor;
+
+			materialData.shaderParams.floatShaderParams.push_back(sheenRoughnessFactorParam);
+
+			if (fastgltfMaterial.sheen->sheenColorTexture.has_value())
+			{
+				const auto& sheenColorTextureInfo = fastgltfMaterial.sheen->sheenColorTexture.value();
+
+				const Texture& texture = textures[sheenColorTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_SHEEN_COLOR;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - Sheen Color Texture - Error with creating the sheen color texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+
+			if (fastgltfMaterial.sheen->sheenRoughnessTexture.has_value())
+			{
+				const auto& sheenRoughnessTextureInfo = fastgltfMaterial.sheen->sheenRoughnessTexture.value();
+
+				const Texture& texture = textures[sheenRoughnessTextureInfo.textureIndex];
+
+				ShaderParameter<TextureShaderParam> textureShaderParam;
+				bool created = BuildShaderTextureParam(textureShaderParam, texture, texture.samplerIndex, engineTexturePacksManifest, texturePacksManifest, false);
+
+				if (created)
+				{
+					textureShaderParam.propertyType = flat::ShaderPropertyType_SHEEN_ROUGHNESS;
+					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+
+					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
+				}
+				else
+				{
+					printf("Material Creation - Sheen Roughness Texture - Error with creating the sheen roughness texture shader params - probably couldn't find the texture name in the pack!\n");
+				}
+			}
+		}
+
+		ShaderParameter<glm::vec4> emissiveFactor;
+		emissiveFactor.propertyType = flat::ShaderPropertyType_EMISSION;
+		emissiveFactor.value = glm::vec4(fastgltfMaterial.emissiveFactor[0], fastgltfMaterial.emissiveFactor[1], fastgltfMaterial.emissiveFactor[2], 1.0f);
+
+		materialData.shaderParams.colorShaderParams.push_back(emissiveFactor);
+
+		ShaderParameter<float> emissiveStrengthParam;
+		emissiveStrengthParam.propertyType = flat::ShaderPropertyType_EMISSION_STRENGTH;
+		emissiveStrengthParam.value = fastgltfMaterial.emissiveStrength.value_or(1.0f);
+
+		materialData.shaderParams.floatShaderParams.push_back(emissiveStrengthParam);
+
+		ShaderParameter<bool> doubleSidedParam;
+		doubleSidedParam.propertyType = flat::ShaderPropertyType_DOUBLE_SIDED;
+		doubleSidedParam.value = fastgltfMaterial.doubleSided;
+
+		materialData.shaderParams.boolShaderParams.push_back(doubleSidedParam);
+
+		ShaderParameter<bool> unlitParam;
+		unlitParam.propertyType = flat::ShaderPropertyType_UNLIT;
+		unlitParam.value = fastgltfMaterial.unlit;
+
+		materialData.shaderParams.boolShaderParams.push_back(unlitParam);
+
+		//somehow figure out which shader effects to use with this material
+		PopulateShaderEffectPasses(materialData);
+
+		//true here means we need to make the material
+		return true;
+	}
+
+	void BuildNewMaterials(const std::filesystem::path& rawMaterialOutputPath, const std::filesystem::path& binaryMaterialParamPacksManifestFile, const std::vector<MaterialData>& materialsToBuild, const std::vector<Sampler>& samplers)
+	{
+		for (size_t i = 0; i < materialsToBuild.size(); ++i)
+		{
+			const MaterialData& materialData = materialsToBuild[i];
+
+			flatbuffers::FlatBufferBuilder fbb;
+
+			std::vector<flatbuffers::Offset<flat::ShaderEffect>> flatShaderEffects;
+
+			const size_t numShaderEffects = materialData.shaderEffectPasses.shaderEffects.size();
+
+			for (size_t j = 0; j < numShaderEffects; ++j)
+			{
+				const auto shaderEffect = materialData.shaderEffectPasses.shaderEffects[j];
+
+				//@TODO(Serge): Shader effects should have AssetName - fix this in the UUID change
+				auto flatShaderEffect = flat::CreateShaderEffect(
+					fbb,
+					shaderEffect.assetName.assetNameHash,
+					fbb.CreateString(shaderEffect.assetName.assetNameString),
+					shaderEffect.staticShader.assetNameHash,
+					shaderEffect.dynamicShader.assetNameHash,
+					shaderEffect.staticVertexLayout,
+					shaderEffect.dynamicVertexLayout);
+
+				flatShaderEffects.push_back(flatShaderEffect);
+			}
+
+			auto flatShaderEffectPasses = flat::CreateShaderEffectPasses(fbb, fbb.CreateVector(flatShaderEffects), 0);
+			
+			std::vector<flatbuffers::Offset<flat::ShaderULongParam>> shaderULongParams;
+			std::vector<flatbuffers::Offset<flat::ShaderBoolParam>> shaderBoolParams;
+			std::vector<flatbuffers::Offset<flat::ShaderFloatParam>> shaderFloatParams;
+			std::vector<flatbuffers::Offset<flat::ShaderColorParam>> shaderColorParams;
+			std::vector<flatbuffers::Offset<flat::ShaderTextureParam>> shaderTextureParams;
+			std::vector<flatbuffers::Offset<flat::ShaderStringParam>> shaderStringParams;
+
+			if (materialData.shaderParams.ulongShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.ulongShaderParams.size(); ++j)
+				{
+					const auto& ulongParam = materialData.shaderParams.ulongShaderParams[j];
+					shaderULongParams.push_back(flat::CreateShaderULongParam(fbb, ulongParam.propertyType, ulongParam.value));
+				}
+			}
+
+			if (materialData.shaderParams.boolShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.boolShaderParams.size(); ++j)
+				{
+					const auto& boolParam = materialData.shaderParams.boolShaderParams[j];
+					shaderBoolParams.push_back(flat::CreateShaderBoolParam(fbb, boolParam.propertyType, boolParam.value));
+				}
+			}
+
+			if (materialData.shaderParams.floatShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.floatShaderParams.size(); ++j)
+				{
+					const auto& floatParam = materialData.shaderParams.floatShaderParams[j];
+					shaderFloatParams.push_back(flat::CreateShaderFloatParam(fbb, floatParam.propertyType, floatParam.value));
+				}
+			}
+
+			if (materialData.shaderParams.colorShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.colorShaderParams.size(); ++j)
+				{
+					const auto& colorParam = materialData.shaderParams.colorShaderParams[j];
+					flat::Colour color{ colorParam.value.r, colorParam.value.g, colorParam.value.b, colorParam.value.a };
+					shaderColorParams.push_back(flat::CreateShaderColorParam(fbb, colorParam.propertyType, &color));
+				}
+			}
+
+			if (materialData.shaderParams.textureShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.textureShaderParams.size(); ++j)
+				{
+					const auto& textureParam = materialData.shaderParams.textureShaderParams[j];
+					const Sampler& sampler = samplers[textureParam.value.samplerIndex];
+
+					auto textureAssetName = flat::CreateAssetName(fbb, 0, textureParam.value.textureAssetName.assetNameHash, fbb.CreateString(textureParam.value.textureAssetName.assetNameString));
+					auto texturePackAssetName = flat::CreateAssetName(fbb, 0, textureParam.value.texturePackAssetName.assetNameHash, fbb.CreateString(textureParam.value.texturePackAssetName.assetNameString));
+
+					shaderTextureParams.push_back(
+						flat::CreateShaderTextureParam(
+							fbb, 
+							textureParam.propertyType,
+							textureAssetName,
+							textureParam.value.packingType,
+							texturePackAssetName,
+							sampler.minFilter,
+							sampler.magFilter,
+							textureParam.value.anisotropicFiltering,
+							sampler.wrapS,
+							sampler.wrapT,
+							sampler.wrapR)
+					);
+				}
+			}
+
+
+			if (materialData.shaderParams.stringShaderParams.size() > 0)
+			{
+				for (size_t j = 0; j < materialData.shaderParams.stringShaderParams.size(); ++j)
+				{
+					const auto& stringParam = materialData.shaderParams.stringShaderParams[j];
+
+					shaderStringParams.push_back(flat::CreateShaderStringParam(fbb, stringParam.propertyType, fbb.CreateString(stringParam.value)));
+				}
+			}
+
+			auto flatShaderParams = flat::CreateShaderParams(
+				fbb,
+				fbb.CreateVector(shaderULongParams),
+				fbb.CreateVector(shaderBoolParams),
+				fbb.CreateVector(shaderFloatParams),
+				fbb.CreateVector(shaderColorParams),
+				fbb.CreateVector(shaderTextureParams),
+				fbb.CreateVector(shaderStringParams),
+				0); //@TODO(Serge): there are no ShaderStageParams yet
+
+			auto materialAssetName = flat::CreateAssetName(fbb, 0, materialData.materialName.name, fbb.CreateString(materialData.materialName.materialNameStr));
+
+			auto flatMaterial = flat::CreateMaterial(fbb, materialAssetName, materialData.transparencyType, flatShaderEffectPasses, flatShaderParams);
+
+			fbb.Finish(flatMaterial);
+
+			uint8_t* dataBuf = fbb.GetBufferPointer();
+			size_t dataSize = fbb.GetSize();
+
+			//Now write out the material file
+
+			//first make the directory of the material
+			std::filesystem::path materialDirectoryPath = rawMaterialOutputPath / materialData.materialName.materialNameStr;
+
+			
+			if (!std::filesystem::exists(materialDirectoryPath))
+			{
+				std::filesystem::create_directory(materialDirectoryPath);
+			}
+
+			std::filesystem::path materialBinPath = materialDirectoryPath / (materialData.materialName.materialNameStr + ".bin");
+
+			char sanitizedMaterialPathPath[256];
+			SanitizeSubPath(materialBinPath.string().c_str(), sanitizedMaterialPathPath);
+
+			char sanitizedRawMaterialOutputPath[256];
+			SanitizeSubPath(materialDirectoryPath.string().c_str(), sanitizedRawMaterialOutputPath);
+
+
+			WriteFile(sanitizedMaterialPathPath, (char*)dataBuf, dataSize);
+
+			std::filesystem::path flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+			flatbufferSchemaPath = flatbufferSchemaPath.lexically_normal();
+
+			std::filesystem::path materialSchemaPath = std::filesystem::path(flatbufferSchemaPath) / "Material.fbs";
+
+			bool generated = GenerateFlatbufferJSONFile(sanitizedRawMaterialOutputPath, materialSchemaPath.string().c_str(), sanitizedMaterialPathPath);
+			
+			assert(generated);
+			
+			if (std::filesystem::exists(sanitizedMaterialPathPath))
+			{
+				std::filesystem::remove(sanitizedMaterialPathPath);
+			}
+
+		}
+		
+		//assert(false && "TODO(Serge): Build the materials based on the materialsToBuild vector and the raw output path");
+		
+		
+		//assert(false && "TODO(Serge): Rebuild the material manifest");
+	}
+
+	char* LoadAndReadFile(const std::filesystem::path& filePath)
+	{
+		DiskAssetFile diskFile;
+
+		bool openResult = diskFile.OpenForRead(filePath.string().c_str());
+
+		assert(openResult && "Couldn't open the file!");
+
+		auto fileSize = diskFile.Size();
+
+		char* theData = new char[fileSize];
+
+		auto readSize = diskFile.Read(theData, fileSize);
+
+		assert(readSize == fileSize && "Didn't read whole file");
+
+		return theData;
+	}
+
 	bool ConvertGLTFModel(const std::filesystem::path& inputFilePath,
 		const std::filesystem::path& parentOutputDir,
 		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
 		const std::filesystem::path& animationParentDirectory,
-		const std::string& extension)
+		const std::filesystem::path& rawMaterialsParentDirectory,
+		const std::filesystem::path& engineTexturePacksManifestFile,
+		const std::filesystem::path& texturePacksManifestFile,
+		bool forceRebuild)
 	{
 		fastgltf::Parser parser{};
 
@@ -517,21 +1436,16 @@ namespace r2::assets::assetlib
 
 		char modelAssetName[256];
 
-
-
-
 		std::filesystem::path dstModelPath = inputFilePath;
 		dstModelPath.replace_extension(RMDL_EXTENSION);
 		r2::asset::MakeAssetNameStringForFilePath(dstModelPath.string().c_str(), modelAssetName, r2::asset::RMODEL);
 
 		model.modelName = modelAssetName;
 
-
-		assert(gltf.meshes.size() == 1 && "Right now we only support 1 gltf mesh which we call a model per file");
-
 		std::vector<Sampler> samplers;
 		std::vector<std::filesystem::path> images;
 		std::vector<Texture> textures;
+		std::vector<MaterialData> materialsToBuild;
 
 		//load samplers
 		for (size_t i = 0; i < gltf.samplers.size(); ++i)
@@ -554,46 +1468,49 @@ namespace r2::assets::assetlib
 			Texture newTexture;
 			newTexture.imageIndex = fastgltfTexture.imageIndex.value();
 			newTexture.samplerIndex = fastgltfTexture.samplerIndex.value();
-			newTexture.name = fastgltfTexture.name;
+
+			newTexture.name = images[newTexture.imageIndex].filename().string();
 
 			textures.push_back(newTexture);
 		}
 
-		//@Temporary: we're going to map our already existing materials to the gltf material
 		{
-			DiskAssetFile diskFile;
+			const char* materialManifestData = LoadAndReadFile(binaryMaterialParamPacksManifestFile);
+			const auto* materialManifest = flat::GetMaterialPack(materialManifestData);
 
-			bool openResult = diskFile.OpenForRead(binaryMaterialParamPacksManifestFile.string().c_str());
+			const char* engineTextureManifestData = LoadAndReadFile(engineTexturePacksManifestFile);
+			const auto* engineTextureManifest = flat::GetTexturePacksManifest(engineTextureManifestData);
 
-			assert(openResult && "Couldn't open the file!");
-
-			auto fileSize = diskFile.Size();
-
-			char* materialManifestData = new char[fileSize];
-
-			auto readSize = diskFile.Read(materialManifestData, fileSize);
-
-			assert(readSize == fileSize && "Didn't read whole file");
-
-			const auto materialManifest = flat::GetMaterialPack(materialManifestData);
+			const char* textureManifestData = LoadAndReadFile(texturePacksManifestFile);
+			const auto* textureManifest = flat::GetTexturePacksManifest(textureManifestData);
 
 			for (size_t i = 0; i < gltf.materials.size(); ++i)
 			{
 				const fastgltf::Material& fastgltfMaterial = gltf.materials[i];
 
-				//@TODO(Serge): extract the materials
+				MaterialData materialData;
+				bool isNew = ExtractMaterialDataFromFastGLTF(model.modelName, i, fastgltfMaterial, materialManifest, materialData, textures, engineTextureManifest, textureManifest, forceRebuild);
+
+				if (isNew)
+				{
+					materialsToBuild.push_back(materialData);
+				}
+
+				model.materialNames.push_back(materialData.materialName);
 
 				//@Temporary: for testing purposes, we're just going to try to find the pre-existing materials from the material pack
-				std::filesystem::path imagePath = "";
+				/*std::filesystem::path imagePath = "";
 				if (fastgltfMaterial.pbrData.baseColorTexture.has_value())
 				{
 					imagePath = images[textures[fastgltfMaterial.pbrData.baseColorTexture.value().textureIndex].imageIndex];
 				}
 
-				model.materialNames.push_back(GetMaterialNameFromMaterialPack(materialManifest, fastgltfMaterial.name.c_str(), imagePath));
+				model.materialNames.push_back(GetMaterialNameFromMaterialPack(materialManifest, fastgltfMaterial.name.c_str(), imagePath));*/
 			}
 
 			//@Temporary
+			delete[] textureManifestData;
+			delete[] engineTextureManifestData;
 			delete[] materialManifestData;
 		}
 		
@@ -677,10 +1594,7 @@ namespace r2::assets::assetlib
 					{
 						fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*normals).second],
 							[&](glm::vec3 v, size_t index) {
-								
 								nextMesh.vertices[index].normal = glm::normalize(v);
-
-						//		printf("Normal value - x: %f, y: %f, z: %f\n", nextMesh.vertices[index].normal.x, nextMesh.vertices[index].normal.y, nextMesh.vertices[index].normal.z);
 							});
 					}
 					else
@@ -700,9 +1614,7 @@ namespace r2::assets::assetlib
 						
 						fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[(*tangents).second],
 							[&](glm::vec4 v, size_t index) {
-								nextMesh.vertices[index].tangent = glm::normalize(v);
-
-							//	printf("Tangent value - x: %f, y: %f, z: %f\n", nextMesh.vertices[index].tangent.x, nextMesh.vertices[index].tangent.y, nextMesh.vertices[index].tangent.z);
+								nextMesh.vertices[index].tangent = v.w * glm::vec3(v.x, v.y, v.z);
 							});
 					}
 					else
@@ -732,6 +1644,7 @@ namespace r2::assets::assetlib
 			}
 		}
 
+		BuildNewMaterials(rawMaterialsParentDirectory, binaryMaterialParamPacksManifestFile, materialsToBuild, samplers);
 
 		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
 	}
@@ -741,7 +1654,10 @@ namespace r2::assets::assetlib
 		const std::filesystem::path& parentOutputDir,
 		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
 		const std::filesystem::path& animationParentDirectory,
-		const std::string& extension)
+		const std::filesystem::path& rawMaterialsParentDirectory,
+		const std::filesystem::path& engineTexturePacksManifestFile,
+		const std::filesystem::path& texturePacksManifestFile,
+		bool forceRebuild)
 	{
 		mJoints.clear();
 		mBoneNecessityMap.clear();
@@ -749,7 +1665,7 @@ namespace r2::assets::assetlib
 
 		if (inputFilePath.extension().string() == ".gltf" || inputFilePath.extension().string() == ".glb")
 		{
-			return ConvertGLTFModel(inputFilePath, parentOutputDir, binaryMaterialParamPacksManifestFile, animationParentDirectory, extension);
+			return ConvertGLTFModel(inputFilePath, parentOutputDir, binaryMaterialParamPacksManifestFile, animationParentDirectory, rawMaterialsParentDirectory, engineTexturePacksManifestFile, texturePacksManifestFile, forceRebuild);
 		}
 
 		Assimp::Importer import;
@@ -2163,4 +3079,14 @@ namespace r2::assets::assetlib
 		};
 		*/
 	}
+
+	
+
+
+
+
+
+
+
+
 }

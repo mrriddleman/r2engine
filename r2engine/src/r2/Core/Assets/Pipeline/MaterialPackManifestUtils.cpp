@@ -815,7 +815,6 @@ namespace r2::asset::pln
 				for (flatbuffers::uoffset_t i = 0; i < binMaterial->shaderParams()->textureParams()->size(); ++i)
 				{
 					const auto* shaderTextureParam = binMaterial->shaderParams()->textureParams()->Get(i);
-					//@TODO(Serge): UUID
 
 					std::string textureName = "";
 					if (shaderTextureParam->value()->stringName())
@@ -823,6 +822,7 @@ namespace r2::asset::pln
 						textureName = shaderTextureParam->value()->stringName()->str();
 					}
 
+					//@TODO(Serge): UUID
 					auto textureAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam->value()->assetName(), builder.CreateString(textureName));
 					auto texturePackAssetName = flat::CreateAssetName(builder, 0, shaderTextureParam->texturePack()->assetName(), builder.CreateString(shaderTextureParam->texturePack()->stringName()->str()));
 

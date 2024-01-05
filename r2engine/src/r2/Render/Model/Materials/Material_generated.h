@@ -19,29 +19,32 @@ struct MaterialBuilder;
 enum eTransparencyType {
   eTransparencyType_OPAQUE = 0,
   eTransparencyType_TRANSPARENT = 1,
+  eTransparencyType_MASK = 2,
   eTransparencyType_MIN = eTransparencyType_OPAQUE,
-  eTransparencyType_MAX = eTransparencyType_TRANSPARENT
+  eTransparencyType_MAX = eTransparencyType_MASK
 };
 
-inline const eTransparencyType (&EnumValueseTransparencyType())[2] {
+inline const eTransparencyType (&EnumValueseTransparencyType())[3] {
   static const eTransparencyType values[] = {
     eTransparencyType_OPAQUE,
-    eTransparencyType_TRANSPARENT
+    eTransparencyType_TRANSPARENT,
+    eTransparencyType_MASK
   };
   return values;
 }
 
 inline const char * const *EnumNameseTransparencyType() {
-  static const char * const names[3] = {
+  static const char * const names[4] = {
     "OPAQUE",
     "TRANSPARENT",
+    "MASK",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameeTransparencyType(eTransparencyType e) {
-  if (flatbuffers::IsOutRange(e, eTransparencyType_OPAQUE, eTransparencyType_TRANSPARENT)) return "";
+  if (flatbuffers::IsOutRange(e, eTransparencyType_OPAQUE, eTransparencyType_MASK)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNameseTransparencyType()[index];
 }

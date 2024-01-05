@@ -43,6 +43,10 @@ struct Arguments
 	std::string inputDir;
 	std::string outputDir;
 	std::string materialParamsManifestPath;
+	std::string rawMaterialsParentPath;
+	std::string engineTexturePacksManifestPath;
+	std::string texturePacksManifestPath;
+	bool forceMaterialRebuild;
 };
 
 bool SkipDirectory(const fs::path& p)
@@ -225,11 +229,20 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-i", "--input" }, &arguments.inputDir, "Input Directory");
 	args.AddArgument({ "-o", "--output" }, &arguments.outputDir, "Output Directory");
 	args.AddArgument({ "-m", "--material" }, &arguments.materialParamsManifestPath, "Material Params Manifest Path");
+	args.AddArgument({ "-r", "--rawmaterialsparent" }, &arguments.rawMaterialsParentPath, "Raw Material Parent Path");
+	args.AddArgument({ "-e", "--enginetexturepacksmanifest" }, &arguments.engineTexturePacksManifestPath, "Engine Texture Packs Manifest Path");
+	args.AddArgument({ "-t", "--texturepacksmanifest" }, &arguments.texturePacksManifestPath, "Texture Packs Manifest Path");
+	args.AddArgument({ "-f", "--forcerematerialrebuild" }, &arguments.forceMaterialRebuild, "Force Material Rebuild");
+
 	args.Parse(agrc, argv);
 
-	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\Sponza\\Sponza.gltf";
-	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\Sponza";
-	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\Sponza\\Sponza.gltf";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\Sponza";
+	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
+	arguments.rawMaterialsParentPath = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Materials\\generated_materials_test";
+	arguments.engineTexturePacksManifestPath = "D:\\Projects\\r2engine\\r2engine\\assets_bin\\textures\\manifests\\engine_texture_pack.tman";
+	arguments.texturePacksManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\manifests\\SandboxTexturePack.tman";
+	arguments.forceMaterialRebuild = false;
 
 	if (arguments.inputDir.empty())
 	{
@@ -246,6 +259,10 @@ int main(int agrc, char** argv)
 	fs::path inputPath{ arguments.inputDir };
 	fs::path outputPath{ arguments.outputDir };
 	fs::path materialParamsManifestPath{ arguments.materialParamsManifestPath };
+	fs::path rawMaterialsParentPath{ arguments.rawMaterialsParentPath };
+	fs::path engineTexturePacksManifestPath{ arguments.engineTexturePacksManifestPath };
+	fs::path texturePacksManifestPath{ arguments.texturePacksManifestPath };
+	bool forceRebuild = arguments.forceMaterialRebuild;
 
 	fs::path currentMetaPath = "";
 
@@ -269,7 +286,7 @@ int main(int agrc, char** argv)
 				animationDirectory = animationsPath;
 			}
 
-			r2::assets::assetlib::ConvertModel(inputPath, outputPath, materialParamsManifestPath, animationDirectory, extension);
+			r2::assets::assetlib::ConvertModel(inputPath, outputPath, materialParamsManifestPath, animationDirectory, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild);
 		}
 
 		//@TODO(Serge): other types here
@@ -336,7 +353,7 @@ int main(int agrc, char** argv)
 						animationDirectory = animationsPath;
 					}
 
-					r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, extension);
+					r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild);
 				}
 			}
 		}

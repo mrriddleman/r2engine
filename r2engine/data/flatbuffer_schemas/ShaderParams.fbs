@@ -53,7 +53,10 @@ enum ShaderPropertyType: uint16
 	SHADER,
 	SHADER_DEFINE,
 	SHADER_MATERIAL_FUNCTION,
-	EMISSION_STRENGTH
+	EMISSION_STRENGTH,
+	ALPHA_CUTOFF,
+	UNLIT,
+	
 }
 
 enum ShaderPropertyPackingType : int8
