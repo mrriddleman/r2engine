@@ -89,6 +89,7 @@ namespace r2::asset::pln
 		std::filesystem::path inputDirPath;
 		std::filesystem::path binaryModelDirectory;
 		std::filesystem::path materialManifestPath;
+
 		bool found = false;
 
 		for (u64 i = 0; i < numWatchPaths; ++i)
@@ -115,7 +116,10 @@ namespace r2::asset::pln
 			//now we need to figure out the proper output dir
 			std::filesystem::path lexicallyRelPath = modelPathToBuild.lexically_relative(inputDirPath).parent_path();
 
-			int result = pln::assetconvert::RunModelConverter(modelPathToBuild.string(), (binaryModelDirectory / lexicallyRelPath).string(), materialManifestPath.string());
+			int result = pln::assetconvert::RunModelConverter(
+				modelPathToBuild.string(),
+				(binaryModelDirectory / lexicallyRelPath).string(),
+				materialManifestPath.string(), mMaterialRawDirectoryPath, mEngineTexturePacksManifestPath, mAppTexturePacksManifestPath, request.forceRebuild);
 
 			R2_CHECK(result == 0, "Failed to create the rmdl files of: %s\n", modelPathToBuild.string().c_str());
 
@@ -239,7 +243,10 @@ namespace r2::asset::pln
 
 			if (std::filesystem::is_empty(outputDirPath))
 			{
-				int result = pln::assetconvert::RunModelConverter(inputDirPath.string(), outputDirPath.string(), materialManifestPath.string());
+				int result = pln::assetconvert::RunModelConverter(
+					inputDirPath.string(),
+					outputDirPath.string(),
+					materialManifestPath.string(), mMaterialRawDirectoryPath, mEngineTexturePacksManifestPath, mAppTexturePacksManifestPath, false);
 				R2_CHECK(result == 0, "Failed to create the rmdl files of: %s\n", inputDirPath.string().c_str());
 			}
 			else
@@ -258,7 +265,10 @@ namespace r2::asset::pln
 
 					if (std::filesystem::is_empty(outputPath))
 					{
-						int result = pln::assetconvert::RunModelConverter(p.path().string(), outputPath.string(), materialManifestPath.string());
+						int result = pln::assetconvert::RunModelConverter(
+							p.path().string(),
+							outputPath.string(),
+							materialManifestPath.string(), mMaterialRawDirectoryPath, mEngineTexturePacksManifestPath, mAppTexturePacksManifestPath, false);
 
 						R2_CHECK(result == 0, "Failed to create the rmdl files of: %s\n", p.path().string().c_str());
 					}
@@ -266,6 +276,19 @@ namespace r2::asset::pln
 			}
 		}
 	}
+
+	void ModelHotReloadCommand::AddTextureManifestPaths(const std::string& engineTexturePacksManifestPath, const std::string& appTexturePacksManifestPath)
+	{
+		mEngineTexturePacksManifestPath = engineTexturePacksManifestPath;
+		mAppTexturePacksManifestPath = appTexturePacksManifestPath;
+
+	}
+
+	void ModelHotReloadCommand::AddMaterialRawDirectory(const std::string& materialRawDirectory)
+	{
+		mMaterialRawDirectoryPath = materialRawDirectory;
+	}
+
 }
 
 #endif

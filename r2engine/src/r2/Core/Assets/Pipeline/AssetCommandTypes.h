@@ -31,6 +31,7 @@ namespace r2::asset::pln
 		HotReloadType reloadType;
 		
 		std::vector<std::filesystem::path> paths;
+		bool forceRebuild = false;
 	};
 }
 

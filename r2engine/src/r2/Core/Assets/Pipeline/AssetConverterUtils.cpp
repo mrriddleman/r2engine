@@ -40,7 +40,11 @@ namespace r2::asset::pln::assetconvert
 	int RunModelConverter(
 		const std::string& inputDir,
 		const std::string& outputDir,
-		const std::string& materialManifestPath)
+		const std::string& materialManifestPath,
+		const std::string& materialRawDirectory,
+		const std::string& engineTexturePacksManifestPath,
+		const std::string& appTexturePacksManifestPath,
+		bool forceMaterialRecreation)
 	{
 		char command[Kilobytes(2)];
 		std::string converterEXEPathStr = R2_ENGINE_ASSET_CONVERTER_EXE;
@@ -57,7 +61,26 @@ namespace r2::asset::pln::assetconvert
 		std::filesystem::path materialPath = materialManifestPath;
 		materialPath.make_preferred();
 
-		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -m %s", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str(), materialPath.string().c_str());
+		std::filesystem::path materialRawDirectoryArg = materialRawDirectory;
+		materialRawDirectoryArg.make_preferred();
+
+		std::filesystem::path engineTexturePacksManifestArg = engineTexturePacksManifestPath;
+		engineTexturePacksManifestArg.make_preferred();
+
+		std::filesystem::path appTexturePacksManifestArg = appTexturePacksManifestPath;
+		appTexturePacksManifestArg.make_preferred();
+
+		std::string forceMaterialRecreationString = forceMaterialRecreation ? "true" : "false";
+
+		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -m %s -r %s -e %s -t %s -f %s",
+			converterEXEPath.string().c_str(),
+			inputDirPath.string().c_str(),
+			outputDirPath.string().c_str(),
+			materialPath.string().c_str(),
+			materialRawDirectoryArg.string().c_str(),
+			engineTexturePacksManifestArg.string().c_str(),
+			appTexturePacksManifestArg.string().c_str(),
+			forceMaterialRecreationString.c_str());
 
 		return RunSystemCommand(command);
 	}

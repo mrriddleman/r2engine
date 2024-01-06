@@ -393,7 +393,7 @@ public:
         mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
-        modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        //modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         /*animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
 
         mTransparentWindowMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -441,7 +441,8 @@ public:
 
   //      mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
 
-
+        //@TODO(Serge): get rid of all of this once the engine can sustain itself
+        //              at the moment we still need this for skybox and color grading
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
 
@@ -477,17 +478,17 @@ public:
 		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 
-        auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
-        mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
+    //    auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
+      //  mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
 
 
-        glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
+  //      glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
 
-        sponzaModelMatrix = sponzaModelMatrix * mSponzaModel->globalInverseTransform;
+    //    sponzaModelMatrix = sponzaModelMatrix * mSponzaModel->globalInverseTransform;
 
-        sponzaModelMatrix = glm::rotate(sponzaModelMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
+      //  sponzaModelMatrix = glm::rotate(sponzaModelMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
 
-        r2::sarr::Push(*modelMats, sponzaModelMatrix);
+        //r2::sarr::Push(*modelMats, sponzaModelMatrix);
 
         r2::util::Random randomizer;
         
@@ -520,7 +521,7 @@ public:
         //mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
         //mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 
-        mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
+   //     mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
 
       //  r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
 
@@ -699,7 +700,7 @@ public:
 			}
             else if (e.KeyCode() == r2::io::KEY_F1 && (e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == 0)
             {
-                mDrawDebugBones = !mDrawDebugBones;
+     //           mDrawDebugBones = !mDrawDebugBones;
                 return true;
             }
             else if (e.KeyCode() == r2::io::KEY_UP)
@@ -890,90 +891,90 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_p)
             {
-                r2::audio::AudioEngine audioEngine;
-                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                {
-                    audioEngine.PauseEvent(mMusicEventHandle);
-                }
+                //r2::audio::AudioEngine audioEngine;
+                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                //{
+                //    audioEngine.PauseEvent(mMusicEventHandle);
+                //}
             }
             else if (e.KeyCode() == r2::io::KEY_n)
             {
-                r2::audio::AudioEngine audioEngine;
-                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                {
-                    audioEngine.StopEvent(mMusicEventHandle, true);
-                }
+                //r2::audio::AudioEngine audioEngine;
+                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                //{
+                //    audioEngine.StopEvent(mMusicEventHandle, true);
+                //}
             }
             else if (e.KeyCode() == r2::io::KEY_o)
             {
-                r2::audio::AudioEngine audioEngine;
-                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                {
-                    bool isPlaying = audioEngine.IsEventPlaying(mMusicEventHandle);
+                //r2::audio::AudioEngine audioEngine;
+                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                //{
+                //    bool isPlaying = audioEngine.IsEventPlaying(mMusicEventHandle);
 
-                    if (isPlaying)
-                    {
-                        printf("Music is currently playing\n");
-                    }
-                    else
-                    {
-                        printf("Music is currently not playing\n");
-                    }
+                //    if (isPlaying)
+                //    {
+                //        printf("Music is currently playing\n");
+                //    }
+                //    else
+                //    {
+                //        printf("Music is currently not playing\n");
+                //    }
 
-                    bool isMusicPaused = audioEngine.IsEventPaused(mMusicEventHandle);
-                    if (isMusicPaused)
-                    {
-                        printf("Music is paused\n");
-                    }
-                    else
-                    {
-                        printf("Music is not paused\n");
-                    }
+                //    bool isMusicPaused = audioEngine.IsEventPaused(mMusicEventHandle);
+                //    if (isMusicPaused)
+                //    {
+                //        printf("Music is paused\n");
+                //    }
+                //    else
+                //    {
+                //        printf("Music is not paused\n");
+                //    }
 
-                    bool hasStopped = audioEngine.HasEventStopped(mMusicEventHandle);
-                    if (hasStopped)
-                    {
-                        printf("Music has stopped\n");
-                    }
-                    else
-                    {
-                        printf("Music not stopped\n");
-                    }
-                }
+                //    bool hasStopped = audioEngine.HasEventStopped(mMusicEventHandle);
+                //    if (hasStopped)
+                //    {
+                //        printf("Music has stopped\n");
+                //    }
+                //    else
+                //    {
+                //        printf("Music not stopped\n");
+                //    }
+                //}
             }
             else if (e.KeyCode() == r2::io::KEY_h)
             {
-			    static r2::util::Random randomizer;
+			 //   static r2::util::Random randomizer;
 
-			    std::call_once(std::once_flag{}, [&]() {
-				    randomizer.Randomize();
-				});
+			 //   std::call_once(std::once_flag{}, [&]() {
+				//    randomizer.Randomize();
+				//});
 
-                r2::audio::AudioEngine audioEngine;
-              //  if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
-                {
-                    mEventInstanceHandle = audioEngine.CreateEventInstance("event:/MyEvent");
-                }
+    //            r2::audio::AudioEngine audioEngine;
+    //          //  if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
+    //            {
+    //                mEventInstanceHandle = audioEngine.CreateEventInstance("event:/MyEvent");
+    //            }
 
-                R2_CHECK(r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle), "?");
+    //            R2_CHECK(r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle), "?");
 
-                const r2::Camera& camera = mPersController.GetCamera();
+    //            const r2::Camera& camera = mPersController.GetCamera();
 
-				r2::audio::AudioEngine::Attributes3D attributes;
-                
-                float paramValue = randomizer.Randomf();
+				//r2::audio::AudioEngine::Attributes3D attributes;
+    //            
+    //            float paramValue = randomizer.Randomf();
 
-                r2::audio::AudioEngine::SetEventParameterByName(mEventInstanceHandle, "Parameter 1", paramValue);
+    //            r2::audio::AudioEngine::SetEventParameterByName(mEventInstanceHandle, "Parameter 1", paramValue);
 
-				attributes.position.x = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
-                attributes.position.y = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
-                attributes.position.z = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+				//attributes.position.x = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+    //            attributes.position.y = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+    //            attributes.position.z = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
 
-				attributes.look = glm::vec3(0, 0, 1);
-				attributes.up = camera.up;
-				attributes.velocity = glm::vec3(0);
+				//attributes.look = glm::vec3(0, 0, 1);
+				//attributes.up = camera.up;
+				//attributes.velocity = glm::vec3(0);
 
-                audioEngine.PlayEvent(mEventInstanceHandle, attributes);
+    //            audioEngine.PlayEvent(mEventInstanceHandle, attributes);
             }
 			return false;
 		});
@@ -1034,33 +1035,33 @@ public:
         r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
         r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
-        r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+   //     r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
-        if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle))
-        {
-			r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
-			r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
+   //     if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle))
+   //     {
+			//r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+			//r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
 
-			const r2::draw::vb::GPUModelRef* sponzaGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSponzaModelRefHandle);
+			//const r2::draw::vb::GPUModelRef* sponzaGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSponzaModelRefHandle);
 
-			//r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, sponzaGPUModelRef->numMaterials);
-			//r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, sponzaGPUModelRef->numMaterials);
+			////r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, sponzaGPUModelRef->numMaterials);
+			////r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, sponzaGPUModelRef->numMaterials);
 
-			/*for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
-			{
-				const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->materialNames, i).name);
+			///*for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
+			//{
+			//	const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->materialNames, i).name);
 
-				R2_CHECK(renderMaterial != nullptr, "...");
-				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-				r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));
-			}*/
+			//	R2_CHECK(renderMaterial != nullptr, "...");
+			//	r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+			//	r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));
+			//}*/
 
-			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, *sponzaGPUModelRef->materialNames, nullptr);
+			//r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, *sponzaGPUModelRef->materialNames, nullptr);
 
-			//FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-			//FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
-			FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
-        }
+			////FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			////FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+			//FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
+   //     }
 
         //r2::draw::DrawParameters drawTransparentWindowParams;
         //drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
@@ -1254,7 +1255,7 @@ public:
         FREE(directions, *MEM_ENG_SCRATCH_PTR);
         FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
 
-        if (mDrawDebugBones)
+      //  if (mDrawDebugBones)
         {
          //   r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
           //  r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
@@ -1265,7 +1266,7 @@ public:
     virtual void Shutdown() override
     {
 
-        FREE(modelMats, *linearArenaPtr);
+    //    FREE(modelMats, *linearArenaPtr);
 
   //      FREE(mAnimationsHandles, *linearArenaPtr);
   //      FREE(animModelMats, *linearArenaPtr);
@@ -1668,7 +1669,7 @@ private:
 
     r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
 
-    r2::SArray<glm::mat4>* modelMats;
+    //r2::SArray<glm::mat4>* modelMats;
    // r2::SArray<glm::mat4>* animModelMats;
 
  //   r2::draw::vb::GPUModelRefHandle mTransparentWindowModelRefHandle;
@@ -1686,18 +1687,18 @@ private:
    // const r2::draw::AnimModel* mSkeletonModel = nullptr;
    // const r2::draw::AnimModel* mEllenModel = nullptr;
     //const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
-    const r2::draw::Model* mSponzaModel = nullptr;
-    r2::draw::vb::GPUModelRefHandle mSponzaModelRefHandle;
+    //const r2::draw::Model* mSponzaModel = nullptr;
+    //r2::draw::vb::GPUModelRefHandle mSponzaModelRefHandle;
 
-    s32 mSelectedAnimationID = 0;
-    bool mDrawDebugBones = false;
+    //s32 mSelectedAnimationID = 0;
+    //bool mDrawDebugBones = false;
 
-    float mExposure = 1.0f;
+  //  float mExposure = 1.0f;
     s32 mResolution = 3;
 
-    r2::audio::AudioEngine::BankHandle mTestBankHandle;
-    r2::audio::AudioEngine::EventInstanceHandle mMusicEventHandle;
-    r2::audio::AudioEngine::EventInstanceHandle mEventInstanceHandle;
+   // r2::audio::AudioEngine::BankHandle mTestBankHandle;
+   // r2::audio::AudioEngine::EventInstanceHandle mMusicEventHandle;
+   // r2::audio::AudioEngine::EventInstanceHandle mEventInstanceHandle;
 };
 
 namespace

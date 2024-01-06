@@ -22,7 +22,10 @@ namespace r2::asset::pln
 
 		void AddBinaryModelDirectories(const std::vector<std::string>& binaryModelDirectories);
 		void AddRawModelDirectories(const std::vector<std::string>& rawModelDirectories);
+
 		void AddMaterialManifestPaths(const std::vector<std::string>& materialManifestPaths);
+		void AddTextureManifestPaths(const std::string& engineTexturePacksManifestPath, const std::string& appTexturePacksManifestPath);
+		void AddMaterialRawDirectory(const std::string& materialRawDirectory);
 
 		void AddBinaryModelManifestPaths(const std::vector<std::string>& binaryManifestPaths);
 		void AddRawModelManifestPaths(const std::vector<std::string>& rawManifestPaths);
@@ -31,7 +34,6 @@ namespace r2::asset::pln
 		virtual void HandleAssetBuildRequest(const AssetBuildRequest& request) override;
 
 	private:
-
 
 		void GenerateModelsManifestsIfNeeded();
 		void GenerateRMDLFilesIfNeeded();
@@ -43,6 +45,10 @@ namespace r2::asset::pln
 
 		std::vector<std::string> mBinaryModelManifestPaths;
 		std::vector<std::string> mRawModelManifestPaths;
+
+		std::string mEngineTexturePacksManifestPath;
+		std::string mAppTexturePacksManifestPath;
+		std::string mMaterialRawDirectoryPath;
 	};
 }
 
