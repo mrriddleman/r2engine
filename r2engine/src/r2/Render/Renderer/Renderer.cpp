@@ -3507,51 +3507,64 @@ namespace r2::draw::renderer
 			modelConstData->AddDataSize(modelsMemorySize);
 		}
 
+
+		cmd::FillConstantBuffer* prevFillCMD = modelsCmd;
+
 		const u64 numRenderMaterials = r2::sarr::Size(*renderMaterials);
 		const u64 materialsDataSize = sizeof(r2::draw::RenderMaterialParams) * numRenderMaterials;
+		auto materialsConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMaterialConfigHandle);
 
 		cmd::FillConstantBuffer* materialsCMD = nullptr;
 
-		materialsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, modelsCmd, materialsDataSize);
+		if (materialsDataSize > 0)
+		{
+			
+			materialsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, prevFillCMD, materialsDataSize);
 
-		auto materialsConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMaterialConfigHandle);
+			
 
-		ConstantBufferData* materialsConstData = GetConstData(renderer, materialsConstantBufferHandle);
+			ConstantBufferData* materialsConstData = GetConstData(renderer, materialsConstantBufferHandle);
 
-		FillConstantBufferCommand(
-			materialsCMD,
-			materialsConstantBufferHandle,
-			materialsConstData->type,
-			materialsConstData->isPersistent,
-			renderMaterials->mData,
-			materialsDataSize,
-			materialsConstData->currentOffset);
+			FillConstantBufferCommand(
+				materialsCMD,
+				materialsConstantBufferHandle,
+				materialsConstData->type,
+				materialsConstData->isPersistent,
+				renderMaterials->mData,
+				materialsDataSize,
+				materialsConstData->currentOffset);
 
-		materialsConstData->AddDataSize(materialsDataSize);
+			materialsConstData->AddDataSize(materialsDataSize);
+
+			prevFillCMD = materialsCMD;
+		}
 
 		const u64 numMaterialOffsets = r2::sarr::Size(*materialOffsetsPerObject);
 		const u64 materialOffsetsDataSize = sizeof(glm::uvec4) * numMaterialOffsets;
+		auto materialOffsetsConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMaterialOffsetsConfigHandle);
 
 		cmd::FillConstantBuffer* materialOffsetsCMD = nullptr;
 
-		materialOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, materialsCMD, materialOffsetsDataSize);
+		if (materialOffsetsDataSize > 0)
+		{
+			materialOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, prevFillCMD, materialOffsetsDataSize);
 
-		auto materialOffsetsConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMaterialOffsetsConfigHandle);
+			ConstantBufferData* materialOffsetsConstData = GetConstData(renderer, materialOffsetsConstantBufferHandle);
 
-		ConstantBufferData* materialOffsetsConstData = GetConstData(renderer, materialOffsetsConstantBufferHandle);
-		
-		FillConstantBufferCommand(
-			materialOffsetsCMD,
-			materialOffsetsConstantBufferHandle,
-			materialOffsetsConstData->type,
-			materialOffsetsConstData->isPersistent,
-			materialOffsetsPerObject->mData,
-			materialOffsetsDataSize,
-			materialOffsetsConstData->currentOffset);
+			FillConstantBufferCommand(
+				materialOffsetsCMD,
+				materialOffsetsConstantBufferHandle,
+				materialOffsetsConstData->type,
+				materialOffsetsConstData->isPersistent,
+				materialOffsetsPerObject->mData,
+				materialOffsetsDataSize,
+				materialOffsetsConstData->currentOffset);
 
-		materialOffsetsConstData->AddDataSize(materialOffsetsDataSize);
+			materialOffsetsConstData->AddDataSize(materialOffsetsDataSize);
 
-		cmd::FillConstantBuffer* prevFillCMD = materialOffsetsCMD;
+			prevFillCMD = materialOffsetsCMD;
+		}
+
 
 		if (dynamicRenderBatch.boneTransforms && r2::sarr::Size(*dynamicRenderBatch.boneTransforms) > 0)
 		{
