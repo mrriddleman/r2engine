@@ -160,7 +160,7 @@ namespace r2
 			}
 
 #ifdef R2_ASSET_PIPELINE
-            
+            std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
             std::string flatcPath = R2_FLATC;
 
             std::vector<std::string> binaryModelPaths;
@@ -195,7 +195,9 @@ namespace r2
             modelAssetCMD->AddMaterialManifestPaths({ binaryMaterialManifestPaths }); 
             modelAssetCMD->AddRawModelManifestPaths(rawModelManifestPaths);
             modelAssetCMD->AddBinaryModelManifestPaths(binaryModelManifestPaths);
-
+            modelAssetCMD->AddMaterialRawDirectory(noptrApp->GetMaterialPacksWatchPaths()[0]);
+            modelAssetCMD->AddTextureManifestPaths(engineBinaryTexturePackManifestPath, noptrApp->GetTexturePackManifestsBinaryPaths()[0]);
+            
             //std::vector<std::string> binaryAnimationPaths;
             //std::vector<std::string> rawAnimationPaths;
 
@@ -316,7 +318,7 @@ namespace r2
 				//for the engine
 				
 				
-				std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
+				
 
 				textureRawManifestPaths.push_back(engineRawTextureManifestPath);
 				textureBinaryManifestPaths.push_back(engineBinaryTexturePackManifestPath);
