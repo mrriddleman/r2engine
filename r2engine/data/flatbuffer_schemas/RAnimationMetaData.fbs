@@ -8,6 +8,10 @@ table RChannelMetaData
 	numPositionKeys:uint;
 	numScaleKeys:uint;
 	numRotationKeys:uint;
+	numberOfSampledPositionFrames:uint;
+	numberOfSampledScaleFrames:uint;
+	numberOfSampledRotationFrames:uint;
+	numberOfAnimationSamples:uint;
 }
 
 table RAnimationMetaData

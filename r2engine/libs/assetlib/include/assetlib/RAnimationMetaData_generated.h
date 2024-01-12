@@ -19,7 +19,11 @@ struct RChannelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NUMPOSITIONKEYS = 4,
     VT_NUMSCALEKEYS = 6,
-    VT_NUMROTATIONKEYS = 8
+    VT_NUMROTATIONKEYS = 8,
+    VT_NUMBEROFSAMPLEDPOSITIONFRAMES = 10,
+    VT_NUMBEROFSAMPLEDSCALEFRAMES = 12,
+    VT_NUMBEROFSAMPLEDROTATIONFRAMES = 14,
+    VT_NUMBEROFANIMATIONSAMPLES = 16
   };
   uint32_t numPositionKeys() const {
     return GetField<uint32_t>(VT_NUMPOSITIONKEYS, 0);
@@ -39,11 +43,39 @@ struct RChannelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool mutate_numRotationKeys(uint32_t _numRotationKeys) {
     return SetField<uint32_t>(VT_NUMROTATIONKEYS, _numRotationKeys, 0);
   }
+  uint32_t numberOfSampledPositionFrames() const {
+    return GetField<uint32_t>(VT_NUMBEROFSAMPLEDPOSITIONFRAMES, 0);
+  }
+  bool mutate_numberOfSampledPositionFrames(uint32_t _numberOfSampledPositionFrames) {
+    return SetField<uint32_t>(VT_NUMBEROFSAMPLEDPOSITIONFRAMES, _numberOfSampledPositionFrames, 0);
+  }
+  uint32_t numberOfSampledScaleFrames() const {
+    return GetField<uint32_t>(VT_NUMBEROFSAMPLEDSCALEFRAMES, 0);
+  }
+  bool mutate_numberOfSampledScaleFrames(uint32_t _numberOfSampledScaleFrames) {
+    return SetField<uint32_t>(VT_NUMBEROFSAMPLEDSCALEFRAMES, _numberOfSampledScaleFrames, 0);
+  }
+  uint32_t numberOfSampledRotationFrames() const {
+    return GetField<uint32_t>(VT_NUMBEROFSAMPLEDROTATIONFRAMES, 0);
+  }
+  bool mutate_numberOfSampledRotationFrames(uint32_t _numberOfSampledRotationFrames) {
+    return SetField<uint32_t>(VT_NUMBEROFSAMPLEDROTATIONFRAMES, _numberOfSampledRotationFrames, 0);
+  }
+  uint32_t numberOfAnimationSamples() const {
+    return GetField<uint32_t>(VT_NUMBEROFANIMATIONSAMPLES, 0);
+  }
+  bool mutate_numberOfAnimationSamples(uint32_t _numberOfAnimationSamples) {
+    return SetField<uint32_t>(VT_NUMBEROFANIMATIONSAMPLES, _numberOfAnimationSamples, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_NUMPOSITIONKEYS) &&
            VerifyField<uint32_t>(verifier, VT_NUMSCALEKEYS) &&
            VerifyField<uint32_t>(verifier, VT_NUMROTATIONKEYS) &&
+           VerifyField<uint32_t>(verifier, VT_NUMBEROFSAMPLEDPOSITIONFRAMES) &&
+           VerifyField<uint32_t>(verifier, VT_NUMBEROFSAMPLEDSCALEFRAMES) &&
+           VerifyField<uint32_t>(verifier, VT_NUMBEROFSAMPLEDROTATIONFRAMES) &&
+           VerifyField<uint32_t>(verifier, VT_NUMBEROFANIMATIONSAMPLES) &&
            verifier.EndTable();
   }
 };
@@ -61,6 +93,18 @@ struct RChannelMetaDataBuilder {
   void add_numRotationKeys(uint32_t numRotationKeys) {
     fbb_.AddElement<uint32_t>(RChannelMetaData::VT_NUMROTATIONKEYS, numRotationKeys, 0);
   }
+  void add_numberOfSampledPositionFrames(uint32_t numberOfSampledPositionFrames) {
+    fbb_.AddElement<uint32_t>(RChannelMetaData::VT_NUMBEROFSAMPLEDPOSITIONFRAMES, numberOfSampledPositionFrames, 0);
+  }
+  void add_numberOfSampledScaleFrames(uint32_t numberOfSampledScaleFrames) {
+    fbb_.AddElement<uint32_t>(RChannelMetaData::VT_NUMBEROFSAMPLEDSCALEFRAMES, numberOfSampledScaleFrames, 0);
+  }
+  void add_numberOfSampledRotationFrames(uint32_t numberOfSampledRotationFrames) {
+    fbb_.AddElement<uint32_t>(RChannelMetaData::VT_NUMBEROFSAMPLEDROTATIONFRAMES, numberOfSampledRotationFrames, 0);
+  }
+  void add_numberOfAnimationSamples(uint32_t numberOfAnimationSamples) {
+    fbb_.AddElement<uint32_t>(RChannelMetaData::VT_NUMBEROFANIMATIONSAMPLES, numberOfAnimationSamples, 0);
+  }
   explicit RChannelMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -77,8 +121,16 @@ inline flatbuffers::Offset<RChannelMetaData> CreateRChannelMetaData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t numPositionKeys = 0,
     uint32_t numScaleKeys = 0,
-    uint32_t numRotationKeys = 0) {
+    uint32_t numRotationKeys = 0,
+    uint32_t numberOfSampledPositionFrames = 0,
+    uint32_t numberOfSampledScaleFrames = 0,
+    uint32_t numberOfSampledRotationFrames = 0,
+    uint32_t numberOfAnimationSamples = 0) {
   RChannelMetaDataBuilder builder_(_fbb);
+  builder_.add_numberOfAnimationSamples(numberOfAnimationSamples);
+  builder_.add_numberOfSampledRotationFrames(numberOfSampledRotationFrames);
+  builder_.add_numberOfSampledScaleFrames(numberOfSampledScaleFrames);
+  builder_.add_numberOfSampledPositionFrames(numberOfSampledPositionFrames);
   builder_.add_numRotationKeys(numRotationKeys);
   builder_.add_numScaleKeys(numScaleKeys);
   builder_.add_numPositionKeys(numPositionKeys);

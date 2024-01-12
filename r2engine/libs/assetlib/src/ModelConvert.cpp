@@ -640,7 +640,7 @@ namespace r2::assets::assetlib
 	//void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene);
 	//void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices);
 
-	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath);
+	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath, uint32_t numberOfSamples);
 
 	//void ProcessMaterial(const std::string& modelName, aiMaterial* aiMaterial);
 	
@@ -2418,7 +2418,7 @@ namespace r2::assets::assetlib
 		
 		//assert(false && "@TODO(Serge): Build the new RAnimation + RModel fbs and update how we do the ConvertModelToFlatbuffer for animation data");
 
-		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
+		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir, numAnimationSamples);
 	}
 
 	bool ConvertModel(
@@ -3427,7 +3427,7 @@ namespace r2::assets::assetlib
 		}
 	}
 
-	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath )
+	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath, uint32_t numberOfSamples )
 	{
 		//meta data
 		flatbuffers::FlatBufferBuilder builder;
@@ -3509,7 +3509,15 @@ namespace r2::assets::assetlib
 			channelMetaDatas.reserve(clip.mTracks.size());
 			for (const auto& track : clip.mTracks)
 			{
-				channelMetaDatas.push_back(flat::CreateRChannelMetaData(builder, track.mPosition.mFrames.size(), track.mScale.mFrames.size(), track.mRotation.mFrames.size()));
+				channelMetaDatas.push_back(flat::CreateRChannelMetaData(
+					builder,
+					track.mPosition.mFrames.size(),
+					track.mScale.mFrames.size(),
+					track.mRotation.mFrames.size(),
+					track.mPosition.mSampledFrames.size(),
+					track.mScale.mSampledFrames.size(),
+					track.mRotation.mSampledFrames.size(),
+					numberOfSamples));
 			}
 
 			asset::MakeAssetNameStringForFilePath(clip.mAnimationName.c_str(), animationName, r2::asset::RANIMATION);
