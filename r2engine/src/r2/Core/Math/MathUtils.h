@@ -15,7 +15,7 @@
 namespace r2::math
 {
     const float EPSILON = 0.00001f;
-    const glm::vec3 GLOBAL_UP = { 0.0f, 0.0f, 1.0f }; //@TODO(serge): change to {0.0f, 0.0f, 1.0f}
+    const glm::vec3 GLOBAL_UP = { 0.0f, 0.0f, 1.0f };
 
     glm::vec3 Lerp(const glm::vec3& v1, const glm::vec3& v2, float t);
     glm::vec4 Lerp(const glm::vec4& v1, const glm::vec4& v2, float t);

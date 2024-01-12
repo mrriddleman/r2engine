@@ -1,9 +1,18 @@
+include "AssetName.fbs";
 include "Mesh.fbs";
+
 
 file_identifier "ranm";
 file_extension "ranm";
 
 namespace flat;
+
+enum InterpolationType: uint8
+{
+	CONSTANT = 0,
+	LINEAR,
+	CUBIC
+}
 
 struct Quaternion
 {
@@ -13,32 +22,71 @@ struct Quaternion
 	w:float;
 }
 
+struct ScalarKey
+{
+	time:float64;
+	value:float64;
+	in:float64;
+	out:float64;
+}
+
 struct VectorKey
 {
 	time:float64;
 	value:Vertex3;
+	in:Vertex3;
+	out:Vertex3;
 }
 
 struct RotationKey
 {
 	time:float64;
 	value:Quaternion;
+	in:Quaternion;
+	out:Quaternion;
 }
 
-table Channel
+table TrackInfo
 {
-	channelName:ulong (hash:"fnv1a_64");
-	positionKeys:[VectorKey];
-	scaleKeys:[VectorKey];
-	rotationKeys:[RotationKey];
+	interpolation:InterpolationType;
+	numberOfSamples:uint32;
+	sampledKeys:[uint32];
+}
+
+table ScalarTrack
+{
+	keys:[ScalarKey];
+	trackInfo:TrackInfo;
+}
+
+table VectorTrack
+{
+	keys:[VectorKey];
+	trackInfo:TrackInfo;
+}
+
+table QuaternionTrack
+{
+	keys:[RotationKey];
+	trackInfo:TrackInfo;
+}
+
+table TransformTrack
+{
+	jointID:int32;
+	positionTrack:VectorTrack;
+	rotationTrack:QuaternionTrack;
+	scaleTrack:VectorTrack;
+	startTime:float;
+	endTime:float;
 }
 
 table RAnimation
 {
-	animationName:ulong (hash:"fnv1a_64");
-	durationInTicks:float64;
-	ticksPerSeconds:float64;
-	channels:[Channel];
+	assetName:AssetName;
+	startTime:float;
+	endTime:float;
+	tracks:[TransformTrack];
 }
 
 root_type RAnimation;

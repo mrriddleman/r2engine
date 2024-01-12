@@ -33,20 +33,20 @@ namespace
 	std::string HDR_EXTENSION = ".hdr";
 
 	//models
-	std::string FBX_EXTENSION = ".fbx";
 	std::string GLTF_EXTENSION = ".gltf";
-
+	std::string GLB_EXTENSION = ".glb";
 }
 
 struct Arguments
 {
-	std::string inputDir;
-	std::string outputDir;
-	std::string materialParamsManifestPath;
-	std::string rawMaterialsParentPath;
-	std::string engineTexturePacksManifestPath;
-	std::string texturePacksManifestPath;
-	bool forceMaterialRebuild;
+	std::string inputDir = "";
+	std::string outputDir = "";
+	std::string materialParamsManifestPath = "";
+	std::string rawMaterialsParentPath = "";
+	std::string engineTexturePacksManifestPath = "";
+	std::string texturePacksManifestPath = "";
+	uint32_t animationSamples = 60;
+	bool forceMaterialRebuild = false;
 };
 
 bool SkipDirectory(const fs::path& p)
@@ -77,9 +77,7 @@ bool IsModel(const std::string& extension)
 	std::transform(theExtension.begin(), theExtension.end(), theExtension.begin(),
 		[](unsigned char c) { return std::tolower(c); });
 
-	return
-		theExtension == FBX_EXTENSION ||
-		theExtension == GLTF_EXTENSION;
+	return	theExtension == GLTF_EXTENSION || theExtension == GLB_EXTENSION;
 }
 
 fs::path GetOutputPathForInputDirectory(const fs::path& outputPath, const fs::path& inputPath, const fs::path& path)
@@ -233,16 +231,16 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-e", "--enginetexturepacksmanifest" }, &arguments.engineTexturePacksManifestPath, "Engine Texture Packs Manifest Path");
 	args.AddArgument({ "-t", "--texturepacksmanifest" }, &arguments.texturePacksManifestPath, "Texture Packs Manifest Path");
 	args.AddArgument({ "-f", "--forcerematerialrebuild" }, &arguments.forceMaterialRebuild, "Force Material Rebuild");
-
+	args.AddArgument({ "-s", "--animationsamples" }, &arguments.animationSamples, "Number of animation samples");
 	args.Parse(agrc, argv);
 
-	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\Sponza\\Sponza.gltf";
-	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\Sponza";
-	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
-	//arguments.rawMaterialsParentPath = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Materials\\generated_materials_test";
-	//arguments.engineTexturePacksManifestPath = "D:\\Projects\\r2engine\\r2engine\\assets_bin\\textures\\manifests\\engine_texture_pack.tman";
-	//arguments.texturePacksManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\manifests\\SandboxTexturePack.tman";
-	//arguments.forceMaterialRebuild = false;
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\chaman\\chaman.gltf";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\chaman";
+	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
+	arguments.rawMaterialsParentPath = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Materials\\generated_materials_test";
+	arguments.engineTexturePacksManifestPath = "D:\\Projects\\r2engine\\r2engine\\assets_bin\\textures\\manifests\\engine_texture_pack.tman";
+	arguments.texturePacksManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\manifests\\SandboxTexturePack.tman";
+	arguments.forceMaterialRebuild = false;
 
 	if (arguments.inputDir.empty())
 	{
@@ -262,6 +260,7 @@ int main(int agrc, char** argv)
 	fs::path rawMaterialsParentPath{ arguments.rawMaterialsParentPath };
 	fs::path engineTexturePacksManifestPath{ arguments.engineTexturePacksManifestPath };
 	fs::path texturePacksManifestPath{ arguments.texturePacksManifestPath };
+	uint32_t numberOfAnimationSamples = arguments.animationSamples;
 	bool forceRebuild = arguments.forceMaterialRebuild;
 
 	fs::path currentMetaPath = "";
@@ -276,17 +275,7 @@ int main(int agrc, char** argv)
 
 		if (IsModel(extension))
 		{
-			//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
-			std::filesystem::path animationDirectory = "";
-
-			std::filesystem::path animationsPath = inputPath.parent_path() / "Animations";
-
-			if (std::filesystem::is_directory(animationsPath))
-			{
-				animationDirectory = animationsPath;
-			}
-
-			r2::assets::assetlib::ConvertModel(inputPath, outputPath, materialParamsManifestPath, animationDirectory, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild);
+			r2::assets::assetlib::ConvertModel(inputPath, outputPath, materialParamsManifestPath, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild, numberOfAnimationSamples);
 		}
 
 		//@TODO(Serge): other types here
@@ -343,17 +332,7 @@ int main(int agrc, char** argv)
 				}
 				else if (IsModel(extension))
 				{
-					//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
-					std::filesystem::path animationDirectory = "";
-
-					std::filesystem::path animationsPath = p.path().parent_path() / "Animations";
-
-					if (std::filesystem::is_directory(animationsPath))
-					{
-						animationDirectory = animationsPath;
-					}
-
-					r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild);
+					r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, rawMaterialsParentPath, engineTexturePacksManifestPath, texturePacksManifestPath, forceRebuild, numberOfAnimationSamples);
 				}
 			}
 		}

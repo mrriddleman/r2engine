@@ -51,22 +51,15 @@ struct BoneInfo
 	offsetTransform:Matrix4;
 }
 
-struct BoneMapEntry
-{
-	key:uint64;
-	val:int32;
-}
-
 table AnimationData
 {
 	boneData:[BoneData];
 	boneInfo:[BoneInfo];
-	boneMapping:[BoneMapEntry];
-	jointNames:[uint64];
 	parents:[int32];
 	restPoseTransforms:[Transform];
 	bindPoseTransforms:[Transform];
-	realParentBones:[int32];
+	jointNames:[uint64];
+	jointNameStrings:[string];
 }
 
 table RModel

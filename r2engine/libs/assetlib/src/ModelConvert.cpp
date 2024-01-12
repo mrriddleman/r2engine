@@ -1,33 +1,36 @@
 #include "assetlib/ModelConvert.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
+//#include <assimp/Importer.hpp>
+//#include <assimp/postprocess.h>
+//#include <assimp/scene.h>
 #include <cassert>
 #include <string>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <unordered_map>
-#include <vector>
-#include "glm/gtx/string_cast.hpp"
+#include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 #include "Hash.h"
-#include "assetlib/DiskAssetFile.h"
+
+#include "AssetName_generated.h"
 #include "Materials/MaterialPack_generated.h"
 #include "Shader/ShaderParams_generated.h"
 
 #include "Textures/TexturePackManifest_generated.h"
+#include "assetlib/DiskAssetFile.h"
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
 #include "assetlib/AssetUtils.h"
 #include "assetlib/AnimationConvert.h"
-#include "AssetName_generated.h"
-#include <assimp/pbrmaterial.h>
 
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/parser.hpp>
 #include <fastgltf/tools.hpp>
+
+#include <unordered_map>
+#include <vector>
+#include <map>
 
 #define MAX_BONE_WEIGHTS 4
 
@@ -105,6 +108,83 @@ namespace r2::assets::assetlib
 		glm::quat rotation = { 0,0,0,1 };
 	};
 
+	inline glm::quat QuatMult(const glm::quat& Q1, const glm::quat& Q2)
+	{
+		glm::quat r;
+
+		r.x = Q2.x * Q1.w + Q2.y * Q1.z - Q2.z * Q1.y + Q2.w * Q1.x;
+		r.y = -Q2.x * Q1.z + Q2.y * Q1.w + Q2.z * Q1.x + Q2.w * Q1.y;
+		r.z = Q2.x * Q1.y - Q2.y * Q1.x + Q2.z * Q1.w + Q2.w * Q1.z;
+		r.w = -Q2.x * Q1.x - Q2.y * Q1.y - Q2.z * Q1.z + Q2.w * Q1.w;
+
+		return r;
+	}
+
+	Transform Combine(const Transform& a, const Transform& b) {
+		Transform out;
+
+		out.scale.x = a.scale.x * b.scale.x;
+		out.scale.y = a.scale.y * b.scale.y;
+		out.scale.z = a.scale.z * b.scale.z;
+
+		out.rotation = QuatMult(b.rotation, a.rotation);
+
+		glm::vec3 temp = b.position;
+
+		temp.x *= a.scale.x;
+		temp.y *= a.scale.y;
+		temp.z *= a.scale.z;
+
+		out.position = a.rotation * temp;
+
+		out.position.x += a.position.x;
+		out.position.y += a.position.y;
+		out.position.z += a.position.z;
+
+		return out;
+	}
+
+	Transform Inverse(const Transform& t)
+	{
+		Transform inv;
+
+		inv.rotation = glm::inverse(t.rotation);
+
+		inv.scale.x = fabs(t.scale.x) < 0.0001 ? 0.0f : 1.0f / t.scale.x;
+		inv.scale.y = fabs(t.scale.y) < 0.0001 ? 0.0f : 1.0f / t.scale.y;
+		inv.scale.z = fabs(t.scale.z) < 0.0001 ? 0.0f : 1.0f / t.scale.z;
+
+		glm::vec3 invTrans = t.position * -1.0f;
+		inv.position = inv.rotation * (inv.scale * invTrans);
+
+		return inv;
+	}
+
+	glm::mat4 TransformToMat4(const Transform& t)
+	{
+		// First, extract the rotation basis of the transform
+		glm::vec3 x = t.rotation * glm::vec3(1, 0, 0);
+		glm::vec3 y = t.rotation * glm::vec3(0, 1, 0);
+		glm::vec3 z = t.rotation * glm::vec3(0, 0, 1);
+
+		// Next, scale the basis vectors
+		x = x * t.scale.x;
+		y = y * t.scale.y;
+		z = z * t.scale.z;
+
+		// Extract the position of the transform
+		glm::vec3 p = t.position;
+
+		// Create matrix
+		return glm::mat4(
+			glm::vec4(x, 0), // X basis (& Scale)
+			glm::vec4(y, 0), // Y basis (& scale)
+			glm::vec4(z, 0), // Z basis (& scale)
+			glm::vec4(p, 1));  // Position
+
+	}
+
+
 	struct Vertex
 	{
 		glm::vec3 position = glm::vec3(0.0f);
@@ -113,21 +193,268 @@ namespace r2::assets::assetlib
 		glm::vec3 tangent = glm::vec3(0.0f);
 	};
 
+	struct Pose
+	{
+		std::vector<int> parents;
+		std::vector<Transform> joints;
+
+		Transform GetGlobalTransform(uint32_t index) const
+		{
+			Transform result = joints[index];
+			for (int p = parents[index]; p >= 0; p = parents[p])
+			{
+				result = Combine(joints[p], result);
+			}
+			return result;
+		}
+
+		void Clear()
+		{
+			parents.clear();
+			joints.clear();
+		}
+
+		void Load(const Pose& otherPose)
+		{
+			Clear();
+			parents.insert(parents.end(), otherPose.parents.begin(), otherPose.parents.end());
+			joints.insert(joints.end(), otherPose.joints.begin(), otherPose.joints.end());
+		}
+	};
+
 	struct Skeleton
 	{
-		std::vector<uint64_t> mJointNames;
-		std::vector<int> mParents;
-		std::vector<Transform> mRestPoseTransforms;
-		std::vector<Transform> mBindPoseTransforms;
-		std::vector<int> mRealParentBones;
+		//std::vector<uint64_t> mJointNames;
+		//std::vector<int> mParents;
+		//std::vector<Transform> mRestPoseTransforms;
+		//std::vector<Transform> mBindPoseTransforms;
+		//std::vector<int> mRealParentBones;
+		
+
+		Pose mRestPose;
+		Pose mBindPose;
+		std::vector<std::string> mJointNameStrings;
+		std::vector<glm::mat4> mInvBindPose;
+
+		void UpdateInverseBindPose()
+		{
+			unsigned int size = mBindPose.joints.size();
+			mInvBindPose.resize(size);
+			for (unsigned int i = 0; i < size; ++i)
+			{
+				Transform world = mBindPose.GetGlobalTransform(i);
+				mInvBindPose[i] = glm::inverse(TransformToMat4(world));
+			}
+		}
 	};
+
+	template<typename T>
+	struct Frame
+	{
+		float mTime;
+		T mValue;
+		T mIn;
+		T mOut;
+	};
+
+	typedef Frame<float> ScalarFrame;
+	typedef Frame<glm::vec3> VectorFrame;
+	typedef Frame<glm::quat> QuatFrame;
+
+	template Frame<float>;
+	template Frame<glm::vec3>;
+	template Frame<glm::quat>;
+
+	template<typename T>
+	struct Track
+	{
+		std::vector<uint32_t> mSampledFrames;
+		std::vector<Frame<T>> mFrames;
+		fastgltf::AnimationInterpolation interpolation; //@TODO(Serge): change to the flat version maybe
+		unsigned int mNumberOfSamples;
+
+		void UpdateIndexLookupTable(unsigned int numberOfSamples)
+		{
+			int numFrames = (int)mFrames.size();
+			if (numFrames <= 1)
+			{
+				return;
+			}
+
+			mNumberOfSamples = numberOfSamples;
+
+			float startTime = mFrames[0].mTime;
+			float duration = mFrames[mFrames.size()-1].mTime - startTime;
+
+			unsigned int numSamples = duration * static_cast<float>(numberOfSamples);
+			mSampledFrames.resize(numSamples);
+
+			for (unsigned int i = 0; i < numSamples; ++i)
+			{
+				float t = (float)i / (float(numSamples - 1));
+				float time = t * duration + startTime;
+				unsigned int frameIndex = 0;
+				for (int j = numFrames - 1; j >= 0; --j)
+				{
+					if (time >= mFrames[j].mTime)
+					{
+						frameIndex = (unsigned int)j;
+						if ((int)frameIndex >= numFrames - 2)
+						{
+							frameIndex = numFrames - 2;
+						}
+						break;
+					}
+				}
+
+				mSampledFrames[i] = frameIndex;
+			}
+		}
+	};
+
+	typedef Track<float> ScalarTrack;
+	typedef Track<glm::vec3> VectorTrack;
+	typedef Track<glm::quat> QuatTrack;
+
+	template Track<float>;
+	template Track<glm::vec3>;
+	template Track<glm::quat>;
+
+	struct TransformTrack
+	{
+		int32_t mJointID;
+		VectorTrack mPosition;
+		QuatTrack mRotation;
+		VectorTrack mScale;
+
+		float GetStartTime() const 
+		{
+			float result = 0.0f;
+			bool isSet = false;
+			if (mPosition.mFrames.size() > 1)
+			{
+				result = mPosition.mFrames[0].mTime;
+				isSet = true;
+			}
+
+			if (mRotation.mFrames.size() > 1)
+			{
+				float rotationStart = mRotation.mFrames[0].mTime;
+				if (rotationStart < result || !isSet)
+				{
+					result = rotationStart;
+					isSet = true;
+				}
+			}
+
+			if (mScale.mFrames.size() > 1)
+			{
+				float scaleStart = mScale.mFrames[0].mTime;
+				if (scaleStart < result || !isSet)
+				{
+					result = scaleStart;
+					isSet = true;
+				}
+			}
+
+			return 0.0f;
+		}
+
+		float GetEndTime() const
+		{
+			float result = 0.0f;
+			bool isSet = false;
+			if (mPosition.mFrames.size() > 1)
+			{
+				result = mPosition.mFrames[mPosition.mFrames.size()-1].mTime;
+				isSet = true;
+			}
+			if (mRotation.mFrames.size() > 1)
+			{
+				float rotationEnd = mRotation.mFrames[mRotation.mFrames.size() - 1].mTime;
+				if (rotationEnd > result || !isSet)
+				{
+					result = rotationEnd;
+					isSet = true;
+				}
+			}
+			if (mScale.mFrames.size() > 1)
+			{
+				float scaleEnd = mScale.mFrames[mScale.mFrames.size() - 1].mTime;
+				if (scaleEnd > result || !isSet)
+				{
+					result = scaleEnd;
+					isSet = true;
+				}
+			}
+			return result;
+		}
+
+		bool IsValid() const
+		{
+			return mPosition.mFrames.size() > 1 || mScale.mFrames.size() > 1 || mRotation.mFrames.size() > 1;
+		}
+	};
+
+	struct Clip
+	{
+		std::vector<TransformTrack> mTracks;
+		std::string mAnimationName;
+		float mStartTime;
+		float mEndTime;
+
+		TransformTrack& operator[](unsigned int joint)
+		{
+			unsigned int s = (unsigned int)mTracks.size();
+			for (unsigned int i = 0; i < s; ++i)
+			{
+				if (mTracks[i].mJointID == joint)
+				{
+					return mTracks[i];
+				}
+			}
+
+			mTracks.push_back(TransformTrack{});
+			mTracks[mTracks.size() - 1].mJointID = joint;
+			return mTracks[mTracks.size() - 1];
+		}
+
+		void RecalculateDuration()
+		{
+			mStartTime = 0.0f;
+			mEndTime = 0.0f;
+			bool startSet = false;
+			bool endSet = false;
+			unsigned int channelsSize = (unsigned int)mTracks.size();
+			for (unsigned int i = 0; i < channelsSize; ++i)
+			{
+				if (mTracks[i].IsValid())
+				{
+					float startTime = mTracks[i].GetStartTime();
+					float endTime = mTracks[i].GetEndTime();
+					if (startTime < mStartTime || !startSet)
+					{
+						mStartTime = startTime;
+						startSet = true;
+					}
+					if (endTime > mEndTime || !endSet)
+					{
+						mEndTime = endTime;
+						endSet = true;
+					}
+				}
+			}
+		}
+	};
+
+
 
 	struct Mesh
 	{
 		uint64_t hashName = 0;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
-
+		//std::vector<BoneData> animVertices;
 		int materialIndex = -1;
 	};
 
@@ -136,19 +463,20 @@ namespace r2::assets::assetlib
 		fs::path binaryMaterialPath;
 		std::string modelName;
 		std::string originalPath;
-		std::string animationParentDirectory;
+		//std::string animationParentDirectory;
 		glm::mat4 globalInverseTransform;
 
 		std::vector<MaterialName> materialNames;
 		std::vector<Mesh> meshes;
 		
 		std::vector<BoneData> boneData;
-		std::vector<BoneInfo> boneInfo;
-		std::vector<Animation> animations;
+		std::vector<glm::mat4> boneInfo;
+		//std::vector<Animation> animations;
 
-		std::unordered_map<uint64_t, int> boneMapping;
+		//std::unordered_map<uint64_t, int> boneMapping;
 
 		Skeleton skeleton;
+		std::vector<Clip> clips;
 	};
 
 	struct Sampler
@@ -296,65 +624,68 @@ namespace r2::assets::assetlib
 		ShaderParams shaderParams;
 	};
 
-	std::unordered_map<std::string, uint32_t> mBoneNecessityMap;
-	std::vector<Joint> mJoints;
-	std::unordered_map<std::string, Bone> mBoneMap;
+	//std::unordered_map<std::string, uint32_t> mBoneNecessityMap;
+	//std::vector<Joint> mJoints;
+	//std::unordered_map<std::string, Bone> mBoneMap;
 
-	aiNode* FindNodeInHeirarchy(const aiScene* scene, aiNode* node, const std::string& strName);
-	void MarkBonesInMesh(aiNode* node, const aiScene* scene, aiMesh* mesh);
-	void MarkBones(aiNode* node, const aiScene* scene);
-	void CreateBonesVector(const aiScene* scene, aiNode* node, int parentIndex);
-	glm::mat4 GetGlobalTransform(uint32_t i);
-	int FindJointIndex(const std::string& jointName);
-	void LoadBindPose(Model& model, Skeleton& skeleton);
-	void ProcessAnimNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene, Skeleton& skeleton, int parentDebugBone, uint32_t& numVertices);
-	void ProcessNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene);
-	void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene);
-	void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices);
+	//aiNode* FindNodeInHeirarchy(const aiScene* scene, aiNode* node, const std::string& strName);
+	//void MarkBonesInMesh(aiNode* node, const aiScene* scene, aiMesh* mesh);
+	//void MarkBones(aiNode* node, const aiScene* scene);
+	//void CreateBonesVector(const aiScene* scene, aiNode* node, int parentIndex);
+	//glm::mat4 GetGlobalTransform(uint32_t i);
+	//int FindJointIndex(const std::string& jointName);
+	//void LoadBindPose(Model& model, Skeleton& skeleton);
+	//void ProcessAnimNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene, Skeleton& skeleton, int parentDebugBone, uint32_t& numVertices);
+	//void ProcessNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene);
+	//void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene);
+	//void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices);
 
 	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath);
 
-	void ProcessMaterial(const std::string& modelName, aiMaterial* aiMaterial);
+	//void ProcessMaterial(const std::string& modelName, aiMaterial* aiMaterial);
 	
+	bool ConvertGLTFModel(
+		const std::filesystem::path& inputFilePath,
+		const std::filesystem::path& parentOutputDir,
+		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
+		const std::filesystem::path& rawMaterialsParentDirectory,
+		const std::filesystem::path& engineTexturePacksManifestFile,
+		const std::filesystem::path& texturePacksManifestFile,
+		bool forceRebuild,
+		uint32_t numAnimationSamples);
 
-	glm::mat4 TransformToMat4(const Transform& t)
-	{
-		// First, extract the rotation basis of the transform
-		glm::vec3 x = t.rotation * glm::vec3(1, 0, 0);
-		glm::vec3 y = t.rotation * glm::vec3(0, 1, 0);
-		glm::vec3 z = t.rotation * glm::vec3(0, 0, 1);
+	//For loading the GLTF Skeleton
+	Pose LoadRestPose(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms);
+	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose);
+	std::vector<std::string> LoadJointNames(const fastgltf::Asset& gltf);
+	using BoneMap = std::map<int, int>;
+	BoneMap RearrangeSkeleton(Pose& restPose, Pose& bindPose, std::vector<std::string>& jointNames);
+	BoneMap LoadSkeleton(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms, Skeleton& skeleton);
 
-		// Next, scale the basis vectors
-		x = x * t.scale.x;
-		y = y * t.scale.y;
-		z = z * t.scale.z;
+	//For Loading GLTF Animation Clips
+	std::vector<Clip> LoadAnimationClips(const fastgltf::Asset& gltf, BoneMap boneMap, unsigned int numSamples);
 
-		// Extract the position of the transform
-		glm::vec3 p = t.position;
 
-		// Create matrix
-		return glm::mat4(
-			glm::vec4(x, 0), // X basis (& Scale)
-			glm::vec4(y, 0), // Y basis (& scale)
-			glm::vec4(z, 0), // Z basis (& scale)
-			glm::vec4(p, 1));  // Position
 
-	}
 
-	glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)
-	{
-		//result[col][row]
-		//mat[row][col] a, b, c, d - rows
-		//              1, 2, 3, 4 - cols
-		glm::mat4 result = glm::mat4();
 
-		result[0][0] = mat.a1; result[1][0] = mat.a2; result[2][0] = mat.a3; result[3][0] = mat.a4;
-		result[0][1] = mat.b1; result[1][1] = mat.b2; result[2][1] = mat.b3; result[3][1] = mat.b4;
-		result[0][2] = mat.c1; result[1][2] = mat.c2; result[2][2] = mat.c3; result[3][2] = mat.c4;
-		result[0][3] = mat.d1; result[1][3] = mat.d2; result[2][3] = mat.d3; result[3][3] = mat.d4;
 
-		return result;
-	}
+
+
+	//glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)
+	//{
+	//	//result[col][row]
+	//	//mat[row][col] a, b, c, d - rows
+	//	//              1, 2, 3, 4 - cols
+	//	glm::mat4 result = glm::mat4();
+
+	//	result[0][0] = mat.a1; result[1][0] = mat.a2; result[2][0] = mat.a3; result[3][0] = mat.a4;
+	//	result[0][1] = mat.b1; result[1][1] = mat.b2; result[2][1] = mat.b3; result[3][1] = mat.b4;
+	//	result[0][2] = mat.c1; result[1][2] = mat.c2; result[2][2] = mat.c3; result[3][2] = mat.c4;
+	//	result[0][3] = mat.d1; result[1][3] = mat.d2; result[2][3] = mat.d3; result[3][3] = mat.d4;
+
+	//	return result;
+	//}
 
 	Transform ToTransform(const glm::mat4& mat)
 	{
@@ -392,10 +723,10 @@ namespace r2::assets::assetlib
 		return out;
 	}
 
-	Transform AssimpMat4ToTransform(const aiMatrix4x4& mat)
+	/*Transform AssimpMat4ToTransform(const aiMatrix4x4& mat)
 	{
 		return ToTransform(AssimpMat4ToGLMMat4(mat));
-	}
+	}*/
 
 	flat::Vertex4 ToFlatVertex4(const glm::vec4& vec)
 	{
@@ -799,16 +1130,15 @@ namespace r2::assets::assetlib
 	{
 		//build the new material
 		std::string materialNameString = fastgltfMaterial.name.c_str();
+		char materialNameToUse[256];
 
 		if (materialNameString.empty())
 		{
-			char materialNameToUse[256];
-
 			std::filesystem::path meshPathName = meshName;
-
-			MakeAssetNameStringForFilePath(meshPathName.stem().string().c_str(), materialNameToUse, r2::asset::MATERIAL);
 			materialNameString = std::string(materialNameToUse) + "_material_" + std::to_string(materialIndex);
 		}
+
+		MakeAssetNameStringForFilePath(materialNameString.c_str(), materialNameToUse, r2::asset::MATERIAL);
 
 		if (!forceRebuild && FindMaterialByMaterialName(materialPack, materialNameString, materialData.materialName))
 		{
@@ -817,8 +1147,8 @@ namespace r2::assets::assetlib
 		}
 
 		//@TODO(Serge): UUID
-		materialData.materialName.materialNameStr = materialNameString;
-		materialData.materialName.name = STRING_ID(materialNameString.c_str());
+		materialData.materialName.materialNameStr = materialNameToUse;
+		materialData.materialName.name = STRING_ID(materialNameToUse);
 		materialData.materialName.materialPackNameStr = materialPack->assetName()->stringName()->str();
 		materialData.materialName.materialPackName = materialPack->assetName()->assetName();
 
@@ -1372,14 +1702,368 @@ namespace r2::assets::assetlib
 		return theData;
 	}
 
+
+	int GetParentNodeIndex(const fastgltf::Asset& gltf, const fastgltf::Node* target)
+	{
+		if (target == nullptr)
+		{
+			return -1;
+		}
+
+		for (unsigned int j = 0; j < gltf.nodes.size(); ++j)
+		{
+			const fastgltf::Node& nextNode = gltf.nodes[j];
+
+			for (unsigned int k = 0; k < nextNode.children.size(); ++k)
+			{
+				if (target == &(gltf.nodes[nextNode.children[k]]))
+				{
+					return (int)j;
+				}
+			}
+		}
+
+		return -1;
+	}
+
+	Pose LoadRestPose(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms)
+	{
+		size_t boneCount = gltf.nodes.size();
+
+		Pose result;
+		result.joints.resize(boneCount);
+		result.parents.resize(boneCount);
+
+		for (size_t i = 0; i < boneCount; ++i)
+		{
+			result.joints[i] = nodeLocalTransforms.find(i)->second;
+			result.parents[i] = GetParentNodeIndex(gltf, &gltf.nodes[i]);
+		}
+
+		return result;
+	}
+
+	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose)
+	{
+		Pose bindPose;
+
+		size_t numBones = restPose.joints.size();
+		std::vector<Transform> worldBindPose(numBones);
+
+		for (size_t i = 0; i < numBones; ++i)
+		{
+			worldBindPose[i] = restPose.GetGlobalTransform(i);
+		}
+
+		size_t numSkins = gltf.skins.size();
+
+		for (size_t i = 0; i < numSkins; ++i)
+		{
+			std::vector<glm::mat4> invBindMatrices;
+
+			fastgltf::iterateAccessorWithIndex<glm::mat4>(gltf, gltf.accessors[gltf.skins[i].inverseBindMatrices.value()],
+				[&](glm::mat4 v, size_t index) {
+					invBindMatrices.push_back(v);
+				});
+			size_t numJoints = gltf.skins[i].joints.size();
+			for (size_t j = 0; j < numJoints; ++j)
+			{
+				glm::mat4 invBindMatrix = invBindMatrices[j];
+				glm::mat4 bindMatrix = glm::inverse(invBindMatrix);
+				
+				worldBindPose[gltf.skins[i].joints[j]] = ToTransform(bindMatrix);
+			}
+		}
+
+		bindPose.Load(restPose);
+
+		for (size_t i = 0; i < numBones; ++i)
+		{
+			Transform current = worldBindPose[i];
+
+			int p = bindPose.parents[i];
+			if (p >= 0)
+			{
+				const Transform& parent = worldBindPose[p];
+				current = Combine(Inverse(parent), current);
+			}
+
+			bindPose.joints[i] = current;
+		}
+
+
+		return bindPose;
+	}
+
+	std::vector<std::string> LoadJointNames(const fastgltf::Asset& gltf)
+	{
+		size_t boneCount = gltf.nodes.size();
+
+		std::vector<std::string> jointNames(boneCount);
+		for (size_t i = 0; i < boneCount; ++i)
+		{
+			const fastgltf::Node& nextNode = gltf.nodes[i];
+			if (nextNode.name.empty())
+			{
+				jointNames[i] = std::string("Joint_") + std::to_string(i);
+			}
+			else
+			{
+				jointNames[i] = nextNode.name;
+			}
+		}
+
+		return jointNames;
+	}
+
+	BoneMap RearrangeSkeleton(Pose& restPose, Pose& bindPose, std::vector<std::string>& jointNames)
+	{
+		if (restPose.joints.empty())
+		{
+			return BoneMap();
+		}
+
+		size_t size = restPose.joints.size();
+		std::vector<std::vector<int>> hierarchy(size);
+		std::list<int> process;
+
+		for (int i = 0; i < size; ++i)
+		{
+			int parent = restPose.parents[i];
+			if (parent > 0)
+			{
+				hierarchy[parent].push_back(i);
+			}
+			else
+			{
+				process.push_back(i);
+			}
+		}
+
+		BoneMap mapForward;
+		BoneMap mapBackward;
+
+		int index = 0;
+		while (process.size() > 0)
+		{
+			int current = *process.begin();
+
+			process.pop_front();
+			std::vector<int>& children = hierarchy[current];
+			auto numChildren = children.size();
+			for (size_t i = 0; i < numChildren; ++i)
+			{
+				process.push_back(children[i]);
+			}
+
+			mapForward[index] = current;
+			mapBackward[current] = index;
+			index++;
+		}
+
+		mapForward[-1] = -1;
+		mapBackward[-1] = -1;
+
+		Pose newRestPose;
+		newRestPose.joints.resize(size);
+		newRestPose.parents.resize(size);
+		Pose newBindPose;
+		newBindPose.joints.resize(size);
+		newBindPose.parents.resize(size);
+
+		std::vector<std::string> newNames(size);
+		for (size_t i = 0; i < size; ++i)
+		{
+			int thisBone = mapForward[i];
+			newRestPose.joints[i] = restPose.joints[thisBone];
+			newBindPose.joints[i] = bindPose.joints[thisBone];
+			newNames[i] = jointNames[thisBone];
+
+			int parent = mapBackward[bindPose.parents[thisBone]];
+			newRestPose.parents[i] = parent;
+			newBindPose.parents[i] = parent;
+		}
+
+		bindPose.Load(newBindPose);
+		restPose.Load(newRestPose);
+
+		return mapBackward;
+	}
+
+	BoneMap LoadSkeleton(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms, Skeleton& skeleton)
+	{
+		Pose restPose = LoadRestPose(gltf, nodeLocalTransforms);
+		Pose bindPose = LoadBindPose(gltf, restPose);
+		std::vector<std::string> jointNames = LoadJointNames(gltf);
+
+		auto boneMap = RearrangeSkeleton(restPose, bindPose, jointNames);
+
+		skeleton.mRestPose.Load(restPose);
+		skeleton.mBindPose.Load(bindPose);
+		skeleton.mJointNameStrings.insert(skeleton.mJointNameStrings.end(), jointNames.begin(), jointNames.end());
+
+		skeleton.UpdateInverseBindPose();
+
+		return boneMap;
+	}
+	
+	void ParseAnimationChannelVec3(const fastgltf::Asset& gltf, const fastgltf::Animation& animation, const fastgltf::AnimationChannel& channel, VectorTrack& result)
+	{
+		const fastgltf::AnimationSampler& animationSampler = animation.samplers[channel.samplerIndex];
+
+		//@TODO(Serge): change to flat version
+		result.interpolation = animationSampler.interpolation;
+		bool isSamplerCubic = result.interpolation == fastgltf::AnimationInterpolation::CubicSpline;
+
+		std::vector<float> times;
+		//inputAccessor is the times
+		fastgltf::iterateAccessorWithIndex<float>(gltf, gltf.accessors[animationSampler.inputAccessor],
+			[&](float v, size_t index) {
+				times.push_back(v);
+			});
+		
+		std::vector<glm::vec3> values;
+		fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[animationSampler.outputAccessor],
+			[&](glm::vec3 v, size_t index) {
+				values.push_back(v);
+			});
+
+		auto numFrames = gltf.accessors[animationSampler.inputAccessor].count;
+		result.mFrames.resize(numFrames);
+
+		for (size_t i = 0; i < numFrames; ++i)
+		{
+			VectorFrame& frame = result.mFrames[i];
+			frame.mTime = times[i];
+
+			frame.mValue = values[i];
+			frame.mIn = isSamplerCubic ? values[i] : glm::vec3(0);
+			frame.mOut = isSamplerCubic ? values[i] : glm::vec3(0);
+		}
+	}
+
+	void ParseAnimationChannelQuat(const fastgltf::Asset& gltf, const fastgltf::Animation& animation, const fastgltf::AnimationChannel& channel, QuatTrack& result)
+	{
+		const fastgltf::AnimationSampler& animationSampler = animation.samplers[channel.samplerIndex];
+
+		//@TODO(Serge): change to flat version
+		result.interpolation = animationSampler.interpolation;
+		bool isSamplerCubic = result.interpolation == fastgltf::AnimationInterpolation::CubicSpline;
+
+		std::vector<float> times;
+		//inputAccessor is the times
+		fastgltf::iterateAccessorWithIndex<float>(gltf, gltf.accessors[animationSampler.inputAccessor],
+			[&](float v, size_t index) {
+				times.push_back(v);
+			});
+
+		std::vector<glm::quat> values;
+		fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[animationSampler.outputAccessor],
+			[&](glm::vec4 v, size_t index) {
+				values.push_back(glm::quat(v.w, v.x, v.y, v.x));
+			});
+
+		auto numFrames = gltf.accessors[animationSampler.inputAccessor].count;
+		result.mFrames.resize(numFrames);
+
+		for (size_t i = 0; i < numFrames; ++i)
+		{
+			QuatFrame& frame = result.mFrames[i];
+			frame.mTime = times[i];
+
+			frame.mValue = values[i];
+			frame.mIn = isSamplerCubic ? values[i] : glm::quat(1, 0, 0, 0);
+			frame.mOut = isSamplerCubic ? values[i] : glm::quat(1, 0, 0, 0);
+		}
+	}
+
+	void RearrangeClip(Clip& clip, BoneMap& boneMap)
+	{
+		auto size = clip.mTracks.size();
+		for (size_t i = 0; i < size; ++i)
+		{
+			int joint = clip.mTracks[i].mJointID;
+			int newJoint = boneMap[joint];
+			clip.mTracks[i].mJointID = newJoint;
+		}
+	}
+
+	std::vector<Clip> LoadAnimationClips(const fastgltf::Asset& gltf, BoneMap boneMap, unsigned int numberOfSamples)
+	{
+		const auto numClips = gltf.animations.size();
+		std::vector<Clip> result(numClips);
+
+		for (size_t i = 0; i < numClips; ++i)
+		{
+			const auto& animation = gltf.animations[i];
+			result[i].mAnimationName = animation.name;
+			
+			const auto numChannels = animation.channels.size();
+
+			for (size_t j = 0; j < numChannels; ++j)
+			{
+				const auto& channel = animation.channels[j];
+
+				if (channel.path == fastgltf::AnimationPath::Translation)
+				{
+					auto& positionChannel = result[i][channel.nodeIndex].mPosition;
+					ParseAnimationChannelVec3(gltf, animation, channel, positionChannel);
+					positionChannel.UpdateIndexLookupTable(numberOfSamples);
+				}
+				else if (channel.path == fastgltf::AnimationPath::Rotation)
+				{
+					auto& rotationChannel = result[i][channel.nodeIndex].mRotation;
+					ParseAnimationChannelQuat(gltf, animation, channel, rotationChannel);
+					rotationChannel.UpdateIndexLookupTable(numberOfSamples);
+				}
+				else if (channel.path == fastgltf::AnimationPath::Scale)
+				{
+					auto& scaleChannel = result[i][channel.nodeIndex].mScale;
+					ParseAnimationChannelVec3(gltf, animation, channel, scaleChannel);
+					scaleChannel.UpdateIndexLookupTable(numberOfSamples);
+				}
+			}
+
+			if (!boneMap.empty())
+			{
+				RearrangeClip(result[i], boneMap);
+			}
+			
+			result[i].RecalculateDuration();
+		}
+
+		return result;
+	}
+
+	std::vector<BoneData> RearrangeMesh(std::vector<BoneData>& animVertices, BoneMap& boneMap)
+	{
+		unsigned int size = animVertices.size();
+		std::vector<BoneData> remappedVertices;
+		remappedVertices.resize(size);
+
+		for (unsigned int i = 0; i < size; ++i)
+		{
+			glm::ivec4 newJoint = glm::ivec4(
+				boneMap[animVertices[i].boneIDs.x],
+				boneMap[animVertices[i].boneIDs.y],
+				boneMap[animVertices[i].boneIDs.z],
+				boneMap[animVertices[i].boneIDs.w]);
+			glm::vec4 weight = glm::vec4(animVertices[i].boneWeights.x, animVertices[i].boneWeights.y, animVertices[i].boneWeights.z, animVertices[i].boneWeights.w);
+
+			remappedVertices[i] = { weight, newJoint };
+		}
+
+		return remappedVertices;
+	}
+
 	bool ConvertGLTFModel(const std::filesystem::path& inputFilePath,
 		const std::filesystem::path& parentOutputDir,
 		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
-		const std::filesystem::path& animationParentDirectory,
 		const std::filesystem::path& rawMaterialsParentDirectory,
 		const std::filesystem::path& engineTexturePacksManifestFile,
 		const std::filesystem::path& texturePacksManifestFile,
-		bool forceRebuild)
+		bool forceRebuild,
+		uint32_t numAnimationSamples)
 	{
 		fastgltf::Parser parser{};
 
@@ -1431,7 +2115,6 @@ namespace r2::assets::assetlib
 		Model model;
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
-		model.animationParentDirectory = animationParentDirectory.string();
 		model.globalInverseTransform = glm::mat4(1.0f); //@TODO(Serge): need to calculate for realz
 
 		char modelAssetName[256];
@@ -1497,48 +2180,56 @@ namespace r2::assets::assetlib
 				}
 
 				model.materialNames.push_back(materialData.materialName);
-
-				//@Temporary: for testing purposes, we're just going to try to find the pre-existing materials from the material pack
-				/*std::filesystem::path imagePath = "";
-				if (fastgltfMaterial.pbrData.baseColorTexture.has_value())
-				{
-					imagePath = images[textures[fastgltfMaterial.pbrData.baseColorTexture.value().textureIndex].imageIndex];
-				}
-
-				model.materialNames.push_back(GetMaterialNameFromMaterialPack(materialManifest, fastgltfMaterial.name.c_str(), imagePath));*/
 			}
 
-			//@Temporary
 			delete[] textureManifestData;
 			delete[] engineTextureManifestData;
 			delete[] materialManifestData;
 		}
-		
-		//@TODO(Serge): support animated models
-		assert(gltf.animations.size() == 0 && gltf.skins.size() == 0 && "We don't support animated models quite yet");
-
 
 		std::unordered_map<size_t, Transform> meshLocalTransforms;
+		std::unordered_map<size_t, size_t> meshToSkin;
+		std::unordered_map<size_t, Transform> nodeLocalTransform;
 
 		//go through all of the nodes to setup the correct transformations
-		for (fastgltf::Node& node : gltf.nodes)
+		for (size_t i = 0; i < gltf.nodes.size(); ++i)
 		{
+			fastgltf::Node& node = gltf.nodes[i];
+			
+			Transform localTransform;
+
+			fastgltf::Node::TRS fastgltfTRS = std::get<fastgltf::Node::TRS>(node.transform);
+
+			glm::vec3 tl(fastgltfTRS.translation[0], fastgltfTRS.translation[1], fastgltfTRS.translation[2]);
+			glm::quat rot(fastgltfTRS.rotation[3], fastgltfTRS.rotation[0], fastgltfTRS.rotation[1], fastgltfTRS.rotation[2]);
+			glm::vec3 sc(fastgltfTRS.scale[0], fastgltfTRS.scale[1], fastgltfTRS.scale[2]);
+
+			localTransform.position = tl;
+			localTransform.rotation = rot;
+			localTransform.scale = sc;
+
+			nodeLocalTransform[i] = localTransform;
+
 			if (node.meshIndex.has_value())
 			{
-				Transform localTransform;
-
-				fastgltf::Node::TRS fastgltfTRS = std::get<fastgltf::Node::TRS>(node.transform);
-
-				glm::vec3 tl(fastgltfTRS.translation[0], fastgltfTRS.translation[1], fastgltfTRS.translation[2]);
-				glm::quat rot(fastgltfTRS.rotation[3], fastgltfTRS.rotation[0], fastgltfTRS.rotation[1], fastgltfTRS.rotation[2]);
-				glm::vec3 sc(fastgltfTRS.scale[0], fastgltfTRS.scale[1], fastgltfTRS.scale[2]);
-
-				localTransform.position = tl;
-				localTransform.rotation = rot;
-				localTransform.scale = sc;
-
 				meshLocalTransforms[node.meshIndex.value()] = localTransform;
+				meshToSkin[node.meshIndex.value()] = node.skinIndex.value();
 			}
+		}
+
+
+		BoneMap boneRemapping;
+
+		if (gltf.skins.size() > 0)
+		{
+			boneRemapping = LoadSkeleton(gltf, nodeLocalTransform, model.skeleton);
+			model.boneInfo.clear();
+			model.boneInfo.insert(model.boneInfo.end(), model.skeleton.mInvBindPose.begin(), model.skeleton.mInvBindPose.end());
+		}
+		
+		if (gltf.animations.size() > 0)
+		{
+			model.clips = LoadAnimationClips(gltf, boneRemapping, numAnimationSamples);
 		}
 
 		for (size_t i = 0; i < gltf.meshes.size(); ++i)
@@ -1548,8 +2239,15 @@ namespace r2::assets::assetlib
 			
 			glm::mat4 localTransformMat = TransformToMat4(meshLocalTransforms[i]);
 
+			const fastgltf::Skin* skinForMesh = nullptr;
+			if (gltf.skins.size() > 0)
+			{
+				skinForMesh = &gltf.skins[meshToSkin[i]];
+			}
+
 			for (size_t p = 0; p < fastgltfMesh.primitives.size(); ++p)
 			{
+				
 				const fastgltf::Primitive& primitive = fastgltfMesh.primitives[p];
 				assert(primitive.type == fastgltf::PrimitiveType::Triangles && "We only support Triangles at the moment!");
 
@@ -1640,11 +2338,85 @@ namespace r2::assets::assetlib
 					}
 				}
 
+				//load the weights
+				std::vector<glm::vec4> weights;
+				{
+					auto accWeights = primitive.findAttribute("WEIGHTS_0");
+					if (accWeights != primitive.attributes.end())
+					{
+						fastgltf::Accessor& weightsAccessor = gltf.accessors[primitive.findAttribute("WEIGHTS_0")->second];
+						weights.resize(weightsAccessor.count);
+
+						assert(weightsAccessor.componentType == fastgltf::ComponentType::Float);
+						assert(weightsAccessor.type == fastgltf::AccessorType::Vec4);
+
+						fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[(*accWeights).second],
+							[&](glm::vec4 w, size_t index)
+							{
+								weights[index] = w;
+							});
+					}
+					else
+					{
+						printf("WEIGHTS_0 attribute not found\n");
+					}
+				}
+
+				std::vector<glm::ivec4> joints;
+				//load the joints
+				{
+					auto accJoints = primitive.findAttribute("JOINTS_0");
+					if (accJoints != primitive.attributes.end())
+					{
+						fastgltf::Accessor& jointAccessor = gltf.accessors[primitive.findAttribute("JOINTS_0")->second];
+						joints.resize(jointAccessor.count);
+
+			//			assert(jointAccessor.componentType == fastgltf::ComponentType::UnsignedShort);
+						assert(jointAccessor.type == fastgltf::AccessorType::Vec4);
+
+						fastgltf::iterateAccessorWithIndex<glm::uvec4>(gltf, gltf.accessors[(*accJoints).second],
+							[&](glm::uvec4 j, size_t index)
+							{
+								joints[index] = glm::ivec4(j);
+							});
+					}
+					else
+					{
+						printf("JOINTS_0 attribute not found\n");
+					}
+				}
+				std::vector<BoneData> animVertices;
+				assert(weights.size() == joints.size() && "should always be the case");
+				for (size_t w = 0; w < weights.size(); ++w)
+				{
+					BoneData animVertex;
+
+					animVertex.boneWeights = weights[w];
+
+					animVertex.boneIDs = glm::ivec4(
+						skinForMesh->joints[joints[w].x],
+						skinForMesh->joints[joints[w].y],
+						skinForMesh->joints[joints[w].z],
+						skinForMesh->joints[joints[w].w]
+					);
+
+					animVertices.push_back(animVertex);
+				}
+
+				if (skinForMesh)
+				{
+					animVertices = RearrangeMesh(animVertices, boneRemapping);
+
+					model.boneData.insert(model.boneData.end(), animVertices.begin(), animVertices.end());
+				}
+
 				model.meshes.push_back(nextMesh);
 			}
 		}
 
 		BuildNewMaterials(rawMaterialsParentDirectory, binaryMaterialParamPacksManifestFile, materialsToBuild, samplers);
+		
+		//assert(false && "@TODO(Serge): Build the new RAnimation + RModel fbs and update how we do the ConvertModelToFlatbuffer for animation data");
 
 		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
 	}
@@ -1653,22 +2425,22 @@ namespace r2::assets::assetlib
 		const std::filesystem::path& inputFilePath,
 		const std::filesystem::path& parentOutputDir,
 		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
-		const std::filesystem::path& animationParentDirectory,
 		const std::filesystem::path& rawMaterialsParentDirectory,
 		const std::filesystem::path& engineTexturePacksManifestFile,
 		const std::filesystem::path& texturePacksManifestFile,
-		bool forceRebuild)
+		bool forceRebuild,
+		uint32_t numAnimationSamples)
 	{
-		mJoints.clear();
-		mBoneNecessityMap.clear();
-		mBoneMap.clear();
+		//mJoints.clear();
+		//mBoneNecessityMap.clear();
+		//mBoneMap.clear();
 
-		if (inputFilePath.extension().string() == ".gltf" || inputFilePath.extension().string() == ".glb")
+//		if (inputFilePath.extension().string() == ".gltf" || inputFilePath.extension().string() == ".glb")
 		{
-			return ConvertGLTFModel(inputFilePath, parentOutputDir, binaryMaterialParamPacksManifestFile, animationParentDirectory, rawMaterialsParentDirectory, engineTexturePacksManifestFile, texturePacksManifestFile, forceRebuild);
+			return ConvertGLTFModel(inputFilePath, parentOutputDir, binaryMaterialParamPacksManifestFile, rawMaterialsParentDirectory, engineTexturePacksManifestFile, texturePacksManifestFile, forceRebuild, numAnimationSamples);
 		}
 
-		Assimp::Importer import;
+	/*	Assimp::Importer import;
 
 		uint8_t flags = 
 			aiProcess_Triangulate |
@@ -1707,7 +2479,6 @@ namespace r2::assets::assetlib
 		Model model;
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
-		model.animationParentDirectory = animationParentDirectory.string();
 
 		char modelAssetName[256];
 
@@ -1769,10 +2540,10 @@ namespace r2::assets::assetlib
 			}
 		}
 
-		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
+		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);*/
 	}
 
-	void CreateBonesVector(const aiScene* scene, aiNode* node, int parentIndex)
+	/*void CreateBonesVector(const aiScene* scene, aiNode* node, int parentIndex)
 	{
 		std::string nodeName = std::string(node->mName.data);
 
@@ -1859,782 +2630,800 @@ namespace r2::assets::assetlib
 		{
 			MarkBones(node->mChildren[i], scene);
 		}
-	}
+	}*/
 
-	void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices)
+	//void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices)
+	//{
+	//	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	//	{
+	//		GetMeshData(node->mChildren[i], scene, numMeshes, numBones, numVertices);
+	//	}
+
+	//	numMeshes += node->mNumMeshes;
+
+	//	for (uint32_t i = 0; i < node->mNumMeshes; ++i)
+	//	{
+	//		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+	//		numVertices += mesh->mNumVertices;
+
+	//		if (mesh->mNumBones > 0)
+	//		{
+	//			numBones += mesh->mNumBones;
+	//		}
+	//	}
+	//}
+
+	//glm::mat4 GetGlobalTransform(uint32_t i)
+	//{
+	//	glm::mat4 result = mJoints[i].localTransform;
+
+	//	for (int p = mJoints[i].parentIndex; p >= 0; p = mJoints[p].parentIndex)
+	//	{
+	//		result = mJoints[p].localTransform * result;
+	//	}
+
+	//	return result;
+	//}
+
+	//int FindJointIndex(const std::string& jointName)
+	//{
+	//	for (uint32_t i = 0; i < mJoints.size(); ++i)
+	//	{
+	//		if (mJoints[i].name == jointName)
+	//		{
+	//			return (int)i;
+	//		}
+	//	}
+
+	//	return -1;
+	//}
+
+	//void LoadBindPose(Model& model, Skeleton& skeleton)
+	//{
+
+	//	//@TODO(Serge): Right now I don't think this is correct. It SEEMS correct since we can put the model into bind pose no problem BUT when it comes to animating the model, this messes up if we first put the model into bind pose which doesn't seems correct.
+	//	//				This might be a weird artifact of ASSIMP since the rest pose is frame 1 of the animation. It might be that we can't load an animation as our "base model" as we're doing for the Skeleton Archer and Ellen. Interestingly, this works for the Micro Bat
+	//	//				Could also be that our math is messed up somewhere but currently I don't see where....
+	//	std::vector<glm::mat4> worldBindPos(mJoints.size());
+
+	//	for (uint32_t i = 0; i < mJoints.size(); ++i)
+	//	{
+	//		worldBindPos[i] = GetGlobalTransform(i);
+	//	}
+
+	//	for (auto iter = mBoneMap.begin(); iter != mBoneMap.end(); iter++)
+	//	{
+	//		int jointIndex = FindJointIndex(iter->first);
+
+	//		if (jointIndex >= 0)
+	//		{
+	//			worldBindPos[jointIndex] = glm::inverse(iter->second.invBindPoseMat);
+	//		}
+	//		else
+	//		{
+	//			assert(jointIndex != -1 && "Fail....");
+	//		}
+	//	}
+
+	//	for (uint32_t i = 0; i < mJoints.size(); ++i)
+	//	{
+	//		glm::mat4 current = worldBindPos[i];
+
+	//		int p = mJoints[i].parentIndex;
+	//		if (p >= 0)
+	//		{
+	//			glm::mat4 parent = worldBindPos[p];
+	//			current = glm::inverse(parent) * current;
+	//		}
+
+	//		skeleton.mBindPoseTransforms[i] = ToTransform(current);
+	//	}
+	//}
+
+	//void PrintAllTexturesOfType(aiMaterial* material, aiTextureType type, const std::string& label)
+	//{
+	//	auto numTexturesOfType = material->GetTextureCount(type);
+	//	printf("----------------------------------------------------------------------------\n\n");
+	//	printf("%s: %u\n", label.c_str(), numTexturesOfType);
+	//	for (unsigned int i = 0; i < numTexturesOfType; ++i)
+	//	{
+	//		aiString path;
+	//		aiTextureMapping textureMapping;
+	//		unsigned int uvIndex;
+	//		ai_real blend;
+	//		aiTextureOp textureOP;
+	//		aiTextureMapMode textureMapMode;
+
+	//		material->GetTexture(type, i, &path, &textureMapping, &uvIndex, &blend, &textureOP, &textureMapMode);
+	//		printf("Texture index: %u\n", i);
+	//		printf("Texture Path: %s\n", path.C_Str());
+	//		std::string textureMappingStr = "";
+	//		switch (textureMapping)
+	//		{
+	//		case aiTextureMapping_UV:
+	//			textureMappingStr = "UV";
+	//			break;
+	//		case aiTextureMapping_SPHERE:
+	//			textureMappingStr = "Sphere";
+	//			break;
+	//		case aiTextureMapping_CYLINDER:
+	//			textureMappingStr = "Cylinder";
+	//			break;
+	//		case aiTextureMapping_BOX:
+	//			textureMappingStr = "Box";
+	//			break;
+	//		case aiTextureMapping_PLANE:
+	//			textureMappingStr = "Plane";
+	//			break;
+	//		case aiTextureMapping_OTHER:
+	//			textureMappingStr = "Other";
+	//			break;
+	//		default:
+	//			break;
+	//		}
+	//		printf("Texture Mapping: %s\n", textureMappingStr.c_str());
+	//		printf("Texture UV Index: %u\n", uvIndex);
+	//		printf("Texture Blend: %f\n", blend);
+	//		std::string textureOpStr = "";
+	//		switch (textureOP)
+	//		{
+	//		case aiTextureOp_Multiply:
+	//			textureOpStr = "Multiply";
+	//			break;
+	//		case aiTextureOp_Add:
+	//			textureOpStr = "Add";
+	//			break;
+	//		case aiTextureOp_Subtract:
+	//			textureOpStr = "Subtract";
+	//			break;
+	//		case aiTextureOp_Divide:
+	//			textureOpStr = "Divide";
+	//			break;
+	//		case aiTextureOp_SmoothAdd:
+	//			textureOpStr = "Smooth Add";
+	//			break;
+	//		case aiTextureOp_SignedAdd:
+	//			textureOpStr = "Signed Add";
+	//			break;
+	//		default:
+	//			textureOpStr = "Not Specified";
+	//			break;
+	//		}
+
+	//		printf("Texture Op: %s\n", textureOpStr.c_str());
+	//		std::string textureMapModeStr = "";
+	//		switch (textureMapMode)
+	//		{
+	//		case aiTextureMapMode_Wrap:
+	//			textureMapModeStr = "Wrap";
+	//			break;
+	//		case aiTextureMapMode_Clamp:
+	//			textureMapModeStr = "Clamp";
+	//			break;
+	//		case aiTextureMapMode_Decal:
+	//			textureMapModeStr = "Decal";
+	//			break;
+	//		case aiTextureMapMode_Mirror:
+	//			textureMapModeStr = "Mirror";
+	//			break;
+	//		default:
+	//			break;
+
+	//		}
+	//		printf("Texture Wrap Mode: %s\n\n", textureMapModeStr.c_str());
+	//		printf("----------------------------------------------------------------------------\n");
+	//	}
+	//}
+
+	//void PrintAllAssimpMaterialInformation(aiMaterial* material)
+	//{
+	//	printf("===========================================================================\n\n");
+	//	printf("Material Name: %s\n", material->GetName().C_Str());
+
+	//	PrintAllTexturesOfType(material, aiTextureType_AMBIENT, "Num Ambient Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_AMBIENT_OCCLUSION, "Num Ambient Occlusion Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_DIFFUSE, "Num Diffuse Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_DIFFUSE_ROUGHNESS, "Num Diffuse Roughness Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_DISPLACEMENT, "Num Displacement Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_EMISSION_COLOR, "Num Emission Color Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_EMISSIVE, "Num Emissive Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_HEIGHT, "Num Height Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_LIGHTMAP, "Num Light Map Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_METALNESS, "Num Metalness Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_NORMALS, "Num Normal Map Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_OPACITY, "Num Opacity Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_REFLECTION, "Num Reflection Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_SHININESS, "Num Shininess Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_SPECULAR, "Num Specular Textures");
+	//	PrintAllTexturesOfType(material, aiTextureType_UNKNOWN, "Num Unknown Textures");
+	//	
+	//	
+
+	//	printf("Material Properties: \n");
+
+	//	for (unsigned int p = 0; p < material->mNumProperties; ++p)
+	//	{
+	//		auto* aiProperty = material->mProperties[p];
+
+	//		//This will skip all of the textures - if semantic != 0 then it's a texture property which we already did above
+	//		if (aiProperty->mSemantic != 0)
+	//		{
+	//			continue;
+	//		}
+
+	//		int intValue = -1;
+	//		ai_real realValue;
+	//		double doubleValue;
+	//		aiString stringValue;
+	//		aiColor3D color3DValue;
+	//		aiColor4D color4DValue;
+	//		aiUVTransform uvTransform;
+
+	//		std::string propertyTypeStr = "Completely Unknown";
+
+	//		switch (aiProperty->mType)
+	//		{
+	//		case aiPTI_Float:
+	//		{
+	//			propertyTypeStr = "Float";
+
+	//			unsigned int numValues = aiProperty->mDataLength / sizeof(ai_real);
+	//			ai_real* values = (ai_real*)aiProperty->mData;
+
+	//			if (numValues == 1)
+	//			{
+	//				printf("Float property: %s, value: %f\n", aiProperty->mKey.C_Str(), *values);
+	//			}
+	//			else if (numValues == 2)
+	//			{
+	//				printf("Vec2 Property: %s, value - x: %f, y: %f\n", aiProperty->mKey.C_Str(), values[0], values[1]);
+	//			}
+	//			else if (numValues == 3)
+	//			{
+	//				printf("Color 3D Property: %s, value - r: %f, g: %f, b: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
+	//			}
+	//			else if (numValues == 4)
+	//			{
+	//				printf("Color 4D Property: %s, value - r: %f, g: %f, b: %f, a: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
+	//			}
+	//		}
+	//			break;
+	//		case aiPTI_Double:
+
+	//			propertyTypeStr = "Double";
+	//			material->Get<double>(aiProperty->mKey.C_Str(), 0, 0, doubleValue);
+	//			printf("Float Property: %s, value: %f\n", aiProperty->mKey.C_Str(), doubleValue);
+
+	//			break;
+	//		case aiPTI_String: 
+
+	//			propertyTypeStr = "String";
+	//			material->Get(aiProperty->mKey.C_Str(), 0, 0, stringValue);
+	//			printf("String Property: %s, value: %s\n", aiProperty->mKey.C_Str(), stringValue.C_Str());
+
+	//			break;
+	//		case aiPTI_Integer:
+	//		{
+	//			propertyTypeStr = "Integer";
+	//			
+	//			unsigned int numValues = aiProperty->mDataLength / sizeof(int);
+	//			int* values = (int*)aiProperty->mData;
+
+	//			if (numValues == 1)
+	//			{
+	//				printf("Int property: %s, value: %i\n", aiProperty->mKey.C_Str(), *values);
+	//			}
+	//			else if (numValues == 2)
+	//			{
+	//				printf("Int2 Property: %s, value - x: %i, y: %i\n", aiProperty->mKey.C_Str(), values[0], values[1]);
+	//			}
+	//			else if (numValues == 3)
+	//			{
+	//				printf("Int3 Property: %s, value - r: %i, g: %i, b: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
+	//			}
+	//			else if (numValues == 4)
+	//			{
+	//				printf("Int4 Property: %s, value - r: %i, g: %i, b: %i, a: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
+	//			}
+	//		}
+	//			break;
+	//		case aiPTI_Buffer:
+	//		{
+	//			propertyTypeStr = "Buffer";
+
+	//			if (std::string(aiProperty->mKey.C_Str()) == "$mat.twosided")
+	//			{
+	//				bool twoSided =  (bool)*aiProperty->mData;
+	//				printf("Buffer Property type: %s - %i\n", aiProperty->mKey.C_Str(), twoSided);
+	//			}
+	//		}
+	//			break;
+	//		default:
+	//			printf("Property type: %s - UNKNOWN\n", aiProperty->mKey.C_Str());
+	//			break;
+	//		}
+	//	}
+
+	//	printf("===========================================================================\n\n");
+	//}
+
+	//void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene)
+	//{
+	//	Mesh nextMesh;
+
+
+	//	//@NOTE: I think this is still wrong - we're not weighting the mesh vertices based on the bone influences (if that matters)
+
+	//	//@NOTE: What this is doing, for the mesh we're looking at we take the local transform up to the first bone we find, then we multiply that transforms by the bind pose of the bone
+	//	//		 Not sure. I think the mTransformation matrices for the meshes remain the same (as the bind pose) up until they encounter the bone which is why this works
+	//	glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
+	//	{
+	//		const aiNode* nextNode = node->mParent;
+
+	//		glm::mat4 bindMat = glm::mat4(1.0f);
+
+	//		aiNode* foundNode = nullptr;
+	//		while (nextNode)
+	//		{
+	//			auto iter = mBoneMap.find(nextNode->mName.C_Str());
+
+	//			if (iter != mBoneMap.end())
+	//			{
+	//				glm::mat4 temp = iter->second.invBindPoseMat;
+
+	//				bindMat = glm::inverse(temp);
+
+	//				break;
+	//			}
+	//			else
+	//			{
+	//				localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
+	//			}
+
+	//			nextNode = nextNode->mParent;
+	//		}
+
+	//		localTransform = bindMat * localTransform * AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
+	//	}
+
+	//	nextMesh.vertices.reserve(mesh->mNumVertices);
+
+
+	//	if (mesh->mNumFaces > 0)
+	//	{
+	//		nextMesh.indices.reserve(mesh->mNumFaces * 3);
+	//	}
+
+	//	nextMesh.hashName = r2::asset::GetAssetNameForFilePath(mesh->mName.C_Str(), r2::asset::MESH);
+
+	//	MaterialName materialName;
+
+	//	int materialIndex = -1;
+
+	//	//@NOTE(Serge): change later 
+	//	if (mesh->mMaterialIndex >= 0)
+	//	{
+	//		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+	//		assert(material != nullptr && "Material is null!");
+
+	//		//@TEMPORARY - We're going to look at all the material params and see what gets packaged into them
+
+	//	//	PrintAllAssimpMaterialInformation(material);
+
+
+
+	//		if (material)
+	//		{
+
+	//		//	ProcessMaterial(mesh->mName.C_Str(), material);
+
+	//			const uint32_t numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
+
+	//			DiskAssetFile diskFile;
+
+	//			bool openResult = diskFile.OpenForRead(model.binaryMaterialPath.string().c_str());
+
+	//			assert(openResult && "Couldn't open the file!");
+
+	//			auto fileSize = diskFile.Size();
+
+	//			char* materialManifestData = new char[fileSize];
+
+	//			auto readSize = diskFile.Read(materialManifestData, fileSize);
+
+	//			assert(readSize == fileSize && "Didn't read whole file");
+
+	//			const auto materialManifest = flat::GetMaterialPack(materialManifestData);//flat::GetMaterialParamsPack(materialManifestData);
+	//			
+	//			if (numTextures > 0)
+	//			{
+	//				for (int i = 0; i < numTextures; ++i)
+	//				{
+	//					aiString diffuseStr;
+
+	//					material->GetTexture(aiTextureType_DIFFUSE, i, &diffuseStr);
+
+	//					fs::path diffuseTexturePath = diffuseStr.C_Str();
+
+	//					diffuseTexturePath.make_preferred();
+
+	//					fs::path diffuseTextureName = diffuseTexturePath.filename();
+
+	//					diffuseTextureName.replace_extension(".rtex");
+	//					std::string diffuseTextureNameStr = diffuseTextureName.string();
+
+	//					std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
+	//						[](unsigned char c) { return std::tolower(c); });
+
+	//					//now look into all the materials and find the material that matches this texture name
+
+
+	//					//@TODO(Serge): we've put the texture pack name into the material for each texture (we only need the diffuse/albedo texture)
+	//					//				thus we need to build the texture name like: texturePackNameStr() / albedo / diffuseTextureName
+
+	//					const auto materials = materialManifest->pack();
+
+	//					const auto numMaterials = materials->size();//materialManifest->pack()->size();
+	//					bool found = false;
+
+	//					for (flatbuffers::uoffset_t i = 0; i < numMaterials && !found; ++i)
+	//					{
+	//					//	const flat::MaterialParams* materialParams = materialManifest->pack()->Get(i);
+
+	//						const flat::Material* material = materials->Get(i);
+
+
+	//						const auto* textureParams = material->shaderParams()->textureParams();
+
+	//						for (flatbuffers::uoffset_t t = 0; t < textureParams->size() && !found; ++t)
+	//						{
+	//							//const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(t);
+	//							const flat::ShaderTextureParam* texParam = textureParams->Get(t);
+
+
+	//							if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
+	//							{
+	//								auto packNameStr = texParam->texturePack()->stringName()->str();//texParam->texturePackNameStr()->str();
+	//								
+	//								std::string textureNameWithParents = packNameStr + "/albedo/" + diffuseTextureNameStr;
+
+	//								auto textureNameID = STRING_ID(textureNameWithParents.c_str());
+
+	//								if (textureNameID == texParam->value()->assetName())
+	//								{
+	//									materialName.name = material->assetName()->assetName();//materialParams->name();
+	//									materialName.materialNameStr = material->assetName()->stringName()->str();
+	//									materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
+	//									materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
+	//									found = true;
+	//									break;
+	//								}
+	//							}
+	//						}
+	//					}
+
+	//					assert(found && "Couldn't find it");
+	//				}
+	//			}
+	//			else
+	//			{
+	//				const char* matName = material->GetName().C_Str();
+	//				materialName.name = STRING_ID(matName);
+	//				materialName.materialNameStr = matName;
+	//				materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
+	//				materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
+	//			}
+
+
+	//			delete[] materialManifestData;
+	//			//r2::draw::MaterialHandle materialHandle = {};
+
+	//			//if (numTextures > 0)
+	//			//{
+	//			//	//find the first one that isn't invalid
+	//			//	for (int i = 0; i < numTextures && r2::draw::mat::IsInvalidHandle(materialHandle); ++i)
+	//			//	{
+	//			//		//@TODO(Serge): check other texture types if we don't find this one
+	//			//		//@TODO(Serge): what do we do if we don't have any textures?
+	//			//		aiString diffuseStr;
+
+	//			//		material->GetTexture(aiTextureType_DIFFUSE, i, &diffuseStr);
+
+
+	//			//		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+	//			//		char textureName[r2::fs::FILE_PATH_LENGTH];
+	//			//		r2::fs::utils::SanitizeSubPath(diffuseStr.C_Str(), sanitizedPath);
+
+	//			//		r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
+
+	//			//		char extType[r2::fs::FILE_PATH_LENGTH];
+
+	//			//		//@TODO(Serge): clean up this MAJOR HACK!
+	//			//		if (r2::fs::utils::CopyFileExtension(textureName, extType))
+	//			//		{
+	//			//			if (strcmp(extType, RTEX_EXT.c_str()) != 0)
+	//			//			{
+	//			//				r2::fs::utils::SetNewExtension(textureName, RTEX_EXT.c_str());
+	//			//			}
+	//			//		}
+
+	//			//		r2::draw::tex::Texture tex;
+	//			//		materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
+	//			//	}
+	//			//}
+	//			//else
+	//			//{
+	//			//	const char* matName = material->GetName().C_Str();
+
+	//			//	auto matNameID = STRING_ID(matName);
+
+	//			//	materialHandle = r2::draw::matsys::FindMaterialHandle(matNameID);
+	//			//}
+
+	//			if (materialName.name != 0 && materialName.materialPackName != 0)//materialName != 0 && materialPackName != 0)
+	//			{
+	//				bool found = false;
+
+	//				auto numMaterialHandles = model.materialNames.size();
+
+	//				for (uint64_t i = 0; i < numMaterialHandles; ++i)
+	//				{
+	//					auto nextMatHandle = model.materialNames[i];
+
+	//					if (nextMatHandle.name == materialName.name && nextMatHandle.materialPackName == materialName.materialPackName)
+	//					{
+	//						materialIndex = i;
+	//						found = true;
+	//						break;
+	//					}
+	//				}
+
+	//				if (!found)
+	//				{
+	//					materialIndex = numMaterialHandles;
+	//					model.materialNames.push_back(materialName);
+	//				}
+	//			}
+	//			else
+	//			{
+	//				assert(false && "Failed to load the material for the mesh");
+	//			}
+
+	//		}
+	//	}
+
+	//	assert(materialIndex != -1 && "We should have a material for the mesh!");
+
+	//	assert(materialName.name != 0 && "We should have a proper material");
+	//	assert(materialName.materialPackName != 0 && "We should have a proper material");
+
+	//	nextMesh.materialIndex = materialIndex;
+
+	//	for (uint32_t i = 0; i < mesh->mNumVertices; ++i)
+	//	{
+	//		Vertex nextVertex;
+
+	//		nextVertex.position = localTransform * glm::vec4(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z), 1.0);
+
+	//		if (mesh->mNormals)
+	//		{
+	//			nextVertex.normal = glm::mat3(glm::transpose(glm::inverse(localTransform))) * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+	//		}
+
+	//		if (mesh->mTextureCoords)
+	//		{
+	//			nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, materialIndex);
+	//		}
+
+	//		if (mesh->mTangents)
+	//		{
+	//			nextVertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+	//			//		printf("nextVertex.tangent - x: %f, y: %f, z: %f\n", nextVertex.tangent.x, nextVertex.tangent.y, nextVertex.tangent.y);
+	//		}
+
+	//		//if (mesh->mBitangents)
+	//		//{
+	//		//	nextVertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+	//		//}
+	//		nextMesh.vertices.push_back(nextVertex);
+	//	}
+
+	//	//u32 indexOffsetToUse = indexOffset;
+	//	for (uint32_t i = 0; i < mesh->mNumFaces; ++i)
+	//	{
+	//		aiFace face = mesh->mFaces[i];
+	//		for (uint32_t j = 0; j < face.mNumIndices; ++j)
+	//		{
+	//			uint32_t nextIndex = face.mIndices[j];
+	//			//	printf("face.mIndices[j] + indexOffsetToUse: %zu\n", nextIndex);
+	//			//r2::sarr::Push(*nextMeshPtr->optrIndices, nextIndex);
+	//			nextMesh.indices.push_back(nextIndex);
+	//			//if (nextIndex > indexOffset)
+	//			//{
+	//			//	indexOffset = nextIndex;
+	//			//}
+	//		}
+
+	//	}
+
+	//	//		indexOffset++;
+
+	//	model.meshes.push_back(nextMesh);
+	//	//r2::sarr::Push(*model.optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
+	//}
+
+	//void ProcessNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene)
+	//{
+	//	//process all of the node's meshes
+	//	for (uint32_t i = 0; i < node->mNumMeshes; ++i)
+	//	{
+	//		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+	//		ProcessMeshForModel(model, mesh, meshIndex, node, scene);
+
+	//		++meshIndex;
+	//	}
+
+	//	//then do the same for each of its children
+	//	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	//	{
+	//		ProcessNode(model, node->mChildren[i], meshIndex, scene);
+	//	}
+	//}
+
+	//void ProcessBones(Model& model, uint32_t baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
+	//{
+	//	const aiMesh* meshToUse = mesh;
+	//	//printf("Num bones: %zu\n", meshToUse->mNumBones);
+
+	//	for (uint32_t i = 0; i < meshToUse->mNumBones; ++i)
+	//	{
+	//		int boneIndex = -1;
+	//		std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
+	//		//		printf("boneNameStr name: %s\n", boneNameStr.c_str());
+
+	//		uint64_t boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
+
+	//		//int theDefault = -1;
+	//		//s32 result = r2::shashmap::Get(*model.boneMapping, boneName, theDefault);
+
+
+	//		auto result = model.boneMapping.find(boneName);
+
+	//		if (result == model.boneMapping.end())
+	//		{
+	//			boneIndex = model.boneInfo.size();//(u32)r2::sarr::Size(*model.boneInfo);
+	//			BoneInfo info;
+	//			info.offsetTransform = AssimpMat4ToGLMMat4(meshToUse->mBones[i]->mOffsetMatrix);
+	//			model.boneInfo.push_back(info);
+
+	//			model.boneMapping[boneName] = boneIndex;
+	//		}
+	//		else
+	//		{
+	//			boneIndex = result->second;
+	//		}
+
+	//		//	printf("boneIndex: %i\n", boneIndex);
+
+	//		size_t numWeights = meshToUse->mBones[i]->mNumWeights;
+
+	//		for (uint32_t j = 0; j < numWeights; ++j)
+	//		{
+	//			uint32_t vertexID = baseVertex + meshToUse->mBones[i]->mWeights[j].mVertexId;
+
+	//			float currentWeightTotal = 0.0f;
+	//			for (uint32_t k = 0; k < MAX_BONE_WEIGHTS; ++k)
+	//			{
+	//				currentWeightTotal += model.boneData[vertexID].boneWeights[k];
+
+	//				if (!NearEq(currentWeightTotal, 1.0f) && NearEq(model.boneData[vertexID].boneWeights[k], 0.0f))
+	//				{
+	//					model.boneData[vertexID].boneIDs[k] = boneIndex;
+	//					model.boneData[vertexID].boneWeights[k] = meshToUse->mBones[i]->mWeights[j].mWeight;
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
+
+	//	if (meshToUse->mNumBones == 0)
+	//	{
+	//		//manually find the bone that goes with this guy
+	//		const aiNode* nodeToUse = node->mParent;
+
+	//		while (nodeToUse)
+	//		{
+	//			uint64_t boneName = STRING_ID(nodeToUse->mName.C_Str());
+	//			
+	//			//s32 boneIndex = r2::shashmap::Get(*model.boneMapping, boneName, theDefault);
+
+	//			auto boneIter = model.boneMapping.find(boneName);
+
+	//			if (boneIter != model.boneMapping.end())
+	//			{
+	//				for (uint64_t i = 0; i < meshToUse->mNumVertices; ++i)
+	//				{
+	//					uint32_t vertexID = baseVertex + i;
+
+	//					model.boneData[vertexID].boneIDs[0] = boneIter->second;
+	//					model.boneData[vertexID].boneWeights[0] = 1.0;
+	//				}
+
+	//				break;
+	//			}
+	//			else
+	//			{
+	//				nodeToUse = nodeToUse->mParent;
+	//			}
+	//		}
+	//	}
+	//}
+
+	//void ProcessAnimNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene, Skeleton& skeleton, int parentDebugBone, uint32_t& numVertices)
+	//{
+	//	for (uint32_t i = 0; i < node->mNumMeshes; ++i)
+	//	{
+	//		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+	//		ProcessMeshForModel(model, mesh, meshIndex, node, scene);
+
+	//		ProcessBones(model, numVertices, mesh, node, scene);
+
+	//		numVertices += mesh->mNumVertices;
+
+	//		++meshIndex;
+	//	}
+
+	//	auto iter = mBoneNecessityMap.find(node->mName.C_Str());
+	//	if (iter != mBoneNecessityMap.end())
+	//	{
+	//		skeleton.mJointNames.push_back(STRING_ID(node->mName.C_Str()));
+	//		skeleton.mRestPoseTransforms.push_back(AssimpMat4ToTransform(node->mTransformation));
+
+	//		int jointIndex = (int)skeleton.mJointNames.size() - 1;
+
+	//		const Joint& joint = mJoints[jointIndex];
+
+	//		skeleton.mParents.push_back(joint.parentIndex);
+
+	//		//#ifdef R2_DEBUG
+	//		//			skeleton.mDebugBoneNames.push_back(node->mName.C_Str());
+	//		//#endif // R2_DEBUG
+
+	//		auto realBoneIter = mBoneMap.find(node->mName.C_Str());
+	//		if (realBoneIter != mBoneMap.end())
+	//		{
+	//		//	r2::sarr::At(*skeleton.mRealParentBones, jointIndex) = parentDebugBone;
+
+	//			skeleton.mRealParentBones[jointIndex] = parentDebugBone;
+
+	//			parentDebugBone = jointIndex;
+	//		}
+	//	}
+
+	//	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	//	{
+	//		ProcessAnimNode(model, node->mChildren[i], meshIndex, scene, model.skeleton, parentDebugBone, numVertices);
+	//	}
+	//}
+
+	flat::InterpolationType GetInterpolationType(fastgltf::AnimationInterpolation fastgltfInterpolationType)
 	{
-		for (uint32_t i = 0; i < node->mNumChildren; ++i)
+		switch (fastgltfInterpolationType)
 		{
-			GetMeshData(node->mChildren[i], scene, numMeshes, numBones, numVertices);
-		}
+		case fastgltf::AnimationInterpolation::Linear:
+			return flat::InterpolationType_LINEAR;
 
-		numMeshes += node->mNumMeshes;
+		case fastgltf::AnimationInterpolation::Step:
+			return flat::InterpolationType_CONSTANT;
 
-		for (uint32_t i = 0; i < node->mNumMeshes; ++i)
-		{
-			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		case fastgltf::AnimationInterpolation::CubicSpline:
+			return flat::InterpolationType_CUBIC;
 
-			numVertices += mesh->mNumVertices;
-
-			if (mesh->mNumBones > 0)
-			{
-				numBones += mesh->mNumBones;
-			}
-		}
-	}
-
-	glm::mat4 GetGlobalTransform(uint32_t i)
-	{
-		glm::mat4 result = mJoints[i].localTransform;
-
-		for (int p = mJoints[i].parentIndex; p >= 0; p = mJoints[p].parentIndex)
-		{
-			result = mJoints[p].localTransform * result;
-		}
-
-		return result;
-	}
-
-	int FindJointIndex(const std::string& jointName)
-	{
-		for (uint32_t i = 0; i < mJoints.size(); ++i)
-		{
-			if (mJoints[i].name == jointName)
-			{
-				return (int)i;
-			}
-		}
-
-		return -1;
-	}
-
-	void LoadBindPose(Model& model, Skeleton& skeleton)
-	{
-
-		//@TODO(Serge): Right now I don't think this is correct. It SEEMS correct since we can put the model into bind pose no problem BUT when it comes to animating the model, this messes up if we first put the model into bind pose which doesn't seems correct.
-		//				This might be a weird artifact of ASSIMP since the rest pose is frame 1 of the animation. It might be that we can't load an animation as our "base model" as we're doing for the Skeleton Archer and Ellen. Interestingly, this works for the Micro Bat
-		//				Could also be that our math is messed up somewhere but currently I don't see where....
-		std::vector<glm::mat4> worldBindPos(mJoints.size());
-
-		for (uint32_t i = 0; i < mJoints.size(); ++i)
-		{
-			worldBindPos[i] = GetGlobalTransform(i);
-		}
-
-		for (auto iter = mBoneMap.begin(); iter != mBoneMap.end(); iter++)
-		{
-			int jointIndex = FindJointIndex(iter->first);
-
-			if (jointIndex >= 0)
-			{
-				worldBindPos[jointIndex] = glm::inverse(iter->second.invBindPoseMat);
-			}
-			else
-			{
-				assert(jointIndex != -1 && "Fail....");
-			}
-		}
-
-		for (uint32_t i = 0; i < mJoints.size(); ++i)
-		{
-			glm::mat4 current = worldBindPos[i];
-
-			int p = mJoints[i].parentIndex;
-			if (p >= 0)
-			{
-				glm::mat4 parent = worldBindPos[p];
-				current = glm::inverse(parent) * current;
-			}
-
-			skeleton.mBindPoseTransforms[i] = ToTransform(current);
-		}
-	}
-
-	void PrintAllTexturesOfType(aiMaterial* material, aiTextureType type, const std::string& label)
-	{
-		auto numTexturesOfType = material->GetTextureCount(type);
-		printf("----------------------------------------------------------------------------\n\n");
-		printf("%s: %u\n", label.c_str(), numTexturesOfType);
-		for (unsigned int i = 0; i < numTexturesOfType; ++i)
-		{
-			aiString path;
-			aiTextureMapping textureMapping;
-			unsigned int uvIndex;
-			ai_real blend;
-			aiTextureOp textureOP;
-			aiTextureMapMode textureMapMode;
-
-			material->GetTexture(type, i, &path, &textureMapping, &uvIndex, &blend, &textureOP, &textureMapMode);
-			printf("Texture index: %u\n", i);
-			printf("Texture Path: %s\n", path.C_Str());
-			std::string textureMappingStr = "";
-			switch (textureMapping)
-			{
-			case aiTextureMapping_UV:
-				textureMappingStr = "UV";
-				break;
-			case aiTextureMapping_SPHERE:
-				textureMappingStr = "Sphere";
-				break;
-			case aiTextureMapping_CYLINDER:
-				textureMappingStr = "Cylinder";
-				break;
-			case aiTextureMapping_BOX:
-				textureMappingStr = "Box";
-				break;
-			case aiTextureMapping_PLANE:
-				textureMappingStr = "Plane";
-				break;
-			case aiTextureMapping_OTHER:
-				textureMappingStr = "Other";
-				break;
-			default:
-				break;
-			}
-			printf("Texture Mapping: %s\n", textureMappingStr.c_str());
-			printf("Texture UV Index: %u\n", uvIndex);
-			printf("Texture Blend: %f\n", blend);
-			std::string textureOpStr = "";
-			switch (textureOP)
-			{
-			case aiTextureOp_Multiply:
-				textureOpStr = "Multiply";
-				break;
-			case aiTextureOp_Add:
-				textureOpStr = "Add";
-				break;
-			case aiTextureOp_Subtract:
-				textureOpStr = "Subtract";
-				break;
-			case aiTextureOp_Divide:
-				textureOpStr = "Divide";
-				break;
-			case aiTextureOp_SmoothAdd:
-				textureOpStr = "Smooth Add";
-				break;
-			case aiTextureOp_SignedAdd:
-				textureOpStr = "Signed Add";
-				break;
-			default:
-				textureOpStr = "Not Specified";
-				break;
-			}
-
-			printf("Texture Op: %s\n", textureOpStr.c_str());
-			std::string textureMapModeStr = "";
-			switch (textureMapMode)
-			{
-			case aiTextureMapMode_Wrap:
-				textureMapModeStr = "Wrap";
-				break;
-			case aiTextureMapMode_Clamp:
-				textureMapModeStr = "Clamp";
-				break;
-			case aiTextureMapMode_Decal:
-				textureMapModeStr = "Decal";
-				break;
-			case aiTextureMapMode_Mirror:
-				textureMapModeStr = "Mirror";
-				break;
-			default:
-				break;
-
-			}
-			printf("Texture Wrap Mode: %s\n\n", textureMapModeStr.c_str());
-			printf("----------------------------------------------------------------------------\n");
-		}
-	}
-
-	void PrintAllAssimpMaterialInformation(aiMaterial* material)
-	{
-		printf("===========================================================================\n\n");
-		printf("Material Name: %s\n", material->GetName().C_Str());
-
-		PrintAllTexturesOfType(material, aiTextureType_AMBIENT, "Num Ambient Textures");
-		PrintAllTexturesOfType(material, aiTextureType_AMBIENT_OCCLUSION, "Num Ambient Occlusion Textures");
-		PrintAllTexturesOfType(material, aiTextureType_DIFFUSE, "Num Diffuse Textures");
-		PrintAllTexturesOfType(material, aiTextureType_DIFFUSE_ROUGHNESS, "Num Diffuse Roughness Textures");
-		PrintAllTexturesOfType(material, aiTextureType_DISPLACEMENT, "Num Displacement Textures");
-		PrintAllTexturesOfType(material, aiTextureType_EMISSION_COLOR, "Num Emission Color Textures");
-		PrintAllTexturesOfType(material, aiTextureType_EMISSIVE, "Num Emissive Textures");
-		PrintAllTexturesOfType(material, aiTextureType_HEIGHT, "Num Height Textures");
-		PrintAllTexturesOfType(material, aiTextureType_LIGHTMAP, "Num Light Map Textures");
-		PrintAllTexturesOfType(material, aiTextureType_METALNESS, "Num Metalness Textures");
-		PrintAllTexturesOfType(material, aiTextureType_NORMALS, "Num Normal Map Textures");
-		PrintAllTexturesOfType(material, aiTextureType_OPACITY, "Num Opacity Textures");
-		PrintAllTexturesOfType(material, aiTextureType_REFLECTION, "Num Reflection Textures");
-		PrintAllTexturesOfType(material, aiTextureType_SHININESS, "Num Shininess Textures");
-		PrintAllTexturesOfType(material, aiTextureType_SPECULAR, "Num Specular Textures");
-		PrintAllTexturesOfType(material, aiTextureType_UNKNOWN, "Num Unknown Textures");
-		
-		
-
-		printf("Material Properties: \n");
-
-		for (unsigned int p = 0; p < material->mNumProperties; ++p)
-		{
-			auto* aiProperty = material->mProperties[p];
-
-			//This will skip all of the textures - if semantic != 0 then it's a texture property which we already did above
-			if (aiProperty->mSemantic != 0)
-			{
-				continue;
-			}
-
-			int intValue = -1;
-			ai_real realValue;
-			double doubleValue;
-			aiString stringValue;
-			aiColor3D color3DValue;
-			aiColor4D color4DValue;
-			aiUVTransform uvTransform;
-
-			std::string propertyTypeStr = "Completely Unknown";
-
-			switch (aiProperty->mType)
-			{
-			case aiPTI_Float:
-			{
-				propertyTypeStr = "Float";
-
-				unsigned int numValues = aiProperty->mDataLength / sizeof(ai_real);
-				ai_real* values = (ai_real*)aiProperty->mData;
-
-				if (numValues == 1)
-				{
-					printf("Float property: %s, value: %f\n", aiProperty->mKey.C_Str(), *values);
-				}
-				else if (numValues == 2)
-				{
-					printf("Vec2 Property: %s, value - x: %f, y: %f\n", aiProperty->mKey.C_Str(), values[0], values[1]);
-				}
-				else if (numValues == 3)
-				{
-					printf("Color 3D Property: %s, value - r: %f, g: %f, b: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
-				}
-				else if (numValues == 4)
-				{
-					printf("Color 4D Property: %s, value - r: %f, g: %f, b: %f, a: %f\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
-				}
-			}
-				break;
-			case aiPTI_Double:
-
-				propertyTypeStr = "Double";
-				material->Get<double>(aiProperty->mKey.C_Str(), 0, 0, doubleValue);
-				printf("Float Property: %s, value: %f\n", aiProperty->mKey.C_Str(), doubleValue);
-
-				break;
-			case aiPTI_String: 
-
-				propertyTypeStr = "String";
-				material->Get(aiProperty->mKey.C_Str(), 0, 0, stringValue);
-				printf("String Property: %s, value: %s\n", aiProperty->mKey.C_Str(), stringValue.C_Str());
-
-				break;
-			case aiPTI_Integer:
-			{
-				propertyTypeStr = "Integer";
-				
-				unsigned int numValues = aiProperty->mDataLength / sizeof(int);
-				int* values = (int*)aiProperty->mData;
-
-				if (numValues == 1)
-				{
-					printf("Int property: %s, value: %i\n", aiProperty->mKey.C_Str(), *values);
-				}
-				else if (numValues == 2)
-				{
-					printf("Int2 Property: %s, value - x: %i, y: %i\n", aiProperty->mKey.C_Str(), values[0], values[1]);
-				}
-				else if (numValues == 3)
-				{
-					printf("Int3 Property: %s, value - r: %i, g: %i, b: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2]);
-				}
-				else if (numValues == 4)
-				{
-					printf("Int4 Property: %s, value - r: %i, g: %i, b: %i, a: %i\n", aiProperty->mKey.C_Str(), values[0], values[1], values[2], values[3]);
-				}
-			}
-				break;
-			case aiPTI_Buffer:
-			{
-				propertyTypeStr = "Buffer";
-
-				if (std::string(aiProperty->mKey.C_Str()) == "$mat.twosided")
-				{
-					bool twoSided =  (bool)*aiProperty->mData;
-					printf("Buffer Property type: %s - %i\n", aiProperty->mKey.C_Str(), twoSided);
-				}
-			}
-				break;
-			default:
-				printf("Property type: %s - UNKNOWN\n", aiProperty->mKey.C_Str());
-				break;
-			}
-		}
-
-		printf("===========================================================================\n\n");
-	}
-
-	void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene)
-	{
-		Mesh nextMesh;
-
-
-		//@NOTE: I think this is still wrong - we're not weighting the mesh vertices based on the bone influences (if that matters)
-
-		//@NOTE: What this is doing, for the mesh we're looking at we take the local transform up to the first bone we find, then we multiply that transforms by the bind pose of the bone
-		//		 Not sure. I think the mTransformation matrices for the meshes remain the same (as the bind pose) up until they encounter the bone which is why this works
-		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
-		{
-			const aiNode* nextNode = node->mParent;
-
-			glm::mat4 bindMat = glm::mat4(1.0f);
-
-			aiNode* foundNode = nullptr;
-			while (nextNode)
-			{
-				auto iter = mBoneMap.find(nextNode->mName.C_Str());
-
-				if (iter != mBoneMap.end())
-				{
-					glm::mat4 temp = iter->second.invBindPoseMat;
-
-					bindMat = glm::inverse(temp);
-
-					break;
-				}
-				else
-				{
-					localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
-				}
-
-				nextNode = nextNode->mParent;
-			}
-
-			localTransform = bindMat * localTransform * AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
-		}
-
-		nextMesh.vertices.reserve(mesh->mNumVertices);
-
-
-		if (mesh->mNumFaces > 0)
-		{
-			nextMesh.indices.reserve(mesh->mNumFaces * 3);
-		}
-
-		nextMesh.hashName = r2::asset::GetAssetNameForFilePath(mesh->mName.C_Str(), r2::asset::MESH);
-
-		MaterialName materialName;
-
-		int materialIndex = -1;
-
-		//@NOTE(Serge): change later 
-		if (mesh->mMaterialIndex >= 0)
-		{
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			assert(material != nullptr && "Material is null!");
-
-			//@TEMPORARY - We're going to look at all the material params and see what gets packaged into them
-
-		//	PrintAllAssimpMaterialInformation(material);
-
-
-
-			if (material)
-			{
-
-			//	ProcessMaterial(mesh->mName.C_Str(), material);
-
-				const uint32_t numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
-
-				DiskAssetFile diskFile;
-
-				bool openResult = diskFile.OpenForRead(model.binaryMaterialPath.string().c_str());
-
-				assert(openResult && "Couldn't open the file!");
-
-				auto fileSize = diskFile.Size();
-
-				char* materialManifestData = new char[fileSize];
-
-				auto readSize = diskFile.Read(materialManifestData, fileSize);
-
-				assert(readSize == fileSize && "Didn't read whole file");
-
-				const auto materialManifest = flat::GetMaterialPack(materialManifestData);//flat::GetMaterialParamsPack(materialManifestData);
-				
-				if (numTextures > 0)
-				{
-					for (int i = 0; i < numTextures; ++i)
-					{
-						aiString diffuseStr;
-
-						material->GetTexture(aiTextureType_DIFFUSE, i, &diffuseStr);
-
-						fs::path diffuseTexturePath = diffuseStr.C_Str();
-
-						diffuseTexturePath.make_preferred();
-
-						fs::path diffuseTextureName = diffuseTexturePath.filename();
-
-						diffuseTextureName.replace_extension(".rtex");
-						std::string diffuseTextureNameStr = diffuseTextureName.string();
-
-						std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
-							[](unsigned char c) { return std::tolower(c); });
-
-						//now look into all the materials and find the material that matches this texture name
-
-
-						//@TODO(Serge): we've put the texture pack name into the material for each texture (we only need the diffuse/albedo texture)
-						//				thus we need to build the texture name like: texturePackNameStr() / albedo / diffuseTextureName
-
-						const auto materials = materialManifest->pack();
-
-						const auto numMaterials = materials->size();//materialManifest->pack()->size();
-						bool found = false;
-
-						for (flatbuffers::uoffset_t i = 0; i < numMaterials && !found; ++i)
-						{
-						//	const flat::MaterialParams* materialParams = materialManifest->pack()->Get(i);
-
-							const flat::Material* material = materials->Get(i);
-
-
-							const auto* textureParams = material->shaderParams()->textureParams();
-
-							for (flatbuffers::uoffset_t t = 0; t < textureParams->size() && !found; ++t)
-							{
-								//const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(t);
-								const flat::ShaderTextureParam* texParam = textureParams->Get(t);
-
-
-								if (texParam->propertyType() == flat::ShaderPropertyType_ALBEDO)
-								{
-									auto packNameStr = texParam->texturePack()->stringName()->str();//texParam->texturePackNameStr()->str();
-									
-									std::string textureNameWithParents = packNameStr + "/albedo/" + diffuseTextureNameStr;
-
-									auto textureNameID = STRING_ID(textureNameWithParents.c_str());
-
-									if (textureNameID == texParam->value()->assetName())
-									{
-										materialName.name = material->assetName()->assetName();//materialParams->name();
-										materialName.materialNameStr = material->assetName()->stringName()->str();
-										materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
-										materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
-										found = true;
-										break;
-									}
-								}
-							}
-						}
-
-						assert(found && "Couldn't find it");
-					}
-				}
-				else
-				{
-					const char* matName = material->GetName().C_Str();
-					materialName.name = STRING_ID(matName);
-					materialName.materialNameStr = matName;
-					materialName.materialPackName = materialManifest->assetName()->assetName();//materialManifest->name();
-					materialName.materialPackNameStr = materialManifest->assetName()->stringName()->str();
-				}
-
-
-				delete[] materialManifestData;
-				//r2::draw::MaterialHandle materialHandle = {};
-
-				//if (numTextures > 0)
-				//{
-				//	//find the first one that isn't invalid
-				//	for (int i = 0; i < numTextures && r2::draw::mat::IsInvalidHandle(materialHandle); ++i)
-				//	{
-				//		//@TODO(Serge): check other texture types if we don't find this one
-				//		//@TODO(Serge): what do we do if we don't have any textures?
-				//		aiString diffuseStr;
-
-				//		material->GetTexture(aiTextureType_DIFFUSE, i, &diffuseStr);
-
-
-				//		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-				//		char textureName[r2::fs::FILE_PATH_LENGTH];
-				//		r2::fs::utils::SanitizeSubPath(diffuseStr.C_Str(), sanitizedPath);
-
-				//		r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
-
-				//		char extType[r2::fs::FILE_PATH_LENGTH];
-
-				//		//@TODO(Serge): clean up this MAJOR HACK!
-				//		if (r2::fs::utils::CopyFileExtension(textureName, extType))
-				//		{
-				//			if (strcmp(extType, RTEX_EXT.c_str()) != 0)
-				//			{
-				//				r2::fs::utils::SetNewExtension(textureName, RTEX_EXT.c_str());
-				//			}
-				//		}
-
-				//		r2::draw::tex::Texture tex;
-				//		materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
-				//	}
-				//}
-				//else
-				//{
-				//	const char* matName = material->GetName().C_Str();
-
-				//	auto matNameID = STRING_ID(matName);
-
-				//	materialHandle = r2::draw::matsys::FindMaterialHandle(matNameID);
-				//}
-
-				if (materialName.name != 0 && materialName.materialPackName != 0)//materialName != 0 && materialPackName != 0)
-				{
-					bool found = false;
-
-					auto numMaterialHandles = model.materialNames.size();
-
-					for (uint64_t i = 0; i < numMaterialHandles; ++i)
-					{
-						auto nextMatHandle = model.materialNames[i];
-
-						if (nextMatHandle.name == materialName.name && nextMatHandle.materialPackName == materialName.materialPackName)
-						{
-							materialIndex = i;
-							found = true;
-							break;
-						}
-					}
-
-					if (!found)
-					{
-						materialIndex = numMaterialHandles;
-						model.materialNames.push_back(materialName);
-					}
-				}
-				else
-				{
-					assert(false && "Failed to load the material for the mesh");
-				}
-
-			}
-		}
-
-		assert(materialIndex != -1 && "We should have a material for the mesh!");
-
-		assert(materialName.name != 0 && "We should have a proper material");
-		assert(materialName.materialPackName != 0 && "We should have a proper material");
-
-		nextMesh.materialIndex = materialIndex;
-
-		for (uint32_t i = 0; i < mesh->mNumVertices; ++i)
-		{
-			Vertex nextVertex;
-
-			nextVertex.position = localTransform * glm::vec4(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z), 1.0);
-
-			if (mesh->mNormals)
-			{
-				nextVertex.normal = glm::mat3(glm::transpose(glm::inverse(localTransform))) * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-			}
-
-			if (mesh->mTextureCoords)
-			{
-				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, materialIndex);
-			}
-
-			if (mesh->mTangents)
-			{
-				nextVertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-				//		printf("nextVertex.tangent - x: %f, y: %f, z: %f\n", nextVertex.tangent.x, nextVertex.tangent.y, nextVertex.tangent.y);
-			}
-
-			//if (mesh->mBitangents)
-			//{
-			//	nextVertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
-			//}
-			nextMesh.vertices.push_back(nextVertex);
-		}
-
-		//u32 indexOffsetToUse = indexOffset;
-		for (uint32_t i = 0; i < mesh->mNumFaces; ++i)
-		{
-			aiFace face = mesh->mFaces[i];
-			for (uint32_t j = 0; j < face.mNumIndices; ++j)
-			{
-				uint32_t nextIndex = face.mIndices[j];
-				//	printf("face.mIndices[j] + indexOffsetToUse: %zu\n", nextIndex);
-				//r2::sarr::Push(*nextMeshPtr->optrIndices, nextIndex);
-				nextMesh.indices.push_back(nextIndex);
-				//if (nextIndex > indexOffset)
-				//{
-				//	indexOffset = nextIndex;
-				//}
-			}
-
-		}
-
-		//		indexOffset++;
-
-		model.meshes.push_back(nextMesh);
-		//r2::sarr::Push(*model.optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
-	}
-
-	void ProcessNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene)
-	{
-		//process all of the node's meshes
-		for (uint32_t i = 0; i < node->mNumMeshes; ++i)
-		{
-			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
-			ProcessMeshForModel(model, mesh, meshIndex, node, scene);
-
-			++meshIndex;
-		}
-
-		//then do the same for each of its children
-		for (uint32_t i = 0; i < node->mNumChildren; ++i)
-		{
-			ProcessNode(model, node->mChildren[i], meshIndex, scene);
-		}
-	}
-
-	void ProcessBones(Model& model, uint32_t baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
-	{
-		const aiMesh* meshToUse = mesh;
-		//printf("Num bones: %zu\n", meshToUse->mNumBones);
-
-		for (uint32_t i = 0; i < meshToUse->mNumBones; ++i)
-		{
-			int boneIndex = -1;
-			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-			//		printf("boneNameStr name: %s\n", boneNameStr.c_str());
-
-			uint64_t boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
-
-			//int theDefault = -1;
-			//s32 result = r2::shashmap::Get(*model.boneMapping, boneName, theDefault);
-
-
-			auto result = model.boneMapping.find(boneName);
-
-			if (result == model.boneMapping.end())
-			{
-				boneIndex = model.boneInfo.size();//(u32)r2::sarr::Size(*model.boneInfo);
-				BoneInfo info;
-				info.offsetTransform = AssimpMat4ToGLMMat4(meshToUse->mBones[i]->mOffsetMatrix);
-				model.boneInfo.push_back(info);
-
-				model.boneMapping[boneName] = boneIndex;
-			}
-			else
-			{
-				boneIndex = result->second;
-			}
-
-			//	printf("boneIndex: %i\n", boneIndex);
-
-			size_t numWeights = meshToUse->mBones[i]->mNumWeights;
-
-			for (uint32_t j = 0; j < numWeights; ++j)
-			{
-				uint32_t vertexID = baseVertex + meshToUse->mBones[i]->mWeights[j].mVertexId;
-
-				float currentWeightTotal = 0.0f;
-				for (uint32_t k = 0; k < MAX_BONE_WEIGHTS; ++k)
-				{
-					currentWeightTotal += model.boneData[vertexID].boneWeights[k];
-
-					if (!NearEq(currentWeightTotal, 1.0f) && NearEq(model.boneData[vertexID].boneWeights[k], 0.0f))
-					{
-						model.boneData[vertexID].boneIDs[k] = boneIndex;
-						model.boneData[vertexID].boneWeights[k] = meshToUse->mBones[i]->mWeights[j].mWeight;
-						break;
-					}
-				}
-			}
-		}
-
-		if (meshToUse->mNumBones == 0)
-		{
-			//manually find the bone that goes with this guy
-			const aiNode* nodeToUse = node->mParent;
-
-			while (nodeToUse)
-			{
-				uint64_t boneName = STRING_ID(nodeToUse->mName.C_Str());
-				
-				//s32 boneIndex = r2::shashmap::Get(*model.boneMapping, boneName, theDefault);
-
-				auto boneIter = model.boneMapping.find(boneName);
-
-				if (boneIter != model.boneMapping.end())
-				{
-					for (uint64_t i = 0; i < meshToUse->mNumVertices; ++i)
-					{
-						uint32_t vertexID = baseVertex + i;
-
-						model.boneData[vertexID].boneIDs[0] = boneIter->second;
-						model.boneData[vertexID].boneWeights[0] = 1.0;
-					}
-
-					break;
-				}
-				else
-				{
-					nodeToUse = nodeToUse->mParent;
-				}
-			}
-		}
-	}
-
-	void ProcessAnimNode(Model& model, aiNode* node, uint32_t& meshIndex, const aiScene* scene, Skeleton& skeleton, int parentDebugBone, uint32_t& numVertices)
-	{
-		for (uint32_t i = 0; i < node->mNumMeshes; ++i)
-		{
-			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
-			ProcessMeshForModel(model, mesh, meshIndex, node, scene);
-
-			ProcessBones(model, numVertices, mesh, node, scene);
-
-			numVertices += mesh->mNumVertices;
-
-			++meshIndex;
-		}
-
-		auto iter = mBoneNecessityMap.find(node->mName.C_Str());
-		if (iter != mBoneNecessityMap.end())
-		{
-			skeleton.mJointNames.push_back(STRING_ID(node->mName.C_Str()));
-			skeleton.mRestPoseTransforms.push_back(AssimpMat4ToTransform(node->mTransformation));
-
-			int jointIndex = (int)skeleton.mJointNames.size() - 1;
-
-			const Joint& joint = mJoints[jointIndex];
-
-			skeleton.mParents.push_back(joint.parentIndex);
-
-			//#ifdef R2_DEBUG
-			//			skeleton.mDebugBoneNames.push_back(node->mName.C_Str());
-			//#endif // R2_DEBUG
-
-			auto realBoneIter = mBoneMap.find(node->mName.C_Str());
-			if (realBoneIter != mBoneMap.end())
-			{
-			//	r2::sarr::At(*skeleton.mRealParentBones, jointIndex) = parentDebugBone;
-
-				skeleton.mRealParentBones[jointIndex] = parentDebugBone;
-
-				parentDebugBone = jointIndex;
-			}
-		}
-
-		for (uint32_t i = 0; i < node->mNumChildren; ++i)
-		{
-			ProcessAnimNode(model, node->mChildren[i], meshIndex, scene, model.skeleton, parentDebugBone, numVertices);
+		default:
+			return flat::InterpolationType_LINEAR;
 		}
 	}
 
@@ -2710,24 +3499,28 @@ namespace r2::assets::assetlib
 
 		//Make the animation meta data here
 		std::vector<flatbuffers::Offset<flat::RAnimationMetaData>> animationsMetaData;
-		animationsMetaData.reserve(model.animations.size());
+		animationsMetaData.reserve(model.clips.size());
 
-		for (const auto& animation : model.animations)
+		char animationName[256];
+
+		for (const auto& clip : model.clips)
 		{
 			std::vector<flatbuffers::Offset<flat::RChannelMetaData>> channelMetaDatas;
-			channelMetaDatas.reserve(animation.channels.size());
-			for (const auto& channel : animation.channels)
+			channelMetaDatas.reserve(clip.mTracks.size());
+			for (const auto& track : clip.mTracks)
 			{
-				channelMetaDatas.push_back(flat::CreateRChannelMetaData(builder, channel.positionKeys.size(), channel.scaleKeys.size(), channel.rotationKeys.size()));
+				channelMetaDatas.push_back(flat::CreateRChannelMetaData(builder, track.mPosition.mFrames.size(), track.mScale.mFrames.size(), track.mRotation.mFrames.size()));
 			}
+
+			asset::MakeAssetNameStringForFilePath(clip.mAnimationName.c_str(), animationName, r2::asset::RANIMATION);
 
 			auto metaData = flat::CreateRAnimationMetaData(
 				builder,
-				animation.animationName,
-				animation.duration,
-				animation.ticksPerSecond,
+				STRING_ID(animationName),
+				clip.mEndTime - clip.mStartTime, //this is now duration in seconds
+				0, //Ticks per second - This doesn't exist anymore - just 0
 				builder.CreateVector(channelMetaDatas),
-				builder.CreateString(animation.originalPath));
+				builder.CreateString(animationName));
 
 			animationsMetaData.push_back(metaData);
 		}
@@ -2746,7 +3539,7 @@ namespace r2::assets::assetlib
 			totalIndices,
 			model.boneData.size() > 0,
 			flat::CreateBoneMetaData(builder, model.boneData.size(), model.boneInfo.size()),
-			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNames.size(), model.skeleton.mParents.size(), model.skeleton.mRestPoseTransforms.size(), model.skeleton.mBindPoseTransforms.size()),
+			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNameStrings.size(), model.skeleton.mBindPose.parents.size(), model.skeleton.mRestPose.joints.size(), model.skeleton.mBindPose.joints.size()),
 			builder.CreateString(model.originalPath),
 			builder.CreateVector(animationsMetaData)); 
 
@@ -2789,10 +3582,7 @@ namespace r2::assets::assetlib
 
 			meshData[i].resize(compressedSize);
 
-
 			flatMeshes.push_back(flat::CreateRMesh(dataBuilder, mesh.materialIndex, dataBuilder.CreateVector(meshData[i])));
-
-
 		}
 
 		const auto numMaterialsInModel = model.materialNames.size();
@@ -2813,12 +3603,13 @@ namespace r2::assets::assetlib
 		{
 			std::vector<flat::BoneData> flatBoneDatas;
 			std::vector<flat::BoneInfo> flatBoneInfos;
+			std::vector<int32_t> flatParents;
 			std::vector<flat::Transform> flatRestPoseTransforms;
 			std::vector<flat::Transform> flatBindPoseTransforms;
 			std::vector<uint64_t> flatJointNames;
-			std::vector<int32_t> flatParents;
-			std::vector<int32_t> flatRealParentBones;
-			std::vector<flat::BoneMapEntry> flatBoneMapEntries;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> flatJointNameStrings;
+			
+			assert(model.skeleton.mBindPose.parents.size() == model.skeleton.mRestPose.parents.size() && "Should always be the case");
 
 			const auto numBoneDatas = model.boneData.size();
 
@@ -2838,104 +3629,120 @@ namespace r2::assets::assetlib
 				const auto& nextBoneInfo = model.boneInfo[i];
 
 				flat::BoneInfo flatBoneInfo;
-				flatBoneInfo.mutable_offsetTransform() = ToFlatMatrix4(model.boneInfo[i].offsetTransform);
+				flatBoneInfo.mutable_offsetTransform() = ToFlatMatrix4(model.boneInfo[i]);
 
 				flatBoneInfos.push_back(flatBoneInfo);
 			}
 
-			for (size_t i = 0; i < model.skeleton.mRestPoseTransforms.size(); ++i)
+			for (size_t i = 0; i < model.skeleton.mRestPose.joints.size(); ++i)
 			{
-				const auto& restPoseTransform = model.skeleton.mRestPoseTransforms[i];
+				const auto& restPoseTransform = model.skeleton.mRestPose.joints[i];
 
-				flatRestPoseTransforms.push_back(ToFlatTransform(model.skeleton.mRestPoseTransforms[i]));
+				flatRestPoseTransforms.push_back(ToFlatTransform(restPoseTransform));
 			}
 
-			for (size_t i = 0; i < model.skeleton.mBindPoseTransforms.size(); ++i)
+			for (size_t i = 0; i < model.skeleton.mBindPose.joints.size(); ++i)
 			{
-				const auto& bindPoseTransform = model.skeleton.mBindPoseTransforms[i];
+				const auto& bindPoseTransform = model.skeleton.mBindPose.joints[i];
 
-				flatBindPoseTransforms.push_back(ToFlatTransform(model.skeleton.mBindPoseTransforms[i]));
+				flatBindPoseTransforms.push_back(ToFlatTransform(bindPoseTransform));
 			}
 
-			for (size_t i = 0; i < model.skeleton.mJointNames.size(); ++i)
+			for (size_t i = 0; i < model.skeleton.mJointNameStrings.size(); ++i)
 			{
-				flatJointNames.push_back(model.skeleton.mJointNames[i]);
+				flatJointNames.push_back(STRING_ID( model.skeleton.mJointNameStrings[i].c_str()));
 			}
 
-			for (size_t i = 0; i < model.skeleton.mParents.size(); ++i)
+			for (size_t i = 0; i < model.skeleton.mJointNameStrings.size(); ++i)
 			{
-				flatParents.push_back(model.skeleton.mParents[i]);
+				flatJointNameStrings.push_back(dataBuilder.CreateString(model.skeleton.mJointNameStrings[i]));
 			}
 
-			for (size_t i = 0; i < model.skeleton.mRealParentBones.size(); ++i)
+			for (size_t i = 0; i < model.skeleton.mBindPose.parents.size(); ++i)
 			{
-				flatRealParentBones.push_back(model.skeleton.mRealParentBones[i]);
-			}
-
-			auto boneMapIter = model.boneMapping.begin();
-
-			for (; boneMapIter != model.boneMapping.end(); boneMapIter++)
-			{
-				flat::BoneMapEntry flatBoneMapEntry(boneMapIter->first, boneMapIter->second);
-				flatBoneMapEntries.push_back(flatBoneMapEntry);
+				flatParents.push_back(model.skeleton.mBindPose.parents[i]);
 			}
 
 			animationData = flat::CreateAnimationData(
 				dataBuilder,
 				dataBuilder.CreateVectorOfStructs(flatBoneDatas),
 				dataBuilder.CreateVectorOfStructs(flatBoneInfos),
-				dataBuilder.CreateVectorOfStructs(flatBoneMapEntries),
-				dataBuilder.CreateVector(flatJointNames),
 				dataBuilder.CreateVector(flatParents),
 				dataBuilder.CreateVectorOfStructs(flatRestPoseTransforms),
 				dataBuilder.CreateVectorOfStructs(flatBindPoseTransforms),
-				dataBuilder.CreateVector(flatRealParentBones));
+				dataBuilder.CreateVector(flatJointNames),
+				dataBuilder.CreateVector(flatJointNameStrings));
 		}
 
 		std::vector<flatbuffers::Offset<flat::RAnimation>> flatAnimations;
 
-		for (const auto& animation : model.animations)
+		for (const auto& clip : model.clips)
 		{
-			std::vector<flatbuffers::Offset<flat::Channel>> channels;
+			std::vector<flatbuffers::Offset<flat::TransformTrack>> transformTracks;
 
-			for (const auto& channel : animation.channels)
+			for (const auto& track : clip.mTracks)
 			{
 				std::vector<flat::VectorKey> flatPositionKeys;
 				std::vector<flat::VectorKey> flatScaleKeys;
 				std::vector<flat::RotationKey> flatRotationKeys;
 
-				for (const auto& positionKey : channel.positionKeys)
+				for (const auto& frame : track.mPosition.mFrames)
 				{
-					flat::VectorKey pKey(positionKey.time, flat::Vertex3(positionKey.value.x, positionKey.value.y, positionKey.value.z));
+					flat::VectorKey pKey;
+					pKey.mutate_time(frame.mTime);
+					pKey.mutable_value() = flat::Vertex3(frame.mValue.x, frame.mValue.y, frame.mValue.z);
+					pKey.mutable_in() = flat::Vertex3(frame.mIn.x, frame.mIn.y, frame.mIn.z);
+					pKey.mutable_out() = flat::Vertex3(frame.mOut.x, frame.mOut.y, frame.mOut.z);
+
 					flatPositionKeys.push_back(pKey);
 				}
 
-				for (const auto& scaleKey : channel.scaleKeys)
+				for (const auto& frame : track.mScale.mFrames)
 				{
-					flat::VectorKey sKey(scaleKey.time, flat::Vertex3(scaleKey.value.x, scaleKey.value.y, scaleKey.value.z));
-					flatScaleKeys.push_back(sKey);
+					flat::VectorKey pKey;
+					pKey.mutate_time(frame.mTime);
+					pKey.mutable_value() = flat::Vertex3(frame.mValue.x, frame.mValue.y, frame.mValue.z);
+					pKey.mutable_in() = flat::Vertex3(frame.mIn.x, frame.mIn.y, frame.mIn.z);
+					pKey.mutable_out() = flat::Vertex3(frame.mOut.x, frame.mOut.y, frame.mOut.z);
+
+					flatScaleKeys.push_back(pKey);
 				}
 
-				for (const auto& rotationKey : channel.rotationKeys)
+				for (const auto& frame : track.mRotation.mFrames)
 				{
-					flat::RotationKey rKey(rotationKey.time, flat::Quaternion(rotationKey.quat.x, rotationKey.quat.y, rotationKey.quat.z, rotationKey.quat.w));
+					flat::RotationKey rKey;
+					rKey.mutate_time(frame.mTime);
+					rKey.mutable_value() = flat::Quaternion(frame.mValue.x, frame.mValue.y, frame.mValue.z, frame.mValue.w);
+					rKey.mutable_in() = flat::Quaternion(frame.mIn.x, frame.mIn.y, frame.mIn.z, frame.mIn.w);
+					rKey.mutable_out() = flat::Quaternion(frame.mOut.x, frame.mOut.y, frame.mOut.z, frame.mOut.w);
+
 					flatRotationKeys.push_back(rKey);
 				}
 
-				channels.push_back(
-					flat::CreateChannel(
-						dataBuilder,
-						channel.channelName,
-						dataBuilder.CreateVectorOfStructs(flatPositionKeys),
-						dataBuilder.CreateVectorOfStructs(flatScaleKeys),
-						dataBuilder.CreateVectorOfStructs(flatRotationKeys)));
+				auto positionTrackInfo = flat::CreateTrackInfo(dataBuilder, GetInterpolationType(track.mPosition.interpolation), track.mPosition.mNumberOfSamples, dataBuilder.CreateVector(track.mPosition.mSampledFrames));
+				auto positionTrack = flat::CreateVectorTrack(dataBuilder, dataBuilder.CreateVectorOfStructs(flatPositionKeys), positionTrackInfo);
+
+				auto scaleTrackInfo = flat::CreateTrackInfo(dataBuilder, GetInterpolationType(track.mScale.interpolation), track.mScale.mNumberOfSamples, dataBuilder.CreateVector(track.mScale.mSampledFrames));
+				auto scaleTrack = flat::CreateVectorTrack(dataBuilder, dataBuilder.CreateVectorOfStructs(flatScaleKeys), scaleTrackInfo);
+
+				auto rotationTrackInfo = flat::CreateTrackInfo(dataBuilder, GetInterpolationType(track.mRotation.interpolation), track.mRotation.mNumberOfSamples, dataBuilder.CreateVector(track.mRotation.mSampledFrames));
+				auto rotationTrack = flat::CreateQuaternionTrack(dataBuilder, dataBuilder.CreateVectorOfStructs(flatRotationKeys), rotationTrackInfo);
+
+				auto flatTransformTrack = flat::CreateTransformTrack(dataBuilder, track.mJointID, positionTrack, rotationTrack, scaleTrack, track.GetStartTime(), track.GetEndTime());
+				
+				transformTracks.push_back(flatTransformTrack);
 			}
 
-			auto flatAnimationData = flat::CreateRAnimation(dataBuilder, animation.animationName, animation.duration, animation.ticksPerSecond, dataBuilder.CreateVector(channels));
+			asset::MakeAssetNameStringForFilePath(clip.mAnimationName.c_str(), animationName, r2::asset::RANIMATION);
+
+			//@TODO(Serge): UUID
+			auto animationAssetName = flat::CreateAssetName(dataBuilder, 0, STRING_ID(animationName), dataBuilder.CreateString(animationName));
+			auto flatAnimationData = flat::CreateRAnimation(dataBuilder, animationAssetName, clip.mStartTime, clip.mEndTime, dataBuilder.CreateVector(transformTracks));
 
 			flatAnimations.push_back(flatAnimationData);
 		}
 
+		//@TODO(Serge): UUID
 		auto modelAssetName2 = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(model.modelName.c_str(), r2::asset::RMODEL), builder.CreateString(model.modelName));
 
 		const auto rmodel = flat::CreateRModel(
@@ -2955,7 +3762,6 @@ namespace r2::assets::assetlib
 		DiskAssetFile assetFile;
 		assetFile.SetFreeDataBlob(false);
 		pack_model(assetFile, metaDataBuf, metaDataSize, modelData, modelDataSize);
-
 
 		if (!std::filesystem::exists(outputPath))
 		{
@@ -2978,115 +3784,105 @@ namespace r2::assets::assetlib
 	}
 
 
-	void ProcessMaterialTextureForType(const aiMaterial* assimpMaterial, aiTextureType textureType, std::vector<std::string>& textureNames)
-	{
-		const uint32_t numDiffuseTextures = aiGetMaterialTextureCount(assimpMaterial, textureType);
+	//void ProcessMaterialTextureForType(const aiMaterial* assimpMaterial, aiTextureType textureType, std::vector<std::string>& textureNames)
+	//{
+	//	const uint32_t numDiffuseTextures = aiGetMaterialTextureCount(assimpMaterial, textureType);
 
-		for (int i = 0; i < numDiffuseTextures; ++i)
-		{
-			aiString diffuseStr;
+	//	for (int i = 0; i < numDiffuseTextures; ++i)
+	//	{
+	//		aiString diffuseStr;
 
-			assimpMaterial->GetTexture(textureType, i, &diffuseStr);
+	//		assimpMaterial->GetTexture(textureType, i, &diffuseStr);
 
-			fs::path diffuseTexturePath = diffuseStr.C_Str();
+	//		fs::path diffuseTexturePath = diffuseStr.C_Str();
 
-			diffuseTexturePath.make_preferred();
+	//		diffuseTexturePath.make_preferred();
 
-			//fs::path diffuseTextureName = diffuseTexturePath.filename();
+	//		//fs::path diffuseTextureName = diffuseTexturePath.filename();
 
-			diffuseTexturePath.replace_extension(".rtex");
-			std::string diffuseTextureNameStr = diffuseTexturePath.string();
+	//		diffuseTexturePath.replace_extension(".rtex");
+	//		std::string diffuseTextureNameStr = diffuseTexturePath.string();
 
-			std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
-				[](unsigned char c) { return std::tolower(c); });
+	//		std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
+	//			[](unsigned char c) { return std::tolower(c); });
 
-			textureNames.push_back(diffuseTextureNameStr);
-		}
-	}
-
-
-	void PrintTextureNames(const std::string& modelName, const std::string& name, const std::vector<std::string>& textures)
-	{
-		printf("========================================\n");
-		printf("%s - %s: \n", modelName.c_str(), name.c_str());
-		printf("========================================\n");
-		for (const auto& texture : textures)
-		{
-			printf("%s\n", texture.c_str());
-		}
-		printf("========================================\n\n");
-	}
-
-	void ProcessMaterial(const std::string& modelName, aiMaterial* assimpMaterial)
-	{
-		//printf("Model Name: %s\n\n", modelName.c_str());
-		//printf("----------------------------------\n");
-
-		std::vector<std::string> diffuseTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE, diffuseTextures);
-		PrintTextureNames(modelName, "Diffuse Textures", diffuseTextures);
-
-		std::vector<std::string> normalTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMALS, normalTextures);
-		PrintTextureNames(modelName, "Normal Textures", normalTextures);
-
-		std::vector<std::string> emissiveTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_EMISSIVE, emissiveTextures);
-		PrintTextureNames(modelName, "Emissive Textures", emissiveTextures);
-
-		std::vector<std::string> heightTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_HEIGHT, heightTextures);
-		PrintTextureNames(modelName, "Height Textures", heightTextures);
-
-		std::vector<std::string> ambientOcclusionTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_AMBIENT_OCCLUSION, ambientOcclusionTextures);
-		PrintTextureNames(modelName, "Ambient Occlusion Textures", ambientOcclusionTextures);
-
-		std::vector<std::string> metallicTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_METALNESS, metallicTextures);
-		PrintTextureNames(modelName, "Metallic Textures", metallicTextures);
-
-		std::vector<std::string> roughnessTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE_ROUGHNESS, roughnessTextures);
-		PrintTextureNames(modelName, "Roughness Textures", roughnessTextures);
-		
-		std::vector<std::string> specularTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMAL_CAMERA, specularTextures);
-		PrintTextureNames(modelName, "Normal Camera Textures", specularTextures);
+	//		textureNames.push_back(diffuseTextureNameStr);
+	//	}
+	//}
 
 
-		std::vector<std::string> unknownTextures;
-		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_UNKNOWN, unknownTextures);
-		PrintTextureNames(modelName, "Unknown Textures", unknownTextures);
+	//void PrintTextureNames(const std::string& modelName, const std::string& name, const std::vector<std::string>& textures)
+	//{
+	//	printf("========================================\n");
+	//	printf("%s - %s: \n", modelName.c_str(), name.c_str());
+	//	printf("========================================\n");
+	//	for (const auto& texture : textures)
+	//	{
+	//		printf("%s\n", texture.c_str());
+	//	}
+	//	printf("========================================\n\n");
+	//}
 
-		/*
-		enum TextureType
-		{
-			Diffuse = 0,
-			Emissive,
-			Normal,
-			Metallic,
-			Height,
-			Roughness,
-			Occlusion,
-			Anisotropy,
-			Detail,
-			ClearCoat,
-			ClearCoatRoughness,
-			ClearCoatNormal,
-			Cubemap,
-			NUM_TEXTURE_TYPES
-		};
-		*/
-	}
+	//void ProcessMaterial(const std::string& modelName, aiMaterial* assimpMaterial)
+	//{
+	//	//printf("Model Name: %s\n\n", modelName.c_str());
+	//	//printf("----------------------------------\n");
 
-	
+	//	std::vector<std::string> diffuseTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE, diffuseTextures);
+	//	PrintTextureNames(modelName, "Diffuse Textures", diffuseTextures);
+
+	//	std::vector<std::string> normalTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMALS, normalTextures);
+	//	PrintTextureNames(modelName, "Normal Textures", normalTextures);
+
+	//	std::vector<std::string> emissiveTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_EMISSIVE, emissiveTextures);
+	//	PrintTextureNames(modelName, "Emissive Textures", emissiveTextures);
+
+	//	std::vector<std::string> heightTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_HEIGHT, heightTextures);
+	//	PrintTextureNames(modelName, "Height Textures", heightTextures);
+
+	//	std::vector<std::string> ambientOcclusionTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_AMBIENT_OCCLUSION, ambientOcclusionTextures);
+	//	PrintTextureNames(modelName, "Ambient Occlusion Textures", ambientOcclusionTextures);
+
+	//	std::vector<std::string> metallicTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_METALNESS, metallicTextures);
+	//	PrintTextureNames(modelName, "Metallic Textures", metallicTextures);
+
+	//	std::vector<std::string> roughnessTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE_ROUGHNESS, roughnessTextures);
+	//	PrintTextureNames(modelName, "Roughness Textures", roughnessTextures);
+	//	
+	//	std::vector<std::string> specularTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMAL_CAMERA, specularTextures);
+	//	PrintTextureNames(modelName, "Normal Camera Textures", specularTextures);
 
 
+	//	std::vector<std::string> unknownTextures;
+	//	ProcessMaterialTextureForType(assimpMaterial, aiTextureType_UNKNOWN, unknownTextures);
+	//	PrintTextureNames(modelName, "Unknown Textures", unknownTextures);
 
-
-
-
-
-
+	//	/*
+	//	enum TextureType
+	//	{
+	//		Diffuse = 0,
+	//		Emissive,
+	//		Normal,
+	//		Metallic,
+	//		Height,
+	//		Roughness,
+	//		Occlusion,
+	//		Anisotropy,
+	//		Detail,
+	//		ClearCoat,
+	//		ClearCoatRoughness,
+	//		ClearCoatNormal,
+	//		Cubemap,
+	//		NUM_TEXTURE_TYPES
+	//	};
+	//	*/
+	//}
 }

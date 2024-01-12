@@ -6,21 +6,69 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "AssetName_generated.h"
 #include "Mesh_generated.h"
 
 namespace flat {
 
 struct Quaternion;
 
+struct ScalarKey;
+
 struct VectorKey;
 
 struct RotationKey;
 
-struct Channel;
-struct ChannelBuilder;
+struct TrackInfo;
+struct TrackInfoBuilder;
+
+struct ScalarTrack;
+struct ScalarTrackBuilder;
+
+struct VectorTrack;
+struct VectorTrackBuilder;
+
+struct QuaternionTrack;
+struct QuaternionTrackBuilder;
+
+struct TransformTrack;
+struct TransformTrackBuilder;
 
 struct RAnimation;
 struct RAnimationBuilder;
+
+enum InterpolationType {
+  InterpolationType_CONSTANT = 0,
+  InterpolationType_LINEAR = 1,
+  InterpolationType_CUBIC = 2,
+  InterpolationType_MIN = InterpolationType_CONSTANT,
+  InterpolationType_MAX = InterpolationType_CUBIC
+};
+
+inline const InterpolationType (&EnumValuesInterpolationType())[3] {
+  static const InterpolationType values[] = {
+    InterpolationType_CONSTANT,
+    InterpolationType_LINEAR,
+    InterpolationType_CUBIC
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesInterpolationType() {
+  static const char * const names[4] = {
+    "CONSTANT",
+    "LINEAR",
+    "CUBIC",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameInterpolationType(InterpolationType e) {
+  if (flatbuffers::IsOutRange(e, InterpolationType_CONSTANT, InterpolationType_CUBIC)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesInterpolationType()[index];
+}
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Quaternion FLATBUFFERS_FINAL_CLASS {
  private:
@@ -66,19 +114,67 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Quaternion FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(Quaternion, 16);
 
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) ScalarKey FLATBUFFERS_FINAL_CLASS {
+ private:
+  double time_;
+  double value_;
+  double in_;
+  double out_;
+
+ public:
+  ScalarKey() {
+    memset(static_cast<void *>(this), 0, sizeof(ScalarKey));
+  }
+  ScalarKey(double _time, double _value, double _in, double _out)
+      : time_(flatbuffers::EndianScalar(_time)),
+        value_(flatbuffers::EndianScalar(_value)),
+        in_(flatbuffers::EndianScalar(_in)),
+        out_(flatbuffers::EndianScalar(_out)) {
+  }
+  double time() const {
+    return flatbuffers::EndianScalar(time_);
+  }
+  void mutate_time(double _time) {
+    flatbuffers::WriteScalar(&time_, _time);
+  }
+  double value() const {
+    return flatbuffers::EndianScalar(value_);
+  }
+  void mutate_value(double _value) {
+    flatbuffers::WriteScalar(&value_, _value);
+  }
+  double in() const {
+    return flatbuffers::EndianScalar(in_);
+  }
+  void mutate_in(double _in) {
+    flatbuffers::WriteScalar(&in_, _in);
+  }
+  double out() const {
+    return flatbuffers::EndianScalar(out_);
+  }
+  void mutate_out(double _out) {
+    flatbuffers::WriteScalar(&out_, _out);
+  }
+};
+FLATBUFFERS_STRUCT_END(ScalarKey, 32);
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) VectorKey FLATBUFFERS_FINAL_CLASS {
  private:
   double time_;
   flat::Vertex3 value_;
+  flat::Vertex3 in_;
+  flat::Vertex3 out_;
   int32_t padding0__;
 
  public:
   VectorKey() {
     memset(static_cast<void *>(this), 0, sizeof(VectorKey));
   }
-  VectorKey(double _time, const flat::Vertex3 &_value)
+  VectorKey(double _time, const flat::Vertex3 &_value, const flat::Vertex3 &_in, const flat::Vertex3 &_out)
       : time_(flatbuffers::EndianScalar(_time)),
         value_(_value),
+        in_(_in),
+        out_(_out),
         padding0__(0) {
     (void)padding0__;
   }
@@ -94,21 +190,37 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) VectorKey FLATBUFFERS_FINAL_CLASS {
   flat::Vertex3 &mutable_value() {
     return value_;
   }
+  const flat::Vertex3 &in() const {
+    return in_;
+  }
+  flat::Vertex3 &mutable_in() {
+    return in_;
+  }
+  const flat::Vertex3 &out() const {
+    return out_;
+  }
+  flat::Vertex3 &mutable_out() {
+    return out_;
+  }
 };
-FLATBUFFERS_STRUCT_END(VectorKey, 24);
+FLATBUFFERS_STRUCT_END(VectorKey, 48);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) RotationKey FLATBUFFERS_FINAL_CLASS {
  private:
   double time_;
   flat::Quaternion value_;
+  flat::Quaternion in_;
+  flat::Quaternion out_;
 
  public:
   RotationKey() {
     memset(static_cast<void *>(this), 0, sizeof(RotationKey));
   }
-  RotationKey(double _time, const flat::Quaternion &_value)
+  RotationKey(double _time, const flat::Quaternion &_value, const flat::Quaternion &_in, const flat::Quaternion &_out)
       : time_(flatbuffers::EndianScalar(_time)),
-        value_(_value) {
+        value_(_value),
+        in_(_in),
+        out_(_out) {
   }
   double time() const {
     return flatbuffers::EndianScalar(time_);
@@ -122,153 +234,473 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) RotationKey FLATBUFFERS_FINAL_CLASS {
   flat::Quaternion &mutable_value() {
     return value_;
   }
+  const flat::Quaternion &in() const {
+    return in_;
+  }
+  flat::Quaternion &mutable_in() {
+    return in_;
+  }
+  const flat::Quaternion &out() const {
+    return out_;
+  }
+  flat::Quaternion &mutable_out() {
+    return out_;
+  }
 };
-FLATBUFFERS_STRUCT_END(RotationKey, 24);
+FLATBUFFERS_STRUCT_END(RotationKey, 56);
 
-struct Channel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef ChannelBuilder Builder;
+struct TrackInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef TrackInfoBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_CHANNELNAME = 4,
-    VT_POSITIONKEYS = 6,
-    VT_SCALEKEYS = 8,
-    VT_ROTATIONKEYS = 10
+    VT_INTERPOLATION = 4,
+    VT_NUMBEROFSAMPLES = 6,
+    VT_SAMPLEDKEYS = 8
   };
-  uint64_t channelName() const {
-    return GetField<uint64_t>(VT_CHANNELNAME, 0);
+  flat::InterpolationType interpolation() const {
+    return static_cast<flat::InterpolationType>(GetField<uint8_t>(VT_INTERPOLATION, 0));
   }
-  bool mutate_channelName(uint64_t _channelName) {
-    return SetField<uint64_t>(VT_CHANNELNAME, _channelName, 0);
+  bool mutate_interpolation(flat::InterpolationType _interpolation) {
+    return SetField<uint8_t>(VT_INTERPOLATION, static_cast<uint8_t>(_interpolation), 0);
   }
-  const flatbuffers::Vector<const flat::VectorKey *> *positionKeys() const {
-    return GetPointer<const flatbuffers::Vector<const flat::VectorKey *> *>(VT_POSITIONKEYS);
+  uint32_t numberOfSamples() const {
+    return GetField<uint32_t>(VT_NUMBEROFSAMPLES, 0);
   }
-  flatbuffers::Vector<const flat::VectorKey *> *mutable_positionKeys() {
-    return GetPointer<flatbuffers::Vector<const flat::VectorKey *> *>(VT_POSITIONKEYS);
+  bool mutate_numberOfSamples(uint32_t _numberOfSamples) {
+    return SetField<uint32_t>(VT_NUMBEROFSAMPLES, _numberOfSamples, 0);
   }
-  const flatbuffers::Vector<const flat::VectorKey *> *scaleKeys() const {
-    return GetPointer<const flatbuffers::Vector<const flat::VectorKey *> *>(VT_SCALEKEYS);
+  const flatbuffers::Vector<uint32_t> *sampledKeys() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_SAMPLEDKEYS);
   }
-  flatbuffers::Vector<const flat::VectorKey *> *mutable_scaleKeys() {
-    return GetPointer<flatbuffers::Vector<const flat::VectorKey *> *>(VT_SCALEKEYS);
-  }
-  const flatbuffers::Vector<const flat::RotationKey *> *rotationKeys() const {
-    return GetPointer<const flatbuffers::Vector<const flat::RotationKey *> *>(VT_ROTATIONKEYS);
-  }
-  flatbuffers::Vector<const flat::RotationKey *> *mutable_rotationKeys() {
-    return GetPointer<flatbuffers::Vector<const flat::RotationKey *> *>(VT_ROTATIONKEYS);
+  flatbuffers::Vector<uint32_t> *mutable_sampledKeys() {
+    return GetPointer<flatbuffers::Vector<uint32_t> *>(VT_SAMPLEDKEYS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_CHANNELNAME) &&
-           VerifyOffset(verifier, VT_POSITIONKEYS) &&
-           verifier.VerifyVector(positionKeys()) &&
-           VerifyOffset(verifier, VT_SCALEKEYS) &&
-           verifier.VerifyVector(scaleKeys()) &&
-           VerifyOffset(verifier, VT_ROTATIONKEYS) &&
-           verifier.VerifyVector(rotationKeys()) &&
+           VerifyField<uint8_t>(verifier, VT_INTERPOLATION) &&
+           VerifyField<uint32_t>(verifier, VT_NUMBEROFSAMPLES) &&
+           VerifyOffset(verifier, VT_SAMPLEDKEYS) &&
+           verifier.VerifyVector(sampledKeys()) &&
            verifier.EndTable();
   }
 };
 
-struct ChannelBuilder {
-  typedef Channel Table;
+struct TrackInfoBuilder {
+  typedef TrackInfo Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_channelName(uint64_t channelName) {
-    fbb_.AddElement<uint64_t>(Channel::VT_CHANNELNAME, channelName, 0);
+  void add_interpolation(flat::InterpolationType interpolation) {
+    fbb_.AddElement<uint8_t>(TrackInfo::VT_INTERPOLATION, static_cast<uint8_t>(interpolation), 0);
   }
-  void add_positionKeys(flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> positionKeys) {
-    fbb_.AddOffset(Channel::VT_POSITIONKEYS, positionKeys);
+  void add_numberOfSamples(uint32_t numberOfSamples) {
+    fbb_.AddElement<uint32_t>(TrackInfo::VT_NUMBEROFSAMPLES, numberOfSamples, 0);
   }
-  void add_scaleKeys(flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> scaleKeys) {
-    fbb_.AddOffset(Channel::VT_SCALEKEYS, scaleKeys);
+  void add_sampledKeys(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> sampledKeys) {
+    fbb_.AddOffset(TrackInfo::VT_SAMPLEDKEYS, sampledKeys);
   }
-  void add_rotationKeys(flatbuffers::Offset<flatbuffers::Vector<const flat::RotationKey *>> rotationKeys) {
-    fbb_.AddOffset(Channel::VT_ROTATIONKEYS, rotationKeys);
-  }
-  explicit ChannelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit TrackInfoBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ChannelBuilder &operator=(const ChannelBuilder &);
-  flatbuffers::Offset<Channel> Finish() {
+  TrackInfoBuilder &operator=(const TrackInfoBuilder &);
+  flatbuffers::Offset<TrackInfo> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Channel>(end);
+    auto o = flatbuffers::Offset<TrackInfo>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Channel> CreateChannel(
+inline flatbuffers::Offset<TrackInfo> CreateTrackInfo(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t channelName = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> positionKeys = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> scaleKeys = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const flat::RotationKey *>> rotationKeys = 0) {
-  ChannelBuilder builder_(_fbb);
-  builder_.add_channelName(channelName);
-  builder_.add_rotationKeys(rotationKeys);
-  builder_.add_scaleKeys(scaleKeys);
-  builder_.add_positionKeys(positionKeys);
+    flat::InterpolationType interpolation = flat::InterpolationType_CONSTANT,
+    uint32_t numberOfSamples = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> sampledKeys = 0) {
+  TrackInfoBuilder builder_(_fbb);
+  builder_.add_sampledKeys(sampledKeys);
+  builder_.add_numberOfSamples(numberOfSamples);
+  builder_.add_interpolation(interpolation);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Channel> CreateChannelDirect(
+inline flatbuffers::Offset<TrackInfo> CreateTrackInfoDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t channelName = 0,
-    const std::vector<flat::VectorKey> *positionKeys = nullptr,
-    const std::vector<flat::VectorKey> *scaleKeys = nullptr,
-    const std::vector<flat::RotationKey> *rotationKeys = nullptr) {
-  auto positionKeys__ = positionKeys ? _fbb.CreateVectorOfStructs<flat::VectorKey>(*positionKeys) : 0;
-  auto scaleKeys__ = scaleKeys ? _fbb.CreateVectorOfStructs<flat::VectorKey>(*scaleKeys) : 0;
-  auto rotationKeys__ = rotationKeys ? _fbb.CreateVectorOfStructs<flat::RotationKey>(*rotationKeys) : 0;
-  return flat::CreateChannel(
+    flat::InterpolationType interpolation = flat::InterpolationType_CONSTANT,
+    uint32_t numberOfSamples = 0,
+    const std::vector<uint32_t> *sampledKeys = nullptr) {
+  auto sampledKeys__ = sampledKeys ? _fbb.CreateVector<uint32_t>(*sampledKeys) : 0;
+  return flat::CreateTrackInfo(
       _fbb,
-      channelName,
-      positionKeys__,
-      scaleKeys__,
-      rotationKeys__);
+      interpolation,
+      numberOfSamples,
+      sampledKeys__);
+}
+
+struct ScalarTrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ScalarTrackBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_KEYS = 4,
+    VT_TRACKINFO = 6
+  };
+  const flatbuffers::Vector<const flat::ScalarKey *> *keys() const {
+    return GetPointer<const flatbuffers::Vector<const flat::ScalarKey *> *>(VT_KEYS);
+  }
+  flatbuffers::Vector<const flat::ScalarKey *> *mutable_keys() {
+    return GetPointer<flatbuffers::Vector<const flat::ScalarKey *> *>(VT_KEYS);
+  }
+  const flat::TrackInfo *trackInfo() const {
+    return GetPointer<const flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  flat::TrackInfo *mutable_trackInfo() {
+    return GetPointer<flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_KEYS) &&
+           verifier.VerifyVector(keys()) &&
+           VerifyOffset(verifier, VT_TRACKINFO) &&
+           verifier.VerifyTable(trackInfo()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ScalarTrackBuilder {
+  typedef ScalarTrack Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_keys(flatbuffers::Offset<flatbuffers::Vector<const flat::ScalarKey *>> keys) {
+    fbb_.AddOffset(ScalarTrack::VT_KEYS, keys);
+  }
+  void add_trackInfo(flatbuffers::Offset<flat::TrackInfo> trackInfo) {
+    fbb_.AddOffset(ScalarTrack::VT_TRACKINFO, trackInfo);
+  }
+  explicit ScalarTrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ScalarTrackBuilder &operator=(const ScalarTrackBuilder &);
+  flatbuffers::Offset<ScalarTrack> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ScalarTrack>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ScalarTrack> CreateScalarTrack(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<const flat::ScalarKey *>> keys = 0,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  ScalarTrackBuilder builder_(_fbb);
+  builder_.add_trackInfo(trackInfo);
+  builder_.add_keys(keys);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ScalarTrack> CreateScalarTrackDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flat::ScalarKey> *keys = nullptr,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  auto keys__ = keys ? _fbb.CreateVectorOfStructs<flat::ScalarKey>(*keys) : 0;
+  return flat::CreateScalarTrack(
+      _fbb,
+      keys__,
+      trackInfo);
+}
+
+struct VectorTrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef VectorTrackBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_KEYS = 4,
+    VT_TRACKINFO = 6
+  };
+  const flatbuffers::Vector<const flat::VectorKey *> *keys() const {
+    return GetPointer<const flatbuffers::Vector<const flat::VectorKey *> *>(VT_KEYS);
+  }
+  flatbuffers::Vector<const flat::VectorKey *> *mutable_keys() {
+    return GetPointer<flatbuffers::Vector<const flat::VectorKey *> *>(VT_KEYS);
+  }
+  const flat::TrackInfo *trackInfo() const {
+    return GetPointer<const flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  flat::TrackInfo *mutable_trackInfo() {
+    return GetPointer<flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_KEYS) &&
+           verifier.VerifyVector(keys()) &&
+           VerifyOffset(verifier, VT_TRACKINFO) &&
+           verifier.VerifyTable(trackInfo()) &&
+           verifier.EndTable();
+  }
+};
+
+struct VectorTrackBuilder {
+  typedef VectorTrack Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_keys(flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> keys) {
+    fbb_.AddOffset(VectorTrack::VT_KEYS, keys);
+  }
+  void add_trackInfo(flatbuffers::Offset<flat::TrackInfo> trackInfo) {
+    fbb_.AddOffset(VectorTrack::VT_TRACKINFO, trackInfo);
+  }
+  explicit VectorTrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  VectorTrackBuilder &operator=(const VectorTrackBuilder &);
+  flatbuffers::Offset<VectorTrack> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<VectorTrack>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<VectorTrack> CreateVectorTrack(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<const flat::VectorKey *>> keys = 0,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  VectorTrackBuilder builder_(_fbb);
+  builder_.add_trackInfo(trackInfo);
+  builder_.add_keys(keys);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<VectorTrack> CreateVectorTrackDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flat::VectorKey> *keys = nullptr,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  auto keys__ = keys ? _fbb.CreateVectorOfStructs<flat::VectorKey>(*keys) : 0;
+  return flat::CreateVectorTrack(
+      _fbb,
+      keys__,
+      trackInfo);
+}
+
+struct QuaternionTrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef QuaternionTrackBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_KEYS = 4,
+    VT_TRACKINFO = 6
+  };
+  const flatbuffers::Vector<const flat::RotationKey *> *keys() const {
+    return GetPointer<const flatbuffers::Vector<const flat::RotationKey *> *>(VT_KEYS);
+  }
+  flatbuffers::Vector<const flat::RotationKey *> *mutable_keys() {
+    return GetPointer<flatbuffers::Vector<const flat::RotationKey *> *>(VT_KEYS);
+  }
+  const flat::TrackInfo *trackInfo() const {
+    return GetPointer<const flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  flat::TrackInfo *mutable_trackInfo() {
+    return GetPointer<flat::TrackInfo *>(VT_TRACKINFO);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_KEYS) &&
+           verifier.VerifyVector(keys()) &&
+           VerifyOffset(verifier, VT_TRACKINFO) &&
+           verifier.VerifyTable(trackInfo()) &&
+           verifier.EndTable();
+  }
+};
+
+struct QuaternionTrackBuilder {
+  typedef QuaternionTrack Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_keys(flatbuffers::Offset<flatbuffers::Vector<const flat::RotationKey *>> keys) {
+    fbb_.AddOffset(QuaternionTrack::VT_KEYS, keys);
+  }
+  void add_trackInfo(flatbuffers::Offset<flat::TrackInfo> trackInfo) {
+    fbb_.AddOffset(QuaternionTrack::VT_TRACKINFO, trackInfo);
+  }
+  explicit QuaternionTrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  QuaternionTrackBuilder &operator=(const QuaternionTrackBuilder &);
+  flatbuffers::Offset<QuaternionTrack> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<QuaternionTrack>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<QuaternionTrack> CreateQuaternionTrack(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<const flat::RotationKey *>> keys = 0,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  QuaternionTrackBuilder builder_(_fbb);
+  builder_.add_trackInfo(trackInfo);
+  builder_.add_keys(keys);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<QuaternionTrack> CreateQuaternionTrackDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flat::RotationKey> *keys = nullptr,
+    flatbuffers::Offset<flat::TrackInfo> trackInfo = 0) {
+  auto keys__ = keys ? _fbb.CreateVectorOfStructs<flat::RotationKey>(*keys) : 0;
+  return flat::CreateQuaternionTrack(
+      _fbb,
+      keys__,
+      trackInfo);
+}
+
+struct TransformTrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef TransformTrackBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_JOINTID = 4,
+    VT_POSITIONTRACK = 6,
+    VT_ROTATIONTRACK = 8,
+    VT_SCALETRACK = 10,
+    VT_STARTTIME = 12,
+    VT_ENDTIME = 14
+  };
+  int32_t jointID() const {
+    return GetField<int32_t>(VT_JOINTID, 0);
+  }
+  bool mutate_jointID(int32_t _jointID) {
+    return SetField<int32_t>(VT_JOINTID, _jointID, 0);
+  }
+  const flat::VectorTrack *positionTrack() const {
+    return GetPointer<const flat::VectorTrack *>(VT_POSITIONTRACK);
+  }
+  flat::VectorTrack *mutable_positionTrack() {
+    return GetPointer<flat::VectorTrack *>(VT_POSITIONTRACK);
+  }
+  const flat::QuaternionTrack *rotationTrack() const {
+    return GetPointer<const flat::QuaternionTrack *>(VT_ROTATIONTRACK);
+  }
+  flat::QuaternionTrack *mutable_rotationTrack() {
+    return GetPointer<flat::QuaternionTrack *>(VT_ROTATIONTRACK);
+  }
+  const flat::VectorTrack *scaleTrack() const {
+    return GetPointer<const flat::VectorTrack *>(VT_SCALETRACK);
+  }
+  flat::VectorTrack *mutable_scaleTrack() {
+    return GetPointer<flat::VectorTrack *>(VT_SCALETRACK);
+  }
+  float startTime() const {
+    return GetField<float>(VT_STARTTIME, 0.0f);
+  }
+  bool mutate_startTime(float _startTime) {
+    return SetField<float>(VT_STARTTIME, _startTime, 0.0f);
+  }
+  float endTime() const {
+    return GetField<float>(VT_ENDTIME, 0.0f);
+  }
+  bool mutate_endTime(float _endTime) {
+    return SetField<float>(VT_ENDTIME, _endTime, 0.0f);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_JOINTID) &&
+           VerifyOffset(verifier, VT_POSITIONTRACK) &&
+           verifier.VerifyTable(positionTrack()) &&
+           VerifyOffset(verifier, VT_ROTATIONTRACK) &&
+           verifier.VerifyTable(rotationTrack()) &&
+           VerifyOffset(verifier, VT_SCALETRACK) &&
+           verifier.VerifyTable(scaleTrack()) &&
+           VerifyField<float>(verifier, VT_STARTTIME) &&
+           VerifyField<float>(verifier, VT_ENDTIME) &&
+           verifier.EndTable();
+  }
+};
+
+struct TransformTrackBuilder {
+  typedef TransformTrack Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_jointID(int32_t jointID) {
+    fbb_.AddElement<int32_t>(TransformTrack::VT_JOINTID, jointID, 0);
+  }
+  void add_positionTrack(flatbuffers::Offset<flat::VectorTrack> positionTrack) {
+    fbb_.AddOffset(TransformTrack::VT_POSITIONTRACK, positionTrack);
+  }
+  void add_rotationTrack(flatbuffers::Offset<flat::QuaternionTrack> rotationTrack) {
+    fbb_.AddOffset(TransformTrack::VT_ROTATIONTRACK, rotationTrack);
+  }
+  void add_scaleTrack(flatbuffers::Offset<flat::VectorTrack> scaleTrack) {
+    fbb_.AddOffset(TransformTrack::VT_SCALETRACK, scaleTrack);
+  }
+  void add_startTime(float startTime) {
+    fbb_.AddElement<float>(TransformTrack::VT_STARTTIME, startTime, 0.0f);
+  }
+  void add_endTime(float endTime) {
+    fbb_.AddElement<float>(TransformTrack::VT_ENDTIME, endTime, 0.0f);
+  }
+  explicit TransformTrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  TransformTrackBuilder &operator=(const TransformTrackBuilder &);
+  flatbuffers::Offset<TransformTrack> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<TransformTrack>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<TransformTrack> CreateTransformTrack(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t jointID = 0,
+    flatbuffers::Offset<flat::VectorTrack> positionTrack = 0,
+    flatbuffers::Offset<flat::QuaternionTrack> rotationTrack = 0,
+    flatbuffers::Offset<flat::VectorTrack> scaleTrack = 0,
+    float startTime = 0.0f,
+    float endTime = 0.0f) {
+  TransformTrackBuilder builder_(_fbb);
+  builder_.add_endTime(endTime);
+  builder_.add_startTime(startTime);
+  builder_.add_scaleTrack(scaleTrack);
+  builder_.add_rotationTrack(rotationTrack);
+  builder_.add_positionTrack(positionTrack);
+  builder_.add_jointID(jointID);
+  return builder_.Finish();
 }
 
 struct RAnimation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RAnimationBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ANIMATIONNAME = 4,
-    VT_DURATIONINTICKS = 6,
-    VT_TICKSPERSECONDS = 8,
-    VT_CHANNELS = 10
+    VT_ASSETNAME = 4,
+    VT_STARTTIME = 6,
+    VT_ENDTIME = 8,
+    VT_TRACKS = 10
   };
-  uint64_t animationName() const {
-    return GetField<uint64_t>(VT_ANIMATIONNAME, 0);
+  const flat::AssetName *assetName() const {
+    return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
   }
-  bool mutate_animationName(uint64_t _animationName) {
-    return SetField<uint64_t>(VT_ANIMATIONNAME, _animationName, 0);
+  flat::AssetName *mutable_assetName() {
+    return GetPointer<flat::AssetName *>(VT_ASSETNAME);
   }
-  double durationInTicks() const {
-    return GetField<double>(VT_DURATIONINTICKS, 0.0);
+  float startTime() const {
+    return GetField<float>(VT_STARTTIME, 0.0f);
   }
-  bool mutate_durationInTicks(double _durationInTicks) {
-    return SetField<double>(VT_DURATIONINTICKS, _durationInTicks, 0.0);
+  bool mutate_startTime(float _startTime) {
+    return SetField<float>(VT_STARTTIME, _startTime, 0.0f);
   }
-  double ticksPerSeconds() const {
-    return GetField<double>(VT_TICKSPERSECONDS, 0.0);
+  float endTime() const {
+    return GetField<float>(VT_ENDTIME, 0.0f);
   }
-  bool mutate_ticksPerSeconds(double _ticksPerSeconds) {
-    return SetField<double>(VT_TICKSPERSECONDS, _ticksPerSeconds, 0.0);
+  bool mutate_endTime(float _endTime) {
+    return SetField<float>(VT_ENDTIME, _endTime, 0.0f);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::Channel>> *channels() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::Channel>> *>(VT_CHANNELS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>> *tracks() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>> *>(VT_TRACKS);
   }
-  flatbuffers::Vector<flatbuffers::Offset<flat::Channel>> *mutable_channels() {
-    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::Channel>> *>(VT_CHANNELS);
+  flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>> *mutable_tracks() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>> *>(VT_TRACKS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_ANIMATIONNAME) &&
-           VerifyField<double>(verifier, VT_DURATIONINTICKS) &&
-           VerifyField<double>(verifier, VT_TICKSPERSECONDS) &&
-           VerifyOffset(verifier, VT_CHANNELS) &&
-           verifier.VerifyVector(channels()) &&
-           verifier.VerifyVectorOfTables(channels()) &&
+           VerifyOffset(verifier, VT_ASSETNAME) &&
+           verifier.VerifyTable(assetName()) &&
+           VerifyField<float>(verifier, VT_STARTTIME) &&
+           VerifyField<float>(verifier, VT_ENDTIME) &&
+           VerifyOffset(verifier, VT_TRACKS) &&
+           verifier.VerifyVector(tracks()) &&
+           verifier.VerifyVectorOfTables(tracks()) &&
            verifier.EndTable();
   }
 };
@@ -277,17 +709,17 @@ struct RAnimationBuilder {
   typedef RAnimation Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_animationName(uint64_t animationName) {
-    fbb_.AddElement<uint64_t>(RAnimation::VT_ANIMATIONNAME, animationName, 0);
+  void add_assetName(flatbuffers::Offset<flat::AssetName> assetName) {
+    fbb_.AddOffset(RAnimation::VT_ASSETNAME, assetName);
   }
-  void add_durationInTicks(double durationInTicks) {
-    fbb_.AddElement<double>(RAnimation::VT_DURATIONINTICKS, durationInTicks, 0.0);
+  void add_startTime(float startTime) {
+    fbb_.AddElement<float>(RAnimation::VT_STARTTIME, startTime, 0.0f);
   }
-  void add_ticksPerSeconds(double ticksPerSeconds) {
-    fbb_.AddElement<double>(RAnimation::VT_TICKSPERSECONDS, ticksPerSeconds, 0.0);
+  void add_endTime(float endTime) {
+    fbb_.AddElement<float>(RAnimation::VT_ENDTIME, endTime, 0.0f);
   }
-  void add_channels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::Channel>>> channels) {
-    fbb_.AddOffset(RAnimation::VT_CHANNELS, channels);
+  void add_tracks(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>>> tracks) {
+    fbb_.AddOffset(RAnimation::VT_TRACKS, tracks);
   }
   explicit RAnimationBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -303,31 +735,31 @@ struct RAnimationBuilder {
 
 inline flatbuffers::Offset<RAnimation> CreateRAnimation(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t animationName = 0,
-    double durationInTicks = 0.0,
-    double ticksPerSeconds = 0.0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::Channel>>> channels = 0) {
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    float startTime = 0.0f,
+    float endTime = 0.0f,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::TransformTrack>>> tracks = 0) {
   RAnimationBuilder builder_(_fbb);
-  builder_.add_ticksPerSeconds(ticksPerSeconds);
-  builder_.add_durationInTicks(durationInTicks);
-  builder_.add_animationName(animationName);
-  builder_.add_channels(channels);
+  builder_.add_tracks(tracks);
+  builder_.add_endTime(endTime);
+  builder_.add_startTime(startTime);
+  builder_.add_assetName(assetName);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<RAnimation> CreateRAnimationDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t animationName = 0,
-    double durationInTicks = 0.0,
-    double ticksPerSeconds = 0.0,
-    const std::vector<flatbuffers::Offset<flat::Channel>> *channels = nullptr) {
-  auto channels__ = channels ? _fbb.CreateVector<flatbuffers::Offset<flat::Channel>>(*channels) : 0;
+    flatbuffers::Offset<flat::AssetName> assetName = 0,
+    float startTime = 0.0f,
+    float endTime = 0.0f,
+    const std::vector<flatbuffers::Offset<flat::TransformTrack>> *tracks = nullptr) {
+  auto tracks__ = tracks ? _fbb.CreateVector<flatbuffers::Offset<flat::TransformTrack>>(*tracks) : 0;
   return flat::CreateRAnimation(
       _fbb,
-      animationName,
-      durationInTicks,
-      ticksPerSeconds,
-      channels__);
+      assetName,
+      startTime,
+      endTime,
+      tracks__);
 }
 
 inline const flat::RAnimation *GetRAnimation(const void *buf) {

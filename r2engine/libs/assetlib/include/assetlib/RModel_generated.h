@@ -29,8 +29,6 @@ struct BoneData;
 
 struct BoneInfo;
 
-struct BoneMapEntry;
-
 struct AnimationData;
 struct AnimationDataBuilder;
 
@@ -184,37 +182,6 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) BoneInfo FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(BoneInfo, 64);
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) BoneMapEntry FLATBUFFERS_FINAL_CLASS {
- private:
-  uint64_t key_;
-  int32_t val_;
-  int32_t padding0__;
-
- public:
-  BoneMapEntry() {
-    memset(static_cast<void *>(this), 0, sizeof(BoneMapEntry));
-  }
-  BoneMapEntry(uint64_t _key, int32_t _val)
-      : key_(flatbuffers::EndianScalar(_key)),
-        val_(flatbuffers::EndianScalar(_val)),
-        padding0__(0) {
-    (void)padding0__;
-  }
-  uint64_t key() const {
-    return flatbuffers::EndianScalar(key_);
-  }
-  void mutate_key(uint64_t _key) {
-    flatbuffers::WriteScalar(&key_, _key);
-  }
-  int32_t val() const {
-    return flatbuffers::EndianScalar(val_);
-  }
-  void mutate_val(int32_t _val) {
-    flatbuffers::WriteScalar(&val_, _val);
-  }
-};
-FLATBUFFERS_STRUCT_END(BoneMapEntry, 16);
-
 struct RMesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RMeshBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -290,12 +257,11 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_BONEDATA = 4,
     VT_BONEINFO = 6,
-    VT_BONEMAPPING = 8,
-    VT_JOINTNAMES = 10,
-    VT_PARENTS = 12,
-    VT_RESTPOSETRANSFORMS = 14,
-    VT_BINDPOSETRANSFORMS = 16,
-    VT_REALPARENTBONES = 18
+    VT_PARENTS = 8,
+    VT_RESTPOSETRANSFORMS = 10,
+    VT_BINDPOSETRANSFORMS = 12,
+    VT_JOINTNAMES = 14,
+    VT_JOINTNAMESTRINGS = 16
   };
   const flatbuffers::Vector<const flat::BoneData *> *boneData() const {
     return GetPointer<const flatbuffers::Vector<const flat::BoneData *> *>(VT_BONEDATA);
@@ -308,18 +274,6 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   flatbuffers::Vector<const flat::BoneInfo *> *mutable_boneInfo() {
     return GetPointer<flatbuffers::Vector<const flat::BoneInfo *> *>(VT_BONEINFO);
-  }
-  const flatbuffers::Vector<const flat::BoneMapEntry *> *boneMapping() const {
-    return GetPointer<const flatbuffers::Vector<const flat::BoneMapEntry *> *>(VT_BONEMAPPING);
-  }
-  flatbuffers::Vector<const flat::BoneMapEntry *> *mutable_boneMapping() {
-    return GetPointer<flatbuffers::Vector<const flat::BoneMapEntry *> *>(VT_BONEMAPPING);
-  }
-  const flatbuffers::Vector<uint64_t> *jointNames() const {
-    return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_JOINTNAMES);
-  }
-  flatbuffers::Vector<uint64_t> *mutable_jointNames() {
-    return GetPointer<flatbuffers::Vector<uint64_t> *>(VT_JOINTNAMES);
   }
   const flatbuffers::Vector<int32_t> *parents() const {
     return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_PARENTS);
@@ -339,11 +293,17 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<const flat::Transform *> *mutable_bindPoseTransforms() {
     return GetPointer<flatbuffers::Vector<const flat::Transform *> *>(VT_BINDPOSETRANSFORMS);
   }
-  const flatbuffers::Vector<int32_t> *realParentBones() const {
-    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_REALPARENTBONES);
+  const flatbuffers::Vector<uint64_t> *jointNames() const {
+    return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_JOINTNAMES);
   }
-  flatbuffers::Vector<int32_t> *mutable_realParentBones() {
-    return GetPointer<flatbuffers::Vector<int32_t> *>(VT_REALPARENTBONES);
+  flatbuffers::Vector<uint64_t> *mutable_jointNames() {
+    return GetPointer<flatbuffers::Vector<uint64_t> *>(VT_JOINTNAMES);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *jointNameStrings() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_JOINTNAMESTRINGS);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *mutable_jointNameStrings() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_JOINTNAMESTRINGS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -351,18 +311,17 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(boneData()) &&
            VerifyOffset(verifier, VT_BONEINFO) &&
            verifier.VerifyVector(boneInfo()) &&
-           VerifyOffset(verifier, VT_BONEMAPPING) &&
-           verifier.VerifyVector(boneMapping()) &&
-           VerifyOffset(verifier, VT_JOINTNAMES) &&
-           verifier.VerifyVector(jointNames()) &&
            VerifyOffset(verifier, VT_PARENTS) &&
            verifier.VerifyVector(parents()) &&
            VerifyOffset(verifier, VT_RESTPOSETRANSFORMS) &&
            verifier.VerifyVector(restPoseTransforms()) &&
            VerifyOffset(verifier, VT_BINDPOSETRANSFORMS) &&
            verifier.VerifyVector(bindPoseTransforms()) &&
-           VerifyOffset(verifier, VT_REALPARENTBONES) &&
-           verifier.VerifyVector(realParentBones()) &&
+           VerifyOffset(verifier, VT_JOINTNAMES) &&
+           verifier.VerifyVector(jointNames()) &&
+           VerifyOffset(verifier, VT_JOINTNAMESTRINGS) &&
+           verifier.VerifyVector(jointNameStrings()) &&
+           verifier.VerifyVectorOfStrings(jointNameStrings()) &&
            verifier.EndTable();
   }
 };
@@ -377,12 +336,6 @@ struct AnimationDataBuilder {
   void add_boneInfo(flatbuffers::Offset<flatbuffers::Vector<const flat::BoneInfo *>> boneInfo) {
     fbb_.AddOffset(AnimationData::VT_BONEINFO, boneInfo);
   }
-  void add_boneMapping(flatbuffers::Offset<flatbuffers::Vector<const flat::BoneMapEntry *>> boneMapping) {
-    fbb_.AddOffset(AnimationData::VT_BONEMAPPING, boneMapping);
-  }
-  void add_jointNames(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames) {
-    fbb_.AddOffset(AnimationData::VT_JOINTNAMES, jointNames);
-  }
   void add_parents(flatbuffers::Offset<flatbuffers::Vector<int32_t>> parents) {
     fbb_.AddOffset(AnimationData::VT_PARENTS, parents);
   }
@@ -392,8 +345,11 @@ struct AnimationDataBuilder {
   void add_bindPoseTransforms(flatbuffers::Offset<flatbuffers::Vector<const flat::Transform *>> bindPoseTransforms) {
     fbb_.AddOffset(AnimationData::VT_BINDPOSETRANSFORMS, bindPoseTransforms);
   }
-  void add_realParentBones(flatbuffers::Offset<flatbuffers::Vector<int32_t>> realParentBones) {
-    fbb_.AddOffset(AnimationData::VT_REALPARENTBONES, realParentBones);
+  void add_jointNames(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames) {
+    fbb_.AddOffset(AnimationData::VT_JOINTNAMES, jointNames);
+  }
+  void add_jointNameStrings(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> jointNameStrings) {
+    fbb_.AddOffset(AnimationData::VT_JOINTNAMESTRINGS, jointNameStrings);
   }
   explicit AnimationDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -411,19 +367,17 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<const flat::BoneData *>> boneData = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::BoneInfo *>> boneInfo = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const flat::BoneMapEntry *>> boneMapping = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> parents = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Transform *>> restPoseTransforms = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Transform *>> bindPoseTransforms = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int32_t>> realParentBones = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> jointNameStrings = 0) {
   AnimationDataBuilder builder_(_fbb);
-  builder_.add_realParentBones(realParentBones);
+  builder_.add_jointNameStrings(jointNameStrings);
+  builder_.add_jointNames(jointNames);
   builder_.add_bindPoseTransforms(bindPoseTransforms);
   builder_.add_restPoseTransforms(restPoseTransforms);
   builder_.add_parents(parents);
-  builder_.add_jointNames(jointNames);
-  builder_.add_boneMapping(boneMapping);
   builder_.add_boneInfo(boneInfo);
   builder_.add_boneData(boneData);
   return builder_.Finish();
@@ -433,30 +387,27 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<flat::BoneData> *boneData = nullptr,
     const std::vector<flat::BoneInfo> *boneInfo = nullptr,
-    const std::vector<flat::BoneMapEntry> *boneMapping = nullptr,
-    const std::vector<uint64_t> *jointNames = nullptr,
     const std::vector<int32_t> *parents = nullptr,
     const std::vector<flat::Transform> *restPoseTransforms = nullptr,
     const std::vector<flat::Transform> *bindPoseTransforms = nullptr,
-    const std::vector<int32_t> *realParentBones = nullptr) {
+    const std::vector<uint64_t> *jointNames = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *jointNameStrings = nullptr) {
   auto boneData__ = boneData ? _fbb.CreateVectorOfStructs<flat::BoneData>(*boneData) : 0;
   auto boneInfo__ = boneInfo ? _fbb.CreateVectorOfStructs<flat::BoneInfo>(*boneInfo) : 0;
-  auto boneMapping__ = boneMapping ? _fbb.CreateVectorOfStructs<flat::BoneMapEntry>(*boneMapping) : 0;
-  auto jointNames__ = jointNames ? _fbb.CreateVector<uint64_t>(*jointNames) : 0;
   auto parents__ = parents ? _fbb.CreateVector<int32_t>(*parents) : 0;
   auto restPoseTransforms__ = restPoseTransforms ? _fbb.CreateVectorOfStructs<flat::Transform>(*restPoseTransforms) : 0;
   auto bindPoseTransforms__ = bindPoseTransforms ? _fbb.CreateVectorOfStructs<flat::Transform>(*bindPoseTransforms) : 0;
-  auto realParentBones__ = realParentBones ? _fbb.CreateVector<int32_t>(*realParentBones) : 0;
+  auto jointNames__ = jointNames ? _fbb.CreateVector<uint64_t>(*jointNames) : 0;
+  auto jointNameStrings__ = jointNameStrings ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*jointNameStrings) : 0;
   return flat::CreateAnimationData(
       _fbb,
       boneData__,
       boneInfo__,
-      boneMapping__,
-      jointNames__,
       parents__,
       restPoseTransforms__,
       bindPoseTransforms__,
-      realParentBones__);
+      jointNames__,
+      jointNameStrings__);
 }
 
 struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
