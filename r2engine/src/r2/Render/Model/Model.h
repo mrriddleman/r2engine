@@ -17,8 +17,6 @@ namespace r2::draw
 {
 	struct Animation;
 
-#define MAX_BONE_WEIGHTS 4
-
 	struct BoneData
 	{
 		glm::vec4 boneWeights = glm::vec4(0.0f);

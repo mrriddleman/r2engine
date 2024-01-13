@@ -57,6 +57,21 @@ namespace r2::math
     {
         return v1 < v2 || NearEq(v1, v2);
     }
+
+    inline float AdjustHermiteResult(float f)
+    {
+        return f;
+    }
+
+    inline glm::vec3 AdjustHermiteResult(const glm::vec3& v)
+    {
+        return v;
+    }
+
+    inline glm::quat AdjustHermiteResult(const glm::quat& q)
+    {
+        return glm::normalize(q);
+    }
 }
 
 #endif /* MathUtils_h */
