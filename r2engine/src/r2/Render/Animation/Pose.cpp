@@ -130,6 +130,12 @@ namespace r2::anim
 
 			return newPose;
 		}
+
+		void SetLocalTransform(Pose& pose, u32 index, const math::Transform& transform)
+		{
+			pose.mJointTransforms->mData[index] = transform;
+		}
+
 	}
 
 	u32 Pose::MemorySize(u32 numJoints, r2::mem::utils::MemoryProperties& memProperties)

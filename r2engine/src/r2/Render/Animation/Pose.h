@@ -33,6 +33,7 @@ namespace r2::anim
 
 		math::Transform GetLocalTransform(const Pose& pose, u32 index);
 		math::Transform GetGlobalTransform(const Pose& pose, u32 index);
+		void SetLocalTransform(Pose& pose, u32 index, const math::Transform& transform);
 
 		void GetMatrixPalette(const Pose& pose, r2::SArray<glm::mat4>* out, u32 offset);
 
