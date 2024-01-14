@@ -1904,6 +1904,12 @@ namespace r2::assets::assetlib
 
 		skeleton.UpdateInverseBindPose();
 
+		//check for parents
+		for (size_t i= 0; i < restPose.parents.size(); ++i)
+		{
+			assert(restPose.parents[i] == bindPose.parents[i] && "We're assuming this atm");
+		}
+
 		return boneMap;
 	}
 	

@@ -22,7 +22,7 @@ namespace r2::anim
 		r2::SArray<math::Transform>* mJointTransforms = nullptr;
 		r2::SArray<s32>* mParents = nullptr;
 
-		static u32 MemorySize(u32 numJoints, r2::mem::utils::MemoryProperties& memProperties);
+		static u32 MemorySize(u32 numJoints, const r2::mem::utils::MemoryProperties& memProperties);
 	};
 
 	namespace pose

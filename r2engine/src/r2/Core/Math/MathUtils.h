@@ -12,6 +12,11 @@
 #include "glm/gtc/quaternion.hpp"
 #include <cmath>
 
+namespace flat
+{
+    struct Matrix4;
+}
+
 namespace r2::math
 {
     const float EPSILON = 0.00001f;
@@ -72,6 +77,8 @@ namespace r2::math
     {
         return glm::normalize(q);
     }
+
+    glm::mat4 GetGLMMatrix4FromFlatMatrix(const flat::Matrix4* mat);
 }
 
 #endif /* MathUtils_h */

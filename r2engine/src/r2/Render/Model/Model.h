@@ -73,24 +73,6 @@ namespace r2::draw
 		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 boneInfoSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
-	//struct AnimModel
-	//{
- //       Model model;
-	//	r2::SArray<BoneData>* boneData = nullptr;
-	//	r2::SArray<BoneInfo>* boneInfo = nullptr;
-
-	//	//r2::SArray<Animation>* animations = nullptr;
- ////       r2::SArray<Animation>* noptrAddedAnimations = nullptr;
-	//	r2::SHashMap<s32>* boneMapping = nullptr;
-	//	
- //       Skeleton skeleton;
-
- //       //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
- //       static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
-	//	//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
- //       static u64 MemorySizeNoData(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
-	//};
-
 	struct DebugBone
 	{
 		glm::vec3 p0;

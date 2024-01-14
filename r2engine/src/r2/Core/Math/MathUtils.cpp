@@ -6,7 +6,7 @@
 //
 #include "r2pch.h"
 #include "MathUtils.h"
-
+#include "assetlib/RModel_generated.h"
 
 namespace r2::math
 {   
@@ -79,5 +79,18 @@ namespace r2::math
     {
         return glm::normalize(from + (to - from) * t);
     }
-    
+
+	glm::mat4 GetGLMMatrix4FromFlatMatrix(const flat::Matrix4* mat)
+	{
+		glm::mat4 glmMat;
+
+		glmMat[0] = glm::vec4(mat->cols()->Get(0)->v()->Get(0), mat->cols()->Get(0)->v()->Get(1), mat->cols()->Get(0)->v()->Get(2), mat->cols()->Get(0)->v()->Get(3));
+		glmMat[1] = glm::vec4(mat->cols()->Get(1)->v()->Get(0), mat->cols()->Get(1)->v()->Get(1), mat->cols()->Get(1)->v()->Get(2), mat->cols()->Get(1)->v()->Get(3));
+		glmMat[2] = glm::vec4(mat->cols()->Get(2)->v()->Get(0), mat->cols()->Get(2)->v()->Get(1), mat->cols()->Get(2)->v()->Get(2), mat->cols()->Get(2)->v()->Get(3));
+		glmMat[3] = glm::vec4(mat->cols()->Get(3)->v()->Get(0), mat->cols()->Get(3)->v()->Get(1), mat->cols()->Get(3)->v()->Get(2), mat->cols()->Get(3)->v()->Get(3));
+
+		return glmMat;
+	}
+
+
 }

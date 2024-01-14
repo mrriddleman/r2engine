@@ -11,24 +11,13 @@
 #include "r2/Render/Animation/Animation.h"
 #include <glm/glm.hpp>
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
+#include "r2/Core/Math/MathUtils.h"
 #ifdef R2_EDITOR
 #include "r2/Core/File/PathUtils.h"
 #endif
 
 namespace r2::asset
 {
-	glm::mat4 GetGLMMatrix4FromFlatMatrix(const flat::Matrix4* mat)
-	{
-		glm::mat4 glmMat;
-		
-		glmMat[0] = glm::vec4(mat->cols()->Get(0)->v()->Get(0), mat->cols()->Get(0)->v()->Get(1), mat->cols()->Get(0)->v()->Get(2), mat->cols()->Get(0)->v()->Get(3));
-		glmMat[1] = glm::vec4(mat->cols()->Get(1)->v()->Get(0), mat->cols()->Get(1)->v()->Get(1), mat->cols()->Get(1)->v()->Get(2), mat->cols()->Get(1)->v()->Get(3));
-		glmMat[2] = glm::vec4(mat->cols()->Get(2)->v()->Get(0), mat->cols()->Get(2)->v()->Get(1), mat->cols()->Get(2)->v()->Get(2), mat->cols()->Get(2)->v()->Get(3));
-		glmMat[3] = glm::vec4(mat->cols()->Get(3)->v()->Get(0), mat->cols()->Get(3)->v()->Get(1), mat->cols()->Get(3)->v()->Get(2), mat->cols()->Get(3)->v()->Get(3));
-
-		return glmMat;
-	}
-
 	r2::math::Transform GetTransformFromFlatTransform(const flat::Transform* t)
 	{
 		r2::math::Transform newTransform;
@@ -221,7 +210,7 @@ namespace r2::asset
 
 		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
-		model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+		model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
 
 		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 

@@ -138,7 +138,7 @@ namespace r2::anim
 
 	}
 
-	u32 Pose::MemorySize(u32 numJoints, r2::mem::utils::MemoryProperties& memProperties)
+	u32 Pose::MemorySize(u32 numJoints, const r2::mem::utils::MemoryProperties& memProperties)
 	{
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Pose), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking) +
