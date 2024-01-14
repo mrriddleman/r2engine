@@ -1,6 +1,7 @@
 #include "r2pch.h"
 
 #include "r2/Render/Animation/Pose.h"
+#include "assetlib/RModel_generated.h"
 
 namespace r2::anim
 {

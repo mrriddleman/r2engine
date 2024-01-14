@@ -7,7 +7,7 @@
 #include "r2/Core/Math/Transform.h"
 #include "r2/Core/Containers/SArray.h"
 #include "flatbuffers/flatbuffers.h"
-#include "assetlib/RModel_generated.h"
+
 
 namespace flat
 {
@@ -55,8 +55,6 @@ namespace r2::anim
 
 			return newPose;
 		}
-
-
 	}
 }
 

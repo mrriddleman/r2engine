@@ -1,19 +1,33 @@
 #ifndef __TRACK_H__
 #define __TRACK_H__
 
-#include "assetlib/RAnimation_generated.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "r2/Render/Animation/Frame.h"
 
+
+namespace flat
+{
+	struct VectorTrack;
+	struct QuaternionTrack;
+}
+
 namespace r2::anim
 {
+
+	enum InterpolationType : u8
+	{
+		CONSTANT = 0,
+		LINEAR,
+		CUBIC
+	};
+
 	template<typename T, unsigned int N>
 	struct Track
 	{
 		r2::SArray<Frame<N>>* mFrames = nullptr;
 		r2::SArray<u32>* mSampledFrames = nullptr;
-		flat::InterpolationType mInterpolationType = flat::InterpolationType_LINEAR;
+		InterpolationType mInterpolationType = LINEAR;
 
 		Frame<N>& operator[](unsigned int index);
 
@@ -40,8 +54,8 @@ namespace r2::anim
 	typedef Track<glm::vec3, 3u> VectorTrack;
 	typedef Track<glm::quat, 4u> QuatTrack;
 
-	VectorTrack* LoadVectorTrack(void** memoryPointer, flatbuffers::Vector<flat::VectorKey*>* frames, flatbuffers::Vector<u32>* sampledFrames, flat::InterpolationType interpolationType);
-	QuatTrack* LoadQuatTrack(void** memoryPointer, flatbuffers::Vector<flat::RotationKey*>* frames, flatbuffers::Vector<u32>* sampledFrames, flat::InterpolationType interpolationType);
+	VectorTrack* LoadVectorTrack(void** memoryPointer, const flat::VectorTrack* flatVectorTrack);
+	QuatTrack* LoadQuatTrack(void** memoryPointer, const flat::QuaternionTrack* flatQuatTrack);
 }
 
 #endif

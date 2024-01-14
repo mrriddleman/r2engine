@@ -2,7 +2,7 @@
 
 #include "r2/Render/Animation/Track.h"
 #include "r2/Core/Math/MathUtils.h"
-
+#include "assetlib/RAnimation_generated.h"
 
 namespace r2::anim
 {
@@ -28,11 +28,11 @@ namespace r2::anim
 	template<typename T, unsigned int N>
 	T r2::anim::Track<T, N>::Sample(float time, bool looping) const
 	{
-		if (mInterpolationType == flat::InterpolationType_LINEAR)
+		if (mInterpolationType == LINEAR)
 		{
 			return SampleLinear(time, looping);
 		}
-		else if (mInterpolationType == flat::InterpolationType_CONSTANT)
+		else if (mInterpolationType == CONSTANT)
 		{
 			return SampleConstant(time, looping);
 		}
@@ -255,12 +255,12 @@ namespace r2::anim
 		return glm::normalize(r);
 	}
 
-	VectorTrack* LoadVectorTrack(void** memoryPointer, flatbuffers::Vector<flat::VectorKey*>* frames, flatbuffers::Vector<u32>* sampledFrames, flat::InterpolationType interpolationType)
+	VectorTrack* LoadVectorTrack(void** memoryPointer, const flat::VectorTrack* flatVectorTrack)
 	{
 		VectorTrack* newVectorTrack = nullptr;
 
-		const auto numFrames = frames->size();
-		const auto numSampledFrames = sampledFrames->size();
+		const auto numFrames = flatVectorTrack->keys()->size();
+		const auto numSampledFrames = flatVectorTrack->trackInfo()->numberOfSamples();
 
 		newVectorTrack = new (*memoryPointer) VectorTrack();
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, sizeof(VectorTrack));
@@ -271,20 +271,20 @@ namespace r2::anim
 		newVectorTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledFrames);
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledFrames));
 
-		memcpy(newVectorTrack->mFrames->mData, frames->data(), sizeof(VectorFrame) * numFrames);
-		memcpy(newVectorTrack->mSampledFrames->mData, sampledFrames->data(), sizeof(u32) * numSampledFrames);
+		memcpy(newVectorTrack->mFrames->mData, flatVectorTrack->keys()->data(), sizeof(VectorFrame) * numFrames);
+		memcpy(newVectorTrack->mSampledFrames->mData, flatVectorTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
 
-		newVectorTrack->mInterpolationType = interpolationType;
+		newVectorTrack->mInterpolationType = static_cast<InterpolationType>(flatVectorTrack->trackInfo()->interpolation());
 
 		return newVectorTrack;
 	}
 
-	QuatTrack* LoadQuatTrack(void** memoryPointer, flatbuffers::Vector<flat::RotationKey*>* frames, flatbuffers::Vector<u32>* sampledFrames, flat::InterpolationType interpolationType)
+	QuatTrack* LoadQuatTrack(void** memoryPointer, const flat::QuaternionTrack* flatQuatTrack)
 	{
 		QuatTrack* newQuatTrack = nullptr;
 
-		const auto numFrames = frames->size();
-		const auto numSampledFrames = sampledFrames->size();
+		const auto numFrames = flatQuatTrack->keys()->size();
+		const auto numSampledFrames = flatQuatTrack->trackInfo()->numberOfSamples();
 
 		newQuatTrack = new (*memoryPointer) QuatTrack();
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, sizeof(QuatTrack));
@@ -295,10 +295,10 @@ namespace r2::anim
 		newQuatTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledFrames);
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledFrames));
 
-		memcpy(newQuatTrack->mFrames->mData, frames->data(), sizeof(QuatFrame) * numFrames);
-		memcpy(newQuatTrack->mSampledFrames->mData, sampledFrames->data(), sizeof(u32) * numSampledFrames);
+		memcpy(newQuatTrack->mFrames->mData, flatQuatTrack->keys()->data(), sizeof(QuatFrame) * numFrames);
+		memcpy(newQuatTrack->mSampledFrames->mData, flatQuatTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
 
-		newQuatTrack->mInterpolationType = interpolationType;
+		newQuatTrack->mInterpolationType = static_cast<InterpolationType>(flatQuatTrack->trackInfo()->interpolation());
 
 		return newQuatTrack;
 	}
