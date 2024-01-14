@@ -8,14 +8,23 @@
 #include "r2/Core/Containers/SArray.h"
 #include "flatbuffers/flatbuffers.h"
 
+namespace r2::draw
+{
+	struct ShaderBoneTransform;
+	struct DebugBone;
+}
 
 namespace flat
 {
 	struct Transform;
+
 }
 
 namespace r2::anim
 {
+
+	struct Skeleton;
+
 	struct Pose
 	{
 	public:
@@ -35,7 +44,11 @@ namespace r2::anim
 		math::Transform GetGlobalTransform(const Pose& pose, u32 index);
 		void SetLocalTransform(Pose& pose, u32 index, const math::Transform& transform);
 
-		void GetMatrixPalette(const Pose& pose, r2::SArray<glm::mat4>* out, u32 offset);
+		void GetMatrixPalette(const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset);
+
+#if defined( R2_DEBUG ) || defined(R2_EDITOR)
+		void GetDebugBones(const Pose& pose, std::vector<r2::draw::DebugBone>& outDebugBones);
+#endif
 
 		bool IsEqual(const Pose& p1, const Pose& p2);
 

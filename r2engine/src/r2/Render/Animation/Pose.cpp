@@ -2,6 +2,7 @@
 
 #include "r2/Render/Animation/Pose.h"
 #include "assetlib/RModel_generated.h"
+#include "r2/Render/Model/Model.h"
 
 namespace r2::anim
 {
@@ -34,7 +35,7 @@ namespace r2::anim
 			return result;
 		}
 
-		void GetMatrixPalette(const Pose& pose, r2::SArray<glm::mat4>* out, u32 offset)
+		void GetMatrixPalette(const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
 		{
 			s32 size = (s32)Size(pose);
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
@@ -50,19 +51,79 @@ namespace r2::anim
 				glm::mat4 global = math::ToMatrix(r2::sarr::At(*pose.mJointTransforms, i));
 				if (parent >= 0)
 				{
-					global = out->mData[parent + offset] * global; //@TODO(Serge): investigate if this is slower than using Combine...
+					global = out->mData[parent + offset].transform * global; //@TODO(Serge): investigate if this is slower than using Combine...
 				}
-				out->mData[i + offset] = global;
+
+				out->mData[i + offset].globalInv = glm::mat4(1); //@TODO(Serge): remove - completely unneeded
+				out->mData[i + offset].transform = global;
+				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
+
 			}
 			
 			for (; i < size; ++i)
 			{
 				R2_CHECK(false, "If we do things right, this should never happen");
 				math::Transform t = GetGlobalTransform(pose, i);
-				out->mData[i] = math::ToMatrix(t);
+				out->mData[i + offset].transform = math::ToMatrix(t);
 			}
 
 		}
+
+#if defined( R2_DEBUG ) || defined(R2_EDITOR)
+		void GetDebugBones(const Pose& pose, std::vector<r2::draw::DebugBone>& outDebugBones)
+		{
+			u32 size = Size(pose);
+			outDebugBones.resize(size);
+
+			std::vector<math::Transform> jointGlobalTransforms;
+
+			jointGlobalTransforms.resize(size);
+
+			int i = 0;
+
+			for (; i < size; ++i)
+			{
+				int parent = pose.mParents->mData[i];
+				if (parent > i)
+				{
+					break;
+				}
+
+				glm::vec3 parentPos = glm::vec3(0);
+				math::Transform global = pose.mJointTransforms->mData[i];
+				if (parent >= 0)
+				{
+					math::Transform parentTransform = jointGlobalTransforms[parent];
+					global = math::Combine(parentTransform, global);
+
+					parentPos = parentTransform.position;
+				}
+
+				outDebugBones[i].p0 = parentPos;
+				outDebugBones[i].p1 = global.position;
+
+				jointGlobalTransforms[i] = global;
+			}
+
+			for (; i < size; ++i)
+			{
+				R2_CHECK(false, "If we do things right, this should never happen");
+				math::Transform t = GetGlobalTransform(pose, i);
+				glm::vec3 parentPos = glm::vec3(0);
+
+				auto parentIndex = pose.mParents->mData[i];
+				if (parentIndex >= 0)
+				{
+					math::Transform p = GetGlobalTransform(pose, parentIndex);
+					parentPos = p.position;
+				}
+
+				outDebugBones[i].p0 = parentPos;
+				outDebugBones[i].p1 = t.position;
+			}
+
+		}
+#endif
 
 		bool IsEqual(const Pose& p1, const Pose& p2)
 		{

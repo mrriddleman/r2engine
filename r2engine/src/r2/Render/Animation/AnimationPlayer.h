@@ -22,6 +22,16 @@ namespace r2::draw
 		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
 		r2::SArray<DebugBone>* outDebugBones,
 		u64 offset);
+
+
+}
+
+namespace r2::anim
+{
+	struct AnimationClip;
+	struct Pose;
+
+	float PlayAnimationClip(const AnimationClip& clip, Pose& animatedPose, float time, bool loop);
 }
 
 #endif /* AnimationPlayer_hpp */

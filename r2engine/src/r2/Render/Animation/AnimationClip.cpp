@@ -8,9 +8,9 @@
 
 namespace r2::anim
 {
-	float AnimationClip::AdjustTimeToFitRange(float inTime) const
+	float AnimationClip::AdjustTimeToFitRange(float inTime, bool loop) const
 	{
-		if (mLooping)
+		if (loop)
 		{
 			float duration = GetDuration();
 			if (duration <= 0)
@@ -55,21 +55,21 @@ namespace r2::anim
 		return mTracks->mSize;
 	}
 
-	float AnimationClip::Sample(Pose& outPose, float inTime) const
+	float AnimationClip::Sample(Pose& outPose, float inTime, bool loop) const
 	{
 		if (math::NearZero(GetDuration()))
 		{
 			return 0.0f;
 		}
 
-		inTime = AdjustTimeToFitRange(inTime);
+		inTime = AdjustTimeToFitRange(inTime, loop);
 
 		u32 size = mTracks->mSize;
 		for (u32 i = 0; i < size; ++i)
 		{
 			u32 j = mTracks->mData[i]->mJointID;
 			math::Transform local = pose::GetLocalTransform(outPose, j);
-			math::Transform animated = mTracks->mData[i]->Sample(local, inTime, mLooping);
+			math::Transform animated = mTracks->mData[i]->Sample(local, inTime, loop);
 			pose::SetLocalTransform(outPose, j, animated);
 		}
 
@@ -103,7 +103,6 @@ namespace r2::anim
 		r2::asset::MakeAssetNameFromFlatAssetName(rAnimation->assetName(), newAnimationClip->mAssetName);
 		newAnimationClip->mStartTime = rAnimation->startTime();
 		newAnimationClip->mEndTime = rAnimation->endTime();
-		newAnimationClip->mLooping = true; //?
 
 		return newAnimationClip;
 	}

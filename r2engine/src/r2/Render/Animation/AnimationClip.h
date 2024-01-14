@@ -23,14 +23,13 @@ namespace r2::anim
 		r2::asset::AssetName mAssetName;
 		float mStartTime;
 		float mEndTime;
-		b32 mLooping;
 		r2::SArray<TransformTrack*>* mTracks;
 
-		float AdjustTimeToFitRange(float inTime) const;
+		float AdjustTimeToFitRange(float inTime, bool loop) const;
 		float GetDuration() const;
 		u32 GetJointIDAtIndex(u32 index) const;
 		u32 Size() const;
-		float Sample(Pose& outPose, float inTime) const;
+		float Sample(Pose& outPose, float inTime, bool loop) const;
 
 		static u64 MemorySize(u32 numTransformTracks, const r2::mem::utils::MemoryProperties& memProperties);
 	};
