@@ -54,21 +54,29 @@ namespace r2::draw
 
 		if ( boneDataSize > 0 && boneInfoSize > 0)
 		{
-			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking);
+			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking);
+			//	r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking);
 				
-			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(std::round(boneInfoSize * r2::SHashMap<s32>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking);
+	//		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(std::round(boneInfoSize * r2::SHashMap<s32>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking);
 		}
 
 		if (numJoints > 0)
 		{
-			memorySize += Skeleton::MemorySizeNoData(numJoints, alignment, headerSize, boundsChecking);
+			//memorySize += Skeleton::MemorySizeNoData(numJoints, alignment, headerSize, boundsChecking);
+
+			r2::mem::utils::MemoryProperties memProperties;
+			memProperties.alignment = alignment;
+			memProperties.headerSize = headerSize;
+			memProperties.boundsChecking = boundsChecking;
+
+			memorySize += anim::Skeleton::MemorySize(numJoints, memProperties);
 		}
 		
 
 		if (numAnimations > 0)
 		{
-			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Animation*>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
+			//memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Animation*>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
+			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<anim::AnimationClip*>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
 		}
 
 		return memorySize;

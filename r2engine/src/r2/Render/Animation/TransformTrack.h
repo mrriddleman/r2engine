@@ -29,7 +29,7 @@ namespace r2::anim
 		bool IsValid();
 		math::Transform Sample(const math::Transform& ref, float time, bool looping);
 
-		static u64 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
+		static u64 MemorySize(u32 numPositionFrames, u32 numScaleFrames, u32 numRotationFrames, u32 numSampledPositions, u32 numSampledScales, u32 numSampledRotations, const r2::mem::utils::MemoryProperties& memProperties);
 	};
 
 	TransformTrack* LoadTransformTrack(void** memoryPointer, const flat::TransformTrack* transformTrack);

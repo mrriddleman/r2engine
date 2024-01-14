@@ -36,9 +36,14 @@ namespace r2::anim
 		return result;
 	}
 
-	u64 TransformTrack::MemorySize(const r2::mem::utils::MemoryProperties& memProperties)
+	u64 TransformTrack::MemorySize(u32 numPositionFrames, u32 numScaleFrames, u32 numRotationFrames, u32 numSampledPositions, u32 numSampledScales, u32 numSampledRotations, const r2::mem::utils::MemoryProperties& memProperties)
 	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(TransformTrack), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+		return 
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(TransformTrack), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking) +
+			VectorTrack::MemorySize(numPositionFrames, numSampledPositions, memProperties) +
+			VectorTrack::MemorySize(numScaleFrames, numSampledScales, memProperties) +
+			QuatTrack::MemorySize(numRotationFrames, numSampledRotations, memProperties)
+			;
 	}
 
 	r2::anim::TransformTrack* LoadTransformTrack(void** memoryPointer, const flat::TransformTrack* flatTransformTrack)

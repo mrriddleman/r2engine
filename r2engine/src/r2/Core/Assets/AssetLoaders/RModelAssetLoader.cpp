@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Core/Math/MathUtils.h"
+#include "r2/Render/Animation/TransformTrack.h"
 #ifdef R2_EDITOR
 #include "r2/Core/File/PathUtils.h"
 #endif
@@ -109,6 +110,8 @@ namespace r2::asset
 			numBones = metaData->boneMetaData()->numBoneInfo();
 			numBoneData = metaData->boneMetaData()->numBoneData();
 			numJoints = metaData->skeletonMetaData()->numJoints();
+
+			R2_CHECK(numBones == numJoints, "I BELIEVE these should always be the same?");
 		}
 
 		const auto* animationsMetaData = metaData->animationMetaData();
@@ -118,13 +121,38 @@ namespace r2::asset
 			const auto numAnimations = animationsMetaData->size();
 			numAnimationsInModel = numAnimations;
 
+
+			r2::mem::utils::MemoryProperties memProperties;
+			memProperties.alignment = alignment;
+			memProperties.headerSize = header;
+			memProperties.boundsChecking = boundsChecking;
+
 			for (u32 i = 0; i < numAnimations; ++i)
 			{
 				const flat::RAnimationMetaData* animationMetaData = animationsMetaData->Get(i);
 				const auto* channelsMetaData = animationMetaData->channelsMetaData();
 				const auto numChannels = channelsMetaData->size();
 
-				u64 bytes = r2::draw::Animation::MemorySize(numChannels, alignment, header, boundsChecking);
+				u64 bytes = 0;
+
+				bytes += r2::anim::AnimationClip::MemorySize(numChannels, memProperties);
+
+				for (u32 j = 0; j < numChannels; ++j)
+				{
+					const auto channelMetaData = channelsMetaData->Get(j);
+
+					bytes += anim::TransformTrack::MemorySize(
+						channelMetaData->numPositionKeys(),
+						channelMetaData->numScaleKeys(),
+						channelMetaData->numRotationKeys(),
+						channelMetaData->numberOfSampledPositionFrames(),
+						channelMetaData->numberOfSampledScaleFrames(),
+						channelMetaData->numberOfSampledRotationFrames(),
+						memProperties
+					);
+				}
+
+				/*u64 bytes = r2::draw::Animation::MemorySize(numChannels, alignment, header, boundsChecking);
 
 				for (u32 j = 0; j < numChannels; ++j)
 				{
@@ -135,28 +163,13 @@ namespace r2::asset
 						channelMetaData->numRotationKeys(),
 						animationMetaData->durationInTicks(),
 						alignment, header, boundsChecking);
-				}
+				}*/
 
 				totalSize += bytes;
 			}
 		}
 		
 		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numBones, numAnimationsInModel, alignment, header, boundsChecking);
-
-		//if (metaData->isAnimatedModel())
-		//{
-		//	totalSize += r2::draw::Skeleton::MemorySizeNoData(metaData->skeletonMetaData()->numJoints(), alignment, header, boundsChecking);
-		//	
-		//	const auto numBones = metaData->boneMetaData()->numBoneInfo();
-
-		//	u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
-
-		//	totalSize += r2::draw::AnimModel::MemorySizeNoData(hashCapacity, totalVertices, numBones, metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
-
-		//	return static_cast<u64>(totalSize);
-		//}
-		//
-		//totalSize += r2::draw::Model::ModelMemorySize(metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
 
 		return totalSize;
 	}
@@ -263,6 +276,11 @@ namespace r2::asset
 			nextMeshPtr->objectBounds.extents = GetVec3FromFlatVec3(bounds->extents());
 
 			r2::sarr::Push(*model->optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
+		}
+
+		if (metaData->isAnimatedModel())
+		{
+			model->animSkeleton = anim::LoadSkeleton(&startOfArrayPtr, modelData->animationData());
 		}
 
 		//if (metaData->isAnimatedModel())
@@ -372,18 +390,30 @@ namespace r2::asset
 		if (animationMetaData && animationMetaData->size() > 0)
 		{
 			R2_CHECK(modelData->animations()->size() == animationMetaData->size(), "These should always be the same");
-			
+			const auto numAnimations = modelData->animations()->size();
 			const auto* animations = modelData->animations();
 
-			const auto numAnimations = modelData->animations()->size();
+			model->optrAnimationClips = EMPLACE_SARRAY(startOfArrayPtr, r2::anim::AnimationClip*, numAnimations);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::anim::AnimationClip*>::MemorySize(numAnimations));
+			for (u32 i = 0; i < numAnimations; ++i)
+			{
+				const flat::RAnimation* flatAnimationData = animations->Get(i);
+				r2::anim::AnimationClip* nextClip = anim::LoadAnimationClip(&startOfArrayPtr, flatAnimationData);
+				r2::sarr::Push(*model->optrAnimationClips, nextClip);
+			}
+			
 
-			model->optrAnimations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation*, numAnimations);
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation*>::MemorySize(numAnimations));
-
-#ifdef R2_EDITOR
-			char animationName[r2::fs::FILE_PATH_LENGTH];
-			char sanitizedAnimationPath[r2::fs::FILE_PATH_LENGTH];
-#endif
+//			
+//
+//			
+//
+//			model->optrAnimations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation*, numAnimations);
+//			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation*>::MemorySize(numAnimations));
+//
+//#ifdef R2_EDITOR
+//			char animationName[r2::fs::FILE_PATH_LENGTH];
+//			char sanitizedAnimationPath[r2::fs::FILE_PATH_LENGTH];
+//#endif
 
 //			for (u32 i = 0; i < numAnimations; ++i)
 //			{

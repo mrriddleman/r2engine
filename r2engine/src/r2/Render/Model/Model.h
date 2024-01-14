@@ -11,7 +11,8 @@
 #include "r2/Render/Model/Mesh.h"
 #include "r2/Core/Math/Transform.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
-
+#include "r2/Render/Animation/Skeleton.h"
+#include "r2/Render/Animation/AnimationClip.h"
 
 namespace r2::draw
 {
@@ -59,14 +60,16 @@ namespace r2::draw
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
         r2::SArray<r2::mat::MaterialName>* optrMaterialNames = nullptr;
 		r2::SArray<BoneData>* optrBoneData = nullptr;
-		r2::SArray<BoneInfo>* optrBoneInfo = nullptr;
-		r2::SHashMap<s32>* optrBoneMapping = nullptr;
+		r2::SArray<BoneInfo>* optrBoneInfo = nullptr; //@TODO(Serge): Remove
+		r2::SHashMap<s32>* optrBoneMapping = nullptr; //@TODO(Serge): Remove
 		
-		Skeleton skeleton;
+		Skeleton skeleton; //@TODO(Serge): Remove
+		anim::Skeleton animSkeleton;
+		r2::SArray<anim::AnimationClip*>* optrAnimationClips = nullptr;
 
-		r2::SArray<Animation*>* optrAnimations = nullptr;
+		r2::SArray<Animation*>* optrAnimations = nullptr; //@TODO(Serge): Remove
 
-        glm::mat4 globalInverseTransform;
+        glm::mat4 globalInverseTransform; //@TODO(Serge): Remove
 
 		static u64 ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 

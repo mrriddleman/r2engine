@@ -27,10 +27,10 @@ namespace r2::anim
 		std::vector<std::string> mJointNames;
 #endif
 
-		u64 MemorySize(u32 numJoints, const r2::mem::utils::MemoryProperties& memProperties);
+		static u64 MemorySize(u32 numJoints, const r2::mem::utils::MemoryProperties& memProperties);
 	};
 
-	Skeleton* LoadSkeleton(void** memoryPointer, const flat::AnimationData* animationData);
+	Skeleton LoadSkeleton(void** memoryPointer, const flat::AnimationData* animationData);
 }
 
 #endif
