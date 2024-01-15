@@ -6,6 +6,7 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/CommandBucket.h"
 #include "r2/Render/Renderer/Commands.h"
+#include "r2/Render/Animation/Pose.h"
 
 namespace r2::draw::vb
 {
@@ -297,7 +298,7 @@ namespace r2::draw::vbsys
 	using FreeNode = SinglyLinkedList<vb::GPUBufferEntry>::Node;
 	s32 FindNextAvailableGPUModelRefIndex(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayout* layout);
 
-	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, u32 numBones, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 
 	u64 FillVertexBufferCommand(cmd::FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset);
 	u64 FillBonesBufferCommand(cmd::FillVertexBuffer* cmd, const r2::SArray<r2::draw::BoneData>* boneData, VertexBufferHandle handle, u64 offset);
@@ -465,7 +466,7 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		return UploadModelToVertexBufferInternal(system, handle, model, model.optrBoneData, model.optrBoneInfo, uploadBucket, commandBucketArena);
+		return UploadModelToVertexBufferInternal(system, handle, model, model.optrBoneData, r2::anim::pose::Size(*model.animSkeleton.mRestPose), uploadBucket, commandBucketArena);
 	}
 
 	cmd::CopyBuffer* CopyVertexBuffer(vb::VertexBufferLayoutSystem& system, vb::VertexBufferLayout* vertexBufferLayout, u32 vertexBufferIndex, cmd::CopyBuffer* prevCommand, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
@@ -544,7 +545,7 @@ namespace r2::draw::vbsys
 		return copyBuffer;
 	}
 
-	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, u32 numBones, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
 		//maybe we should check to see if we've already uploaded the model?
 		vb::GPUModelRefHandle modelRefHandle = GetModelRefHandle(system, model);
@@ -594,7 +595,7 @@ namespace r2::draw::vbsys
 
 		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::VertexBufferLayoutSystem::g_GPUModelSalt++);
 		modelRef->assetName = model.assetName;
-		modelRef->isAnimated = boneData && boneInfo;
+		modelRef->isAnimated = boneData && numBones > 0;
 
 		vb::GPUBufferEntry vertexEntry;
 		vb::GPUBufferEntry indexEntry;
@@ -624,9 +625,9 @@ namespace r2::draw::vbsys
 		modelRef->boneEntry.size = 0;
 		modelRef->numBones = 0;
 
-		if (boneInfo)
+		if (numBones> 0)
 		{
-			modelRef->numBones = boneInfo->mSize;
+			modelRef->numBones = numBones;
 		}
 
 		if (boneData)

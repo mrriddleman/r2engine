@@ -28,8 +28,8 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
   const flat::AssetName *animModelAssetName() const {
     return GetPointer<const flat::AssetName *>(VT_ANIMMODELASSETNAME);
   }
-  uint32_t startingAnimationIndex() const {
-    return GetField<uint32_t>(VT_STARTINGANIMATIONINDEX, 0);
+  int32_t startingAnimationIndex() const {
+    return GetField<int32_t>(VT_STARTINGANIMATIONINDEX, 0);
   }
   uint32_t startTime() const {
     return GetField<uint32_t>(VT_STARTTIME, 0);
@@ -44,7 +44,7 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ANIMMODELASSETNAME) &&
            verifier.VerifyTable(animModelAssetName()) &&
-           VerifyField<uint32_t>(verifier, VT_STARTINGANIMATIONINDEX) &&
+           VerifyField<int32_t>(verifier, VT_STARTINGANIMATIONINDEX) &&
            VerifyField<uint32_t>(verifier, VT_STARTTIME) &&
            VerifyField<uint8_t>(verifier, VT_SHOULDLOOP) &&
            VerifyField<uint8_t>(verifier, VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES) &&
@@ -59,8 +59,8 @@ struct SkeletalAnimationComponentDataBuilder {
   void add_animModelAssetName(flatbuffers::Offset<flat::AssetName> animModelAssetName) {
     fbb_.AddOffset(SkeletalAnimationComponentData::VT_ANIMMODELASSETNAME, animModelAssetName);
   }
-  void add_startingAnimationIndex(uint32_t startingAnimationIndex) {
-    fbb_.AddElement<uint32_t>(SkeletalAnimationComponentData::VT_STARTINGANIMATIONINDEX, startingAnimationIndex, 0);
+  void add_startingAnimationIndex(int32_t startingAnimationIndex) {
+    fbb_.AddElement<int32_t>(SkeletalAnimationComponentData::VT_STARTINGANIMATIONINDEX, startingAnimationIndex, 0);
   }
   void add_startTime(uint32_t startTime) {
     fbb_.AddElement<uint32_t>(SkeletalAnimationComponentData::VT_STARTTIME, startTime, 0);
@@ -86,7 +86,7 @@ struct SkeletalAnimationComponentDataBuilder {
 inline flatbuffers::Offset<SkeletalAnimationComponentData> CreateSkeletalAnimationComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flat::AssetName> animModelAssetName = 0,
-    uint32_t startingAnimationIndex = 0,
+    int32_t startingAnimationIndex = 0,
     uint32_t startTime = 0,
     bool shouldLoop = false,
     bool shouldUseSameTransformForAllInstances = false) {

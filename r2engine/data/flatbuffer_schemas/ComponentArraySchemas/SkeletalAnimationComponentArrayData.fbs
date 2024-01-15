@@ -5,7 +5,7 @@ namespace flat;
 table SkeletalAnimationComponentData
 {
 	animModelAssetName:AssetName;
-	startingAnimationIndex:uint;
+	startingAnimationIndex:int;
 	startTime:uint;
 	shouldLoop:bool;
 	shouldUseSameTransformForAllInstances:bool;

@@ -1,6 +1,6 @@
 #include "r2pch.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Animation/Animation.h"
+//#include "r2/Render/Animation/Animation.h"
 
 namespace r2::draw
 {
@@ -11,14 +11,14 @@ namespace r2::draw
 	// r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel)) / r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model) call
 
 
-	u64 Skeleton::MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking)
-	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + //rest pose
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + // bind pose
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking); //real parents
-	}
+	//u64 Skeleton::MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking)
+	//{
+	//	return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
+	//		r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + //rest pose
+	//		r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
+	//		r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + // bind pose
+	//		r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking); //real parents
+	//}
 
 	//u64 AnimModel::MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking)
 	//{
@@ -46,13 +46,13 @@ namespace r2::draw
 	//}
 
 
-	u64 Model::MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 boneInfoSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking)
+	u64 Model::MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 memorySize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
 
-		if ( boneDataSize > 0 && boneInfoSize > 0)
+		if ( boneDataSize > 0)
 		{
 			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking);
 			//	r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking);

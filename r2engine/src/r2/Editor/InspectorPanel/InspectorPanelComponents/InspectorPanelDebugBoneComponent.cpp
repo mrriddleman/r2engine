@@ -6,6 +6,7 @@
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Render/Animation/Pose.h"
 #include "imgui.h"
 
 namespace r2::edit
@@ -151,7 +152,7 @@ namespace r2::edit
 		debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
 
 		const ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<ecs::SkeletalAnimationComponent>(theEntity);
-		debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*animationComponent.animModel->optrBoneInfo));
+		debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::anim::pose::Size(*animationComponent.animModel->animSkeleton.mRestPose));
 		coordinator->AddComponent<r2::ecs::DebugBoneComponent>(theEntity, debugBoneComponent);
 	}
 
@@ -167,7 +168,7 @@ namespace r2::edit
 
 			newDebugBoneComponent.color = glm::vec4(1, 1, 0, 1);
 			const ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<ecs::SkeletalAnimationComponent>(theEntity);
-			newDebugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*animationComponent.animModel->optrBoneInfo));
+			newDebugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::anim::pose::Size(*animationComponent.animModel->animSkeleton.mRestPose));
 
 			r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugBoneComponent);
 		}

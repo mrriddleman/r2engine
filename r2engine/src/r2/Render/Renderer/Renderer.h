@@ -709,13 +709,7 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		//@NOTE(Serge): We don't need the numInstances here at all
-		//				we can just use the size of the model matrices
-		//u32 numInstances,
 
-		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
 
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
@@ -726,9 +720,6 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<u32>& numInstancesPerModel,
 		
-		//@NOTE(Serge): We should collapse these down into just material names (a MaterialName SArray) 
-		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
 
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);

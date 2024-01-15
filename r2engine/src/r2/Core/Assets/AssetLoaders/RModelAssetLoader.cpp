@@ -8,7 +8,7 @@
 #include "assetlib/RAnimationMetaData_generated.h"
 #include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Animation/Animation.h"
+//#include "r2/Render/Animation/Animation.h"
 #include <glm/glm.hpp>
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
 #include "r2/Core/Math/MathUtils.h"
@@ -202,14 +202,14 @@ namespace r2::asset
 		R2_CHECK(model != nullptr, "We should have a proper model!");
 
 		model->optrBoneData = nullptr;
-		model->optrBoneInfo = nullptr;
-		model->optrBoneMapping = nullptr;
-		model->skeleton.mBindPoseTransforms = nullptr;
-		model->skeleton.mJointNames = nullptr;
-		model->skeleton.mParents = nullptr;
-		model->skeleton.mRealParentBones = nullptr;
-		model->skeleton.mRestPoseTransforms = nullptr;
-		model->optrAnimations = nullptr;
+		//model->optrBoneInfo = nullptr;
+		//model->optrBoneMapping = nullptr;
+		//model->skeleton.mBindPoseTransforms = nullptr;
+		//model->skeleton.mJointNames = nullptr;
+		//model->skeleton.mParents = nullptr;
+		//model->skeleton.mRealParentBones = nullptr;
+		//model->skeleton.mRestPoseTransforms = nullptr;
+		//model->optrAnimations = nullptr;
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
@@ -223,7 +223,7 @@ namespace r2::asset
 
 		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
-		model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+	//	model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
 
 		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 
@@ -280,6 +280,20 @@ namespace r2::asset
 
 		if (metaData->isAnimatedModel())
 		{
+			model->optrBoneData = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneData, numVertices);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneData>::MemorySize(numVertices));
+
+			const auto flatBoneData = modelData->animationData()->boneData();
+
+			for (flatbuffers::uoffset_t i = 0; i < flatBoneData->size(); ++i)
+			{
+				r2::draw::BoneData boneData;
+				boneData.boneWeights = GetVec4FromFlatVec4(&flatBoneData->Get(i)->boneWeights());
+				boneData.boneIDs = GetIVec4FromFlatIVec4(&flatBoneData->Get(i)->boneIDs());
+
+				r2::sarr::Push(*model->optrBoneData, boneData);
+			}
+
 			model->animSkeleton = anim::LoadSkeleton(&startOfArrayPtr, modelData->animationData());
 		}
 
@@ -287,8 +301,8 @@ namespace r2::asset
 		//{
 		//	const auto numBones = metaData->boneMetaData()->numBoneInfo();
 
-		//	model->optrBoneData = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneData, numVertices);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneData>::MemorySize(numVertices));
+		//	
+		//	
 
 		//	model->optrBoneInfo = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneInfo, numBones);
 		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneInfo>::MemorySize(numBones));
@@ -330,16 +344,7 @@ namespace r2::asset
 		//		r2::sarr::Push(*model->optrBoneInfo, boneInfo);
 		//	}
 
-		//	const auto flatBoneData = modelData->animationData()->boneData();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatBoneData->size(); ++i)
-		//	{
-		//		r2::draw::BoneData boneData;
-		//		boneData.boneWeights = GetVec4FromFlatVec4(&flatBoneData->Get(i)->boneWeights());
-		//		boneData.boneIDs = GetIVec4FromFlatIVec4(&flatBoneData->Get(i)->boneIDs());
-
-		//		r2::sarr::Push(*model->optrBoneData, boneData);
-		//	}
+		
 
 		//	const auto flatBoneMapEntries = modelData->animationData()->boneMapping();
 

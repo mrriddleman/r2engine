@@ -31,7 +31,7 @@
 #ifdef R2_EDITOR
 #include "r2/Game/ECS/Components/SelectionComponent.h"
 #endif
-
+#include "r2/Render/Animation/Pose.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Core/Application.h"
 #include "r2/Platform/Platform.h"
@@ -161,7 +161,7 @@ namespace r2::ecs
 
 				ecs::DebugBoneComponent debugBoneComponent;
 				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::anim::pose::Size(*skeletalAnimationComponent.animModel->animSkeleton.mRestPose));
 				r2::sarr::Clear(*debugBoneComponent.debugBones);
 				mComponentAllocations.push_back({ debugBoneComponent.debugBones });
 
@@ -187,7 +187,7 @@ namespace r2::ecs
 
 				for (u32 j = 0; j < numInstances; ++j)
 				{
-					const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->optrBoneInfo);
+					const auto numDebugBones = r2::anim::pose::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->animSkeleton.mRestPose);
 
 					ecs::DebugBoneComponent debugBoneInstance1;
 					debugBoneInstance1.color = glm::vec4(1, 1, 0, 1);
@@ -256,6 +256,11 @@ namespace r2::ecs
 
 		if (skeletalAnimationComponent->shaderBones != nullptr)
 		{
+			ECS_WORLD_FREE(*this, skeletalAnimationComponent->animationPose->mParents);
+			ECS_WORLD_FREE(*this, skeletalAnimationComponent->animationPose->mJointTransforms);
+			ECS_WORLD_FREE(*this, skeletalAnimationComponent->animationPose);
+			skeletalAnimationComponent->animationPose = nullptr;
+
 			ECS_WORLD_FREE(*this, skeletalAnimationComponent->shaderBones);
 			skeletalAnimationComponent->shaderBones = nullptr;
 		}
@@ -271,6 +276,14 @@ namespace r2::ecs
 			for (u32 i = 0; i < instancedSkeletalAnimationComponent->numInstances; ++i)
 			{
 				ecs::SkeletalAnimationComponent& animationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent->instances, i);
+
+				if (animationComponent.animationPose)
+				{
+					ECS_WORLD_FREE(*this, animationComponent.animationPose->mParents);
+					ECS_WORLD_FREE(*this, animationComponent.animationPose->mJointTransforms);
+					ECS_WORLD_FREE(*this, animationComponent.animationPose);
+					animationComponent.animationPose = nullptr;
+				}
 
 				if (animationComponent.shaderBones != nullptr)
 				{

@@ -16,7 +16,7 @@
 
 namespace r2::draw
 {
-	struct Animation;
+//	struct Animation;
 
 	struct BoneData
 	{
@@ -24,10 +24,10 @@ namespace r2::draw
 		glm::ivec4 boneIDs = glm::ivec4(0);
 	};
 
-	struct BoneInfo
-	{
-        glm::mat4 offsetTransform;
-	};
+	//struct BoneInfo
+	//{
+ //       glm::mat4 offsetTransform;
+	//};
 
 	struct ShaderBoneTransform
 	{
@@ -37,20 +37,20 @@ namespace r2::draw
 	};
 
 
-    struct Skeleton
-    {
-        r2::SArray<u64>* mJointNames = nullptr;
-        r2::SArray<s32>* mParents = nullptr;
-        r2::SArray<r2::math::Transform>* mRestPoseTransforms = nullptr; 
-        r2::SArray<r2::math::Transform>* mBindPoseTransforms = nullptr;
-        r2::SArray<s32>* mRealParentBones = nullptr; //for debug
-
-//#ifdef R2_DEBUG
-//        std::vector<std::string> mDebugBoneNames;
-//#endif // R2_DEBUG
-
-        static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
-    };
+//    struct Skeleton
+//    {
+//        r2::SArray<u64>* mJointNames = nullptr;
+//        r2::SArray<s32>* mParents = nullptr;
+//        r2::SArray<r2::math::Transform>* mRestPoseTransforms = nullptr; 
+//        r2::SArray<r2::math::Transform>* mBindPoseTransforms = nullptr;
+//        r2::SArray<s32>* mRealParentBones = nullptr; //for debug
+//
+////#ifdef R2_DEBUG
+////        std::vector<std::string> mDebugBoneNames;
+////#endif // R2_DEBUG
+//
+//        static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
+//    };
 
 	struct Model
 	{
@@ -60,20 +60,20 @@ namespace r2::draw
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
         r2::SArray<r2::mat::MaterialName>* optrMaterialNames = nullptr;
 		r2::SArray<BoneData>* optrBoneData = nullptr;
-		r2::SArray<BoneInfo>* optrBoneInfo = nullptr; //@TODO(Serge): Remove
-		r2::SHashMap<s32>* optrBoneMapping = nullptr; //@TODO(Serge): Remove
+	//	r2::SArray<BoneInfo>* optrBoneInfo = nullptr; //@TODO(Serge): Remove
+	//	r2::SHashMap<s32>* optrBoneMapping = nullptr; //@TODO(Serge): Remove
 		
-		Skeleton skeleton; //@TODO(Serge): Remove
+	//	Skeleton skeleton; //@TODO(Serge): Remove
 		anim::Skeleton animSkeleton;
 		r2::SArray<anim::AnimationClip*>* optrAnimationClips = nullptr;
 
-		r2::SArray<Animation*>* optrAnimations = nullptr; //@TODO(Serge): Remove
+	//	r2::SArray<Animation*>* optrAnimations = nullptr; //@TODO(Serge): Remove
 
-        glm::mat4 globalInverseTransform; //@TODO(Serge): Remove
+     //   glm::mat4 globalInverseTransform; //@TODO(Serge): Remove
 
 		static u64 ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 
-		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 boneInfoSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
 	struct DebugBone

@@ -8,27 +8,28 @@
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
-
+#include "R2/Render/Animation/AnimationClip.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Render/Animation/Pose.h"
 
 #include "imgui.h"
 
 namespace r2::edit
 {
-	void DisplayAnimationDetails(r2::ecs::SkeletalAnimationComponent& animationComponent, u32& animationIndex, int id, const r2::draw::Animation* animation)
+	void DisplayAnimationDetails(r2::ecs::SkeletalAnimationComponent& animationComponent, s32& animationIndex, int id, const r2::anim::AnimationClip* animation)
 	{
 		R2_CHECK(animation != nullptr, "Should never happen");
 
 		ImGui::PushID(id);
 
-		if (ImGui::BeginCombo("##label animation", animation->animationName.c_str()))
+		if (ImGui::BeginCombo("##label animation", animation->mAssetName.assetNameString.c_str()))
 		{
-			const u32 numAnimations = r2::sarr::Size(*animationComponent.animModel->optrAnimations);
+			const u32 numAnimations = r2::sarr::Size(*animationComponent.animModel->optrAnimationClips);
 
 			for (u32 i = 0; i < numAnimations; ++i)
 			{
-				const r2::draw::Animation* nextAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, i);
-				if (ImGui::Selectable(nextAnimation->animationName.c_str(), animation->assetName == nextAnimation->assetName))
+				const r2::anim::AnimationClip* nextAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, i);
+				if (ImGui::Selectable(nextAnimation->mAssetName.assetNameString.c_str(), animation->mAssetName == nextAnimation->mAssetName))
 				{
 					animationIndex = i;
 					animation = nextAnimation;
@@ -38,8 +39,10 @@ namespace r2::edit
 			ImGui::EndCombo();
 		}
 
-		ImGui::Text("Duration: %f", animation->duration);
-		ImGui::Text("Ticks Per Second: %f", animation->ticksPerSeconds);
+		ImGui::Text("Duration: %f", animation->GetDuration());
+		ImGui::Text("Start Time: %f", animation->mStartTime);
+		ImGui::Text("End Time: %f", animation->mEndTime);
+
 		ImGui::PopID();
 	}
 
@@ -128,14 +131,14 @@ namespace r2::edit
 
 		if (ImGui::TreeNodeEx("Current Animation"))
 		{
-			DisplayAnimationDetails(animationComponent, animationComponent.currentAnimationIndex, 0, r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex));
+			DisplayAnimationDetails(animationComponent, animationComponent.currentAnimationIndex, 0, r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex));
 
 			ImGui::TreePop();
 		}
 
 		if (ImGui::TreeNodeEx("Starting Animation"))
 		{
-			const r2::draw::Animation* startingAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.startingAnimationIndex);
+			const r2::anim::AnimationClip* startingAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.startingAnimationIndex);
 			R2_CHECK(startingAnimation != nullptr, "This should never happen");
 			DisplayAnimationDetails(animationComponent, animationComponent.startingAnimationIndex, 1, startingAnimation);
 			ImGui::TreePop();
@@ -145,8 +148,8 @@ namespace r2::edit
 		ImGui::Text("Start Time: ");
 		ImGui::SameLine();
 
-		const r2::draw::Animation* currentAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex);
-		if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(currentAnimation->duration * (1.0f / currentAnimation->ticksPerSeconds))))
+		const r2::anim::AnimationClip* currentAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
+		if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(currentAnimation->GetDuration())))
 		{
 			animationComponent.startTime = startTime;
 		}
@@ -235,14 +238,25 @@ namespace r2::edit
 			newSkeletalAnimationComponent.animModel = renderModel;
 			newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
 
-			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+			R2_CHECK(renderModel->optrAnimationClips && r2::sarr::Size(*renderModel->optrAnimationClips) > 0, "we need to have animations");
 
 			newSkeletalAnimationComponent.startingAnimationIndex = 0;
 			newSkeletalAnimationComponent.shouldLoop = true;
 			newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 			newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
 			newSkeletalAnimationComponent.startTime = 0;
-			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::anim::pose::Size(*renderModel->animSkeleton.mRestPose));
+
+			newSkeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, anim::Pose);
+			u32 numJoints = r2::anim::pose::Size(*newSkeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+
+			newSkeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+			newSkeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+			r2::anim::pose::Copy(*newSkeletalAnimationComponent.animationPose, *newSkeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+			newSkeletalAnimationComponent.animationTime = 0.0f;
+
+
 
 			r2::sarr::Push(*instancedSkeletalAnimationComponentToUse->instances, newSkeletalAnimationComponent);
 		}

@@ -6,6 +6,7 @@
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Render/Animation/Pose.h"
 
 namespace r2::ecs
 {
@@ -26,6 +27,7 @@ namespace r2::ecs
 		R2_CHECK(mEntities != nullptr, "Not sure why this should ever be nullptr?");
 
 		const auto numEntities = r2::sarr::Size(*mEntities);
+		auto deltaTime = r2::util::MillisecondsToSecondsF32(static_cast<float>(CPLAT.TickRate()));
 
 		for (u32 i = 0; i < numEntities; ++i)
 		{
@@ -48,7 +50,7 @@ namespace r2::ecs
 			R2_CHECK(animationComponent.shaderBones != nullptr, "These should not be null");
 
 			u32 numInstancesToAnimate = 1;
-			const u32 numShaderBones = r2::sarr::Size(*animationComponent.animModel->optrBoneInfo);
+			const u32 numShaderBones = r2::anim::pose::Size(*animationComponent.animModel->animSkeleton.mRestPose);
 			u32 totalNumShaderBones = numShaderBones;
 
 			if (instancedAnimationComponent)
@@ -64,29 +66,52 @@ namespace r2::ecs
 			R2_CHECK(r2::sarr::Capacity(*animationComponent.shaderBones) == numShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
-#ifdef R2_DEBUG
-			if (debugBonesToUse)
-			{
-				r2::sarr::Clear(*debugBonesToUse);
-			}
-#endif
+
 			const auto ticks = CENG.GetTicks();
 			
 			u32 offset = 0;
 
-			r2::draw::PlayAnimationForAnimModel(
+			if (animationComponent.currentAnimationIndex >= 0)
+			{
+				const r2::anim::AnimationClip* clip = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
+				animationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *animationComponent.animationPose, animationComponent.animationTime + deltaTime, animationComponent.shouldLoop);
+			}
+			
+			r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, offset);
+
+#ifdef R2_DEBUG
+			if (debugBonesToUse)
+			{
+				r2::sarr::Clear(*debugBonesToUse);
+				r2::anim::pose::GetDebugBones(*animationComponent.animationPose, debugBonesToUse);
+			}
+#endif
+			/*r2::draw::PlayAnimationForAnimModel(
 				ticks,
 				animationComponent.startTime,
 				(bool)animationComponent.shouldLoop,
 				*animationComponent.animModel,
 				r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex),
-				*animationComponent.shaderBones, debugBonesToUse, 0);
+				*animationComponent.shaderBones, debugBonesToUse, 0);*/
 
 			if (instancedAnimationComponent && !animationComponent.shouldUseSameTransformsForAllInstances)
 			{
 				for (u32 j = 0; j < instancedAnimationComponent->numInstances; ++j)
 				{
 					SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedAnimationComponent->instances, j);
+
+					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
+					R2_CHECK(r2::sarr::Capacity(*skeletalAnimationComponent.shaderBones) == numShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
+
+					if (skeletalAnimationComponent.currentAnimationIndex >= 0)
+					{
+						const r2::anim::AnimationClip* clip = r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimationClips, skeletalAnimationComponent.currentAnimationIndex);
+						skeletalAnimationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animationTime + deltaTime, skeletalAnimationComponent.shouldLoop);
+					}
+
+					r2::anim::pose::GetMatrixPalette(*skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, offset);
+
 #ifdef R2_DEBUG
 					if (instancedDebugBoneComponent && j < instancedDebugBoneComponent->numInstances)
 					{
@@ -96,28 +121,27 @@ namespace r2::ecs
 
 						debugBonesToUse = debugBonesComponent.debugBones;
 						r2::sarr::Clear(*debugBonesToUse);
+
+						r2::anim::pose::GetDebugBones(*skeletalAnimationComponent.animationPose, debugBonesToUse);
 					}
 					else
 					{
 						debugBonesToUse = nullptr;
 					}
 #endif
-					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
 
-					R2_CHECK(r2::sarr::Capacity(*skeletalAnimationComponent.shaderBones) == numShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
-
-					r2::draw::PlayAnimationForAnimModel(
-						ticks,
-						skeletalAnimationComponent.startTime,
-						(bool)skeletalAnimationComponent.shouldLoop,
-						*skeletalAnimationComponent.animModel,
-						r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimations, skeletalAnimationComponent.currentAnimationIndex),
-						*skeletalAnimationComponent.shaderBones, debugBonesToUse, 0);
+					//r2::draw::PlayAnimationForAnimModel(
+					//	ticks,
+					//	skeletalAnimationComponent.startTime,
+					//	(bool)skeletalAnimationComponent.shouldLoop,
+					//	*skeletalAnimationComponent.animModel,
+					//	r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimations, skeletalAnimationComponent.currentAnimationIndex),
+					//	*skeletalAnimationComponent.shaderBones, debugBonesToUse, 0);
 				}
 			}
 
 #ifdef R2_DEBUG
-			if (instancedDebugBoneComponent && animationComponent.shouldUseSameTransformsForAllInstances)
+			if (debugBoneComponent && instancedDebugBoneComponent && animationComponent.shouldUseSameTransformsForAllInstances)
 			{
 				//copy all of the bone data into the instances
 				for (u32 i = 0; i < instancedDebugBoneComponent->numInstances; ++i)

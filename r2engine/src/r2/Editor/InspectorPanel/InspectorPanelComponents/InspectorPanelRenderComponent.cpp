@@ -27,9 +27,9 @@
 #include "r2/Render/Model/Materials/Material_generated.h"
 
 #include "r2/Editor/EditorMaterialEditor/MaterialEditor.h"
-
+#include "r2/Render/Animation/Pose.h"
 //this is dumb but...
-#include "r2/Render/Animation/AnimationPlayer.h"
+//#include "r2/Render/Animation/AnimationPlayer.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
@@ -254,6 +254,27 @@ namespace r2::edit
 		return "";
 	}
 
+	void FreeSkeletalAnimationComponentData(r2::ecs::ECSWorld& ecsWorld, r2::ecs::SkeletalAnimationComponent& skeletalAnimationComponent)
+	{
+		ECS_WORLD_FREE(ecsWorld, skeletalAnimationComponent.animationPose->mParents);
+		ECS_WORLD_FREE(ecsWorld, skeletalAnimationComponent.animationPose->mJointTransforms);
+		ECS_WORLD_FREE(ecsWorld, skeletalAnimationComponent.animationPose);
+		ECS_WORLD_FREE(ecsWorld, skeletalAnimationComponent.shaderBones);
+	}
+
+	void AllocateNewSkeletalAnimationComponentData(r2::ecs::ECSWorld& ecsWorld, const r2::draw::Model& renderModel, r2::ecs::SkeletalAnimationComponent& skeletalAnimationComponent)
+	{
+		const auto numJoints = r2::anim::pose::Size(*renderModel.animSkeleton.mRestPose);
+
+		skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, numJoints);
+		skeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, r2::anim::Pose);
+		skeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+		skeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+		r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *renderModel.animSkeleton.mRestPose);
+		skeletalAnimationComponent.animationTime = 0.0f;
+	}
+
 	void UpdateSkeletalAnimationComponentIfNecessary(
 		const r2::draw::Model* renderModel,
 		bool useSameBoneTransformsForInstances,
@@ -267,6 +288,14 @@ namespace r2::edit
 		bool hasSkeletalAnimationComponent = coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity);
 		bool hasDebugBoneComponent = coordinator->HasComponent<r2::ecs::DebugBoneComponent>(entity);
 		bool updateShaderBones = false;
+		auto numJoints = 0;
+		
+		if (renderComponent.isAnimated)
+		{
+			numJoints = r2::anim::pose::Size(*renderModel->animSkeleton.mRestPose);
+			R2_CHECK(renderModel->optrAnimationClips && r2::sarr::Size(*renderModel->optrAnimationClips) > 0, "we need to have animations");
+		}
+			
 
 		if (renderComponent.isAnimated && !hasSkeletalAnimationComponent)
 		{
@@ -275,14 +304,24 @@ namespace r2::edit
 			newSkeletalAnimationComponent.animModel = renderModel;
 			newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
 
-			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+			
 
 			newSkeletalAnimationComponent.startingAnimationIndex = 0;
 			newSkeletalAnimationComponent.shouldLoop = true;
 			newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
 			newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
 			newSkeletalAnimationComponent.startTime = 0;
-			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+			
+			AllocateNewSkeletalAnimationComponentData(ecsWorld, *renderModel, newSkeletalAnimationComponent);
+
+			/*auto numJoints = newSkeletalAnimationComponent.animModel->animSkeleton.mRestPose->mJointTransforms->mSize;
+			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, numJoints);
+			newSkeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, r2::anim::Pose);
+			newSkeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+			newSkeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);*/
+
+			/*r2::anim::pose::Copy(*newSkeletalAnimationComponent.animationPose, *newSkeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+			newSkeletalAnimationComponent.animationTime = 0.0f;*/
 
 			coordinator->AddComponent<r2::ecs::SkeletalAnimationComponent>(entity, newSkeletalAnimationComponent);
 
@@ -292,8 +331,6 @@ namespace r2::edit
 			{
 				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 			}
-			
-			
 		}
 		else if (renderComponent.isAnimated && hasSkeletalAnimationComponent)
 		{
@@ -302,7 +339,6 @@ namespace r2::edit
 			animationComponent.animModel = renderModel;
 			animationComponent.animModelAssetName = renderModel->assetName;
 
-			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
 
 			//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
 			animationComponent.startingAnimationIndex = 0;
@@ -311,12 +347,27 @@ namespace r2::edit
 			animationComponent.currentAnimationIndex = animationComponent.startingAnimationIndex;
 			animationComponent.startTime = 0;
 
-			if (r2::sarr::Capacity(*animationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
-			{
-				ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
+			
 
-				animationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
-				
+			if (r2::sarr::Capacity(*animationComponent.shaderBones) != numJoints)
+			{
+				FreeSkeletalAnimationComponentData(ecsWorld, animationComponent);
+				AllocateNewSkeletalAnimationComponentData(ecsWorld, *renderModel, animationComponent);
+				/*ECS_WORLD_FREE(ecsWorld, animationComponent.animationPose->mParents);
+				ECS_WORLD_FREE(ecsWorld, animationComponent.animationPose->mJointTransforms);
+				ECS_WORLD_FREE(ecsWorld, animationComponent.animationPose);
+				ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);*/
+
+				/*animationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, numJoints);
+
+				animationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, r2::anim::Pose);
+
+				animationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+				animationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+				r2::anim::pose::Copy(*animationComponent.animationPose, *renderModel->animSkeleton.mRestPose);
+				animationComponent.animationTime = 0.0f;*/
+
 			}
 			r2::sarr::Clear(*animationComponent.shaderBones);
 
@@ -328,7 +379,7 @@ namespace r2::edit
 
 				ECS_WORLD_FREE(ecsWorld, debugBoneComponent.debugBones);
 
-				debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+				debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, numJoints);
 
 				r2::sarr::Clear(*debugBoneComponent.debugBones);
 			}
@@ -361,15 +412,21 @@ namespace r2::edit
 				debugBones = debugBoneComponent.debugBones;
 			}
 
-			auto ticks = CENG.GetTicks();
-			r2::draw::PlayAnimationForAnimModel(
-				ticks,
-				animationComponent.startTime,
-				animationComponent.shouldLoop,
-				*renderModel,
-				r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
-				*animationComponent.shaderBones,
-				debugBones, 0);
+			r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+
+			if (debugBones)
+			{
+				r2::anim::pose::GetDebugBones(*animationComponent.animationPose, debugBones);
+			}
+			//auto ticks = CENG.GetTicks();
+			//r2::draw::PlayAnimationForAnimModel(
+			//	ticks,
+			//	animationComponent.startTime,
+			//	animationComponent.shouldLoop,
+			//	*renderModel,
+			//	r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
+			//	*animationComponent.shaderBones,
+			//	debugBones, 0);
 		}
 
 		bool hasInstancedSkeletalAnimationComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<r2::ecs::SkeletalAnimationComponent>>(entity);
@@ -391,8 +448,6 @@ namespace r2::edit
 				nextAnimationComponent.animModel = renderModel;
 				nextAnimationComponent.animModelAssetName = renderModel->assetName;
 
-				R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
-
 				//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
 				nextAnimationComponent.startingAnimationIndex = 0;
 				nextAnimationComponent.shouldLoop = true;
@@ -400,11 +455,23 @@ namespace r2::edit
 				nextAnimationComponent.currentAnimationIndex = nextAnimationComponent.startingAnimationIndex;
 				nextAnimationComponent.startTime = 0;
 
-				if (r2::sarr::Capacity(*nextAnimationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
+				
+				if (r2::sarr::Capacity(*nextAnimationComponent.shaderBones) != numJoints)
 				{
-					ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.shaderBones);
+					FreeSkeletalAnimationComponentData(ecsWorld, nextAnimationComponent);
+					/*ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.animationPose->mParents);
+					ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.animationPose->mJointTransforms);
+					ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.animationPose);
+					ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.shaderBones);*/
+					AllocateNewSkeletalAnimationComponentData(ecsWorld, *renderModel, nextAnimationComponent);
+					/*nextAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, numJoints);
+					nextAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, r2::anim::Pose);
+					nextAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+					nextAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
 
-					nextAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+					r2::anim::pose::Copy(*nextAnimationComponent.animationPose, *renderModel->animSkeleton.mRestPose);
+					nextAnimationComponent.animationTime = 0.0f;*/
+
 				}
 				r2::sarr::Clear(*nextAnimationComponent.shaderBones);
 
@@ -416,10 +483,9 @@ namespace r2::edit
 					auto& debugComponentInstance = r2::sarr::At(*instancedDebugBoneComponent->instances, i);
 					ECS_WORLD_FREE(ecsWorld, debugComponentInstance.debugBones);
 
-					debugComponentInstance.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+					debugComponentInstance.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, numJoints);
 
 					r2::sarr::Clear(*debugComponentInstance.debugBones);
-
 				}
 
 				if (updateShaderBones)
@@ -433,7 +499,14 @@ namespace r2::edit
 						debugBones = debugBoneComponent.debugBones;
 					}
 
-					auto ticks = CENG.GetTicks();
+					r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+
+					if (debugBones)
+					{
+						r2::anim::pose::GetDebugBones(*animationComponent.animationPose, debugBones);
+					}
+
+					/*auto ticks = CENG.GetTicks();
 					r2::draw::PlayAnimationForAnimModel(
 						ticks,
 						animationComponent.startTime,
@@ -441,7 +514,7 @@ namespace r2::edit
 						*renderModel,
 						r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
 						*animationComponent.shaderBones,
-						debugBones, 0);
+						debugBones, 0);*/
 				}
 			}
 		}
@@ -462,14 +535,19 @@ namespace r2::edit
 				newSkeletalAnimationComponent.animModel = renderModel;
 				newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
 
-				R2_CHECK(renderModel->optrAnimations&& r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
-
 				newSkeletalAnimationComponent.startingAnimationIndex = 0;
 				newSkeletalAnimationComponent.shouldLoop = true;
 				newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
 				newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
 				newSkeletalAnimationComponent.startTime = 0;
-				newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+				AllocateNewSkeletalAnimationComponentData(ecsWorld, *renderModel, newSkeletalAnimationComponent);
+				//newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, numJoints);
+				//newSkeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, r2::anim::Pose);
+				//newSkeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+				//newSkeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+				//r2::anim::pose::Copy(*newSkeletalAnimationComponent.animationPose, *renderModel->animSkeleton.mRestPose);
+				//newSkeletalAnimationComponent.animationTime = 0.0f;
 
 				r2::sarr::Push(*instancedAnimationComponent.instances, newSkeletalAnimationComponent);
 
@@ -486,15 +564,22 @@ namespace r2::edit
 						debugBones = debugBoneComponent.debugBones;
 					}
 
-					auto ticks = CENG.GetTicks();
-					r2::draw::PlayAnimationForAnimModel(
-						ticks,
-						animationComponent.startTime,
-						animationComponent.shouldLoop,
-						*renderModel,
-						r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
-						*animationComponent.shaderBones,
-						debugBones, 0);
+					r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+
+					if (debugBones)
+					{
+						r2::anim::pose::GetDebugBones(*animationComponent.animationPose, debugBones);
+					}
+
+					//auto ticks = CENG.GetTicks();
+					//r2::draw::PlayAnimationForAnimModel(
+					//	ticks,
+					//	animationComponent.startTime,
+					//	animationComponent.shouldLoop,
+					//	*renderModel,
+					//	r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
+					//	*animationComponent.shaderBones,
+					//	debugBones, 0);
 				}
 			}
 
@@ -611,7 +696,7 @@ namespace r2::edit
 							//	renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(renderModel);
 							//}
 
-							renderComponent.isAnimated = renderModel->optrBoneInfo != nullptr;
+							renderComponent.isAnimated = renderModel->animSkeleton.mBindPose != nullptr;
 
 							if (renderComponent.isAnimated)
 							{

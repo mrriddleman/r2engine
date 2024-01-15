@@ -70,10 +70,10 @@ namespace r2::anim
 		}
 
 #if defined( R2_DEBUG ) || defined(R2_EDITOR)
-		void GetDebugBones(const Pose& pose, std::vector<r2::draw::DebugBone>& outDebugBones)
+		void GetDebugBones(const Pose& pose, r2::SArray<r2::draw::DebugBone>* outDebugBones)
 		{
 			u32 size = Size(pose);
-			outDebugBones.resize(size);
+			R2_CHECK(r2::sarr::Capacity(*outDebugBones) >= size, "We don't have enough space in our outDebugBones");
 
 			std::vector<math::Transform> jointGlobalTransforms;
 
@@ -99,9 +99,12 @@ namespace r2::anim
 					parentPos = parentTransform.position;
 				}
 
-				outDebugBones[i].p0 = parentPos;
-				outDebugBones[i].p1 = global.position;
+				r2::draw::DebugBone debugBone;
+				debugBone.p0 = parentPos;
+				debugBone.p1 = global.position;
 
+				r2::sarr::Push(*outDebugBones, debugBone);
+				
 				jointGlobalTransforms[i] = global;
 			}
 
@@ -118,8 +121,8 @@ namespace r2::anim
 					parentPos = p.position;
 				}
 
-				outDebugBones[i].p0 = parentPos;
-				outDebugBones[i].p1 = t.position;
+				//outDebugBones[i].p0 = parentPos;
+				//outDebugBones[i].p1 = t.position;
 			}
 
 		}
@@ -195,6 +198,20 @@ namespace r2::anim
 		void SetLocalTransform(Pose& pose, u32 index, const math::Transform& transform)
 		{
 			pose.mJointTransforms->mData[index] = transform;
+		}
+
+		void Copy(Pose& dstPose, const Pose& srcPose)
+		{
+			const auto numJoints = srcPose.mJointTransforms->mSize;
+
+			R2_CHECK(dstPose.mJointTransforms->mCapacity >= numJoints, "Not enough space in our destination pose. We have: %u and need: %u", dstPose.mJointTransforms->mCapacity, numJoints);
+			R2_CHECK(dstPose.mParents->mCapacity >= numJoints, "Not enough space in our destination pose. We have: %u and need: %u", dstPose.mParents->mCapacity, numJoints);
+
+			r2::sarr::Clear(*dstPose.mJointTransforms);
+			r2::sarr::Clear(*dstPose.mParents);
+
+			r2::sarr::Copy(*dstPose.mJointTransforms, *srcPose.mJointTransforms);
+			r2::sarr::Copy(*dstPose.mParents, *srcPose.mParents);
 		}
 
 	}

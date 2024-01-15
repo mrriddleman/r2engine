@@ -68,6 +68,11 @@ namespace r2::util
     {
         return static_cast<float>(milliseconds) / 1000.f;
     }
+
+    float MillisecondsToSecondsF32(float milliseconds)
+    {
+        return milliseconds / 1000.f;
+    }
     
     u32 SecondsToMilliseconds(float seconds)
     {

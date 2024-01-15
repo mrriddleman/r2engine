@@ -8,7 +8,7 @@
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Render/Renderer/Renderer.h"
-
+#include "R2/Render/Animation/Pose.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 
@@ -52,7 +52,7 @@ namespace r2::ecs
 				//R2_CHECK(instanceDebugBonesComponent->numInstances <= instancedTranformsComponent->numInstances, "Should always be the case");
 
 				const u32 numModels = numInstancesToUse;//instanceDebugBonesComponent->numInstances;
-				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent->animModel->optrBoneInfo);
+				const u32 numBonesPerInstance = r2::anim::pose::Size(*animationComponent->animModel->animSkeleton.mRestPose);
 
 				for (u32 j = 0; j < numModels; ++j)
 				{

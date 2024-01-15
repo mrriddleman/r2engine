@@ -11,6 +11,7 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Engine.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Animation/Pose.h"
 
 namespace r2::ecs
 {
@@ -159,9 +160,18 @@ namespace r2::ecs
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 			skeletalAnimationComponent.animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
-			skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+			skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::anim::pose::Size(*skeletalAnimationComponent.animModel->animSkeleton.mRestPose));
 
 			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
+			skeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, anim::Pose);
+			u32 numJoints = r2::anim::pose::Size(*skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+
+			skeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+			skeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+			r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+			skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
 			r2::sarr::Push(components, skeletalAnimationComponent);
 		}
@@ -209,11 +219,19 @@ namespace r2::ecs
 				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 				skeletalAnimationComponent.animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
-				skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
-				
-				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
-
+				skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::anim::pose::Size(*skeletalAnimationComponent.animModel->animSkeleton.mRestPose));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
+				skeletalAnimationComponent.animationPose = ECS_WORLD_ALLOC(ecsWorld, anim::Pose);
+				u32 numJoints = r2::anim::pose::Size(*skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+
+				skeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
+				skeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
+
+				r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+				skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
+
+				skeletalAnimationComponent.currentAnimationIndex = static_cast<s32>(skeletalAnimationComponent.startingAnimationIndex);
 
 				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
 			}

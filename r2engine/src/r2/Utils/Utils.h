@@ -79,6 +79,7 @@ namespace r2::util
     bool IsPowerOfTwo(u64 n);
     u64 RoundUp(u64 numToRound, u64 multiple);
     float MillisecondsToSeconds(u32 milliseconds);
+    float MillisecondsToSecondsF32(float milliseconds);
     u32 SecondsToMilliseconds(float seconds);
     bool WildcardMatch(const char* pTameText, const char* pWildText, bool bCaseSensitive = false, char cAltTerminator ='\0');
     void PathCpy(char* dest, const char* source, u64 destLength = r2::fs::FILE_PATH_LENGTH);
