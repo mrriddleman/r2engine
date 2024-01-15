@@ -169,7 +169,7 @@ namespace r2::asset
 			}
 		}
 		
-		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numBones, numAnimationsInModel, alignment, header, boundsChecking);
+		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numAnimationsInModel, alignment, header, boundsChecking);
 
 		return totalSize;
 	}

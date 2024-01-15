@@ -28,10 +28,11 @@
 Sandbox/*.xcodeproj/
 Sandbox/assets_bin/
 Sandbox/assets/asset_bin/
-Sanbox/assets/*
+
 Sandbox/*.vcxproj
 Sandbox/*.vcxproj.user
 Sandbox/bin/*
+Sandbox/assets/Sandbox_Levels/
 Sandbox/assets/models/
 Sandbox/assets/sound/music/
 Sandbox/assets/sound/sound_fx/
@@ -40,7 +41,17 @@ Sandbox/assets/3DGameKit
 Sandbox/assets/3DGameKit.zip
 Sandbox/assets/sponza
 Sandbox/assets/sponza.zip
-Sandbox/assets/Sandbox_Textures/packs/Sponza/
+Sandbox/assets/Sandbox_Textures/packs/*
+Sandbox/assets/Sandbox_Levels/
+Sandbox/assets/Retired_Texture_Packs/
+Sandbox/assets/Retired_Materials
+Sandbox/assets/Sponza_Test/
+Sandbox/assets/Sounds_Raw/
+Sandbox/assets/Sandbox_Models/
+Sandbox/assets/Sandbox_Sounds/
+Sandbox/assets/Sandbox_Materials/*
+Sandbox/assets/Sandbox_Materials/manifests/*
+Sandbox/assets/Sandbox_Textures/manifests/*
 
 # r2engine files/dirs
 
