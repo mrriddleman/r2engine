@@ -466,7 +466,13 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		return UploadModelToVertexBufferInternal(system, handle, model, model.optrBoneData, r2::anim::pose::Size(*model.animSkeleton.mRestPose), uploadBucket, commandBucketArena);
+
+		u32 numBones = 0;
+		if (model.animSkeleton.mRestPose)
+		{
+			numBones = r2::anim::pose::Size(*model.animSkeleton.mRestPose);
+		}
+		return UploadModelToVertexBufferInternal(system, handle, model, model.optrBoneData, numBones, uploadBucket, commandBucketArena);
 	}
 
 	cmd::CopyBuffer* CopyVertexBuffer(vb::VertexBufferLayoutSystem& system, vb::VertexBufferLayout* vertexBufferLayout, u32 vertexBufferIndex, cmd::CopyBuffer* prevCommand, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)

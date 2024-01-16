@@ -116,7 +116,6 @@ namespace r2::anim
 		
 		if (looping)
 		{
-			
 			time = fmodf(time - startTime, duration);
 			if (time < 0.0f)
 			{

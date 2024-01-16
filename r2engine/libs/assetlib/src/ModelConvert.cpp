@@ -1135,7 +1135,7 @@ namespace r2::assets::assetlib
 		if (materialNameString.empty())
 		{
 			std::filesystem::path meshPathName = meshName;
-			materialNameString = std::string(materialNameToUse) + "_material_" + std::to_string(materialIndex);
+			materialNameString = meshPathName.stem().string() + "_material_" + std::to_string(materialIndex);
 		}
 
 		MakeAssetNameStringForFilePath(materialNameString.c_str(), materialNameToUse, r2::asset::MATERIAL);
@@ -2219,6 +2219,11 @@ namespace r2::assets::assetlib
 			if (node.meshIndex.has_value())
 			{
 				meshLocalTransforms[node.meshIndex.value()] = localTransform;
+				
+			}
+
+			if (node.skinIndex.has_value())
+			{
 				meshToSkin[node.meshIndex.value()] = node.skinIndex.value();
 			}
 		}
