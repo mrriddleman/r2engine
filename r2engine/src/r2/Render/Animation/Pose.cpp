@@ -38,10 +38,10 @@ namespace r2::anim
 
 		void GetMatrixPalette(const glm::mat4& globalInvTransform, const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
 		{
+			auto time = CENG.GetTicks();
 			s32 size = (s32)Size(pose);
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
 			R2_CHECK(static_cast<s32>(r2::sarr::Capacity(*out)) - offset >= size, "The matrix palette is too small. We have %i slots left and we need %i!", static_cast<s32>(r2::sarr::Capacity(*out)) - offset, size);
-
 
 			r2::SArray<math::Transform>* tempTransforms =MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, math::Transform, pose.mJointTransforms->mSize);
 			r2::sarr::Fill(*tempTransforms, math::Transform{});
@@ -53,20 +53,17 @@ namespace r2::anim
 				s32 parent = r2::sarr::At(*pose.mParents, i);
 				if (parent > i) { break; }
 				
-				//glm::mat4 global = math::ToMatrix(r2::sarr::At(*pose.mJointTransforms, i));
-
 				math::Transform nextTransform = r2::sarr::At(*pose.mJointTransforms, i);
 
 				if (parent >= 0)
 				{
 					nextTransform = math::Combine(tempTransforms->mData[parent], nextTransform);
-					//global = out->mData[parent + offset].transform * global; //@TODO(Serge): investigate if this is slower than using Combine...
 				}
 
 				tempTransforms->mData[i] = nextTransform;
 
 				out->mData[i + offset].globalInv = globalInvTransform; 
-				//out->mData[i + offset].transform = global;
+
 				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
 
 			}
@@ -78,18 +75,10 @@ namespace r2::anim
 
 			out->mSize += size;
 			
-			for (; i < size; ++i)
-			{
-				R2_CHECK(false, "If we do things right, this should never happen");
-				math::Transform t = GetGlobalTransform(pose, i);
-
-				out->mData[i + offset].globalInv = globalInvTransform;
-				out->mData[i + offset].transform = math::ToMatrix(t);
-				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
-			}
-
-			//out->mSize += size;
 			FREE(tempTransforms, *MEM_ENG_SCRATCH_PTR);
+
+			printf("Finished time: %f\n", CENG.GetTicks() - time);
+			
 		}
 
 #if defined( R2_DEBUG ) || defined(R2_EDITOR)
