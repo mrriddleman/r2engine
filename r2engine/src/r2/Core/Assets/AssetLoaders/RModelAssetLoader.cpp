@@ -224,6 +224,7 @@ namespace r2::asset
 		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
 		model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+		model->globalTransform = glm::inverse(model->globalInverseTransform);
 
 		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 

@@ -2330,15 +2330,6 @@ namespace r2::assets::assetlib
 							
 							newVertex.position = v;
 
-							if (skinForMesh == nullptr)
-							{
-								//Directly apply the global mesh matrix if this is not an animated mesh
-
-								//@TODO(Serge): FIX ME - we shouldn't be doing this since it will mess up normals
-								glm::vec4 aPos = meshGlobalMatrix * glm::vec4(v, 1.0);
-								newVertex.position = glm::vec3(aPos) / aPos.w;
-							}
-
 							newVertex.normal = glm::vec3(0, 0, 1);
 							newVertex.tangent = glm::vec3(1, 0, 0);
 							newVertex.texCoords = glm::vec3(0);

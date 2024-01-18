@@ -70,6 +70,7 @@ namespace r2::draw
 	//	r2::SArray<Animation*>* optrAnimations = nullptr; //@TODO(Serge): Remove
 
         glm::mat4 globalInverseTransform; 
+		glm::mat4 globalTransform;
 
 		static u64 ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 

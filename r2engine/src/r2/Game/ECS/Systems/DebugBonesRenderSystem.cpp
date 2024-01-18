@@ -31,6 +31,7 @@ namespace r2::ecs
 		R2_CHECK(mEntities != nullptr, "Not sure why this should ever be nullptr?");
 
 		const auto numEntities = r2::sarr::Size(*mEntities);
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		for (u32 i = 0; i < numEntities; ++i)
 		{
@@ -43,7 +44,25 @@ namespace r2::ecs
 			
 			const SkeletalAnimationComponent* animationComponent = mnoptrCoordinator->GetComponentPtr<SkeletalAnimationComponent>(e);
 
-			r2::draw::renderer::DrawDebugBones(*debugBoneComponent.debugBones, transformComponent.modelMatrix, debugBoneComponent.color);
+
+			RenderComponent* renderComponent = mnoptrCoordinator->GetComponentPtr<RenderComponent>(e);
+			const r2::draw::Model* model = nullptr;
+
+			glm::mat4 transformMatrix = transformComponent.modelMatrix;
+			if (renderComponent)
+			{
+
+				r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent->assetModelName, r2::asset::RMODEL);
+
+				//@NOTE(Serge): hopefully this never actually loads anything
+				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+
+				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+				//@PERFORMANCE(Serge): this might be too slow when it comes to moving characters around
+				transformMatrix = transformMatrix * model->globalInverseTransform;
+			}
+
+			r2::draw::renderer::DrawDebugBones(*debugBoneComponent.debugBones, transformMatrix, debugBoneComponent.color);
 			
 			if(instancedTranformsComponent && instanceDebugBonesComponent && animationComponent)
 			{
@@ -58,7 +77,13 @@ namespace r2::ecs
 				{
 					DebugBoneComponent& debugBoneComponentJ = r2::sarr::At(*instanceDebugBonesComponent->instances, j);
 					TransformComponent& transformComponentJ = r2::sarr::At(*instancedTranformsComponent->instances, j);
-					r2::draw::renderer::DrawDebugBones(*debugBoneComponentJ.debugBones, transformComponentJ.modelMatrix, debugBoneComponentJ.color);
+					glm::mat4 transformMatrix = transformComponentJ.modelMatrix;
+					if (model)
+					{
+						transformMatrix *= model->globalInverseTransform;
+					}
+
+					r2::draw::renderer::DrawDebugBones(*debugBoneComponentJ.debugBones, transformMatrix, debugBoneComponentJ.color);
 				}
 			}
 		}

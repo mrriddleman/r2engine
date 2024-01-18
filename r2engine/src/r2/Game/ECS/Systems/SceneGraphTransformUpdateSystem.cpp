@@ -34,6 +34,8 @@ namespace r2::ecs
 		if (numEntitiesToUpdate == 0)
 			return;
 
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
 		for (u32 i = 0; i < numEntitiesToUpdate; ++i)
 		{
 			//do the update of the matrices here
@@ -53,7 +55,24 @@ namespace r2::ecs
 
 			//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
 			entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
-			entityTransformComponent.modelMatrix = math::ToMatrix(entityTransformComponent.accumTransform);
+
+			glm::mat4 worldTransform = math::ToMatrix(entityTransformComponent.accumTransform);
+
+			RenderComponent* renderComponent = mnoptrCoordinator->GetComponentPtr<RenderComponent>(entity);
+			const r2::draw::Model* model = nullptr;
+			if (renderComponent)
+			{
+				r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent->assetModelName, r2::asset::RMODEL);
+				
+				//@NOTE(Serge): hopefully this never actually loads anything
+				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+
+				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+				//@PERFORMANCE(Serge): this might be too slow when it comes to moving characters around
+				worldTransform = worldTransform * model->globalTransform;
+			}
+
+			entityTransformComponent.modelMatrix = worldTransform;
 
 			InstanceComponentT<TransformComponent>* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(entity);
 			if (instanceComponent)
@@ -62,7 +81,12 @@ namespace r2::ecs
 				{
 					TransformComponent& tranformComponent = r2::sarr::At(*instanceComponent->instances, j);
 					tranformComponent.accumTransform = math::Combine(parentTransform, tranformComponent.localTransform);
-					tranformComponent.modelMatrix = math::ToMatrix(tranformComponent.accumTransform);
+					glm::mat4 worldTransform = math::ToMatrix(tranformComponent.accumTransform);
+					if (renderComponent)
+					{
+						worldTransform = worldTransform * model->globalTransform;
+					}
+					tranformComponent.modelMatrix = worldTransform;
 				}
 			}
 		}
