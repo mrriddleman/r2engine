@@ -43,11 +43,13 @@ namespace r2::cam
         }
         else if(mDirectionPressed.IsSet(LEFT))
         {
-            MoveCameraBy(mCamera, glm::normalize(glm::cross(mCamera.facing, mCamera.up)) * -speed);
+            MoveCameraBy(mCamera, cam::GetWorldRight(mCamera) * -speed);
         }
         else if(mDirectionPressed.IsSet(RIGHT))
         {
-            MoveCameraBy(mCamera, glm::normalize(glm::cross(mCamera.facing, mCamera.up)) * speed);
+             
+
+            MoveCameraBy(mCamera, cam::GetWorldRight(mCamera) * speed);
         }
     }
     

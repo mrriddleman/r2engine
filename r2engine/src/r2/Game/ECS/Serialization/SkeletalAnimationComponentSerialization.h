@@ -150,11 +150,11 @@ namespace r2::ecs
 			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 			skeletalAnimationComponent.animModel = nullptr;
 			skeletalAnimationComponent.shaderBones = nullptr;
-			skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 			skeletalAnimationComponent.shouldLoop = false;
 			skeletalAnimationComponent.startTime = 0;
-
+			
 			DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatSkeletalAnimationComponent);
+			skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
@@ -173,7 +173,11 @@ namespace r2::ecs
 			r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mBindPose);
 			skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
+			r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
+
 			r2::sarr::Push(components, skeletalAnimationComponent);
+
+			
 		}
 	}
 
@@ -209,11 +213,12 @@ namespace r2::ecs
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 				skeletalAnimationComponent.animModel = nullptr;
 				skeletalAnimationComponent.shaderBones = nullptr;
-				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
+				
 				skeletalAnimationComponent.shouldLoop = false;
 				skeletalAnimationComponent.startTime = 0;
 
 				DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatInstancedSkeletalAnimationComponent->skeletalAnimationComponentArray()->Get(j));
+				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 
 				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
@@ -232,6 +237,8 @@ namespace r2::ecs
 				skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
 				skeletalAnimationComponent.currentAnimationIndex = static_cast<s32>(skeletalAnimationComponent.startingAnimationIndex);
+
+				r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
 
 				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
 			}

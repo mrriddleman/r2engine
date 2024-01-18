@@ -322,7 +322,7 @@ namespace r2
 
         mStartTime = SDL_GetPerformanceCounter();
         u64 currentTime = mStartTime;
-        s64 accumulator = 0;
+        f64 accumulator = 0;
         
         f64 maxMSPerFrame = 0;
         f64 minMSPerFrame = std::numeric_limits<double>::max();
@@ -338,8 +338,8 @@ namespace r2
         u64 endTime = startTime;
 
         u64 t = 0;
-        u64 k_desiredUpdateRate = 60;
-        const u64 dt = k_frequency / k_desiredUpdateRate;
+        f64 k_desiredUpdateRate = 0.01666666 * 1000.0;
+        const f64 dt = k_desiredUpdateRate;
         bool resync = false;
 
 		const u64 k_timeHistoryCount = 4;
@@ -347,27 +347,30 @@ namespace r2
 
         const u64 k_dtUpperToleranceMult = 8;
 
-
-		const s64 snap_frequencies[] = { dt,        //60fps
-                              dt * 2,      //30fps
-                              dt * 3,      //20fps
-                              dt * 4,      //15fps
-							  (dt + 1) / 2,  //120fps //120hz, 240hz, or higher need to round up, so that adding 120hz twice guaranteed is at least the same as adding time_60hz once
+		const f64 snap_frequencies[] = { dt,        //60fps
+                              dt * 2.0,      //30fps
+                              dt * 3.0,      //20fps
+                              dt * 4.0,      //15fps
+							  (dt + 1.0) / 2.0,  //120fps //120hz, 240hz, or higher need to round up, so that adding 120hz twice guaranteed is at least the same as adding time_60hz once
 						   // (time_60hz+2)/3,  //180fps //that's where the +1 and +2 come from in those equations
 						   // (time_60hz+3)/4,  //240fps //I do not want to snap to anything higher than 120 in my engine, but I left the math in here anyway
 		};
 
         
-        const s64 vsync_maxerror = k_frequency * .0002;
+        const f64 vsync_maxerror = dt * .002;
         const u32 k_ignoreFrames = 100;
 
         u64 totalFrames = 0;
 
+        //auto tempCurrent = SDL_GetTicks();
+        //auto tempLast = tempCurrent;
+        
         while (mRunning)
         {
+
 			u64 newTime = SDL_GetPerformanceCounter();
-			s64 delta = newTime - currentTime;
-			currentTime = newTime;
+			f64 delta = (f64(newTime - currentTime) * k_millisecondsToSeconds) / (f64)k_frequency;
+            currentTime = newTime;
 
 			if (delta > dt * k_dtUpperToleranceMult)
 			{
@@ -389,29 +392,33 @@ namespace r2
 
             //first k_ignoreFrames frames are a wash
             //just assume they're fine so we don't mess up the timing
-            if (frames < k_ignoreFrames) 
+            if (totalFrames < k_ignoreFrames)
             {
                 delta = dt;
             }
 
 			//delta time averaging
-			for (u32 i = 0; i < k_timeHistoryCount - 1; i++) 
+			/*for (u32 i = 0; i < k_timeHistoryCount - 1; i++) 
             {
 				timeAverager[i] = timeAverager[i + 1];
-			}
+			}*/
 			
-            timeAverager[k_timeHistoryCount - 1] = delta;
-			delta = 0;
+            //timeAverager[totalFrames % k_timeHistoryCount] = delta;
+
+            //timeAverager[k_timeHistoryCount - 1] = delta;
 			
-            for (u32 i = 0; i < k_timeHistoryCount; i++)
-            {
-				delta += timeAverager[i];
-			}
-			delta /= k_timeHistoryCount;
+            //delta = 0;
+			
+            //for (u32 i = 0; i < k_timeHistoryCount; i++)
+            //{
+            //    delta += timeAverager[i];
+            //}
+			
+            //delta /= k_timeHistoryCount;
 
 			accumulator += delta;
 
-			if (accumulator > dt* k_dtUpperToleranceMult) {
+			if (accumulator > dt * k_dtUpperToleranceMult) {
 				resync = true;
 			}
 
@@ -426,8 +433,12 @@ namespace r2
 
             u32 numGameUpdates = 0;
 
-            while (accumulator >= (s64)dt)
+            while (accumulator >= dt)
             {
+				//tempCurrent = SDL_GetTicks();
+				//auto temp = tempCurrent - tempLast;
+				//tempLast = tempCurrent;
+
                 mEngine.Update();
 				accumulator -= dt;
 

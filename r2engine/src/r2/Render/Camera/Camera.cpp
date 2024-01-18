@@ -132,21 +132,21 @@ namespace r2::cam
     {
         //cam.view[col][row]
         //first row
-        return glm::vec3(cam.view[0][0], cam.view[0][1], cam.view[0][2]);
+        return glm::vec3(cam.view[0][0], cam.view[1][0], cam.view[2][0]);
     }
 
     glm::vec3 GetWorldUp(const Camera& cam)
     {
         //cam.view[col][row]
         //second row
-        return glm::vec3(cam.view[1][0], cam.view[1][1], cam.view[1][2]);
+        return glm::vec3(cam.view[0][1], cam.view[1][1], cam.view[2][1]);
     }
 
     glm::vec3 GetWorldForward(const Camera& cam)
     {
         //cam.view[col][row]
         //third row
-        return glm::vec3(cam.view[2][0], cam.view[2][1], cam.view[2][2]);
+        return glm::vec3(cam.view[0][2], cam.view[1][2], cam.view[2][2]);
     }
 
     void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS])

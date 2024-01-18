@@ -74,7 +74,7 @@ namespace r2::ecs
 			if (animationComponent.currentAnimationIndex >= 0)
 			{
 				const r2::anim::AnimationClip* clip = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
-				animationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *animationComponent.animationPose, r2::util::MillisecondsToSeconds(ticks), animationComponent.shouldLoop);
+				animationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *animationComponent.animationPose, deltaTime + animationComponent.animationTime, animationComponent.shouldLoop);
 			}
 			
 			r2::anim::pose::GetMatrixPalette(animationComponent.animModel->globalInverseTransform, *animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, offset);
@@ -107,7 +107,7 @@ namespace r2::ecs
 					if (skeletalAnimationComponent.currentAnimationIndex >= 0)
 					{
 						const r2::anim::AnimationClip* clip = r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimationClips, skeletalAnimationComponent.currentAnimationIndex);
-						skeletalAnimationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animationTime + deltaTime, skeletalAnimationComponent.shouldLoop);
+						skeletalAnimationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *skeletalAnimationComponent.animationPose, deltaTime + animationComponent.animationTime, skeletalAnimationComponent.shouldLoop);
 					}
 
 					r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, offset);

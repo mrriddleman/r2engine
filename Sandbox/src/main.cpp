@@ -390,7 +390,7 @@ public:
         
         R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
         
-        mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         //modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
