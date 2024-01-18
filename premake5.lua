@@ -186,13 +186,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 		sysincludedirs
 		{
-			"%{prj.name}/vendor/assimp/MacOSX/include"
+			
 		}
 
 		libdirs 
 		{
 			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
-			"%{prj.name}/vendor/assimp/MacOSX/lib",
+			
 			"/usr/local/opt/llvm/lib"
 		}
 
@@ -208,13 +208,11 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			links
 			{
 				"fmodL",
-				"assimp"
 			}
 		filter {"configurations:not Debug", "system:macosx"}
 			links
 			{
 				"fmod",
-				"assimp"
 			}
 
 
@@ -250,7 +248,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 		sysincludedirs
 		{
-			"%{prj.name}/vendor/assimp/Windows/include"
+
 		}
 
 		links
@@ -377,7 +375,6 @@ project "r2Tests"
 
 		libdirs
 		{
-			"r2engine/vendor/assimp/Windows/lib/Debug"
 		}
 
 		links
@@ -385,7 +382,6 @@ project "r2Tests"
 			"fmodL_vc",
 			"fmodstudioL_vc",
 			"fsbank_vc",
-			"assimp-vc142-mtd"
 		}
 
 		postbuildcommands
@@ -396,7 +392,6 @@ project "r2Tests"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/fsbank.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/libfsbvorbis64.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/opus.dll ../bin/Debug_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Debug_windows_x86_64/%{prj.name}",
@@ -407,13 +402,11 @@ project "r2Tests"
 
 		libdirs
 		{
-			"r2engine/vendor/assimp/Windows/lib/Release",
 		}
 
 		links
 		{
 			"fmod_vc",
-			"assimp-vc142-mt"
 		}
 
 		postbuildcommands
@@ -424,7 +417,6 @@ project "r2Tests"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/fsbank.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/libfsbvorbis64.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/opus.dll ../bin/Debug_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Release_windows_x86_64/%{prj.name}",
@@ -444,14 +436,12 @@ project "r2Tests"
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}"
 		}
 
 	filter {"configurations:Release", "system:macosx"}
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}"
 		}
 
 	filter "configurations:Debug"
@@ -572,7 +562,7 @@ project "Sandbox"
 	filter {"configurations:Debug", "system:windows"}
 		libdirs
 		{
-			"r2engine/vendor/assimp/Windows/lib/Debug"
+
 		}
 
 		links
@@ -580,7 +570,6 @@ project "Sandbox"
 			"fmodL_vc",
 			"fsbank_vc",
 			"fmodstudioL_vc",
-			"assimp-vc142-mtd"
 		}
 
 		postbuildcommands 
@@ -591,7 +580,6 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/fsbank.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/libfsbvorbis64.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/opus.dll ../bin/Debug_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Debug_windows_x86_64/%{prj.name}/sounds",
 			"{COPY} ../engine_assets/sounds/ ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Debug_windows_x86_64/%{prj.name}",
@@ -605,7 +593,6 @@ project "Sandbox"
 
 		libdirs
 		{
-			"r2engine/vendor/assimp/Windows/lib/Release",
 		}
 
 		links
@@ -613,7 +600,6 @@ project "Sandbox"
 			"fmod_vc",
 			"fmodstudio_vc",
 			"fsbank_vc",
-			"assimp-vc142-mt"
 		}
 		postbuildcommands 
 		{
@@ -623,7 +609,6 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/fsbank.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/libfsbvorbis64.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/opus.dll ../bin/Release_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Release_windows_x86_64/%{prj.name}/sounds",
 			"{COPY} ../engine_assets/sounds ./bin/Release_windows_x86_64/%{prj.name}/sounds",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Release_windows_x86_64/%{prj.name}",
@@ -636,7 +621,6 @@ project "Sandbox"
 	filter {"configurations:Publish", "system:windows"}
 		libdirs
 		{
-			"r2engine/vendor/assimp/Windows/lib/Release",
 		}
 
 		links
@@ -644,7 +628,6 @@ project "Sandbox"
 			"fmod_vc",
 			"fmodstudio_vc",
 			"fsbank_vc",
-			"assimp-vc142-mt"
 		}
 
 		postbuildcommands 
@@ -655,7 +638,6 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/fsbank.dll ../bin/Publish_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/libfsbvorbis64.dll ../bin/Publish_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/fsbank/lib/x64/opus.dll ../bin/Publish_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Publish_windows_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Publish_windows_x86_64/%{prj.name}/sounds",
 			"{COPY} ../engine_assets/sounds ./bin/Publish_windows_x86_64/%{prj.name}/sounds",
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Publish_windows_x86_64/%{prj.name}",
@@ -678,7 +660,6 @@ project "Sandbox"
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Debug_macosx_x86_64/%{prj.name}/sounds",
 			"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}"
 		}
@@ -687,7 +668,6 @@ project "Sandbox"
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Release_macosx_x86_64/%{prj.name}/sounds",
 			"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
 		}    

@@ -66,7 +66,6 @@ project "assetlib"
 
 		sysincludedirs
 		{
-			"../../vendor/assimp/Windows/include"
 		}
 
 	filter "configurations:Debug"

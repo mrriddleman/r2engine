@@ -19,7 +19,6 @@
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
 #include "assetlib/AssetUtils.h"
-#include "assetlib/AnimationConvert.h"
 
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/parser.hpp>
@@ -29,11 +28,7 @@
 #include <vector>
 #include <map>
 
-#define MAX_BONE_WEIGHTS 4
-
 namespace fs = std::filesystem;
-
-
 
 namespace r2::assets::assetlib
 {
