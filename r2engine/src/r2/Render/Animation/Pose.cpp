@@ -3,6 +3,7 @@
 #include "r2/Render/Animation/Pose.h"
 #include "assetlib/RModel_generated.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 
 namespace r2::anim
 {
@@ -41,6 +42,10 @@ namespace r2::anim
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
 			R2_CHECK(static_cast<s32>(r2::sarr::Capacity(*out)) - offset >= size, "The matrix palette is too small. We have %i slots left and we need %i!", static_cast<s32>(r2::sarr::Capacity(*out)) - offset, size);
 
+
+			r2::SArray<math::Transform>* tempTransforms =MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, math::Transform, pose.mJointTransforms->mSize);
+			r2::sarr::Fill(*tempTransforms, math::Transform{});
+
 			s32 i = 0;
 
 			for (; i < size; ++i)
@@ -48,16 +53,27 @@ namespace r2::anim
 				s32 parent = r2::sarr::At(*pose.mParents, i);
 				if (parent > i) { break; }
 				
-				glm::mat4 global = math::ToMatrix(r2::sarr::At(*pose.mJointTransforms, i));
+				//glm::mat4 global = math::ToMatrix(r2::sarr::At(*pose.mJointTransforms, i));
+
+				math::Transform nextTransform = r2::sarr::At(*pose.mJointTransforms, i);
+
 				if (parent >= 0)
 				{
-					global = out->mData[parent + offset].transform * global; //@TODO(Serge): investigate if this is slower than using Combine...
+					nextTransform = math::Combine(tempTransforms->mData[parent], nextTransform);
+					//global = out->mData[parent + offset].transform * global; //@TODO(Serge): investigate if this is slower than using Combine...
 				}
 
+				tempTransforms->mData[i] = nextTransform;
+
 				out->mData[i + offset].globalInv = globalInvTransform; 
-				out->mData[i + offset].transform = global;
+				//out->mData[i + offset].transform = global;
 				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
 
+			}
+
+			for (s32 j = 0; j < size; ++j)
+			{
+				out->mData[j + offset].transform = math::ToMatrix(tempTransforms->mData[j]);
 			}
 
 			out->mSize += size;
@@ -73,7 +89,7 @@ namespace r2::anim
 			}
 
 			//out->mSize += size;
-
+			FREE(tempTransforms, *MEM_ENG_SCRATCH_PTR);
 		}
 
 #if defined( R2_DEBUG ) || defined(R2_EDITOR)
