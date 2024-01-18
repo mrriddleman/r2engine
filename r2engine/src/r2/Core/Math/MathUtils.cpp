@@ -51,13 +51,13 @@ namespace r2::math
 
     glm::quat Interpolate(const glm::quat& q1, const glm::quat& q2, float t)
     {
-        glm::quat result = Lerp(q1, q2, t);
-        if (glm::dot(q1, q2) < 0)
-        {
-            return Lerp(q1, -q2, t);
-        }
-        
-        return glm::normalize(result);
+        //glm::quat result = Lerp(q1, q2, t);
+        //if (glm::dot(q1, q2) < 0)
+        //{
+        //    return Lerp(q1, -q2, t);
+        //}
+        //
+        return glm::normalize(Slerp(q1, q2, t));
     }
 
     glm::vec3 Interpolate(const glm::vec3& v1, const glm::vec3& v2, float t)

@@ -16,32 +16,55 @@
 
 namespace r2::edit
 {
-	void DisplayAnimationDetails(r2::ecs::SkeletalAnimationComponent& animationComponent, s32& animationIndex, int id, const r2::anim::AnimationClip* animation)
+	void DisplayAnimationDetails(r2::ecs::SkeletalAnimationComponent& animationComponent, s32& animationIndex, int id)
 	{
-		R2_CHECK(animation != nullptr, "Should never happen");
 
 		ImGui::PushID(id);
 
-		if (ImGui::BeginCombo("##label animation", animation->mAssetName.assetNameString.c_str()))
+		std::string animationNameStr = "None";
+		std::vector<std::string> animationNames;
+		animationNames.push_back(animationNameStr);
+
+		for (size_t i = 0; i < r2::sarr::Size(*animationComponent.animModel->optrAnimationClips); ++i)
+		{
+			const std::string& animationName = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, i)->mAssetName.assetNameString;
+
+			animationNames.push_back(animationName);
+		}
+
+		std::string preview = animationNames[animationIndex + 1];
+
+		if (ImGui::BeginCombo("##label animation", preview.c_str()))
 		{
 			const u32 numAnimations = r2::sarr::Size(*animationComponent.animModel->optrAnimationClips);
 
-			for (u32 i = 0; i < numAnimations; ++i)
+			for (s32 i = 0; i < (s32)numAnimations+1; ++i)
 			{
-				const r2::anim::AnimationClip* nextAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, i);
-				if (ImGui::Selectable(nextAnimation->mAssetName.assetNameString.c_str(), animation->mAssetName == nextAnimation->mAssetName))
+				if (ImGui::Selectable(animationNames[i].c_str(), (i-1) == animationIndex))
 				{
-					animationIndex = i;
-					animation = nextAnimation;
+					animationIndex = i-1;
 				}
 			}
 
 			ImGui::EndCombo();
 		}
 
-		ImGui::Text("Duration: %f", animation->GetDuration());
-		ImGui::Text("Start Time: %f", animation->mStartTime);
-		ImGui::Text("End Time: %f", animation->mEndTime);
+		if (animationIndex >= 0)
+		{
+			r2::anim::AnimationClip* animation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationIndex);
+			
+			if (&animationIndex == &animationComponent.currentAnimationIndex)
+			{
+				ImGui::SliderFloat("Animation Time", &animationComponent.animationTime, 0.0f, animation->GetDuration());
+			}
+
+			ImGui::Text("Duration: %f", animation->GetDuration());
+			ImGui::Text("Start Time: %f", animation->mStartTime);
+			ImGui::Text("End Time: %f", animation->mEndTime);
+		}
+
+
+		
 
 		ImGui::PopID();
 	}
@@ -131,16 +154,14 @@ namespace r2::edit
 
 		if (ImGui::TreeNodeEx("Current Animation"))
 		{
-			DisplayAnimationDetails(animationComponent, animationComponent.currentAnimationIndex, 0, r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex));
+			DisplayAnimationDetails(animationComponent, animationComponent.currentAnimationIndex, 0);
 
 			ImGui::TreePop();
 		}
 
 		if (ImGui::TreeNodeEx("Starting Animation"))
 		{
-			const r2::anim::AnimationClip* startingAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.startingAnimationIndex);
-			R2_CHECK(startingAnimation != nullptr, "This should never happen");
-			DisplayAnimationDetails(animationComponent, animationComponent.startingAnimationIndex, 1, startingAnimation);
+			DisplayAnimationDetails(animationComponent, animationComponent.startingAnimationIndex, 1);
 			ImGui::TreePop();
 		}
 
@@ -148,11 +169,17 @@ namespace r2::edit
 		ImGui::Text("Start Time: ");
 		ImGui::SameLine();
 
-		const r2::anim::AnimationClip* currentAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
-		if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(currentAnimation->GetDuration())))
+		if (animationComponent.currentAnimationIndex > 0)
 		{
-			animationComponent.startTime = startTime;
+			const r2::anim::AnimationClip* currentAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
+			if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(currentAnimation->GetDuration())))
+			{
+				animationComponent.startTime = startTime;
+			}
 		}
+		
+		
+		
 
 		bool shouldLoop = animationComponent.shouldLoop;
 		if (ImGui::Checkbox("Loop", &shouldLoop))
@@ -240,7 +267,7 @@ namespace r2::edit
 
 			R2_CHECK(renderModel->optrAnimationClips && r2::sarr::Size(*renderModel->optrAnimationClips) > 0, "we need to have animations");
 
-			newSkeletalAnimationComponent.startingAnimationIndex = 0;
+			newSkeletalAnimationComponent.startingAnimationIndex = -1;
 			newSkeletalAnimationComponent.shouldLoop = true;
 			newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 			newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;

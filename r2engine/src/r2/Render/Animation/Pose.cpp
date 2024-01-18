@@ -35,7 +35,7 @@ namespace r2::anim
 			return result;
 		}
 
-		void GetMatrixPalette(const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
+		void GetMatrixPalette(const glm::mat4& globalInvTransform, const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
 		{
 			s32 size = (s32)Size(pose);
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
@@ -54,18 +54,25 @@ namespace r2::anim
 					global = out->mData[parent + offset].transform * global; //@TODO(Serge): investigate if this is slower than using Combine...
 				}
 
-				out->mData[i + offset].globalInv = glm::mat4(1); //@TODO(Serge): remove - completely unneeded
+				out->mData[i + offset].globalInv = globalInvTransform; 
 				out->mData[i + offset].transform = global;
 				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
 
 			}
+
+			out->mSize += size;
 			
 			for (; i < size; ++i)
 			{
 				R2_CHECK(false, "If we do things right, this should never happen");
 				math::Transform t = GetGlobalTransform(pose, i);
+
+				out->mData[i + offset].globalInv = globalInvTransform;
 				out->mData[i + offset].transform = math::ToMatrix(t);
+				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
 			}
+
+			//out->mSize += size;
 
 		}
 
@@ -104,26 +111,41 @@ namespace r2::anim
 				debugBone.p1 = global.position;
 
 				r2::sarr::Push(*outDebugBones, debugBone);
-				
+
 				jointGlobalTransforms[i] = global;
 			}
+
+			
 
 			for (; i < size; ++i)
 			{
 				R2_CHECK(false, "If we do things right, this should never happen");
-				math::Transform t = GetGlobalTransform(pose, i);
+				//math::Transform t = GetGlobalTransform(pose, i);
 				glm::vec3 parentPos = glm::vec3(0);
 
 				auto parentIndex = pose.mParents->mData[i];
+
+				math::Transform global = pose.mJointTransforms->mData[i];
+
 				if (parentIndex >= 0)
 				{
 					math::Transform p = GetGlobalTransform(pose, parentIndex);
+
 					parentPos = p.position;
+
+					global = math::Combine(p, global);
 				}
 
-				//outDebugBones[i].p0 = parentPos;
-				//outDebugBones[i].p1 = t.position;
+				r2::draw::DebugBone debugBone;
+				debugBone.p0 = parentPos;
+				debugBone.p1 = global.position;
+
+				r2::sarr::Push(*outDebugBones, debugBone);
+
+
 			}
+
+		
 
 		}
 #endif
@@ -187,10 +209,27 @@ namespace r2::anim
 			*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<s32>::MemorySize(numJoints));
 
 			////@TODO(Serge): check to see if this is okay
-			memcpy(newPose->mJointTransforms->mData, joints->data(), sizeof(math::Transform) * numJoints);
-			newPose->mJointTransforms->mSize = numJoints;
-			memcpy(newPose->mParents->mData, parents->data(), sizeof(s32) * numJoints);
-			newPose->mParents->mSize = numJoints;
+
+			for (flatbuffers::uoffset_t i = 0; i < joints->size(); ++i)
+			{
+				const auto flatJoint = joints->Get(i);
+				const auto flatPosition = flatJoint->position();
+				const auto flatScale = flatJoint->scale();
+				const auto flatRotation = flatJoint->rotation();
+
+				math::Transform t;
+				t.position = glm::vec3(flatPosition->Get(0), flatPosition->Get(1), flatPosition->Get(2));
+				t.scale = glm::vec3(flatScale->Get(0), flatScale->Get(1), flatScale->Get(2));
+				t.rotation = glm::quat(flatRotation->Get(3), flatRotation->Get(0), flatRotation->Get(1), flatRotation->Get(2));
+
+				r2::sarr::Push(*newPose->mJointTransforms, t);
+				r2::sarr::Push(*newPose->mParents, parents->Get(i));
+			}
+
+			//memcpy(newPose->mJointTransforms->mData, joints->data(), sizeof(math::Transform) * numJoints);
+			//newPose->mJointTransforms->mSize = numJoints;
+			//memcpy(newPose->mParents->mData, parents->data(), sizeof(s32) * numJoints);
+			//newPose->mParents->mSize = numJoints;
 
 			return newPose;
 		}

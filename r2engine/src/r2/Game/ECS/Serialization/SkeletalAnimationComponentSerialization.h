@@ -146,7 +146,7 @@ namespace r2::ecs
 #ifdef R2_ASSET_PIPELINE
 			skeletalAnimationComponent.animModelAssetName.assetNameString= "";
 #endif
-			skeletalAnimationComponent.startingAnimationIndex = 0;
+			skeletalAnimationComponent.startingAnimationIndex = -1;
 			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 			skeletalAnimationComponent.animModel = nullptr;
 			skeletalAnimationComponent.shaderBones = nullptr;
@@ -170,7 +170,7 @@ namespace r2::ecs
 			skeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
 			skeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
 
-			r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+			r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mBindPose);
 			skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
 			r2::sarr::Push(components, skeletalAnimationComponent);
@@ -205,7 +205,7 @@ namespace r2::ecs
 #ifdef R2_ASSET_PIPELINE
 				skeletalAnimationComponent.animModelAssetName.assetNameString = "";
 #endif
-				skeletalAnimationComponent.startingAnimationIndex = 0;
+				skeletalAnimationComponent.startingAnimationIndex = -1;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 				skeletalAnimationComponent.animModel = nullptr;
 				skeletalAnimationComponent.shaderBones = nullptr;
@@ -228,7 +228,7 @@ namespace r2::ecs
 				skeletalAnimationComponent.animationPose->mJointTransforms = ECS_WORLD_MAKE_SARRAY(ecsWorld, math::Transform, numJoints);
 				skeletalAnimationComponent.animationPose->mParents = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, numJoints);
 
-				r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mRestPose);
+				r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mBindPose);
 				skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
 				skeletalAnimationComponent.currentAnimationIndex = static_cast<s32>(skeletalAnimationComponent.startingAnimationIndex);

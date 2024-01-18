@@ -148,11 +148,20 @@ namespace r2::assets::assetlib
 	{
 		Transform inv;
 
-		inv.rotation = glm::inverse(t.rotation);
+		auto q = t.rotation;
+		float lenSQ = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+		if (lenSQ < 0.00001f)
+		{
+			q = glm::quat(1, 0, 0, 0);
+		}
 
-		inv.scale.x = fabs(t.scale.x) < 0.0001 ? 0.0f : 1.0f / t.scale.x;
-		inv.scale.y = fabs(t.scale.y) < 0.0001 ? 0.0f : 1.0f / t.scale.y;
-		inv.scale.z = fabs(t.scale.z) < 0.0001 ? 0.0f : 1.0f / t.scale.z;
+		float recip = 1.0f / lenSQ;
+
+		inv.rotation = glm::quat(q.w * recip, -q.x * recip, -q.y * recip, -q.z * recip);
+
+		inv.scale.x = fabs(t.scale.x) < 0.00001 ? 0.0f : 1.0f / t.scale.x;
+		inv.scale.y = fabs(t.scale.y) < 0.00001 ? 0.0f : 1.0f / t.scale.y;
+		inv.scale.z = fabs(t.scale.z) < 0.00001 ? 0.0f : 1.0f / t.scale.z;
 
 		glm::vec3 invTrans = t.position * -1.0f;
 		inv.position = inv.rotation * (inv.scale * invTrans);
@@ -224,13 +233,6 @@ namespace r2::assets::assetlib
 
 	struct Skeleton
 	{
-		//std::vector<uint64_t> mJointNames;
-		//std::vector<int> mParents;
-		//std::vector<Transform> mRestPoseTransforms;
-		//std::vector<Transform> mBindPoseTransforms;
-		//std::vector<int> mRealParentBones;
-		
-
 		Pose mRestPose;
 		Pose mBindPose;
 		std::vector<std::string> mJointNameStrings;
@@ -270,7 +272,7 @@ namespace r2::assets::assetlib
 	{
 		std::vector<uint32_t> mSampledFrames;
 		std::vector<Frame<T>> mFrames;
-		fastgltf::AnimationInterpolation interpolation; //@TODO(Serge): change to the flat version maybe
+		fastgltf::AnimationInterpolation interpolation; 
 		unsigned int mNumberOfSamples;
 
 		void UpdateIndexLookupTable(unsigned int numberOfSamples)
@@ -498,6 +500,22 @@ namespace r2::assets::assetlib
 		size_t imageIndex;
 	};
 
+	//struct Node;
+
+	//struct Node
+	//{
+	//	int parent = -1;
+	//	int mesh = -1;
+	//	int skin = -1;
+	//	size_t index = 0;
+	//	std::string name;
+
+	//	Transform localTransform;
+	//	std::vector<Node*> children;
+
+
+	//};
+
 	template<typename T>
 	struct ShaderParameter
 	{
@@ -656,7 +674,7 @@ namespace r2::assets::assetlib
 
 	//For loading the GLTF Skeleton
 	Pose LoadRestPose(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms);
-	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose);
+	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose, const std::unordered_map<size_t, Transform>& nodeLocalTransforms, const std::vector<glm::mat4>& invBindPose);
 	std::vector<std::string> LoadJointNames(const fastgltf::Asset& gltf);
 	using BoneMap = std::map<int, int>;
 	BoneMap RearrangeSkeleton(Pose& restPose, Pose& bindPose, std::vector<std::string>& jointNames);
@@ -776,10 +794,10 @@ namespace r2::assets::assetlib
 		transform.mutable_scale()->Mutate(1, t.scale[1]);
 		transform.mutable_scale()->Mutate(2, t.scale[2]);
 
-		transform.mutable_rotation()->Mutate(0, t.rotation[0]);
-		transform.mutable_rotation()->Mutate(1, t.rotation[1]);
-		transform.mutable_rotation()->Mutate(2, t.rotation[2]);
-		transform.mutable_rotation()->Mutate(3, t.rotation[3]);
+		transform.mutable_rotation()->Mutate(0, t.rotation.x);
+		transform.mutable_rotation()->Mutate(1, t.rotation.y);
+		transform.mutable_rotation()->Mutate(2, t.rotation.z);
+		transform.mutable_rotation()->Mutate(3, t.rotation.w);
 
 		return transform;
 	}
@@ -1709,10 +1727,12 @@ namespace r2::assets::assetlib
 		{
 			return -1;
 		}
+		assert(gltf.skins.size() == 1);
+		const auto& skin = gltf.skins[0];
 
-		for (unsigned int j = 0; j < gltf.nodes.size(); ++j)
+		for (unsigned int j = 0; j < skin.joints.size(); ++j)
 		{
-			const fastgltf::Node& nextNode = gltf.nodes[j];
+			const fastgltf::Node& nextNode = gltf.nodes[skin.joints[j]];
 
 			for (unsigned int k = 0; k < nextNode.children.size(); ++k)
 			{
@@ -1726,9 +1746,49 @@ namespace r2::assets::assetlib
 		return -1;
 	}
 
+	int FindGlobalParent(const fastgltf::Asset& gltf, size_t joint)
+	{
+		Transform parentTransform;
+		for (size_t j = 0; j < gltf.nodes.size(); ++j)
+		{
+			const fastgltf::Node& parentNode = gltf.nodes[j];
+
+			for (unsigned int k = 0; k < parentNode.children.size(); ++k)
+			{
+				if (&gltf.nodes[joint] == &(gltf.nodes[parentNode.children[k]]))
+				{
+
+					return (int)j;
+				}
+			}
+		}
+
+		return -1;
+	}
+
+	Transform GetGlobalTransform(const fastgltf::Asset& gltf, size_t nodeIndex, const std::unordered_map<size_t, Transform>& nodeLocalTransforms)
+	{
+		Transform result = nodeLocalTransforms.find(nodeIndex)->second;
+
+		int parent = -1;
+		while ((parent = FindGlobalParent(gltf, nodeIndex)) > -1)
+		{
+			result = Combine(nodeLocalTransforms.find(parent)->second, result);
+			nodeIndex = parent;
+		}
+
+		return result;
+	}
+
+
 	Pose LoadRestPose(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms)
 	{
-		size_t boneCount = gltf.nodes.size();
+		//Right now all we support
+		assert(gltf.skins.size() == 1);
+
+		const auto& skin = gltf.skins[0];
+
+		size_t boneCount = skin.joints.size();
 
 		Pose result;
 		result.joints.resize(boneCount);
@@ -1736,60 +1796,68 @@ namespace r2::assets::assetlib
 
 		for (size_t i = 0; i < boneCount; ++i)
 		{
-			result.joints[i] = nodeLocalTransforms.find(i)->second;
-			result.parents[i] = GetParentNodeIndex(gltf, &gltf.nodes[i]);
+			size_t nodeIndex = skin.joints[i];
+			
+			if (skin.skeleton.value() == nodeIndex)
+			{
+				result.parents[i] = -1;
+				result.joints[i] = GetGlobalTransform(gltf, nodeIndex, nodeLocalTransforms);
+			}
+			else
+			{
+				result.joints[i] = nodeLocalTransforms.find(nodeIndex)->second;
+				result.parents[i] = GetParentNodeIndex(gltf, &gltf.nodes[nodeIndex]);
+			}
 		}
 
 		return result;
 	}
 
-	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose)
+
+	Pose LoadBindPose(const fastgltf::Asset& gltf, const Pose& restPose, const std::unordered_map<size_t, Transform>& nodeLocalTransforms, const std::vector<glm::mat4>& invBindPose)
 	{
 		Pose bindPose;
+		/*size_t numSkins = gltf.skins.size();
+		assert(numSkins == 1);
+		const auto& skin = gltf.skins[0];
+
+		
 
 		size_t numBones = restPose.joints.size();
 		std::vector<Transform> worldBindPose(numBones);
 
 		for (size_t i = 0; i < numBones; ++i)
 		{
-			worldBindPose[i] = restPose.GetGlobalTransform(i);
+			size_t nextGlobalJoint = skin.joints[i];
+
+			Transform result = GetGlobalTransform(gltf, nextGlobalJoint, nodeLocalTransforms);
+
+			worldBindPose[i] = result;
 		}
 
-		size_t numSkins = gltf.skins.size();
-
-		for (size_t i = 0; i < numSkins; ++i)
+		for (size_t j = 0; j < numBones; ++j)
 		{
-			std::vector<glm::mat4> invBindMatrices;
+			glm::mat4 invBindMatrix = invBindPose[j];
+			glm::mat4 bindMatrix = glm::inverse(invBindMatrix);
 
-			fastgltf::iterateAccessorWithIndex<glm::mat4>(gltf, gltf.accessors[gltf.skins[i].inverseBindMatrices.value()],
-				[&](glm::mat4 v, size_t index) {
-					invBindMatrices.push_back(v);
-				});
-			size_t numJoints = gltf.skins[i].joints.size();
-			for (size_t j = 0; j < numJoints; ++j)
-			{
-				glm::mat4 invBindMatrix = invBindMatrices[j];
-				glm::mat4 bindMatrix = glm::inverse(invBindMatrix);
-				
-				worldBindPose[gltf.skins[i].joints[j]] = ToTransform(bindMatrix);
-			}
-		}
-
+			worldBindPose[j] = ToTransform(bindMatrix);
+		}*/
+		
 		bindPose.Load(restPose);
 
-		for (size_t i = 0; i < numBones; ++i)
-		{
-			Transform current = worldBindPose[i];
+		//for (size_t i = 0; i < numBones; ++i)
+		//{
+		//	Transform current = worldBindPose[i];
 
-			int p = bindPose.parents[i];
-			if (p >= 0)
-			{
-				const Transform& parent = worldBindPose[p];
-				current = Combine(Inverse(parent), current);
-			}
+		//	int p = bindPose.parents[i];
+		//	if (p >= 0)
+		//	{
+		//		const Transform& parent = worldBindPose[p];
+		//		current = Combine(Inverse(parent), current);
+		//	}
 
-			bindPose.joints[i] = current;
-		}
+		//	bindPose.joints[i] = current;
+		//}
 
 
 		return bindPose;
@@ -1797,12 +1865,16 @@ namespace r2::assets::assetlib
 
 	std::vector<std::string> LoadJointNames(const fastgltf::Asset& gltf)
 	{
-		size_t boneCount = gltf.nodes.size();
+		size_t numSkins = gltf.skins.size();
+		assert(numSkins == 1);
+		const auto& skin = gltf.skins[0];
+
+		size_t boneCount = skin.joints.size();
 
 		std::vector<std::string> jointNames(boneCount);
 		for (size_t i = 0; i < boneCount; ++i)
 		{
-			const fastgltf::Node& nextNode = gltf.nodes[i];
+			const fastgltf::Node& nextNode = gltf.nodes[skin.joints[i]];
 			if (nextNode.name.empty())
 			{
 				jointNames[i] = std::string("Joint_") + std::to_string(i);
@@ -1816,7 +1888,7 @@ namespace r2::assets::assetlib
 		return jointNames;
 	}
 
-	BoneMap RearrangeSkeleton(Pose& restPose, Pose& bindPose, std::vector<std::string>& jointNames)
+	BoneMap RearrangeSkeleton(Pose& restPose, Pose& bindPose, std::vector<std::string>& jointNames, std::vector<glm::mat4>& invBindPose)
 	{
 		if (restPose.joints.empty())
 		{
@@ -1871,6 +1943,8 @@ namespace r2::assets::assetlib
 		newBindPose.joints.resize(size);
 		newBindPose.parents.resize(size);
 
+		std::vector<glm::mat4> newInvBindPose(size);
+
 		std::vector<std::string> newNames(size);
 		for (size_t i = 0; i < size; ++i)
 		{
@@ -1879,6 +1953,8 @@ namespace r2::assets::assetlib
 			newBindPose.joints[i] = bindPose.joints[thisBone];
 			newNames[i] = jointNames[thisBone];
 
+			newInvBindPose[i] = invBindPose[thisBone];
+
 			int parent = mapBackward[bindPose.parents[thisBone]];
 			newRestPose.parents[i] = parent;
 			newBindPose.parents[i] = parent;
@@ -1886,6 +1962,10 @@ namespace r2::assets::assetlib
 
 		bindPose.Load(newBindPose);
 		restPose.Load(newRestPose);
+		jointNames.clear();
+		jointNames.insert(jointNames.end(), newNames.begin(), newNames.end());
+		invBindPose.clear();
+		invBindPose.insert(invBindPose.end(), newInvBindPose.begin(), newInvBindPose.end());
 
 		return mapBackward;
 	}
@@ -1893,19 +1973,28 @@ namespace r2::assets::assetlib
 	BoneMap LoadSkeleton(const fastgltf::Asset& gltf, const std::unordered_map<size_t, Transform>& nodeLocalTransforms, Skeleton& skeleton)
 	{
 		Pose restPose = LoadRestPose(gltf, nodeLocalTransforms);
-		Pose bindPose = LoadBindPose(gltf, restPose);
+		
 		std::vector<std::string> jointNames = LoadJointNames(gltf);
 
-		auto boneMap = RearrangeSkeleton(restPose, bindPose, jointNames);
+		const auto& skin = gltf.skins[0];
+		std::vector<glm::mat4> invBindPose;
+
+		fastgltf::iterateAccessorWithIndex<glm::mat4>(gltf, gltf.accessors[skin.inverseBindMatrices.value()],
+			[&](glm::mat4 v, size_t index) {
+				invBindPose.push_back(v);
+			});
+
+		Pose bindPose = LoadBindPose(gltf, restPose, nodeLocalTransforms, invBindPose);
+
+		auto boneMap = RearrangeSkeleton(restPose, bindPose, jointNames, invBindPose);
 
 		skeleton.mRestPose.Load(restPose);
 		skeleton.mBindPose.Load(bindPose);
 		skeleton.mJointNameStrings.insert(skeleton.mJointNameStrings.end(), jointNames.begin(), jointNames.end());
-
-		skeleton.UpdateInverseBindPose();
+		skeleton.mInvBindPose.insert(skeleton.mInvBindPose.end(), invBindPose.begin(), invBindPose.end());
 
 		//check for parents
-		for (size_t i= 0; i < restPose.parents.size(); ++i)
+		for (size_t i = 0; i < restPose.parents.size(); ++i)
 		{
 			assert(restPose.parents[i] == bindPose.parents[i] && "We're assuming this atm");
 		}
@@ -1966,7 +2055,7 @@ namespace r2::assets::assetlib
 		std::vector<glm::quat> values;
 		fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[animationSampler.outputAccessor],
 			[&](glm::vec4 v, size_t index) {
-				values.push_back(glm::quat(v.w, v.x, v.y, v.x));
+				values.push_back(glm::quat(v.w, v.x, v.y, v.z));
 			});
 
 		auto numFrames = gltf.accessors[animationSampler.inputAccessor].count;
@@ -1994,6 +2083,23 @@ namespace r2::assets::assetlib
 		}
 	}
 
+	int MapGlobalNodeIndexToSkeleton(const fastgltf::Asset& gltf, size_t nodeIndex)
+	{
+		const auto& skin = gltf.skins[0];
+
+		size_t numBones = skin.joints.size();
+		for (size_t i = 0; i < numBones; ++i)
+		{
+			if (skin.joints[i] == nodeIndex)
+			{
+				return (int)i;
+			}
+		}
+
+		assert(false);
+		return -1;
+	}
+
 	std::vector<Clip> LoadAnimationClips(const fastgltf::Asset& gltf, BoneMap boneMap, unsigned int numberOfSamples)
 	{
 		const auto numClips = gltf.animations.size();
@@ -2010,21 +2116,23 @@ namespace r2::assets::assetlib
 			{
 				const auto& channel = animation.channels[j];
 
+				int boneIndex = MapGlobalNodeIndexToSkeleton(gltf, channel.nodeIndex);
+
 				if (channel.path == fastgltf::AnimationPath::Translation)
 				{
-					auto& positionChannel = result[i][channel.nodeIndex].mPosition;
+					auto& positionChannel = result[i][boneIndex].mPosition;
 					ParseAnimationChannelVec3(gltf, animation, channel, positionChannel);
 					positionChannel.UpdateIndexLookupTable(numberOfSamples);
 				}
 				else if (channel.path == fastgltf::AnimationPath::Rotation)
 				{
-					auto& rotationChannel = result[i][channel.nodeIndex].mRotation;
+					auto& rotationChannel = result[i][boneIndex].mRotation;
 					ParseAnimationChannelQuat(gltf, animation, channel, rotationChannel);
 					rotationChannel.UpdateIndexLookupTable(numberOfSamples);
 				}
 				else if (channel.path == fastgltf::AnimationPath::Scale)
 				{
-					auto& scaleChannel = result[i][channel.nodeIndex].mScale;
+					auto& scaleChannel = result[i][boneIndex].mScale;
 					ParseAnimationChannelVec3(gltf, animation, channel, scaleChannel);
 					scaleChannel.UpdateIndexLookupTable(numberOfSamples);
 				}
@@ -2193,12 +2301,18 @@ namespace r2::assets::assetlib
 			delete[] materialManifestData;
 		}
 
-		std::unordered_map<size_t, Transform> meshLocalTransforms;
 		std::unordered_map<size_t, size_t> meshToSkin;
 		std::unordered_map<size_t, Transform> nodeLocalTransform;
 
 		//go through all of the nodes to setup the correct transformations
-		for (size_t i = 0; i < gltf.nodes.size(); ++i)
+
+		//All we support at the moment
+		assert(gltf.scenes.size() == 1 && gltf.scenes[0].nodeIndices.size() == 1);
+		assert(gltf.meshes.size() == 1);
+
+		size_t rootSceneNode = gltf.scenes[0].nodeIndices[0];
+		size_t meshIndex = 0;
+		for (size_t i = rootSceneNode; i < gltf.nodes.size(); ++i)
 		{
 			fastgltf::Node& node = gltf.nodes[i];
 			
@@ -2211,23 +2325,26 @@ namespace r2::assets::assetlib
 			glm::vec3 sc(fastgltfTRS.scale[0], fastgltfTRS.scale[1], fastgltfTRS.scale[2]);
 
 			localTransform.position = tl;
-			localTransform.rotation = rot;
+			localTransform.rotation = glm::normalize(rot);
 			localTransform.scale = sc;
 
 			nodeLocalTransform[i] = localTransform;
 
 			if (node.meshIndex.has_value())
 			{
-				meshLocalTransforms[node.meshIndex.value()] = localTransform;
-				
+				meshIndex = node.meshIndex.value();
 			}
 
-			if (node.skinIndex.has_value())
+			if (node.meshIndex.has_value() && node.skinIndex.has_value())
 			{
 				meshToSkin[node.meshIndex.value()] = node.skinIndex.value();
 			}
 		}
+		
+		Transform meshGlobalTransform = GetGlobalTransform(gltf, meshIndex, nodeLocalTransform);
 
+		glm::mat4 meshGlobalMatrix = TransformToMat4(meshGlobalTransform);
+		model.globalInverseTransform = glm::inverse(meshGlobalMatrix);
 
 		BoneMap boneRemapping;
 
@@ -2248,14 +2365,13 @@ namespace r2::assets::assetlib
 			const fastgltf::Mesh& fastgltfMesh = gltf.meshes[i];
 			assert(fastgltfMesh.primitives.size() > 0 && "Empty Mesh?");
 			
-			glm::mat4 localTransformMat = TransformToMat4(meshLocalTransforms[i]);
-
+			
 			const fastgltf::Skin* skinForMesh = nullptr;
 			if (gltf.skins.size() > 0)
 			{
 				skinForMesh = &gltf.skins[meshToSkin[i]];
 			}
-
+			
 			for (size_t p = 0; p < fastgltfMesh.primitives.size(); ++p)
 			{
 				
@@ -2286,8 +2402,18 @@ namespace r2::assets::assetlib
 					fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, posAccessor, [&](glm::vec3 v, size_t index)
 						{
 							Vertex newVertex;
-							//We apply the local transform directly to the mesh - not sure if that's an issue but why would it be?
-							newVertex.position = localTransformMat * glm::vec4(v, 1.0);
+							
+							newVertex.position = v;
+
+							if (skinForMesh == nullptr)
+							{
+								//Directly apply the global mesh matrix if this is not an animated mesh
+
+								//@TODO(Serge): FIX ME - we shouldn't be doing this since it will mess up normals
+								glm::vec4 aPos = meshGlobalMatrix * glm::vec4(v, 1.0);
+								newVertex.position = glm::vec3(aPos) / aPos.w;
+							}
+
 							newVertex.normal = glm::vec3(0, 0, 1);
 							newVertex.tangent = glm::vec3(1, 0, 0);
 							newVertex.texCoords = glm::vec3(0);
@@ -2364,7 +2490,13 @@ namespace r2::assets::assetlib
 						fastgltf::iterateAccessorWithIndex<glm::vec4>(gltf, gltf.accessors[(*accWeights).second],
 							[&](glm::vec4 w, size_t index)
 							{
+								if (glm::length(w) == 0)
+								{
+									w = glm::vec4(1, 0, 0, 0);
+								}
+
 								weights[index] = w;
+							//	printf("weights[%zu] - x: %f, y: %f, z: %f, w: %f\n", index, w.x, w.y, w.z, w.w);
 							});
 					}
 					else
@@ -2389,6 +2521,7 @@ namespace r2::assets::assetlib
 							[&](glm::uvec4 j, size_t index)
 							{
 								joints[index] = glm::ivec4(j);
+							//	printf("Joint %zu, value - x: %u, y: %u, z: %u, w: %u\n", index, j.x, j.y, j.z, j.w);
 							});
 					}
 					else
@@ -2405,11 +2538,13 @@ namespace r2::assets::assetlib
 					animVertex.boneWeights = weights[w];
 
 					animVertex.boneIDs = glm::ivec4(
-						skinForMesh->joints[joints[w].x],
-						skinForMesh->joints[joints[w].y],
-						skinForMesh->joints[joints[w].z],
-						skinForMesh->joints[joints[w].w]
+						joints[w].x,
+						joints[w].y,
+						joints[w].z,
+						joints[w].w
 					);
+
+				//	printf("Mesh: %zu, primitive: %zu - w: %zu - boneID - x: %i, y: %i, z: %i, w: %i\n", i, p, w, animVertex.boneIDs.x, animVertex.boneIDs.y, animVertex.boneIDs.z, animVertex.boneIDs.w);
 
 					animVertices.push_back(animVertex);
 				}
@@ -2426,8 +2561,6 @@ namespace r2::assets::assetlib
 		}
 
 		BuildNewMaterials(rawMaterialsParentDirectory, binaryMaterialParamPacksManifestFile, materialsToBuild, samplers);
-		
-		//assert(false && "@TODO(Serge): Build the new RAnimation + RModel fbs and update how we do the ConvertModelToFlatbuffer for animation data");
 
 		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir, numAnimationSamples);
 	}
@@ -3648,7 +3781,7 @@ namespace r2::assets::assetlib
 				const auto& nextBoneInfo = model.boneInfo[i];
 
 				flat::BoneInfo flatBoneInfo;
-				flatBoneInfo.mutable_offsetTransform() = ToFlatMatrix4(model.boneInfo[i]);
+				flatBoneInfo.mutable_offsetTransform() = ToFlatMatrix4(nextBoneInfo);
 
 				flatBoneInfos.push_back(flatBoneInfo);
 			}

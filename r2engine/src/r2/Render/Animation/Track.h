@@ -28,6 +28,7 @@ namespace r2::anim
 		r2::SArray<Frame<N>>* mFrames = nullptr;
 		r2::SArray<u32>* mSampledFrames = nullptr;
 		InterpolationType mInterpolationType = LINEAR;
+		unsigned int mNumSamples = 0;
 
 		Frame<N>& operator[](unsigned int index);
 

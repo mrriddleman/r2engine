@@ -138,7 +138,7 @@ namespace r2::anim
 		u32 numSampledFrames = r2::sarr::Size(*mSampledFrames);
 
 		float t = time / duration;
-		u32 numSamples = (duration * static_cast<float>(numSampledFrames));
+		u32 numSamples = (duration * static_cast<float>(mNumSamples));
 		u32 index = (t * (float)numSamples);
 		if (index >= numSampledFrames)
 		{
@@ -259,7 +259,10 @@ namespace r2::anim
 		VectorTrack* newVectorTrack = nullptr;
 
 		const auto numFrames = flatVectorTrack->keys()->size();
-		const auto numSampledFrames = flatVectorTrack->trackInfo()->numberOfSamples();
+
+
+		const auto sampledKeys = flatVectorTrack->trackInfo()->sampledKeys();
+		const auto numSampledKeys = sampledKeys->size();
 
 		newVectorTrack = new (*memoryPointer) VectorTrack();
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, sizeof(VectorTrack));
@@ -267,13 +270,50 @@ namespace r2::anim
 		newVectorTrack->mFrames = EMPLACE_SARRAY(*memoryPointer, VectorFrame, numFrames);
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray< VectorFrame>::MemorySize(numFrames));
 
-		newVectorTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledFrames);
-		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledFrames));
+		newVectorTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledKeys);
+		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledKeys));
 
-		memcpy(newVectorTrack->mFrames->mData, flatVectorTrack->keys()->data(), sizeof(VectorFrame) * numFrames);
-		memcpy(newVectorTrack->mSampledFrames->mData, flatVectorTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
+
+		const auto flatKeys = flatVectorTrack->keys();
+		const auto flatKeysSize = flatKeys->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < flatKeysSize; ++i)
+		{
+			const auto flatKey = flatKeys->Get(i);
+			
+			Frame<3> nextFrame;
+
+			nextFrame.mValue[0] = flatKey->value().x();
+			nextFrame.mValue[1] = flatKey->value().y();
+			nextFrame.mValue[2] = flatKey->value().z();
+
+			nextFrame.mIn[0] = flatKey->in().x();
+			nextFrame.mIn[1] = flatKey->in().y();
+			nextFrame.mIn[2] = flatKey->in().z();
+
+			nextFrame.mOut[0] = flatKey->out().x();
+			nextFrame.mOut[1] = flatKey->out().y();
+			nextFrame.mOut[2] = flatKey->out().z();
+
+			nextFrame.mTime = flatKey->time();
+
+			r2::sarr::Push(*newVectorTrack->mFrames, nextFrame);
+		}
+
+
+		for (flatbuffers::uoffset_t i = 0; i < numSampledKeys; ++i)
+		{
+			r2::sarr::Push(*newVectorTrack->mSampledFrames, sampledKeys->Get(i));
+		}
+
+		//memcpy(newVectorTrack->mFrames->mData, flatVectorTrack->keys()->data(), sizeof(VectorFrame) * numFrames);
+		//memcpy(newVectorTrack->mSampledFrames->mData, flatVectorTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
+
+		//newVectorTrack->mFrames->mSize = flatVectorTrack->keys()->size();
+		//newVectorTrack->mSampledFrames->mSize = flatVectorTrack->trackInfo()->sampledKeys()->size();
 
 		newVectorTrack->mInterpolationType = static_cast<InterpolationType>(flatVectorTrack->trackInfo()->interpolation());
+		newVectorTrack->mNumSamples = flatVectorTrack->trackInfo()->numberOfSamples();
 
 		return newVectorTrack;
 	}
@@ -283,7 +323,9 @@ namespace r2::anim
 		QuatTrack* newQuatTrack = nullptr;
 
 		const auto numFrames = flatQuatTrack->keys()->size();
-		const auto numSampledFrames = flatQuatTrack->trackInfo()->numberOfSamples();
+
+		const auto sampledKeys = flatQuatTrack->trackInfo()->sampledKeys();
+		const auto numSampledKeys = sampledKeys->size();
 
 		newQuatTrack = new (*memoryPointer) QuatTrack();
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, sizeof(QuatTrack));
@@ -291,13 +333,52 @@ namespace r2::anim
 		newQuatTrack->mFrames = EMPLACE_SARRAY(*memoryPointer, QuatFrame, numFrames);
 		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray< QuatFrame>::MemorySize(numFrames));
 
-		newQuatTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledFrames);
-		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledFrames));
+		newQuatTrack->mSampledFrames = EMPLACE_SARRAY(*memoryPointer, u32, numSampledKeys);
+		*memoryPointer = r2::mem::utils::PointerAdd(*memoryPointer, r2::SArray<u32>::MemorySize(numSampledKeys));
 
-		memcpy(newQuatTrack->mFrames->mData, flatQuatTrack->keys()->data(), sizeof(QuatFrame) * numFrames);
-		memcpy(newQuatTrack->mSampledFrames->mData, flatQuatTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
+		const auto flatKeys = flatQuatTrack->keys();
+		const auto flatKeysSize = flatKeys->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < flatKeysSize; ++i)
+		{
+			const auto flatKey = flatKeys->Get(i);
+
+			Frame<4> nextFrame;
+
+			nextFrame.mValue[0] = flatKey->value().x();
+			nextFrame.mValue[1] = flatKey->value().y();
+			nextFrame.mValue[2] = flatKey->value().z();
+			nextFrame.mValue[3] = flatKey->value().w();
+
+			nextFrame.mIn[0] = flatKey->in().x();
+			nextFrame.mIn[1] = flatKey->in().y();
+			nextFrame.mIn[2] = flatKey->in().z();
+			nextFrame.mIn[3] = flatKey->in().w();
+
+			nextFrame.mOut[0] = flatKey->out().x();
+			nextFrame.mOut[1] = flatKey->out().y();
+			nextFrame.mOut[2] = flatKey->out().z();
+			nextFrame.mOut[3] = flatKey->out().w();
+
+			nextFrame.mTime = flatKey->time();
+
+			r2::sarr::Push(*newQuatTrack->mFrames, nextFrame);
+		}
+
+		for (flatbuffers::uoffset_t i = 0; i < numSampledKeys; ++i)
+		{
+			r2::sarr::Push(*newQuatTrack->mSampledFrames, sampledKeys->Get(i));
+		}
+
+
+		//memcpy(newQuatTrack->mFrames->mData, flatQuatTrack->keys()->data(), sizeof(QuatFrame) * numFrames);
+		//memcpy(newQuatTrack->mSampledFrames->mData, flatQuatTrack->trackInfo()->sampledKeys()->data(), sizeof(u32) * numSampledFrames);
+
+		//newQuatTrack->mFrames->mSize = flatQuatTrack->keys()->size();
+		//newQuatTrack->mSampledFrames->mSize = flatQuatTrack->trackInfo()->sampledKeys()->size();
 
 		newQuatTrack->mInterpolationType = static_cast<InterpolationType>(flatQuatTrack->trackInfo()->interpolation());
+		newQuatTrack->mNumSamples = flatQuatTrack->trackInfo()->numberOfSamples();
 
 		return newQuatTrack;
 	}

@@ -277,4 +277,13 @@ namespace r2::math
 
 		return out;
 	}
+
+#ifdef R2_DEBUG
+	void PrintTransform(const Transform& t)
+	{
+		printf("Position - x: %f, y: %f, z: %f\n", t.position.x, t.position.y, t.position.z);
+		printf("Scale - x: %f, y: %f, z: %f\n", t.scale.x, t.scale.y, t.scale.z);
+		printf("Rotation - x: %f, y: %f, z: %f, w: %f\n", t.rotation.x, t.rotation.y, t.rotation.z, t.rotation.w);
+	}
+#endif
 }

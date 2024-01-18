@@ -22,6 +22,10 @@ namespace r2::math
 	Transform Mix(const Transform& a, const Transform& b, float t);
 	glm::mat4 ToMatrix(const Transform& t);
 	Transform ToTransform(const glm::mat4& m);
+
+#ifdef R2_DEBUG
+	void PrintTransform(const Transform& t);
+#endif
 }
 
 
