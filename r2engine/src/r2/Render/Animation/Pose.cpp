@@ -38,7 +38,6 @@ namespace r2::anim
 
 		void GetMatrixPalette(const glm::mat4& globalInvTransform, const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
 		{
-			auto time = CENG.GetTicks();
 			s32 size = (s32)Size(pose);
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
 			R2_CHECK(static_cast<s32>(r2::sarr::Capacity(*out)) - offset >= size, "The matrix palette is too small. We have %i slots left and we need %i!", static_cast<s32>(r2::sarr::Capacity(*out)) - offset, size);
@@ -76,9 +75,6 @@ namespace r2::anim
 			out->mSize += size;
 			
 			FREE(tempTransforms, *MEM_ENG_SCRATCH_PTR);
-
-			printf("Finished time: %f\n", CENG.GetTicks() - time);
-			
 		}
 
 #if defined( R2_DEBUG ) || defined(R2_EDITOR)

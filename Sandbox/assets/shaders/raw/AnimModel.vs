@@ -13,8 +13,7 @@ layout (location = 6) in uint DrawID;
 //#define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
-#include "Input/ShaderBufferObjects/ModelData.glsl"
-#include "Input/ShaderBufferObjects/BoneTransformData.glsl"
+#include "Common/ModelFunctions.glsl"
 
 out VS_OUT
 {
@@ -37,18 +36,10 @@ invariant gl_Position;
 
 void main()
 {
-	int boneOffset = boneOffsets[DrawID].x;
-	mat4 localMatrix = inverse(bonesXForms[BoneIDs[0] + boneOffset].globalInv);
-
-	mat4 finalBoneVertexTransform = bonesXForms[BoneIDs[0] + boneOffset].globalInv * bonesXForms[BoneIDs[0] + boneOffset].transform * bonesXForms[BoneIDs[0] + boneOffset].invBinPose * BoneWeights[0];
-	finalBoneVertexTransform 	 += bonesXForms[BoneIDs[1] + boneOffset].globalInv * bonesXForms[BoneIDs[1] + boneOffset].transform * bonesXForms[BoneIDs[1] + boneOffset].invBinPose * BoneWeights[1];
-	finalBoneVertexTransform	 += bonesXForms[BoneIDs[2] + boneOffset].globalInv * bonesXForms[BoneIDs[2] + boneOffset].transform * bonesXForms[BoneIDs[2] + boneOffset].invBinPose * BoneWeights[2];
-	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
-
-	mat4 vertexTransform = models[DrawID] * localMatrix * finalBoneVertexTransform;
+	mat4 vertexTransform = GetAnimatedModel(DrawID);
 	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
 
-	mat3 normalMatrix = transpose(inverse(mat3(vertexTransform)));
+	mat3 normalMatrix = GetNormalMatrix(vertexTransform);
 
 	vs_out.normal = normalize(normalMatrix * aNormal);
 	mat3 viewNormalMatrix = transpose(inverse(mat3(view * models[DrawID])));
@@ -70,7 +61,7 @@ void main()
 
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
-	vs_out.fragPos = modelPos.xyz;
+	vs_out.fragPos = modelPos.xyz / modelPos.w;
 
 	vs_out.fragPosTangent = TBN * vs_out.fragPos;
 	vs_out.viewPosTangent = TBN * cameraPosTimeW.xyz;

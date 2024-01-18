@@ -9,8 +9,7 @@ layout (location = 5) in ivec4 BoneIDs;
 layout (location = 6) in uint DrawID;
 
 #include "Input/UniformBuffers/Matrices.glsl"
-#include "Input/ShaderBufferObjects/ModelData.glsl"
-#include "Input/ShaderBufferObjects/BoneTransformData.glsl"
+#include "Common/ModelFunctions.glsl"
 
 invariant gl_Position;
 
@@ -23,15 +22,8 @@ out VS_OUT
 
 void main()
 {
-	int boneOffset = boneOffsets[DrawID].x;
-	mat4 localMatrix = inverse(bonesXForms[BoneIDs[0] + boneOffset].globalInv);
-
-	mat4 finalBoneVertexTransform = bonesXForms[BoneIDs[0] + boneOffset].globalInv * bonesXForms[BoneIDs[0] + boneOffset].transform * bonesXForms[BoneIDs[0] + boneOffset].invBinPose * BoneWeights[0];
-	finalBoneVertexTransform 	 += bonesXForms[BoneIDs[1] + boneOffset].globalInv * bonesXForms[BoneIDs[1] + boneOffset].transform * bonesXForms[BoneIDs[1] + boneOffset].invBinPose * BoneWeights[1];
-	finalBoneVertexTransform	 += bonesXForms[BoneIDs[2] + boneOffset].globalInv * bonesXForms[BoneIDs[2] + boneOffset].transform * bonesXForms[BoneIDs[2] + boneOffset].invBinPose * BoneWeights[2];
-	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
-
-	mat4 vertexTransform = models[DrawID] * localMatrix * finalBoneVertexTransform;
+	
+	mat4 vertexTransform = GetAnimatedModel(DrawID);
 	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
 	
 	gl_Position = projection * view * modelPos;
