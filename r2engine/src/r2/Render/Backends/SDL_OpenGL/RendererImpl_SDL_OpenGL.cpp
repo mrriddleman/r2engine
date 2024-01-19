@@ -44,6 +44,10 @@ namespace
 		GLint mMaxComputeWorkGroupCountX = 0;
 		GLint mMaxComputeWorkGroupCountY = 0;
 		GLint mMaxComputeWorkGroupCountZ = 0;
+		GLint mMaxUniformBufferSize = 0;
+		GLint mMaxUniformBufferBindings = 0;
+		GLint mMaxVertexUniformBlocks = 0;
+		GLint mMaxFragmentUniformBlocks = 0;
 	};
 
 	struct RendererImplState
@@ -1272,6 +1276,11 @@ namespace r2::draw::rendererimpl
 		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxVertexShaderStorageBlocks);
 		glGetIntegerv(GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxGeometryShaderStorageBlocks);
 		glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxComputeShaderStorageBlocks);
+
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &rendererImpl->mLimits.mMaxUniformBufferSize);
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &rendererImpl->mLimits.mMaxUniformBufferBindings);
+		glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &rendererImpl->mLimits.mMaxVertexUniformBlocks);
+		glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &rendererImpl->mLimits.mMaxFragmentUniformBlocks);
 
 		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &rendererImpl->mLimits.mMaxComputeWorkGroupCountX);
 		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &rendererImpl->mLimits.mMaxComputeWorkGroupCountY);

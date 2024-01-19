@@ -697,7 +697,6 @@ namespace r2::draw::rmat
 				}
 
 				const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle);
-				//R2_CHECK(theTexture != nullptr, "Should never happen");
 
 				if (!theTexture)
 				{
@@ -710,9 +709,10 @@ namespace r2::draw::rmat
 
 				tex::TextureAddress address = texsys::GetTextureAddress(*theTexture);
 
-			//	tex::TextureType textureType = GetTextureTypeForPropertyType(textureParam->propertyType());
+			 	s32 channel = textureParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : textureParam->packingType();
 
-			 	s32 channel = textureParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : textureParam->packingType();//GetPackingType(material, textureType);
+				u32 textureCoordIndex = textureParam->textureCoordIndex();
+				//@TODO(Serge): implement textureCoordinateIndex into the channel
 
 				switch (propertyType)
 				{

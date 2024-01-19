@@ -190,8 +190,9 @@ namespace r2::assets::assetlib
 	{
 		glm::vec3 position = glm::vec3(0.0f);
 		glm::vec3 normal = glm::vec3(0.0f);
-		glm::vec3 texCoords = glm::vec3(0.0f);
 		glm::vec3 tangent = glm::vec3(0.0f);
+		glm::vec3 texCoords0 = glm::vec3(0.0f);
+		glm::vec3 texCoords1 = glm::vec3(0.0f);
 	};
 
 	struct Pose
@@ -508,6 +509,7 @@ namespace r2::assets::assetlib
 		AssetName texturePackAssetName;
 		size_t samplerIndex;
 		float anisotropicFiltering;
+		size_t textureCoordIndex;
 	};
 
 	struct ShaderStageParam
@@ -1141,7 +1143,7 @@ namespace r2::assets::assetlib
 		{
 			//we have a texture 
 			const auto& baseTextureInfo = fastgltfMaterial.pbrData.baseColorTexture.value();
-
+			
 			const Texture& texture = textures[baseTextureInfo.textureIndex];
 
 			ShaderParameter<TextureShaderParam> textureShaderParam;
@@ -1150,6 +1152,13 @@ namespace r2::assets::assetlib
 			//set the property type and packing type directly here
 			textureShaderParam.propertyType = flat::ShaderPropertyType_ALBEDO;
 			textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+			textureShaderParam.value.textureCoordIndex = baseTextureInfo.texCoordIndex;
+
+			if (textureShaderParam.value.textureCoordIndex > 1)
+			{
+				printf("WARNING - Base Color: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+				textureShaderParam.value.textureCoordIndex = 0;
+			}
 
 			materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 		}
@@ -1167,12 +1176,19 @@ namespace r2::assets::assetlib
 			{
 				textureShaderParam.propertyType = flat::ShaderPropertyType_METALLIC;
 				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_B;
+				textureShaderParam.value.textureCoordIndex = metallicRoughnessTextureInfo.texCoordIndex;
+
+				if (textureShaderParam.value.textureCoordIndex > 1)
+				{
+					printf("WARNING - Metallic Roughness: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+					textureShaderParam.value.textureCoordIndex = 0;
+				}
 
 				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 
 				textureShaderParam.propertyType = flat::ShaderPropertyType_ROUGHNESS;
 				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_G;
-
+				
 				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 			}
 			else
@@ -1194,6 +1210,13 @@ namespace r2::assets::assetlib
 			{
 				textureShaderParam.propertyType = flat::ShaderPropertyType_NORMAL;
 				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+				textureShaderParam.value.textureCoordIndex = normalTextureInfo.texCoordIndex;
+
+				if (textureShaderParam.value.textureCoordIndex > 1)
+				{
+					printf("WARNING - Normal: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+					textureShaderParam.value.textureCoordIndex = 0;
+				}
 
 				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 			}
@@ -1216,6 +1239,13 @@ namespace r2::assets::assetlib
 			{
 				textureShaderParam.propertyType = flat::ShaderPropertyType_AMBIENT_OCCLUSION;
 				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_R;
+				textureShaderParam.value.textureCoordIndex = occlusionTextureInfo.texCoordIndex;
+
+				if (textureShaderParam.value.textureCoordIndex > 1)
+				{
+					printf("WARNING - Occlusion: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+					textureShaderParam.value.textureCoordIndex = 0;
+				}
 
 				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 			}
@@ -1238,6 +1268,13 @@ namespace r2::assets::assetlib
 			{
 				textureShaderParam.propertyType = flat::ShaderPropertyType_EMISSION;
 				textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+				textureShaderParam.value.textureCoordIndex = emissiveTextureInfo.texCoordIndex;
+
+				if (textureShaderParam.value.textureCoordIndex > 1)
+				{
+					printf("WARNING - Emissive: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+					textureShaderParam.value.textureCoordIndex = 0;
+				}
 
 				materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 			}
@@ -1274,6 +1311,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_ANISOTROPY;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+					textureShaderParam.value.textureCoordIndex = anisotropyTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Anisotropy: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1312,6 +1356,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+					textureShaderParam.value.textureCoordIndex = clearcoatTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Clear Coat: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1334,6 +1385,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT_NORMAL;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+					textureShaderParam.value.textureCoordIndex = clearcoatNormalTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Clear Coat Normal: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1356,6 +1414,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_CLEAR_COAT_ROUGHNESS;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_G;
+					textureShaderParam.value.textureCoordIndex = clearcoatTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Clear Coat Roughness: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1393,6 +1458,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_SHEEN_COLOR;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+					textureShaderParam.value.textureCoordIndex = sheenColorTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Sheen Color: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1415,6 +1487,13 @@ namespace r2::assets::assetlib
 				{
 					textureShaderParam.propertyType = flat::ShaderPropertyType_SHEEN_ROUGHNESS;
 					textureShaderParam.value.packingType = flat::ShaderPropertyPackingType_RGBA;
+					textureShaderParam.value.textureCoordIndex = sheenRoughnessTextureInfo.texCoordIndex;
+
+					if (textureShaderParam.value.textureCoordIndex > 1)
+					{
+						printf("WARNING - Sheen Roughness: we have a textureCoordIndex greater than 1 - defaulting to 0\n");
+						textureShaderParam.value.textureCoordIndex = 0;
+					}
 
 					materialData.shaderParams.textureShaderParams.push_back(textureShaderParam);
 				}
@@ -1553,7 +1632,8 @@ namespace r2::assets::assetlib
 							textureParam.value.anisotropicFiltering,
 							sampler.wrapS,
 							sampler.wrapT,
-							sampler.wrapR)
+							sampler.wrapR,
+							textureParam.value.textureCoordIndex)
 					);
 				}
 			}
@@ -2332,7 +2412,8 @@ namespace r2::assets::assetlib
 
 							newVertex.normal = glm::vec3(0, 0, 1);
 							newVertex.tangent = glm::vec3(1, 0, 0);
-							newVertex.texCoords = glm::vec3(0);
+							newVertex.texCoords0 = glm::vec3(0);
+							newVertex.texCoords1 = glm::vec3(0);
 
 							nextMesh.vertices[index] = newVertex;
 						});
@@ -2382,12 +2463,40 @@ namespace r2::assets::assetlib
 						fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
 							[&](glm::vec2 v, size_t index)
 							{
-								nextMesh.vertices[index].texCoords = glm::vec3(v.x, v.y, primitive.materialIndex.value());
+								nextMesh.vertices[index].texCoords0 = glm::vec3(v.x, v.y, primitive.materialIndex.value());
 							});
 					}
 					else
 					{
 						printf("TEXCOORD_0 attribute not found!\n");
+						
+						//if it's not found, we need to still fill our texCoords with at least the material index
+						const auto numVertices = nextMesh.vertices.size();
+						for (size_t i = 0; i < numVertices; ++i)
+						{
+							nextMesh.vertices[i].texCoords0 = glm::vec3(0.0f, 0.0f, primitive.materialIndex.value());
+						}
+					}
+				}
+
+				{
+					std::vector<glm::vec3> texCoords1(nextMesh.vertices.size());
+					auto uv1 = primitive.findAttribute("TEXCOORD_1");
+					if (uv1 != primitive.attributes.end())
+					{
+						fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv1).second],
+							[&](glm::vec2 v, size_t index)
+							{
+								nextMesh.vertices[index].texCoords1 = glm::vec3(v.x, v.y, i);
+							});
+					}
+					else
+					{
+						const auto numVertices = nextMesh.vertices.size();
+						for (size_t j = 0; j < numVertices; ++j)
+						{
+							nextMesh.vertices[j].texCoords1 = glm::vec3(0.0f, 0.0f, i);
+						}
 					}
 				}
 

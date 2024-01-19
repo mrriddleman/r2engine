@@ -208,7 +208,10 @@ layout (std430, binding = 6) buffer ShadowData
 
 layout (std430, binding = 7) buffer MaterialOffsets
 {
-    uint32_t materialOffsets[];
+    uvec4 materialOffsets[];
+	//x holds the actual material offset
+	//in editor builds - y is the entity ID
+	//in editor builds - z is the instance of the entity ID (-1 for the first one)
 }
 
 struct LightGrid {

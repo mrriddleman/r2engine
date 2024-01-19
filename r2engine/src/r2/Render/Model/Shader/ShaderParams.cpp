@@ -118,6 +118,7 @@ namespace r2::draw
 			shaderTextureParam.wrapS = flatTextureParam->wrapS();
 			shaderTextureParam.wrapT = flatTextureParam->wrapT();
 			shaderTextureParam.wrapR = flatTextureParam->wrapR();
+			shaderTextureParam.textureCoordIndex = flatTextureParam->textureCoordIndex();
 
 			shaderParams.textureParams.push_back(shaderTextureParam);
 		}

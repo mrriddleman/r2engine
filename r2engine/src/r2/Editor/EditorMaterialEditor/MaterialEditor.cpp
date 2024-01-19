@@ -125,6 +125,8 @@ namespace r2::edit
 
 	}
 
+	static std::string s_textureCoordLabels[] = { "TEXCOORD_0", "TEXCOORD_1" };
+
 	void EditMaterial(r2::mat::Material& material, bool& windowOpen)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
@@ -539,6 +541,23 @@ namespace r2::edit
 							ImGui::EndCombo();
 						}
 
+						ImGui::Text("Texture Coordinate Index: ");
+						ImGui::SameLine();
+						std::string textureCoordinateIndexLabel = std::string("label texturecoordindex") + I_STRING;
+						if (ImGui::BeginCombo(textureCoordinateIndexLabel.c_str(), s_textureCoordLabels[textureParam.textureCoordIndex].c_str()))
+						{
+							for (int tc = 0; tc < 2; ++tc)
+							{
+								if (ImGui::Selectable(s_textureCoordLabels[tc].c_str(), tc == textureParam.textureCoordIndex))
+								{
+									textureParam.textureCoordIndex = tc;
+									hasMaterialChanged = true;
+								}
+							}
+
+							ImGui::EndCombo();
+						}
+
 						//min filtering
 						ImGui::Text("Min Filter: ");
 						ImGui::SameLine();
@@ -710,6 +729,7 @@ namespace r2::edit
 					newTextureParam.wrapS = flat::TextureWrapMode_REPEAT;
 					newTextureParam.wrapT = flat::TextureWrapMode_REPEAT;
 					newTextureParam.wrapR = flat::TextureWrapMode_REPEAT;
+					newTextureParam.textureCoordIndex = 0;
 
 					material.shaderParams.textureParams.push_back(newTextureParam);
 					hasMaterialChanged = true;

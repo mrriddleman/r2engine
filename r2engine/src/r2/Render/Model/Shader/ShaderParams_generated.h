@@ -689,7 +689,8 @@ struct ShaderTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ANISOTROPICFILTERING = 16,
     VT_WRAPS = 18,
     VT_WRAPT = 20,
-    VT_WRAPR = 22
+    VT_WRAPR = 22,
+    VT_TEXTURECOORDINDEX = 24
   };
   flat::ShaderPropertyType propertyType() const {
     return static_cast<flat::ShaderPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
@@ -721,6 +722,9 @@ struct ShaderTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flat::TextureWrapMode wrapR() const {
     return static_cast<flat::TextureWrapMode>(GetField<uint8_t>(VT_WRAPR, 0));
   }
+  uint32_t textureCoordIndex() const {
+    return GetField<uint32_t>(VT_TEXTURECOORDINDEX, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_PROPERTYTYPE) &&
@@ -735,6 +739,7 @@ struct ShaderTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint8_t>(verifier, VT_WRAPS) &&
            VerifyField<uint8_t>(verifier, VT_WRAPT) &&
            VerifyField<uint8_t>(verifier, VT_WRAPR) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTURECOORDINDEX) &&
            verifier.EndTable();
   }
 };
@@ -773,6 +778,9 @@ struct ShaderTextureParamBuilder {
   void add_wrapR(flat::TextureWrapMode wrapR) {
     fbb_.AddElement<uint8_t>(ShaderTextureParam::VT_WRAPR, static_cast<uint8_t>(wrapR), 0);
   }
+  void add_textureCoordIndex(uint32_t textureCoordIndex) {
+    fbb_.AddElement<uint32_t>(ShaderTextureParam::VT_TEXTURECOORDINDEX, textureCoordIndex, 0);
+  }
   explicit ShaderTextureParamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -796,8 +804,10 @@ inline flatbuffers::Offset<ShaderTextureParam> CreateShaderTextureParam(
     float anisotropicFiltering = 0.0f,
     flat::TextureWrapMode wrapS = flat::TextureWrapMode_REPEAT,
     flat::TextureWrapMode wrapT = flat::TextureWrapMode_REPEAT,
-    flat::TextureWrapMode wrapR = flat::TextureWrapMode_REPEAT) {
+    flat::TextureWrapMode wrapR = flat::TextureWrapMode_REPEAT,
+    uint32_t textureCoordIndex = 0) {
   ShaderTextureParamBuilder builder_(_fbb);
+  builder_.add_textureCoordIndex(textureCoordIndex);
   builder_.add_anisotropicFiltering(anisotropicFiltering);
   builder_.add_texturePack(texturePack);
   builder_.add_value(value);

@@ -103,7 +103,7 @@ namespace r2::asset
 
 			if (texCoords)
 			{
-				nextVertex.texCoords = glm::vec3(texCoords->Get(v)->x(), texCoords->Get(v)->y(), 0);
+				nextVertex.texCoords0 = glm::vec3(texCoords->Get(v)->x(), texCoords->Get(v)->y(), 0);
 			}
 
 			if (tangents)
@@ -111,6 +111,8 @@ namespace r2::asset
 				
 				nextVertex.tangent = glm::vec3(tangents->Get(v)->x(), tangents->Get(v)->y(), tangents->Get(v)->z());
 			}
+
+			nextVertex.texCoords1 = glm::vec3(0);
 
 			//if (bitangents)
 			//{

@@ -45,9 +45,9 @@ namespace r2::anim
 			r2::SArray<math::Transform>* tempTransforms =MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, math::Transform, pose.mJointTransforms->mSize);
 			r2::sarr::Fill(*tempTransforms, math::Transform{});
 
-			s32 i = 0;
+			
 
-			for (; i < size; ++i)
+			for (s32 i = 0; i < size; ++i)
 			{
 				s32 parent = r2::sarr::At(*pose.mParents, i);
 				if (parent > i) { break; }

@@ -2110,8 +2110,10 @@ namespace r2::draw::renderer
 				{
 				{r2::draw::ShaderDataType::Float3, "aPos"},
 				{r2::draw::ShaderDataType::Float3, "aNormal"},
-				{r2::draw::ShaderDataType::Float3, "aTexCoord"},
 				{r2::draw::ShaderDataType::Float3, "aTangent"},
+				{r2::draw::ShaderDataType::Float3, "aTexCoord0"},
+				{r2::draw::ShaderDataType::Float3, "aTexCoord1"},
+
 				}
 			}
 		);
@@ -2170,8 +2172,9 @@ namespace r2::draw::renderer
 			{
 				{r2::draw::ShaderDataType::Float3, "aPos", 0},
 				{r2::draw::ShaderDataType::Float3, "aNormal", 0},
-				{r2::draw::ShaderDataType::Float3, "aTexCoord", 0},
 				{r2::draw::ShaderDataType::Float3, "aTangent", 0},
+				{r2::draw::ShaderDataType::Float3, "aTexCoord0", 0},
+				{r2::draw::ShaderDataType::Float3, "aTexCoord1", 0},
 				{r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
 				{r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
 			}

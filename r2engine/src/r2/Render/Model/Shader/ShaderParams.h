@@ -52,6 +52,7 @@ namespace r2::draw
 		flat::TextureWrapMode wrapS;
 		flat::TextureWrapMode wrapT;
 		flat::TextureWrapMode wrapR;
+		u32 textureCoordIndex;
 	};
 
 	struct ShaderStageParam

@@ -20,7 +20,7 @@ mat4 GetAnimatedModel(uint drawID)
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[2] + boneOffset].globalInv * bonesXForms[BoneIDs[2] + boneOffset].transform * bonesXForms[BoneIDs[2] + boneOffset].invBinPose * BoneWeights[2];
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
 
-	return models[drawID]  * finalBoneVertexTransform;
+	return models[drawID] * finalBoneVertexTransform;
 }
 
 mat3 GetNormalMatrix(mat4 matrix)

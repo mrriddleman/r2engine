@@ -127,6 +127,7 @@ table ShaderTextureParam
 	wrapS:TextureWrapMode;
 	wrapT:TextureWrapMode;
 	wrapR:TextureWrapMode;
+	textureCoordIndex:uint;
 }
 
 table ShaderParams

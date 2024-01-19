@@ -103,7 +103,8 @@ namespace r2::mat
 						shaderTextureParam.minFilter,
 						shaderTextureParam.magFilter,
 						shaderTextureParam.anisotropicFiltering,
-						shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR));
+						shaderTextureParam.wrapS, shaderTextureParam.wrapT, shaderTextureParam.wrapR,
+						shaderTextureParam.textureCoordIndex));
 			}
 		}
 

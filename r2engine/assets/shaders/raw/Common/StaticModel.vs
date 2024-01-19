@@ -1,11 +1,8 @@
 #version 450 core
 
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec3 aTexCoord;
-layout (location = 3) in vec3 aTangent;
-layout (location = 4) in uint DrawID;
+#extension GL_NV_gpu_shader5 : enable
 
+#include "Input/VertexLayouts/StaticVertexInput.glsl"
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
 
