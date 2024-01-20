@@ -5,10 +5,12 @@
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
+#include "Common/CommonFunctions.glsl"
 
 out VS_OUT
 {
-	vec3 texCoords; 
+	vec3 texCoords0; 
+	vec3 texCoords1;
 	vec3 fragPos;
 	vec3 normal;
 	vec3 tangent;
@@ -21,7 +23,7 @@ out VS_OUT
 	vec3 viewNormal;
 
 	flat uint drawID;
-
+	flat uint materialIndex;
 } vs_out;
 
 invariant gl_Position;
@@ -56,7 +58,8 @@ void main()
 
 	vs_out.fragPosTangent = TBN * vs_out.fragPos;
 	vs_out.viewPosTangent = TBN * cameraPosTimeW.xyz;
-
-	vs_out.texCoords = aTexCoord;
+	vs_out.materialIndex = GetLocalMeshOrMaterialIndex(aTexCoord);
+	vs_out.texCoords0 = aTexCoord;
+	vs_out.texCoords1 = aTexCoord1;
 	vs_out.drawID = DrawID;
 }

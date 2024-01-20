@@ -9,15 +9,20 @@
 in VS_OUT
 {
 	flat uint drawID;
+	flat uint materialIndex;
 	vec3 texCoords; 
 } fs_in;
 
 void main()
 {
 	#ifdef DISCARD_ALPHA
-	Material m = GetMaterial(fs_in.drawID, fs_in.texCoords);
+	Material m = GetMaterial(fs_in.drawID, fs_in.materialIndex);
 
-	vec4 sampledColor = SampleMaterialDiffuse(m, fs_in.texCoords);
+	//@TODO(Serge): fix this
+	vec2 uv[2];
+	uv[0] = fs_in.texCoords.rg;
+	uv[1] = vec2(0);
+	vec4 sampledColor = SampleMaterialDiffuse(m, uv);
 
 	if(sampledColor.a < 0.5)
 		discard;

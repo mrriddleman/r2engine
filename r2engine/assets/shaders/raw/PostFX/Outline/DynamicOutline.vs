@@ -5,10 +5,12 @@
 #include "Input/VertexLayouts/DynamicVertexInput.glsl"
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Common/ModelFunctions.glsl"
+#include "Common/CommonFunctions.glsl"
 
 out VS_OUT
 {
 	vec3 texCoords; 
+	flat uint materialIndex;
 	flat uint drawID;
 } vs_out;
 
@@ -24,6 +26,7 @@ void main()
 
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
+	vs_out.materialIndex = GetLocalMeshOrMaterialIndex(aTexCoord);
 	vec4 modelPos = vertexTransform * vec4(aPos, 1.0) + (worldNormal * 0.05);
 	
 	gl_Position = projection * view * modelPos;

@@ -10,13 +10,14 @@ layout (location = 0) out vec4 FragColor;
 in VS_OUT
 {
 	vec3 texCoords; 
+	flat uint materialIndex;
 	flat uint drawID;
 
 } fs_in;
 
 void main()
 {
-	Material m = GetMaterial(fs_in.drawID, fs_in.texCoords);
+	Material m = GetMaterial(fs_in.drawID, fs_in.materialIndex);
 
 	FragColor = vec4(m.albedo.color.rgb, 1);
 }

@@ -53,15 +53,15 @@ layout (std430, binding = 7) buffer MaterialOffsets
 	//in editor builds - z is the instance of the entity ID (-1 for the first one)
 };
 
-uint GetMaterialIndex(uint drawID, vec3 uv)
+uint GetMaterialIndex(uint drawID, uint localMaterialIndex)
 {
-	highp uint matIndex = uint(round(uv.z)) + materialOffsets[drawID].x;
+	highp uint matIndex = localMaterialIndex + materialOffsets[drawID].x;
 	return matIndex;
 }
 
-Material GetMaterial(uint drawID, vec3 uv)
+Material GetMaterial(uint drawID, uint localMaterialIndex)
 {
-	highp uint materialIndex = GetMaterialIndex(drawID, uv);
+	highp uint materialIndex = GetMaterialIndex(drawID, localMaterialIndex);
 	return materials[materialIndex];
 }
 

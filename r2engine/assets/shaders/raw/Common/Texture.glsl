@@ -1,6 +1,7 @@
 #ifndef GLSL_TEXTURE
 #define GLSL_TEXTURE
 
+#include "Common/Defines.glsl"
 
 struct Tex2DAddress
 {
@@ -10,7 +11,7 @@ struct Tex2DAddress
 	sampler2DArray container;
 #endif
 	float page;
-	int channel;
+	uint channel;
 };
 
 struct CubemapAddress
@@ -21,23 +22,35 @@ struct CubemapAddress
 	samplerCubeArray container;
 #endif
 	float page;
-	int channel;
+	uint channel;
 };
 
+uint GetChannel(Tex2DAddress addr)
+{
+	//the channel is in the lower 16 bits of the addr.channel
+	return (addr.channel & uint(0x0000ffff));
+}
+
+uint GetTexCoordIndex(Tex2DAddress addr)
+{
+	//the texture coordinate is in the high 16 bits
+	return (addr.channel & uint(0xffff0000)) >> 16;
+}
 
 float GetTextureModifier(Tex2DAddress addr)
 {
 	return float( min(max(addr.container, 0), 1) );
 }
 
-vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
+vec2 ResolveUVArray(Tex2DAddress addr, vec2 texCoords[NUM_TEX_COORDS])
 {
-#ifdef GL_NV_gpu_shader5
-	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
-#else
-	vec4 textureSample = textureLod(addr.container, coord, mipmapLevel);
-#endif
-	return addr.channel < 0 ? vec4(textureSample.rgba) : vec4(textureSample[addr.channel]); //no rgb right now
+	return texCoords[GetTexCoordIndex(addr)];
+}
+
+vec3 MakeTextureCoord(Tex2DAddress addr, vec2 texCoords[NUM_TEX_COORDS])
+{
+	vec2 uv = ResolveUVArray(addr, texCoords);
+	return vec3(uv, addr.page);
 }
 
 vec3 MakeTextureCoord(Tex2DAddress addr, vec3 uv)
@@ -48,6 +61,59 @@ vec3 MakeTextureCoord(Tex2DAddress addr, vec3 uv)
 ivec3 MakeTextureCoord(Tex2DAddress addr, ivec2 texCoords)
 {
 	return ivec3(texCoords, (int)addr.page);
+}
+
+float TextureQueryLod(Tex2DAddress tex, vec2 uv)
+{
+#ifdef GL_NV_gpu_shader5
+	return textureQueryLod(sampler2DArray(tex.container), uv).x;
+#else
+	return textureQueryLod(tex.container), uv).x;
+#endif
+}
+
+vec4 SampleTextureAddr(Tex2DAddress addr, vec2 texCoords[NUM_TEX_COORDS])
+{
+	vec3 coord = MakeTextureCoord(addr, texCoords);
+
+	float mipmapLevel = TextureQueryLod(addr, coord.rg);
+
+#ifdef GL_NV_gpu_shader5
+	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+#else
+	vec4 textureSample = textureLod(addr.container, coord, mipmapLevel);
+#endif
+
+	uint channel = GetChannel(addr);
+
+	return channel > TEX_CHANNEL_A ? vec4(textureSample) : vec4(textureSample[channel]);
+}
+
+vec4 SampleMaterialTexture(Tex2DAddress addr, vec2 texCoords[NUM_TEX_COORDS], vec4 defaultColor)
+{
+	vec4 textureColor = defaultColor;
+	
+	float modifier = GetTextureModifier(addr);
+
+	if(modifier > 0.0f)
+	{
+		textureColor = SampleTextureAddr(addr, texCoords);
+	}
+
+	return textureColor;
+}
+
+vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
+{
+#ifdef GL_NV_gpu_shader5
+	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+#else
+	vec4 textureSample = textureLod(addr.container, coord, mipmapLevel);
+#endif
+
+	uint channel = GetChannel(addr);
+
+	return channel > TEX_CHANNEL_A ? vec4(textureSample.rgba) : vec4(textureSample[channel]); //no rgb right now
 }
 
 vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
@@ -184,14 +250,7 @@ vec4 SampleCubemapLodRGBA(CubemapAddress tex, vec3 texCoords, float lod)
 #endif
 }
 
-float TextureQueryLod(Tex2DAddress tex, vec2 uv)
-{
-#ifdef GL_NV_gpu_shader5
-	return textureQueryLod(sampler2DArray(tex.container), uv).x;
-#else
-	return textureQueryLod(tex.container), uv).x;
-#endif
-}
+
 
 vec2 TexelFetchLodOffset(Tex2DAddress inputTexture, ivec2 uv, ivec2 uvOffset, int lod)
 {

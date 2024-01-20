@@ -274,4 +274,9 @@ namespace r2::util
     {
         return 32;
     }
+
+    u32 Pack216BitValues(const u16 high, const u16 low)
+    {
+        return (((u32)high) << 16 | ((u32)low));
+    }
 }

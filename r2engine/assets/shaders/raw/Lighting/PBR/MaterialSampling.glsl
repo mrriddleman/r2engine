@@ -6,89 +6,100 @@
 
 vec4 SampleCubemapMaterialDiffuse(in Material m, vec3 uv)
 {
-	//Tex2DAddress addr = m.albedo.texture;
-
-	//sampler2DArray temp2DArray = (sampler2DArray)addr.container;
-
-	return SampleCubemapRGBA(m.cubemap.texture, uv);//textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
+	return SampleCubemapRGBA(m.cubemap.texture, uv);
 }
 
-vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
+vec4 SampleMaterialDiffuse(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.albedo.texture;
 
-	vec3 coord = MakeTextureCoord(addr, uv);
+	return m.albedo.color * SampleMaterialTexture(addr, uv, vec4(1));
 
-	float mipmapLevel = TextureQueryLod(addr, uv.rg);
+	// vec3 coord = MakeTextureCoord(addr, uv);
 
-	float modifier = GetTextureModifier(addr);
+	// float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
-	return (1.0 - modifier) * m.albedo.color + modifier * SampleTexture(addr, coord, mipmapLevel);
+	// float modifier = GetTextureModifier(addr);
+
+	// return (1.0 - modifier) * m.albedo.color + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
-vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec3 uv)
+vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.normalMap.texture;
-
-	vec3 coord = vec3(uv.rg, addr.page);
-
-	float mipmapLevel = TextureQueryLod(addr, uv.rg);
-
 	float modifier = GetTextureModifier(addr);
 
-	vec3 normalMapNormal = SampleTexture(addr, coord, mipmapLevel).rgb;
+	vec3 normalToReturn = normalize(normal);
 
-	normalMapNormal = normalize(normalMapNormal * 2.0 - 1.0);
+	if(modifier > 0.0f)
+	{
+		normalToReturn = SampleTextureAddr(addr, uv).rgb;
+		normalToReturn = normalize(normalToReturn * 2.0 - 1.0);
+		normalToReturn = normalize(TBN * normalToReturn);
+	}
+	return vec4(normalToReturn, 1);
+	// vec3 coord = vec3(uv.rg, addr.page);
 
-	normalMapNormal = normalize(TBN * normalMapNormal);
+	// float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
-	return  (1.0 - modifier) * vec4(normalize(normal), 1) +  modifier * vec4(normalMapNormal, 1);
+	// float modifier = ;
+
+	// vec3 normalMapNormal = SampleTexture(addr, coord, mipmapLevel).rgb;
+
+	
+
+//	return  (1.0 - modifier) * vec4(normalize(normal), 1) +  modifier * vec4(normalMapNormal, 1);
 }
 
-vec4 SampleMaterialEmission(in Material m, vec3 uv)
+vec4 SampleMaterialEmission(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.emission.texture;
 
-	vec3 coord = vec3(uv.rg,addr.page);
+	return m.emission.color * SampleMaterialTexture(addr, uv, vec4(1));
+	// vec3 coord = vec3(uv.rg,addr.page);
 
-	float mipmapLevel = TextureQueryLod(addr, uv.rg);
+	// float mipmapLevel = TextureQueryLod(addr, uv.rg);
 
-	float modifier = GetTextureModifier(addr);
+	// float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(m.emission.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
+	// return (1.0 - modifier) * vec4(m.emission.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
-vec4 SampleMaterialMetallic(in Material m, vec3 uv)
+vec4 SampleMaterialMetallic(in Material m,  vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.metallic.texture;
 
-	float modifier = GetTextureModifier(addr);
+	return m.metallic.color * SampleMaterialTexture(addr, uv, vec4(1));
+	// float modifier = GetTextureModifier(addr);
 
-	vec4 color = m.metallic.color;
+	// vec4 color = m.metallic.color;
 
-	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	// return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleMaterialRoughness(in Material m, vec3 uv)
+vec4 SampleMaterialRoughness(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	//@TODO(Serge): put this back to roughnessTexture1
 	Tex2DAddress addr = m.roughness.texture;
 
-	float modifier = GetTextureModifier(addr);
+	return m.roughness.color * SampleMaterialTexture(addr, uv, vec4(1));
+	// float modifier = GetTextureModifier(addr);
 
-	vec4 color = m.roughness.color;
+	// vec4 color = m.roughness.color;
 
-	//@TODO(Serge): put this back to not using the alpha
-	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	// //@TODO(Serge): put this back to not using the alpha
+	// return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleMaterialAO(in Material m, vec3 uv)
+vec4 SampleMaterialAO(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.ao.texture;
 
-	float modifier = GetTextureModifier(addr);
+	//@TODO(Serge): this is wrong atm - fix with data - should be: m.ao.color * SampleMaterialTexture(addr, uv)
+	return vec4(1) * SampleMaterialTexture(addr, uv, vec4(1));
+	// float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	// return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 float SampleAOSurface(vec2 uv)
@@ -96,23 +107,25 @@ float SampleAOSurface(vec2 uv)
 	return TexelFetch(ambientOcclusionTemporalDenoiseSurface[0], ivec2(uv), 0).r;
 }
 
-vec4 SampleDetail(in Material m, vec3 uv)
-{
-	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = m.detail.texture;
+//@NOTE(Serge): old code - probably not used
+// vec4 SampleDetail(in Material m, vec3 uv)
+// {
+// 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
+// 	Tex2DAddress addr = m.detail.texture;
 
-	float modifier = GetTextureModifier(addr);
+// 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.detail.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
-}
+// 	return (1.0 - modifier) * m.detail.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+// }
 
-float SampleClearCoat(in Material m, vec3 uv)
+float SampleClearCoat(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.clearCoat.texture;
 
-	float modifier = GetTextureModifier(addr);
+	return m.clearCoat.color.r * SampleMaterialTexture(addr, uv, vec4(1)).r;
+	// float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.clearCoat.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
+	// return (1.0 - modifier) * m.clearCoat.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
 }
 
 vec3 SampleClearCoatNormal(in Material m, vec3 uv)
@@ -124,13 +137,14 @@ vec3 SampleClearCoatNormal(in Material m, vec3 uv)
 	return (1.0 - modifier) * m.clearCoatNormal.color.rgb + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rgb;
 }
 
-float SampleClearCoatRoughness(in Material m, vec3 uv)
+float SampleClearCoatRoughness(in Material m, vec2 uv[NUM_TEX_COORDS])
 {
 	Tex2DAddress addr = m.clearCoatRoughness.texture;
 
-	float modifier = GetTextureModifier(addr);
+	return m.clearCoatRoughness.color.r * SampleMaterialTexture(addr, uv, vec4(1)).r;
+	// float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.clearCoatRoughness.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
+	// return (1.0 - modifier) * m.clearCoatRoughness.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
 }
 
 float SampleMaterialHeight(in Material m, vec3 uv)

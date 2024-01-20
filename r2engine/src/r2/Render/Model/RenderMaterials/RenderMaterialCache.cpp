@@ -709,10 +709,12 @@ namespace r2::draw::rmat
 
 				tex::TextureAddress address = texsys::GetTextureAddress(*theTexture);
 
-			 	s32 channel = textureParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : textureParam->packingType();
+			 	u16 packingType = static_cast<u16>(textureParam->packingType());
 
-				u32 textureCoordIndex = textureParam->textureCoordIndex();
-				//@TODO(Serge): implement textureCoordinateIndex into the channel
+				u16 textureCoordIndex = textureParam->textureCoordIndex();
+
+				u32 channel = r2::util::Pack216BitValues(textureCoordIndex, packingType);
+
 
 				switch (propertyType)
 				{

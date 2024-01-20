@@ -4,10 +4,12 @@
 #include "Input/VertexLayouts/StaticVertexInput.glsl"
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
+#include "Common/CommonFunctions.glsl"
 
 out VS_OUT
 {
 	vec3 texCoords; 
+	flat uint materialIndex;
 	flat uint drawID;
 
 } vs_out;
@@ -23,6 +25,6 @@ void main()
 	gl_Position = projection * view * (modelPos + Normal*0.0001);
 
 	vs_out.texCoords = aTexCoord;
-	
+	vs_out.materialIndex = GetLocalMeshOrMaterialIndex(aTexCoord);
 	vs_out.drawID = DrawID;
 }

@@ -6,6 +6,12 @@
 #define TWO_PI 2.0 * PI
 #define NUM_FRUSTUM_SPLITS 4
 
+#define NUM_TEX_COORDS 2
+#define TEX_CHANNEL_R 0
+#define TEX_CHANNEL_G 1
+#define TEX_CHANNEL_B 2
+#define TEX_CHANNEL_A 3
+
 #define MAX_NUM_DIRECTIONAL_LIGHTS 50
 #define MAX_NUM_POINT_LIGHTS 4096
 #define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
@@ -29,7 +35,7 @@ struct PixelData
 	vec3 baseColor;
 	vec3 N; //normal to use
 	vec3 V; //view vector (camera look)
-	vec3 uv; //texture coords
+	//vec3 uv; //texture coords
 	vec3 diffuseColor;
 	vec3 R; //reflection vector
 	vec3 F0; //specular reflectance at 0

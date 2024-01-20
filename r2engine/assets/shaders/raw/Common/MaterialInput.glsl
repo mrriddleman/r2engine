@@ -1,7 +1,7 @@
 #ifndef GLSL_MATERIAL_INPUT
 #define GLSL_MATERIAL_INPUT
 
-#include "Common/Defines.glsl"
+#include "Common/CommonFunctions.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Lighting/PBR/MaterialSampling.glsl"
 #include "Lighting/PBR/PBR.glsl"
@@ -13,7 +13,7 @@ vec3 worldFragPos,
 vec3 materialNormal,
 vec3 worldNormal,
 vec3 viewVector,
-vec3 uv,
+//vec3 uv,
 vec3 multibounceAO,
 float reflectance,
 float metallic,
@@ -27,7 +27,7 @@ inout PixelData pixel)
 	pixel.baseColor = baseColor;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
-	pixel.uv = uv;
+//	pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
 	pixel.alpha = alpha;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
@@ -56,7 +56,7 @@ vec3 worldFragPos,
 vec3 materialNormal,
 vec3 worldNormal,
 vec3 viewVector,
-vec3 uv,
+//vec3 uv,
 vec3 anisotropyDirection,
 vec3 clearCoatNormal,
 vec3 multibounceAO,
@@ -75,7 +75,7 @@ inout PixelData pixel)
 	pixel.baseColor = baseColor;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
-	pixel.uv = uv;
+	//pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
 	pixel.alpha = alpha;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
@@ -129,7 +129,7 @@ vec3 worldFragPos,
 vec3 materialNormal,
 vec3 worldNormal,
 vec3 viewVector,
-vec3 uv,
+//vec3 uv,
 vec3 clearCoatNormal,
 vec3 multibounceAO,
 float reflectance,
@@ -147,7 +147,7 @@ inout PixelData pixel)
 	pixel.alpha = alpha;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
-	pixel.uv = uv;
+	//pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	pixel.F0 = CalculateClearCoatBaseF0(pixel.F0, clearCoat);
@@ -183,7 +183,7 @@ vec3 worldFragPos,
 vec3 materialNormal,
 vec3 worldNormal,
 vec3 viewVector,
-vec3 uv,
+//vec3 uv,
 vec3 anisotropyDirection,
 vec3 multibounceAO,
 float reflectance,
@@ -200,7 +200,7 @@ inout PixelData pixel)
 	pixel.alpha = alpha;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
-	pixel.uv = uv;
+	//pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	//pixel.F0 = CalculateClearCoatBaseF0(pixel.F0, clearCoat);
@@ -243,7 +243,9 @@ inout PixelData pixel)
 void DefaultWorldMaterialFunction(
 	vec3 fragPos,
 	uint drawID,
+	uint materialIndex,
 	vec3 uv,
+	vec3 uv1,
 	mat3 TBN,
 	vec3 tangent,
 	vec3 normal,
@@ -251,7 +253,7 @@ void DefaultWorldMaterialFunction(
 {
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
-	Material material = GetMaterial(drawID, uv);
+	Material material = GetMaterial(drawID, materialIndex);
 
 	float NoV = dot(normal, viewVector);
 	
@@ -264,28 +266,32 @@ void DefaultWorldMaterialFunction(
 
 	normal = normalMult * normal;
 
-	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+	vec2 texCoordArr[NUM_TEX_COORDS];
+	texCoordArr[0] = uv.rg;
+	texCoordArr[1] = uv1.rg;
+
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, texCoordArr);
 
 	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
-	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
+	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, texCoordArr).xyz;
 
 	float reflectance = material.reflectance;
 	
 	float anisotropy = material.anisotropy.color.r;
 	
-	float metallic = SampleMaterialMetallic(material, uv).r;
+	float metallic = SampleMaterialMetallic(material, texCoordArr).r;
 
-	float ao = min(SampleMaterialAO(material, uv).r, SampleAOSurface(gl_FragCoord.xy));
+	float ao = min(SampleMaterialAO(material, texCoordArr).r, SampleAOSurface(gl_FragCoord.xy));
 
-	float perceptualRoughness = clamp(SampleMaterialRoughness(material, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float perceptualRoughness = clamp(SampleMaterialRoughness(material, texCoordArr).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
+	vec3 emission = SampleMaterialEmission(material, texCoordArr).rgb * material.emissionStrength;
 
 
 
@@ -299,7 +305,7 @@ void DefaultWorldMaterialFunction(
 		materialNormal,
 		normal,
 		viewVector,
-		uv,
+		//uv,
 		multibounceAO,
 		reflectance,
 		metallic,
@@ -316,7 +322,9 @@ void DefaultWorldMaterialFunction(
 void DefaultCharacterMaterialFunction(
 	vec3 fragPos,
 	uint drawID,
+	uint materialIndex,
 	vec3 uv,
+	vec3 uv1,
 	mat3 TBN,
 	vec3 tangent,
 	vec3 normal,
@@ -324,7 +332,7 @@ void DefaultCharacterMaterialFunction(
 {
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
-	Material material = GetMaterial(drawID, uv);
+	Material material = GetMaterial(drawID, materialIndex);
 
 	float NoV = dot(normal, viewVector);
 	
@@ -337,24 +345,28 @@ void DefaultCharacterMaterialFunction(
 
 	normal = normalMult * normal;
 
-	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+	vec2 texCoordArr[NUM_TEX_COORDS];
+	texCoordArr[0] = uv.rg;
+	texCoordArr[1] = uv1.rg;
+
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, texCoordArr);
 
 	vec3 baseColor = materialDiffuseColor.rgb;
 
 	float alpha = materialDiffuseColor.a;
 
-	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
+	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, texCoordArr).xyz;
 
 	float reflectance = material.reflectance;
 	
 //	float anisotropy = material.anisotropy.color.r;
 	
-	float metallic = SampleMaterialMetallic(material, uv).r;
+	float metallic = SampleMaterialMetallic(material, texCoordArr).r;
 
 	//change from the world version
-	float ao = SampleMaterialAO(material, uv).r;
+	float ao = SampleMaterialAO(material, texCoordArr).r;
 
-	float perceptualRoughness = clamp(SampleMaterialRoughness(material, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float perceptualRoughness = clamp(SampleMaterialRoughness(material, texCoordArr).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -369,7 +381,7 @@ void DefaultCharacterMaterialFunction(
 
 //	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
+	vec3 emission = SampleMaterialEmission(material, texCoordArr).rgb * material.emissionStrength;
 
 	DefaultBRDFInputNoClearCoatNoAnisotropy(
 		baseColor,
@@ -378,7 +390,7 @@ void DefaultCharacterMaterialFunction(
 		materialNormal,
 		normal,
 		viewVector,
-		uv,
+		//uv,
 		multibounceAO,
 		reflectance,
 		metallic,
@@ -393,7 +405,9 @@ void DefaultCharacterMaterialFunction(
 void DefaultWorldMaterialFunctionWithClearCoat(
 	vec3 fragPos,
 	uint drawID,
+	uint materialIndex,
 	vec3 uv,
+	vec3 uv1,
 	mat3 TBN,
 	vec3 tangent,
 	vec3 normal,
@@ -401,7 +415,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 {
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
-	Material material = GetMaterial(drawID, uv);
+	Material material = GetMaterial(drawID, materialIndex);
 
 	float NoV = dot(normal, viewVector);
 	
@@ -414,23 +428,27 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	normal = normalMult * normal;
 
-	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+	vec2 texCoordArr[NUM_TEX_COORDS];
+	texCoordArr[0] = uv.rg;
+	texCoordArr[1] = uv1.rg;
+
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, texCoordArr);
 
 	vec3 baseColor = materialDiffuseColor.rgb;
 
 	float alpha = materialDiffuseColor.a;
 
-	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
+	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, texCoordArr).xyz;
 
 	float reflectance = material.reflectance;
 	
 	float anisotropy = material.anisotropy.color.r;
 	
-	float metallic = SampleMaterialMetallic(material, uv).r;
+	float metallic = SampleMaterialMetallic(material, texCoordArr).r;
 
-	float ao = min(SampleMaterialAO(material, uv).r, SampleAOSurface(gl_FragCoord.xy));
+	float ao = min(SampleMaterialAO(material, texCoordArr).r, SampleAOSurface(gl_FragCoord.xy));
 
-	float perceptualRoughness = clamp(SampleMaterialRoughness(material, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float perceptualRoughness = clamp(SampleMaterialRoughness(material, texCoordArr).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -445,7 +463,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
+	vec3 emission = SampleMaterialEmission(material, texCoordArr).rgb * material.emissionStrength;
 
 	DefaultBRDFInputWithClearCoat(
 		baseColor,
@@ -454,7 +472,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 		materialNormal,
 		normal,
 		viewVector,
-		uv,
+	//	uv,
 		clearCoatNormal,
 		multibounceAO,
 		reflectance,
@@ -472,7 +490,9 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 void DefaultWorldMaterialFunctionWithAnisotropy(
 	vec3 fragPos,
 	uint drawID,
+	uint materialIndex,
 	vec3 uv,
+	vec3 uv1,
 	mat3 TBN,
 	vec3 tangent,
 	vec3 normal,
@@ -480,7 +500,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 {
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
-	Material material = GetMaterial(drawID, uv);
+	Material material = GetMaterial(drawID, materialIndex);
 
 	float NoV = dot(normal, viewVector);
 	
@@ -493,22 +513,26 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	normal = normalMult * normal;
 
-	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+	vec2 texCoordArr[NUM_TEX_COORDS];
+	texCoordArr[0] = uv.rg;
+	texCoordArr[1] = uv1.rg;
+
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, texCoordArr);
 
 	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
-	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
+	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, texCoordArr).xyz;
 
 	float reflectance = material.reflectance;
 	
 	float anisotropy = material.anisotropy.color.r;
 	
-	float metallic = SampleMaterialMetallic(material, uv).r;
+	float metallic = SampleMaterialMetallic(material, texCoordArr).r;
 
-	float ao = min(SampleMaterialAO(material, uv).r, SampleAOSurface(gl_FragCoord.xy));
+	float ao = min(SampleMaterialAO(material, texCoordArr).r, SampleAOSurface(gl_FragCoord.xy));
 
-	float perceptualRoughness = clamp(SampleMaterialRoughness(material, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float perceptualRoughness = clamp(SampleMaterialRoughness(material, texCoordArr).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -523,7 +547,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	//float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
+	vec3 emission = SampleMaterialEmission(material, texCoordArr).rgb * material.emissionStrength;
 
 
 	DefaultBRDFInputWithAnisotropy(
@@ -533,7 +557,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 		materialNormal,
 		normal,
 		viewVector,
-		uv,
+	//	uv,
 		anisotropyDirection,
 		multibounceAO,
 		reflectance,
@@ -549,7 +573,9 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 void DefaultCharacterMaterialFunctionWithAnisotropy(
 	vec3 fragPos,
 	uint drawID,
+	uint materialIndex,
 	vec3 uv,
+	vec3 uv1,
 	mat3 TBN,
 	vec3 tangent,
 	vec3 normal,
@@ -557,7 +583,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 {
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
-	Material material = GetMaterial(drawID, uv);
+	Material material = GetMaterial(drawID, materialIndex);
 
 	float NoV = dot(normal, viewVector);
 	
@@ -570,23 +596,27 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 	normal = normalMult * normal;
 
-	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+	vec2 texCoordArr[NUM_TEX_COORDS];
+	texCoordArr[0] = uv.rg;
+	texCoordArr[1] = uv1.rg;
+
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, texCoordArr);
 
 	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
-	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
+	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, texCoordArr).xyz;
 
 	float reflectance = material.reflectance;
 	
 	float anisotropy = material.anisotropy.color.r;
 	
-	float metallic = SampleMaterialMetallic(material, uv).r;
+	float metallic = SampleMaterialMetallic(material, texCoordArr).r;
 
 	//change from the world version
-	float ao = SampleMaterialAO(material, uv).r;
+	float ao = SampleMaterialAO(material, texCoordArr).r;
 
-	float perceptualRoughness = clamp(SampleMaterialRoughness(material, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float perceptualRoughness = clamp(SampleMaterialRoughness(material, texCoordArr).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -601,7 +631,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 //	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	vec3 emission = SampleMaterialEmission(material, uv).rgb * material.emissionStrength;
+	vec3 emission = SampleMaterialEmission(material, texCoordArr).rgb * material.emissionStrength;
 
 	DefaultBRDFInputWithAnisotropy(
 		baseColor,
@@ -610,7 +640,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 		materialNormal,
 		normal,
 		viewVector,
-		uv,
+		//uv,
 		anisotropyDirection,
 		multibounceAO,
 		reflectance,

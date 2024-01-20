@@ -15,7 +15,8 @@ layout (location = 2) out vec4 SpecularColor;
 
 in VS_OUT
 {
-	vec3 texCoords; 
+	vec3 texCoords0; 
+	vec3 texCoords1;
 	vec3 fragPos;
 	vec3 normal;
 	vec3 tangent;
@@ -28,6 +29,7 @@ in VS_OUT
 	vec3 viewNormal;
 
 	flat uint drawID;
+	flat uint materialIndex;
 } fs_in;
 
 vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
@@ -77,7 +79,7 @@ void main()
 
  	PixelData pixel;
 
- 	DefaultCharacterMaterialFunction(fs_in.fragPos, fs_in.drawID, fs_in.texCoords, fs_in.TBN, fs_in.tangent, fs_in.normal, pixel);
+ 	DefaultCharacterMaterialFunction(fs_in.fragPos, fs_in.drawID, fs_in.materialIndex, fs_in.texCoords0, fs_in.texCoords1, fs_in.TBN, fs_in.tangent, fs_in.normal, pixel);
 
 	vec3 lightingResult = CalculateLightingNoClearCoatNoAnisotropy(pixel);
 

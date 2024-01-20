@@ -149,5 +149,10 @@ float Max3(vec3 v)
     return max(max(v.x, v.y), v.z);
 }
 
+uint GetLocalMeshOrMaterialIndex(vec3 uv)
+{
+	highp uint meshLocalIndex = uint(round(uv.z));
+	return meshLocalIndex;
+}
 
 #endif

@@ -29,7 +29,8 @@ void main()
 	Tex2DAddress addr;
 	addr.container = inputTextureContainer;
 	addr.page = inputTexturePage;
-	addr.channel = int(inputTextureLod);
+	int lod =  int(inputTextureLod);
+	addr.channel = uint(lod);
 	
-	gl_FragDepth = SampleMSTexel(addr, ivec2(gl_FragCoord.xy), addr.channel).r;
+	gl_FragDepth = SampleMSTexel(addr, ivec2(gl_FragCoord.xy), lod).r;
 }

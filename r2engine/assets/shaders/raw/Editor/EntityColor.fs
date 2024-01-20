@@ -10,6 +10,7 @@ layout (location = 0) out uvec2 FragColor;
 in VS_OUT
 {
 	flat uint drawID;
+	flat uint materialIndex;
 	vec3 texCoords; 
 } fs_in;
 

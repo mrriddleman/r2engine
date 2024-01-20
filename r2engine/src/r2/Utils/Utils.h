@@ -95,6 +95,8 @@ namespace r2::util
     f32 HalfToFloat(const u16 x);
     u16 FloatToHalf(const f32 x);
 
+    u32 Pack216BitValues(const u16 high, const u16 low);
+
     u32 FloatToU24(const f32 x);
 
     u32 GetWarpSize();
