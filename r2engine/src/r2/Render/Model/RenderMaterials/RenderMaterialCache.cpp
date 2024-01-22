@@ -4,6 +4,9 @@
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Model/Materials/MaterialTypes.h"
+#include "r2/Render/Model/Shader/ShaderEffect.h"
+#include "r2/Render/Model/Shader/ShaderSystem.h"
 #include "r2/Utils/Hash.h"
 
 namespace r2::draw
@@ -28,6 +31,7 @@ namespace r2::draw
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(numMaterials * r2::SHashMap<s32>::LoadFactorMultiplier()), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s32>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderMaterialParams*>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderEffectPasses>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>::MemorySize(memorySize) * r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>::LoadFactorMultiplier(), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderMaterialParams), ALIGNMENT, poolHeaderSize, boundsChecking) * numMaterials;
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(tex::NUM_TEXTURE_TYPES), ALIGNMENT, freelistHeaderSize, boundsChecking) * numMaterials;
@@ -42,7 +46,7 @@ namespace r2::draw::rmat
 	constexpr u32 ALIGNMENT = 16;
 
 	void UpdateGPURenderMaterialForMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
-	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material);
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, s32& index);
 	void RemoveGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
 	//tex::TextureType GetTextureTypeForPropertyType(flat::ShaderPropertyType propertyType);
 
@@ -104,6 +108,9 @@ namespace r2::draw::rmat
 		RenderMaterialParams* nullRenderMaterial = nullptr;
 
 		r2::sarr::Fill(*newRenderMaterialCache->mGPURenderMaterialArray, nullRenderMaterial);
+
+		newRenderMaterialCache->mShaderEffectPassesArray = MAKE_SARRAY(*renderMaterialCacheArena, r2::draw::ShaderEffectPasses, numMaterials);
+		r2::sarr::Fill(*newRenderMaterialCache->mShaderEffectPassesArray, {});
 
 		newRenderMaterialCache->mAssetHandleArena = MAKE_FREELIST_ARENA(*renderMaterialCacheArena, r2::SArray<r2::asset::AssetHandle>::MemorySize(tex::NUM_TEXTURE_TYPES) * numMaterials, r2::mem::FIND_BEST);
 
@@ -184,6 +191,8 @@ namespace r2::draw::rmat
 		FREE(cache->mUploadedTextureForMaterialMap, *arena);
 
 		FREE(cache->mAssetHandleArena, *arena);
+
+		FREE(cache->mShaderEffectPassesArray, *arena);
 
 		FREE(cache->mGPURenderMaterialArray, *arena);
 
@@ -501,9 +510,9 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, u64 materialName)
+	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, const r2::mat::MaterialName& materialName)
 	{
-		return r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
+		return r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName.assetName.hashID);
 	}
 
 	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName)
@@ -518,6 +527,22 @@ namespace r2::draw::rmat
 		}
 
 		return r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
+	}
+
+	bool GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const r2::mat::MaterialName& materialName, RenderMaterialParams** renderMaterialParams, r2::draw::ShaderEffectPasses& shaderEffectPasses)
+	{
+		s32 defaultIndex = -1;
+
+		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, materialName.assetName.hashID, defaultIndex);
+
+		if (index == defaultIndex)
+		{
+			return false;
+		}
+
+		*renderMaterialParams = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
+		shaderEffectPasses = r2::sarr::At(*renderMaterialCache.mShaderEffectPassesArray, index);
+		return true;
 	}
 
 	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials)
@@ -556,31 +581,16 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	/*s32 GetPackingType(const flat::Material* material, tex::TextureType textureType)
-	{
-		R2_CHECK(material != nullptr, "This shouldn't be null!");
-
-		const auto* textureParams = material->shaderParams()->textureParams();
-
-		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
-		{
-			const flat::ShaderTextureParam* texParam = textureParams->Get(i);
-
-			auto paramTextureType = GetTextureTypeForPropertyType(texParam->propertyType());
-
-			if (textureType != tex::TextureType::NUM_TEXTURE_TYPES && textureType == paramTextureType)
-			{
-				return texParam->packingType() > flat::ShaderPropertyPackingType_A ? -1 : texParam->packingType();
-			}
-		}
-
-		return 0;
-	}*/
-
 	void ClearRenderMaterialParams(RenderMaterialParams* renderMaterialParams)
 	{
 		*renderMaterialParams = {};
 	}
+
+	void ClearShaderEffectPasses(ShaderEffectPasses* shaderEffectPasses)
+	{
+		*shaderEffectPasses = {};
+	}
+
 
 	void UpdateGPURenderMaterialForMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture)
 	{
@@ -591,19 +601,43 @@ namespace r2::draw::rmat
 		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, material->assetName()->assetName(), defaultIndex);
 
 		RenderMaterialParams* gpuRenderMaterial = nullptr;
+		ShaderEffectPasses* shaderEffectPasses = nullptr;
 
 		if (index == defaultIndex)
 		{
 			//make a new one
-			gpuRenderMaterial = AddNewGPURenderMaterial(renderMaterialCache, material);
+			s32 index = -1;
+			gpuRenderMaterial = AddNewGPURenderMaterial(renderMaterialCache, material, index);
+			shaderEffectPasses = &r2::sarr::At(*renderMaterialCache.mShaderEffectPassesArray, index);
+			
 		}
 		else
 		{
 			gpuRenderMaterial = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
+			shaderEffectPasses = &r2::sarr::At(*renderMaterialCache.mShaderEffectPassesArray, index);
+			
 			ClearRenderMaterialParams(gpuRenderMaterial);
 		}
 
 		R2_CHECK(gpuRenderMaterial != nullptr, "Should never happen");
+		R2_CHECK(shaderEffectPasses != nullptr, "Should never happen");
+
+		ClearShaderEffectPasses(shaderEffectPasses);
+
+		const auto* flatShaderEffectPasses = material->shaderEffectPasses()->shaderEffectPasses();
+		
+		for (u32 i = flat::eMeshPass_FORWARD; i < flat::eMeshPass_NUM_SHADER_EFFECT_PASSES; ++i)
+		{
+			flat::eMeshPass flatMeshPass = static_cast<flat::eMeshPass>(i);
+
+			const flat::ShaderEffect* flatShaderEffect = flatShaderEffectPasses->Get(flatMeshPass);
+
+			r2::draw::ShaderEffect shaderEffect;
+			shaderEffect.staticShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->staticShader());
+			shaderEffect.dynamicShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->dynamicShader());
+
+			shaderEffectPasses->meshPasses[flatMeshPass] = shaderEffect;
+		}
 
 		const auto* shaderParams = material->shaderParams();
 
@@ -845,12 +879,10 @@ namespace r2::draw::rmat
 					r2::sarr::Push(*textureAssetHandles, cubemapTexture->mips[m].sides[s].textureAssetHandle);
 				}
 			}
-			
-			
 		}
 	}
 
-	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material)
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::Material* material, s32& outIndex)
 	{
 		R2_CHECK(material != nullptr, "Should never be the case");
 
@@ -864,6 +896,7 @@ namespace r2::draw::rmat
 
 		//now find where we should add it
 		s32 index = r2::squeue::First(*renderMaterialCache.mFreeIndices);
+		outIndex = index; 
 
 		r2::shashmap::Set(*renderMaterialCache.mGPURenderMaterialIndices, materialName, index);
 

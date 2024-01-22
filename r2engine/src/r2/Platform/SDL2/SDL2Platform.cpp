@@ -50,9 +50,9 @@ namespace r2
     
     //@NOTE: Increase as needed for dev
 #ifdef R2_DEBUG
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(430);
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(436);
 #elif R2_RELEASE || R2_PUBLISH
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(290);
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(296);
 #endif
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);

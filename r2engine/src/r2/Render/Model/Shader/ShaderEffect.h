@@ -22,7 +22,7 @@ namespace r2::draw
 
 	struct ShaderEffectPasses
 	{
-		ShaderEffect meshPasses[flat::eMeshPass_NUM_SHADER_EFFECT_PASSES];
+		ShaderEffect meshPasses[flat::eMeshPass_NUM_SHADER_EFFECT_PASSES] = { {}, {}, {}, {}, {}, {} };
 	};
 
 	//@TODO(Serge): kinda dumb but...

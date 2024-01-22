@@ -6165,13 +6165,14 @@ namespace r2::draw::renderer
 			{
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, i);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.assetName.hashID);
+				r2::draw::RenderMaterialParams* renderMaterial = nullptr;
+				r2::draw::ShaderEffectPasses shaderEffectPasses;
+
+				bool result = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName, &renderMaterial, shaderEffectPasses);
+				R2_CHECK(result, "Should always succeed");
 
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
-
-				//@Optimization(Serge): this is fairly slow since we need to do a few lookups each time we draw the model
-				//						It would be smart to cache the ShaderEffects somehow
-				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
+				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, shaderEffectPasses);
 			}
 		}
 		else
@@ -6180,8 +6181,11 @@ namespace r2::draw::renderer
 
 			const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, 0);
 
-			const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.assetName.hashID);
-			r2::draw::ShaderEffectPasses shaderEffectPasses = r2::mat::GetShaderEffectPassesForMaterialName(materialName);
+			r2::draw::RenderMaterialParams* renderMaterial = nullptr;
+			r2::draw::ShaderEffectPasses shaderEffectPasses;
+
+			bool result = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName, &renderMaterial, shaderEffectPasses);
+			R2_CHECK(result, "Should always succeed");
 
 			for (u32 i = 0; i < gpuModelRef->numMaterials; ++i)
 			{
@@ -6406,10 +6410,12 @@ namespace r2::draw::renderer
 			{
 				const r2::mat::MaterialName& materialName = r2::sarr::At(materialNames, j + materialOffset);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName.assetName.hashID);
+				r2::draw::RenderMaterialParams* renderMaterial = nullptr;
+				r2::draw::ShaderEffectPasses shaderEffectPasses;
+				r2::draw::rmat::GetGPURenderMaterial(*renderer.mRenderMaterialCache, materialName, &renderMaterial, shaderEffectPasses);
 
 				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, *renderMaterial);
-				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, r2::mat::GetShaderEffectPassesForMaterialName(materialName));
+				r2::sarr::Push(*batch.materialBatch.shaderEffectPasses, shaderEffectPasses);
 			}
 
 			materialOffset += info.numMaterials;

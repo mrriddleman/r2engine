@@ -871,7 +871,7 @@ namespace r2::edit
 			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 			R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
 
-			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName.assetName.hashID);
+			bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, material.materialName);
 
 			bool result = r2::draw::texche::GetTexturesForFlatMaterial(texturePacksCache, flatMaterial, textures, cubemaps); // gameAssetManager.GetTexturesForFlatMaterial(flatMaterial, textures, cubemaps);
 			R2_CHECK(result, "This should always work");

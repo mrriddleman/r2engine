@@ -130,10 +130,14 @@ namespace r2::asset::pln
 		std::string materialNameStr = changedPath.stem().string();
 		u64 materialName = STRING_ID(materialNameStr.c_str());
 
+		r2::mat::MaterialName tempMaterialName;
+		tempMaterialName.assetName.hashID = materialName;
+		tempMaterialName.assetName.assetNameString = materialNameStr;
+
 		r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 		R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
 
-		bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialName);
+		bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, tempMaterialName);
 
 		//now find it in the MaterialParamsPack. If we don't find it then, we know it was removed
 		//const flat::MaterialParams* foundMaterialParams = nullptr;

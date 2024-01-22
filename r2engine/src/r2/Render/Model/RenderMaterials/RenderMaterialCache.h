@@ -10,6 +10,7 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Render/Model/Textures/Texture.h"
 
+
 namespace flat
 {
 	//struct MaterialParams;
@@ -19,6 +20,8 @@ namespace flat
 
 namespace r2::draw
 {
+	struct ShaderEffectPasses;
+
 	struct RenderMaterialCache
 	{
 		u32 mName = 0;
@@ -33,7 +36,8 @@ namespace r2::draw
 		
 		r2::mem::PoolArena* mGPURenderMaterialArena = nullptr;
 		r2::SArray<RenderMaterialParams*>* mGPURenderMaterialArray = nullptr;
-		
+		r2::SArray<r2::draw::ShaderEffectPasses>* mShaderEffectPassesArray = nullptr;
+
 		r2::mem::FreeListArena* mAssetHandleArena = nullptr;
 		r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>* mUploadedTextureForMaterialMap = nullptr;
 
@@ -41,6 +45,11 @@ namespace r2::draw
 
 		static u64 MemorySize(u32 numMaterials);
 	};
+}
+
+namespace r2::mat
+{
+	struct MaterialName;
 }
 
 namespace r2::draw::rmat
@@ -57,9 +66,11 @@ namespace r2::draw::rmat
 	bool UnloadMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
 	bool UnloadMaterialArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames);
 
-	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, u64 materialName);
+	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, const r2::mat::MaterialName& materialName);
 
 	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
+
+	bool GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const r2::mat::MaterialName& materialName, RenderMaterialParams** renderMaterialParams, r2::draw::ShaderEffectPasses& shaderEffectPasses);
 
 	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials);
 }
