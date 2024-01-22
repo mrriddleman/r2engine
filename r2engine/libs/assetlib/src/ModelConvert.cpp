@@ -452,6 +452,13 @@ namespace r2::assets::assetlib
 		int materialIndex = -1;
 	};
 
+	struct GLTFMeshInfo
+	{
+		unsigned int numPrimitives;
+		glm::mat4 globalInverseTransform;
+		glm::mat4 globalTransform;
+	};
+
 	struct Model
 	{
 		fs::path binaryMaterialPath;
@@ -467,6 +474,7 @@ namespace r2::assets::assetlib
 
 		Skeleton skeleton;
 		std::vector<Clip> clips;
+		std::vector<GLTFMeshInfo> gltfMeshInfos;
 	};
 
 	struct Sampler
@@ -2308,6 +2316,7 @@ namespace r2::assets::assetlib
 
 		std::unordered_map<size_t, size_t> meshToSkin;
 		std::unordered_map<size_t, Transform> nodeLocalTransform;
+		std::unordered_map<size_t, size_t> meshToNodeIndexMap;
 
 		//go through all of the nodes to setup the correct transformations
 
@@ -2338,6 +2347,8 @@ namespace r2::assets::assetlib
 			if (node.meshIndex.has_value())
 			{
 				meshIndex = node.meshIndex.value();
+
+				meshToNodeIndexMap[node.meshIndex.value()] = i;
 			}
 
 			if (node.meshIndex.has_value() && node.skinIndex.has_value())
@@ -2377,6 +2388,14 @@ namespace r2::assets::assetlib
 				skinForMesh = &gltf.skins[meshToSkin[i]];
 			}
 			
+			GLTFMeshInfo gltfMeshInfo;
+			
+			gltfMeshInfo.numPrimitives = fastgltfMesh.primitives.size();
+			gltfMeshInfo.globalTransform = TransformToMat4(GetGlobalTransform( gltf, meshToNodeIndexMap[i], nodeLocalTransform));
+			gltfMeshInfo.globalInverseTransform = glm::inverse(gltfMeshInfo.globalTransform);
+
+			model.gltfMeshInfos.push_back(gltfMeshInfo);
+
 			for (size_t p = 0; p < fastgltfMesh.primitives.size(); ++p)
 			{
 				
@@ -2738,7 +2757,8 @@ namespace r2::assets::assetlib
 			flat::CreateBoneMetaData(builder, model.boneData.size(), model.boneInfo.size()),
 			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNameStrings.size(), model.skeleton.mBindPose.parents.size(), model.skeleton.mRestPose.joints.size(), model.skeleton.mBindPose.joints.size()),
 			builder.CreateString(model.originalPath),
-			builder.CreateVector(animationsMetaData)); 
+			builder.CreateVector(animationsMetaData),
+			model.gltfMeshInfos.size()); 
 
 		builder.Finish(modelMetaDataOffset, "mdmd");
 
@@ -2939,6 +2959,16 @@ namespace r2::assets::assetlib
 			flatAnimations.push_back(flatAnimationData);
 		}
 
+		std::vector<flatbuffers::Offset<flat::GLTFMeshInfo>> flatGLTFMeshInfos;
+
+		for (size_t i = 0; i < model.gltfMeshInfos.size(); ++i)
+		{
+			auto flatGlobalInvTransform = ToFlatMatrix4(model.gltfMeshInfos[i].globalInverseTransform);
+			auto flatGlobalTransform = ToFlatMatrix4(model.gltfMeshInfos[i].globalTransform);
+
+			flatGLTFMeshInfos.push_back(flat::CreateGLTFMeshInfo(dataBuilder, model.gltfMeshInfos[i].numPrimitives, &flatGlobalInvTransform, &flatGlobalTransform));
+		}
+
 		//@TODO(Serge): UUID
 		auto modelAssetName2 = flat::CreateAssetName(builder, 0, r2::asset::GetAssetNameForFilePath(model.modelName.c_str(), r2::asset::RMODEL), builder.CreateString(model.modelName));
 
@@ -2949,7 +2979,8 @@ namespace r2::assets::assetlib
 			dataBuilder.CreateVector(flatMaterialNames),
 			dataBuilder.CreateVector(flatMeshes),
 			animationData,
-			dataBuilder.CreateVector(flatAnimations));
+			dataBuilder.CreateVector(flatAnimations),
+			dataBuilder.CreateVector(flatGLTFMeshInfos));
 
 		dataBuilder.Finish(rmodel, "rmdl");
 

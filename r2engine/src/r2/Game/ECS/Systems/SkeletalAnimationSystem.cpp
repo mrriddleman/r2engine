@@ -77,7 +77,7 @@ namespace r2::ecs
 				animationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *animationComponent.animationPose, deltaTime + animationComponent.animationTime, animationComponent.shouldLoop);
 			}
 			
-			r2::anim::pose::GetMatrixPalette(animationComponent.animModel->globalInverseTransform, *animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, offset);
+			r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, offset);
 
 #ifdef R2_DEBUG
 			if (debugBonesToUse)
@@ -110,7 +110,7 @@ namespace r2::ecs
 						skeletalAnimationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *skeletalAnimationComponent.animationPose, deltaTime + animationComponent.animationTime, skeletalAnimationComponent.shouldLoop);
 					}
 
-					r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, offset);
+					r2::anim::pose::GetMatrixPalette(*skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, offset);
 
 #ifdef R2_DEBUG
 					if (instancedDebugBoneComponent && j < instancedDebugBoneComponent->numInstances)

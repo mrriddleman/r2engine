@@ -602,6 +602,11 @@ namespace r2::draw::vbsys
 		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::VertexBufferLayoutSystem::g_GPUModelSalt++);
 		modelRef->assetName = model.assetName;
 		modelRef->isAnimated = boneData && numBones > 0;
+		modelRef->numGLTFMeshes = 0;
+		if (model.optrGLTFMeshInfos)
+		{
+			modelRef->numGLTFMeshes = r2::sarr::Size(*model.optrGLTFMeshInfos);
+		}
 
 		vb::GPUBufferEntry vertexEntry;
 		vb::GPUBufferEntry indexEntry;

@@ -563,7 +563,7 @@ namespace r2::draw
         mElements.emplace_back(ConstantBufferElement());
         mElements[0].offset = 0;
         mElements[0].typeCount = numBoneTransforms;
-        mElements[0].elementSize = sizeof(glm::mat4) * 3;
+        mElements[0].elementSize = sizeof(r2::draw::ShaderBoneTransform);
         mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
         mElements[0].type = ShaderDataType::Struct;
 
@@ -939,6 +939,24 @@ namespace r2::draw
 
 		mBufferMult = 1;
     }
+
+	void ConstantBufferLayout::InitForMeshData(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 elementSize, u64 numDraws)
+	{
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = numDraws;
+		mElements[0].elementSize = elementSize;
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+
+		mBufferMult = RING_BUFFER_MULTIPLIER;
+	}
 
 	void  ConstantBufferLayout::InitForSSR()
 	{

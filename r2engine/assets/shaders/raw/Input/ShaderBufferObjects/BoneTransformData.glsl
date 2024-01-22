@@ -3,7 +3,6 @@
 
 struct BoneTransform
 {
-	mat4 globalInv;
 	mat4 transform;
 	mat4 invBinPose;
 };

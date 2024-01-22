@@ -6,6 +6,7 @@
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
 #include "Common/CommonFunctions.glsl"
+#include "Common/ModelFunctions.glsl"
 
 invariant gl_Position;
 
@@ -18,7 +19,7 @@ out VS_OUT
 
 void main()
 {
-    vec4 modelPos = models[DrawID] * vec4(aPos, 1.0);
+    vec4 modelPos = GetStaticModel(DrawID, GetLocalMeshOrMaterialIndex(aTexCoord1)) * vec4(aPos, 1.0);
 	gl_Position = projection * view * modelPos;
 
     vs_out.materialIndex = GetLocalMeshOrMaterialIndex(aTexCoord);

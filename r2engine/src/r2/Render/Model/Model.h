@@ -31,7 +31,6 @@ namespace r2::draw
 
 	struct ShaderBoneTransform
 	{
-		glm::mat4 globalInv; //@Memory: could maybe remove or have this be a per object param
 		glm::mat4 transform;
 		glm::mat4 invBindPose; //@Memory: could maybe remove or have this be a per object param
 	};
@@ -52,6 +51,13 @@ namespace r2::draw
 //        static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
 //    };
 
+	struct GLTFMeshInfo
+	{
+		u32 numPrimitives;
+		glm::mat4 meshGlobalInv;
+		glm::mat4 meshGlobal;
+	};
+
 	struct Model
 	{
 		r2::asset::AssetName assetName;
@@ -69,12 +75,14 @@ namespace r2::draw
 
 	//	r2::SArray<Animation*>* optrAnimations = nullptr; //@TODO(Serge): Remove
 
-        glm::mat4 globalInverseTransform; 
-		glm::mat4 globalTransform;
+		r2::SArray<GLTFMeshInfo>* optrGLTFMeshInfos = nullptr;
+
+     //   glm::mat4 globalInverseTransform; 
+	//	glm::mat4 globalTransform;
 
 		static u64 ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 
-		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 numGLTFMeshes, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
 	struct DebugBone

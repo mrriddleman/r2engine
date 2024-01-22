@@ -412,7 +412,7 @@ namespace r2::edit
 				debugBones = debugBoneComponent.debugBones;
 			}
 
-			r2::anim::pose::GetMatrixPalette(animationComponent.animModel->globalInverseTransform, *animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+			r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
 
 			if (debugBones)
 			{
@@ -499,7 +499,7 @@ namespace r2::edit
 						debugBones = debugBoneComponent.debugBones;
 					}
 
-					r2::anim::pose::GetMatrixPalette(animationComponent.animModel->globalInverseTransform, *animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+					r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
 
 					if (debugBones)
 					{
@@ -564,7 +564,7 @@ namespace r2::edit
 						debugBones = debugBoneComponent.debugBones;
 					}
 
-					r2::anim::pose::GetMatrixPalette(animationComponent.animModel->globalInverseTransform, *animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
+					r2::anim::pose::GetMatrixPalette(*animationComponent.animationPose, animationComponent.animModel->animSkeleton, animationComponent.shaderBones, 0);
 
 					if (debugBones)
 					{

@@ -169,7 +169,7 @@ namespace r2::asset
 			}
 		}
 		
-		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numAnimationsInModel, alignment, header, boundsChecking);
+		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numAnimationsInModel, metaData->numGLTFMeshes(), alignment, header, boundsChecking);
 
 		return totalSize;
 	}
@@ -221,10 +221,10 @@ namespace r2::asset
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(numMeshes));
 
-		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
+		//const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
-		model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
-		model->globalTransform = glm::inverse(model->globalInverseTransform);
+		//model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+	//	model->globalTransform = glm::inverse(model->globalInverseTransform);
 
 		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 
@@ -298,99 +298,6 @@ namespace r2::asset
 			model->animSkeleton = anim::LoadSkeleton(&startOfArrayPtr, modelData->animationData());
 		}
 
-		//if (metaData->isAnimatedModel())
-		//{
-		//	const auto numBones = metaData->boneMetaData()->numBoneInfo();
-
-		//	
-		//	
-
-		//	model->optrBoneInfo = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneInfo, numBones);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneInfo>::MemorySize(numBones));
-
-		//	u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
-
-		//	model->optrBoneMapping = MAKE_SHASHMAP_IN_PLACE(s32, startOfArrayPtr, hashCapacity);
-
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<u32>::MemorySize(hashCapacity));
-
-		//	////Process the Nodes
-		//	const u64 numJoints = metaData->skeletonMetaData()->numJoints();
-		//	const u64 numBindPoseTransforms = metaData->skeletonMetaData()->numBindPoseTransforms();
-
-		//	model->skeleton.mJointNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numJoints);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numJoints));
-
-		//	model->skeleton.mParents = EMPLACE_SARRAY(startOfArrayPtr, s32, numJoints);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numJoints));
-
-		//	model->skeleton.mRestPoseTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numJoints);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::math::Transform>::MemorySize(numJoints));
-
-		//	model->skeleton.mBindPoseTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numBindPoseTransforms);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::math::Transform>::MemorySize(numBindPoseTransforms));
-
-		//	model->skeleton.mRealParentBones = EMPLACE_SARRAY(startOfArrayPtr, s32, numBindPoseTransforms);
-		//	startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numBindPoseTransforms));
-
-
-		//	//Animation data
-		//	const auto flatBoneInfos = modelData->animationData()->boneInfo();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatBoneInfos->size(); ++i)
-		//	{
-		//		r2::draw::BoneInfo boneInfo;
-		//		boneInfo.offsetTransform = GetGLMMatrix4FromFlatMatrix(&flatBoneInfos->Get(i)->offsetTransform());
-
-		//		r2::sarr::Push(*model->optrBoneInfo, boneInfo);
-		//	}
-
-		
-
-		//	const auto flatBoneMapEntries = modelData->animationData()->boneMapping();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatBoneMapEntries->size(); ++i)
-		//	{
-		//		r2::shashmap::Set(*model->optrBoneMapping, flatBoneMapEntries->Get(i)->key(), flatBoneMapEntries->Get(i)->val());
-		//	}
-
-		//	const auto flatJoints = modelData->animationData()->jointNames();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatJoints->size(); ++i)
-		//	{
-		//		r2::sarr::Push(*model->skeleton.mJointNames, flatJoints->Get(i));
-		//	}
-
-		//	const auto flatParents = modelData->animationData()->parents();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatParents->size(); ++i)
-		//	{
-		//		r2::sarr::Push(*model->skeleton.mParents, flatParents->Get(i));
-		//	}
-
-		//	const auto flatRestPoseTransforms = modelData->animationData()->restPoseTransforms();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatRestPoseTransforms->size(); ++i)
-		//	{
-		//		r2::sarr::Push(*model->skeleton.mRestPoseTransforms, GetTransformFromFlatTransform(flatRestPoseTransforms->Get(i)));
-		//	}
-
-		//	const auto flatBindPoseTransforms = modelData->animationData()->bindPoseTransforms();
-		//	const auto flatBindPoseTransformsSize = flatBindPoseTransforms->size();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatBindPoseTransformsSize; ++i)
-		//	{
-		//		r2::sarr::Push(*model->skeleton.mBindPoseTransforms, GetTransformFromFlatTransform(flatBindPoseTransforms->Get(i)));
-		//	}
-
-		//	const auto flatRealParents = modelData->animationData()->realParentBones();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < flatRealParents->size(); ++i)
-		//	{
-		//		r2::sarr::Push(*model->skeleton.mRealParentBones, flatRealParents->Get(i));
-		//	}
-		//}
-
 		const auto* animationMetaData = metaData->animationMetaData();
 		
 		if (animationMetaData && animationMetaData->size() > 0)
@@ -407,125 +314,24 @@ namespace r2::asset
 				r2::anim::AnimationClip* nextClip = anim::LoadAnimationClip(&startOfArrayPtr, flatAnimationData);
 				r2::sarr::Push(*model->optrAnimationClips, nextClip);
 			}
+		}
+
+		u32 numGLTFMeshes = metaData->numGLTFMeshes();
+		model->optrGLTFMeshInfos = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::GLTFMeshInfo, numGLTFMeshes);
+		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::GLTFMeshInfo>::MemorySize(numGLTFMeshes));
+
+		const auto flatGLTFMeshInfoData = modelData->gltfMeshInfos();
+
+		for (u32 i=0; i < numGLTFMeshes; ++i)
+		{
+			r2::draw::GLTFMeshInfo gltfMeshInfo;
+			const auto flatGLTFMeshInfo = flatGLTFMeshInfoData->Get(i);
 			
+			gltfMeshInfo.numPrimitives = flatGLTFMeshInfo->numPrimitives();
+			gltfMeshInfo.meshGlobal = r2::math::GetGLMMatrix4FromFlatMatrix(flatGLTFMeshInfo->globalTransform());
+			gltfMeshInfo.meshGlobalInv = r2::math::GetGLMMatrix4FromFlatMatrix(flatGLTFMeshInfo->globalInverseTransform());
 
-//			
-//
-//			
-//
-//			model->optrAnimations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation*, numAnimations);
-//			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation*>::MemorySize(numAnimations));
-//
-//#ifdef R2_EDITOR
-//			char animationName[r2::fs::FILE_PATH_LENGTH];
-//			char sanitizedAnimationPath[r2::fs::FILE_PATH_LENGTH];
-//#endif
-
-//			for (u32 i = 0; i < numAnimations; ++i)
-//			{
-//				const flat::RAnimation* flatAnimationData = animations->Get(i);
-//
-//				r2::draw::Animation* animation = new (startOfArrayPtr) r2::draw::Animation();
-//
-//				R2_CHECK(animation != nullptr, "Big problem here");
-//
-//				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Animation));
-//
-//#ifdef R2_EDITOR
-//				//add in the name of the animation here
-//				const auto* tempAnimationMetaData = animationMetaData->Get(i);
-//				std::string originalAnimationPath = tempAnimationMetaData->originalPath()->str();
-//				r2::fs::utils::SanitizeSubPath(originalAnimationPath.c_str(), sanitizedAnimationPath);
-//				r2::fs::utils::CopyFileName(sanitizedAnimationPath, animationName);
-//				animation->animationName = animationName;
-//#endif
-//
-//				const auto* flatChannels = flatAnimationData->channels();
-//				const auto numChannels = flatChannels->size();
-//
-//				const auto hashMapSize = glm::round( numChannels * r2::SHashMap<r2::draw::AnimationChannel>::LoadFactorMultiplier() );
-//
-//				if (numChannels > 0)
-//				{
-//					animation->channels = MAKE_SHASHMAP_IN_PLACE(r2::draw::AnimationChannel, startOfArrayPtr, hashMapSize);
-//					startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<r2::draw::AnimationChannel>::MemorySize(hashMapSize));
-//				}
-//
-//				animation->assetName = flatAnimationData->animationName();
-//				animation->ticksPerSeconds = flatAnimationData->ticksPerSeconds();
-//
-//				double maxChannelDuration = 0;
-//
-//				for (u32 i = 0; i < numChannels; ++i)
-//				{
-//					const flat::Channel* flatChannel = flatChannels->Get(i);
-//
-//					r2::draw::AnimationChannel channel;
-//
-//					channel.hashName = flatChannel->channelName();
-//					const auto positionKeys = flatChannel->positionKeys();
-//					const auto numPositionKeys = flatChannel->positionKeys()->size();
-//					if (numPositionKeys > 0)
-//					{
-//						channel.positionKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numPositionKeys);
-//
-//						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numPositionKeys));
-//					}
-//
-//					for (u32 pKey = 0; pKey < numPositionKeys; ++pKey)
-//					{
-//						const auto flatPositionKey = positionKeys->Get(pKey);
-//						const auto flatPositionValue = flatPositionKey->value();
-//
-//						r2::sarr::Push(*channel.positionKeys, { flatPositionKey->time(), glm::vec3(flatPositionValue.x(), flatPositionValue.y(), flatPositionValue.z()) });
-//
-//						maxChannelDuration = std::max(flatPositionKey->time(), maxChannelDuration);
-//					}
-//
-//					const auto scaleKeys = flatChannel->scaleKeys();
-//					const auto numScaleKeys = scaleKeys->size();
-//
-//					if (numScaleKeys > 0)
-//					{
-//						channel.scaleKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numScaleKeys);
-//						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numScaleKeys));
-//					}
-//
-//					for (u32 sKey = 0; sKey < numScaleKeys; ++sKey)
-//					{
-//						const auto flatScaleKey = scaleKeys->Get(sKey);
-//						const auto flatScaleValue = flatScaleKey->value();
-//						r2::sarr::Push(*channel.scaleKeys, { flatScaleKey->time(), glm::vec3(flatScaleValue.x(), flatScaleValue.y(), flatScaleValue.z()) });
-//
-//						maxChannelDuration = std::max(flatScaleKey->time(), maxChannelDuration);
-//					}
-//					const auto rotationKeys = flatChannel->rotationKeys();
-//					const auto numRotationKeys = rotationKeys->size();
-//
-//					if (numRotationKeys > 0)
-//					{
-//						channel.rotationKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::RotationKey, numRotationKeys);
-//						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(numRotationKeys));
-//					}
-//
-//					for (u32 rKey = 0; rKey < numRotationKeys; ++rKey)
-//					{
-//						const auto flatRotationKey = rotationKeys->Get(rKey);
-//						const auto flatRotationValue = flatRotationKey->value();
-//						r2::sarr::Push(*channel.rotationKeys, { flatRotationKey->time(), glm::quat(flatRotationValue.w(), flatRotationValue.x(), flatRotationValue.y(), flatRotationValue.z()) });
-//
-//						maxChannelDuration = std::max(flatRotationKey->time(), maxChannelDuration);
-//					}
-//
-//					r2::shashmap::Set(*animation->channels, channel.hashName, channel);
-//				}
-//
-//				//@TODO(Serge): this should be taken care of when we convert the animation, but for now this will suffice
-//				animation->duration = std::min(flatAnimationData->durationInTicks(), maxChannelDuration);
-//
-//
-//				r2::sarr::Push(*model->optrAnimations, animation);
-//			}
+			r2::sarr::Push(*model->optrGLTFMeshInfos, gltfMeshInfo);
 		}
 
 		return true;

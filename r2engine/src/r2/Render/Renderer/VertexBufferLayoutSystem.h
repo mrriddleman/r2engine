@@ -50,6 +50,7 @@ namespace r2::draw::vb
 		GPUBufferEntry boneEntry;
 		u32 numBones;
 		b32 isAnimated;
+		u32 numGLTFMeshes;
 	};
 
 	constexpr size_t MAX_VBOS = BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS;

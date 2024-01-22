@@ -243,7 +243,7 @@ namespace r2::draw
 		cmd::ClearBufferParams clearParams[4]={};
 	};
 
-	u64 RenderBatch::MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking)
+	u64 RenderBatch::MemorySize(u32 numModels, u32 numModelRefs, u32 numMeshes, u32 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 totalBytes = 0;
 
@@ -253,6 +253,7 @@ namespace r2::draw
 		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
 		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
 		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderEffectPasses>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking); 
+		totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshRenderData>::MemorySize(numMeshes), alignment, headerSize, boundsChecking);
 
 		if (numModels > 0)
 		{
@@ -509,12 +510,7 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		
-		//u32 numInstances,
-		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<r2::mat::MaterialName>& materialNames,
-
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
@@ -649,6 +645,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddMaterialOffsetsLayout(Renderer& renderer);
 	ConstantConfigHandle AddClusterVolumesLayout(Renderer& renderer);
 	ConstantConfigHandle AddDispatchComputeIndirectLayout(Renderer& renderer);
+	ConstantConfigHandle AddMeshDataLayout(Renderer& renderer);
 
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 	bool GenerateConstantBuffers(Renderer& renderer, const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
@@ -1203,7 +1200,7 @@ namespace r2::draw::renderer
 				nextBatch.models = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				nextBatch.drawState = MAKE_SARRAY(*rendererArena, cmd::DrawState, MAX_NUM_DRAWS);
 				nextBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
-
+				nextBatch.meshRenderData = MAKE_SARRAY(*rendererArena, MeshRenderData, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL);
 #ifdef R2_EDITOR
 				nextBatch.entityIDs = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
 				nextBatch.entityInstanceOffsetBatches = MAKE_SARRAY(*rendererArena, EntityInstanceBatchOffset, MAX_NUM_DRAWS);
@@ -1681,7 +1678,7 @@ namespace r2::draw::renderer
 			FREE(nextBatch.entityInstanceOffsetBatches, *arena);
 			FREE(nextBatch.entityIDs, *arena);
 #endif
-
+			FREE(nextBatch.meshRenderData, *arena);
 			FREE(nextBatch.numInstances, *arena);
 			FREE(nextBatch.drawState, *arena);
 			FREE(nextBatch.models, *arena);
@@ -1950,16 +1947,6 @@ namespace r2::draw::renderer
 
 		AddLightingLayout(renderer);
 	
-		
-
-		bool success = GenerateLayouts(renderer);
-		R2_CHECK(success, "We couldn't create the buffer layouts!");
-
-		
-	}
-
-	bool GenerateLayouts(Renderer& renderer)
-	{
 
 #ifdef R2_DEBUG
 		//Only add the vertex layout here
@@ -1975,6 +1962,17 @@ namespace r2::draw::renderer
 		AddMaterialOffsetsLayout(renderer);
 		AddClusterVolumesLayout(renderer);
 		AddDispatchComputeIndirectLayout(renderer);
+
+		AddMeshDataLayout(renderer);
+
+
+		bool success = GenerateLayouts(renderer);
+		R2_CHECK(success, "We couldn't create the buffer layouts!");
+	}
+
+	bool GenerateLayouts(Renderer& renderer)
+	{
+
 
 		bool success = //GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
 		GenerateConstantBuffers(renderer, renderer.mConstantLayouts);
@@ -2633,6 +2631,33 @@ namespace r2::draw::renderer
 		return renderer.mDispatchComputeConfigHandle;
 	}
 
+	ConstantConfigHandle AddMeshDataLayout(Renderer& renderer)
+	{
+		if (renderer.mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration meshData
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		meshData.layout.InitForMeshData(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, sizeof(glm::mat4)*2, MAX_NUM_DRAWS);
+
+		r2::sarr::Push(*renderer.mConstantLayouts, meshData);
+
+		renderer.mMeshDataConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+		return renderer.mMeshDataConfigHandle;
+	}
+
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer)
 	{
 		if (renderer.mConstantLayouts == nullptr)
@@ -2723,8 +2748,8 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2
@@ -3250,7 +3275,17 @@ namespace r2::draw::renderer
 
 
 
-	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
+	void PopulateRenderDataFromRenderBatch(
+		Renderer& renderer,
+		r2::SArray<void*>* tempAllocations,
+		const RenderBatch& renderBatch,
+		r2::SHashMap<DrawCommandData*>* shaderDrawCommandData,
+		r2::SArray<RenderMaterialParams>* renderMaterials,
+		r2::SArray<glm::uvec4>* materialOffsetsPerObject,
+		u32& materialOffset,
+		u32 baseInstanceOffset,
+		u32 drawCommandBatchSize, 
+		u32& meshOffset)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.gpuModelRefs);
 		u32 numModelInstances = 0;
@@ -3290,10 +3325,20 @@ namespace r2::draw::renderer
 					entityInstance = r2::sarr::At(*renderBatch.entityInstances, entityInstanceBatchOffset.start + i);
 				}
 #endif
-				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, entityID, entityInstance, 0));
+				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, entityID, entityInstance, meshOffset));
 			}
 			
 			materialOffset += materialBatchInfo.numMaterials;
+
+			//@NOTE(Serge): for engine Models (non-gltf models) we should also include a mesh 
+			if (modelRef->numGLTFMeshes == 0)
+			{
+				meshOffset += 1;
+			}
+			else
+			{
+				meshOffset += modelRef->numGLTFMeshes;
+			}
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
 			{
@@ -3466,9 +3511,9 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*tempAllocations, (void*)shaderDrawCommandData);
 
 		u32 materialOffset = 0;
-
-		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, 0, dynamicDrawCommandBatchSize);
-		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, numDynamicInstances, staticDrawCommandBatchSize);
+		u32 meshOffset = 0;
+		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, 0, dynamicDrawCommandBatchSize, meshOffset);
+		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, numDynamicInstances, staticDrawCommandBatchSize, meshOffset);
 
 		r2::sarr::Append(*renderMaterials, *dynamicRenderBatch.materialBatch.renderMaterialParams);
 		r2::sarr::Append(*renderMaterials, *staticRenderBatch.materialBatch.renderMaterialParams);
@@ -3547,7 +3592,8 @@ namespace r2::draw::renderer
 		auto materialOffsetsConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMaterialOffsetsConfigHandle);
 
 		cmd::FillConstantBuffer* materialOffsetsCMD = nullptr;
-
+		
+		
 		if (materialOffsetsDataSize > 0)
 		{
 			materialOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, prevFillCMD, materialOffsetsDataSize);
@@ -3568,6 +3614,41 @@ namespace r2::draw::renderer
 			prevFillCMD = materialOffsetsCMD;
 		}
 
+		cmd::FillConstantBuffer* meshDataCMD = nullptr;
+
+		const u32 numDynamicMeshDatas = r2::sarr::Size(*dynamicRenderBatch.meshRenderData);
+		const u32 numStaticMeshDatas = r2::sarr::Size(*staticRenderBatch.meshRenderData);
+
+		const u32 numMeshDatas = numDynamicMeshDatas + numStaticMeshDatas;
+		const u32 meshDataSize = sizeof(MeshRenderData) * numMeshDatas;
+		auto meshDataConstantBufferHandle = r2::sarr::At(*constHandles, renderer.mMeshDataConfigHandle);
+
+		if (materialOffsetsDataSize > 0 && meshDataSize > 0)
+		{
+			meshDataCMD = AddFillConstantBufferCommand<mem::StackArena, key::Basic>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, basicKey, meshDataSize);
+
+			char* meshDataAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(meshDataCMD);
+
+			const u64 dynamicMeshMemorySize = numDynamicMeshDatas * sizeof(MeshRenderData);
+			const u64 staticMeshMemorySize = numStaticMeshDatas * sizeof(MeshRenderData);
+
+			memcpy(meshDataAuxMemory, dynamicRenderBatch.meshRenderData->mData, dynamicMeshMemorySize);
+			memcpy(mem::utils::PointerAdd(meshDataAuxMemory, dynamicMeshMemorySize), staticRenderBatch.meshRenderData->mData, staticMeshMemorySize);
+
+			ConstantBufferData* meshConstData = GetConstData(renderer, meshDataConstantBufferHandle);
+
+			meshDataCMD->data = meshDataAuxMemory;
+			meshDataCMD->dataSize = meshDataSize;
+			meshDataCMD->offset = meshConstData->currentOffset;
+			meshDataCMD->constantBufferHandle = meshDataConstantBufferHandle;
+
+			meshDataCMD->isPersistent = meshConstData->isPersistent;
+			meshDataCMD->type = meshConstData->type;
+
+			meshConstData->AddDataSize(meshDataSize);
+
+			prevFillCMD = meshDataCMD;
+		}
 
 		if (dynamicRenderBatch.boneTransforms && r2::sarr::Size(*dynamicRenderBatch.boneTransforms) > 0)
 		{
@@ -3746,7 +3827,12 @@ namespace r2::draw::renderer
 			completeMaterialOffsetsCMD->constantBufferHandle = materialOffsetsConstantBufferHandle;
 			completeMaterialOffsetsCMD->count = numMaterialOffsets;
 
-			cmd::CompleteConstantBuffer* prevCompleteCMD = completeMaterialOffsetsCMD;
+			cmd::CompleteConstantBuffer* completeMeshDataCMD = AppendCommand<cmd::CompleteConstantBuffer, cmd::CompleteConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, completeMaterialOffsetsCMD, 0);
+
+			completeMaterialOffsetsCMD->constantBufferHandle = meshDataConstantBufferHandle;
+			completeMaterialOffsetsCMD->count = numMeshDatas;
+
+			cmd::CompleteConstantBuffer* prevCompleteCMD = completeMeshDataCMD;
 
 			if (dynamicRenderBatch.boneTransforms && r2::sarr::Size(*dynamicRenderBatch.boneTransforms) > 0)
 			{
@@ -4706,6 +4792,7 @@ namespace r2::draw::renderer
 			r2::sarr::Clear(*batch.models);
 			r2::sarr::Clear(*batch.drawState);
 			r2::sarr::Clear(*batch.numInstances);
+			r2::sarr::Clear(*batch.meshRenderData);
 
 			if (batch.boneTransforms)
 			{
@@ -5984,7 +6071,6 @@ namespace r2::draw::renderer
 		const vb::GPUModelRef* gpuModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
 		R2_CHECK(gpuModelRef != nullptr, "Failed to get the GPUModelRef for handle: %llu", modelRefHandle);
 
-
 		R2_CHECK(gpuModelRef->numMaterials == r2::sarr::Size(materialNames) || ((r2::sarr::Size(materialNames) == 1) && gpuModelRef->numMaterials >= 1), "These must be the same");
 
 		DrawType drawType = STATIC;
@@ -5998,8 +6084,42 @@ namespace r2::draw::renderer
 		{
 			drawType = DYNAMIC;
 		}
+		
+		//@NOTE(Serge): maybe we should pass the mesh data in
+		auto gameAssetManager = CENG.GetGameAssetManager();
+		const Model* model = nullptr;
+
+		if (r2::draw::modlche::HasModel(renderer.mModelCache, { gpuModelRef->assetName.hashID, renderer.mModelCache->mModelCache->GetSlot() }))
+		{
+			model = GetDefaultModel(gpuModelRef->assetName);
+		}
+		else
+		{
+			model = gameAssetManager.GetAssetDataConst<Model>(gpuModelRef->assetName);
+		}
+
+		R2_CHECK(model != nullptr, "Should never happen");
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+
+		if (model->optrGLTFMeshInfos)
+		{
+			const auto numMeshInfos = r2::sarr::Size(*model->optrGLTFMeshInfos);
+			for (u32 i = 0; i < numMeshInfos; ++i)
+			{
+				MeshRenderData meshRenderData;
+				const auto& gltfMeshInfo = r2::sarr::At(*model->optrGLTFMeshInfos, i);
+				meshRenderData.globalInvTransform = gltfMeshInfo.meshGlobalInv;
+				meshRenderData.globalTransform = gltfMeshInfo.meshGlobal;
+
+				r2::sarr::Push(*batch.meshRenderData, meshRenderData);
+			}
+		}
+		else
+		{
+			MeshRenderData meshRenderData = {};
+			r2::sarr::Push(*batch.meshRenderData, meshRenderData);
+		}
 
 		r2::sarr::Push(*batch.gpuModelRefs, gpuModelRef);
 
@@ -6119,6 +6239,7 @@ namespace r2::draw::renderer
 #endif
 
 		r2::SArray<const vb::GPUModelRef*>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const vb::GPUModelRef*, numModelRefs);
+		auto gameAssetManager = CENG.GetGameAssetManager();
 
 		//get all the model refs
 		for (u64 i = 0; i < numModelRefs; ++i)
@@ -6181,6 +6302,46 @@ namespace r2::draw::renderer
 		DrawType drawType = (!boneTransforms) ? DrawType::STATIC : DrawType::DYNAMIC;
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+
+
+		//@NOTE(Serge): maybe we should pass the mesh data in
+		for (u32 i = 0; i < numModelRefs; ++i)
+		{
+			const auto gpuModelRef = r2::sarr::At(*modelRefArray, i);
+			const Model* model = nullptr;
+
+			if (r2::draw::modlche::HasModel(renderer.mModelCache, { gpuModelRef->assetName.hashID, renderer.mModelCache->mModelCache->GetSlot() }))
+			{
+				model = GetDefaultModel(gpuModelRef->assetName);
+			}
+			else
+			{
+				model = gameAssetManager.GetAssetDataConst<Model>(gpuModelRef->assetName);
+			}
+
+			R2_CHECK(model != nullptr, "Should never happen");
+
+			RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+
+			if (model->optrGLTFMeshInfos)
+			{
+				const auto numMeshInfos = r2::sarr::Size(*model->optrGLTFMeshInfos);
+				for (u32 j = 0; j < numMeshInfos; ++j)
+				{
+					MeshRenderData meshRenderData;
+					const auto& gltfMeshInfo = r2::sarr::At(*model->optrGLTFMeshInfos, j);
+					meshRenderData.globalInvTransform = gltfMeshInfo.meshGlobalInv;
+					meshRenderData.globalTransform = gltfMeshInfo.meshGlobal;
+
+					r2::sarr::Push(*batch.meshRenderData, meshRenderData);
+				}
+			}
+			else
+			{
+				MeshRenderData meshRenderData = {};
+				r2::sarr::Push(*batch.meshRenderData, meshRenderData);
+			}
+		}
 
 #ifdef R2_EDITOR
 		R2_CHECK(r2::sarr::Size(numEntityInstancesPerEntity) == r2::sarr::Size(entities), "These should always be the same");
@@ -9268,12 +9429,7 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		//u32 numInstances,
-		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
-
-
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		//0 is then invalid entity - if we change that - we need to change this
@@ -9288,10 +9444,7 @@ namespace r2::draw::renderer
 		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<u32>& numInstancesPerModel,
-
 		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
-		//const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		//const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		r2::SArray<u32>* entities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
@@ -9397,10 +9550,6 @@ namespace r2::draw::renderer
 	}
 
 #ifdef R2_EDITOR
-	//r2::asset::FileList GetModelFiles()
-	//{
-	//	return GetModelFiles(MENG.GetCurrentRendererRef());
-	//}
 
 	const r2::draw::Model* GetDefaultModel(const r2::asset::AssetName& assetName)
 	{
@@ -9419,8 +9568,6 @@ namespace r2::draw::renderer
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
 		const r2::SArray<r2::mat::MaterialName>& materialsPerMesh,
-		/*const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
-		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,*/
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		R2_CHECK(entityInstances.mSize == modelMatrices.mSize, "Should always be true");

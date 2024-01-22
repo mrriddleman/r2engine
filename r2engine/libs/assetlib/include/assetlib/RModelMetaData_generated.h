@@ -498,7 +498,8 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_BONEMETADATA = 20,
     VT_SKELETONMETADATA = 22,
     VT_ORIGINALPATH = 24,
-    VT_ANIMATIONMETADATA = 26
+    VT_ANIMATIONMETADATA = 26,
+    VT_NUMGLTFMESHES = 28
   };
   const flat::AssetName *modelAssetName() const {
     return GetPointer<const flat::AssetName *>(VT_MODELASSETNAME);
@@ -572,6 +573,12 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *mutable_animationMetaData() {
     return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *>(VT_ANIMATIONMETADATA);
   }
+  uint32_t numGLTFMeshes() const {
+    return GetField<uint32_t>(VT_NUMGLTFMESHES, 0);
+  }
+  bool mutate_numGLTFMeshes(uint32_t _numGLTFMeshes) {
+    return SetField<uint32_t>(VT_NUMGLTFMESHES, _numGLTFMeshes, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_MODELASSETNAME) &&
@@ -594,6 +601,7 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_ANIMATIONMETADATA) &&
            verifier.VerifyVector(animationMetaData()) &&
            verifier.VerifyVectorOfTables(animationMetaData()) &&
+           VerifyField<uint32_t>(verifier, VT_NUMGLTFMESHES) &&
            verifier.EndTable();
   }
 };
@@ -638,6 +646,9 @@ struct RModelMetaDataBuilder {
   void add_animationMetaData(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData) {
     fbb_.AddOffset(RModelMetaData::VT_ANIMATIONMETADATA, animationMetaData);
   }
+  void add_numGLTFMeshes(uint32_t numGLTFMeshes) {
+    fbb_.AddElement<uint32_t>(RModelMetaData::VT_NUMGLTFMESHES, numGLTFMeshes, 0);
+  }
   explicit RModelMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -663,8 +674,10 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
     flatbuffers::Offset<flatbuffers::String> originalPath = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData = 0,
+    uint32_t numGLTFMeshes = 0) {
   RModelMetaDataBuilder builder_(_fbb);
+  builder_.add_numGLTFMeshes(numGLTFMeshes);
   builder_.add_animationMetaData(animationMetaData);
   builder_.add_originalPath(originalPath);
   builder_.add_skeletonMetaData(skeletonMetaData);
@@ -693,7 +706,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
     const char *originalPath = nullptr,
-    const std::vector<flatbuffers::Offset<flat::RAnimationMetaData>> *animationMetaData = nullptr) {
+    const std::vector<flatbuffers::Offset<flat::RAnimationMetaData>> *animationMetaData = nullptr,
+    uint32_t numGLTFMeshes = 0) {
   auto meshInfos__ = meshInfos ? _fbb.CreateVector<flatbuffers::Offset<flat::MeshInfo>>(*meshInfos) : 0;
   auto originalPath__ = originalPath ? _fbb.CreateString(originalPath) : 0;
   auto animationMetaData__ = animationMetaData ? _fbb.CreateVector<flatbuffers::Offset<flat::RAnimationMetaData>>(*animationMetaData) : 0;
@@ -710,7 +724,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
       boneMetaData,
       skeletonMetaData,
       originalPath__,
-      animationMetaData__);
+      animationMetaData__,
+      numGLTFMeshes);
 }
 
 inline const flat::RModelMetaData *GetRModelMetaData(const void *buf) {

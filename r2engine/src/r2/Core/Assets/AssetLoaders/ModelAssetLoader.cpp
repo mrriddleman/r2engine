@@ -78,8 +78,8 @@ namespace r2::asset
 		r2::draw::Model* model = new (dataPtr) r2::draw::Model();
 		void* startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
-		model->globalInverseTransform = glm::mat4(1);
-		model->globalTransform = glm::mat4(1);
+		//model->globalInverseTransform = glm::mat4(1);
+		//model->globalTransform = glm::mat4(1);
 		model->assetName.hashID = flatModel->name();
 		model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 

@@ -6,6 +6,7 @@
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
 #include "Common/CommonFunctions.glsl"
+#include "Common/ModelFunctions.glsl"
 
 out VS_OUT
 {
@@ -30,7 +31,7 @@ invariant gl_Position;
 
 void main()
 {
-	vec4 modelPos = models[DrawID] * vec4(aPos, 1.0);
+	vec4 modelPos = GetStaticModel(DrawID, GetLocalMeshOrMaterialIndex(aTexCoord1)) * vec4(aPos, 1.0);
 	vs_out.fragPos = modelPos.xyz;
 	gl_Position = projection * view * modelPos;
 

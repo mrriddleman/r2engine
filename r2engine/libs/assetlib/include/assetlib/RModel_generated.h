@@ -32,6 +32,9 @@ struct BoneInfo;
 struct AnimationData;
 struct AnimationDataBuilder;
 
+struct GLTFMeshInfo;
+struct GLTFMeshInfoBuilder;
+
 struct RModel;
 struct RModelBuilder;
 
@@ -410,6 +413,77 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationDataDirect(
       jointNameStrings__);
 }
 
+struct GLTFMeshInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef GLTFMeshInfoBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NUMPRIMITIVES = 4,
+    VT_GLOBALINVERSETRANSFORM = 6,
+    VT_GLOBALTRANSFORM = 8
+  };
+  uint32_t numPrimitives() const {
+    return GetField<uint32_t>(VT_NUMPRIMITIVES, 0);
+  }
+  bool mutate_numPrimitives(uint32_t _numPrimitives) {
+    return SetField<uint32_t>(VT_NUMPRIMITIVES, _numPrimitives, 0);
+  }
+  const flat::Matrix4 *globalInverseTransform() const {
+    return GetStruct<const flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
+  }
+  flat::Matrix4 *mutable_globalInverseTransform() {
+    return GetStruct<flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
+  }
+  const flat::Matrix4 *globalTransform() const {
+    return GetStruct<const flat::Matrix4 *>(VT_GLOBALTRANSFORM);
+  }
+  flat::Matrix4 *mutable_globalTransform() {
+    return GetStruct<flat::Matrix4 *>(VT_GLOBALTRANSFORM);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_NUMPRIMITIVES) &&
+           VerifyField<flat::Matrix4>(verifier, VT_GLOBALINVERSETRANSFORM) &&
+           VerifyField<flat::Matrix4>(verifier, VT_GLOBALTRANSFORM) &&
+           verifier.EndTable();
+  }
+};
+
+struct GLTFMeshInfoBuilder {
+  typedef GLTFMeshInfo Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_numPrimitives(uint32_t numPrimitives) {
+    fbb_.AddElement<uint32_t>(GLTFMeshInfo::VT_NUMPRIMITIVES, numPrimitives, 0);
+  }
+  void add_globalInverseTransform(const flat::Matrix4 *globalInverseTransform) {
+    fbb_.AddStruct(GLTFMeshInfo::VT_GLOBALINVERSETRANSFORM, globalInverseTransform);
+  }
+  void add_globalTransform(const flat::Matrix4 *globalTransform) {
+    fbb_.AddStruct(GLTFMeshInfo::VT_GLOBALTRANSFORM, globalTransform);
+  }
+  explicit GLTFMeshInfoBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  GLTFMeshInfoBuilder &operator=(const GLTFMeshInfoBuilder &);
+  flatbuffers::Offset<GLTFMeshInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<GLTFMeshInfo>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<GLTFMeshInfo> CreateGLTFMeshInfo(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t numPrimitives = 0,
+    const flat::Matrix4 *globalInverseTransform = 0,
+    const flat::Matrix4 *globalTransform = 0) {
+  GLTFMeshInfoBuilder builder_(_fbb);
+  builder_.add_globalTransform(globalTransform);
+  builder_.add_globalInverseTransform(globalInverseTransform);
+  builder_.add_numPrimitives(numPrimitives);
+  return builder_.Finish();
+}
+
 struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RModelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -418,7 +492,8 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_MATERIALS = 8,
     VT_MESHES = 10,
     VT_ANIMATIONDATA = 12,
-    VT_ANIMATIONS = 14
+    VT_ANIMATIONS = 14,
+    VT_GLTFMESHINFOS = 16
   };
   const flat::AssetName *assetName() const {
     return GetPointer<const flat::AssetName *>(VT_ASSETNAME);
@@ -456,6 +531,12 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<flatbuffers::Offset<flat::RAnimation>> *mutable_animations() {
     return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimation>> *>(VT_ANIMATIONS);
   }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>> *gltfMeshInfos() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>> *>(VT_GLTFMESHINFOS);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>> *mutable_gltfMeshInfos() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>> *>(VT_GLTFMESHINFOS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ASSETNAME) &&
@@ -472,6 +553,9 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_ANIMATIONS) &&
            verifier.VerifyVector(animations()) &&
            verifier.VerifyVectorOfTables(animations()) &&
+           VerifyOffset(verifier, VT_GLTFMESHINFOS) &&
+           verifier.VerifyVector(gltfMeshInfos()) &&
+           verifier.VerifyVectorOfTables(gltfMeshInfos()) &&
            verifier.EndTable();
   }
 };
@@ -498,6 +582,9 @@ struct RModelBuilder {
   void add_animations(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimation>>> animations) {
     fbb_.AddOffset(RModel::VT_ANIMATIONS, animations);
   }
+  void add_gltfMeshInfos(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>>> gltfMeshInfos) {
+    fbb_.AddOffset(RModel::VT_GLTFMESHINFOS, gltfMeshInfos);
+  }
   explicit RModelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -517,8 +604,10 @@ inline flatbuffers::Offset<RModel> CreateRModel(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> materials = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RMesh>>> meshes = 0,
     flatbuffers::Offset<flat::AnimationData> animationData = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimation>>> animations = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimation>>> animations = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::GLTFMeshInfo>>> gltfMeshInfos = 0) {
   RModelBuilder builder_(_fbb);
+  builder_.add_gltfMeshInfos(gltfMeshInfos);
   builder_.add_animations(animations);
   builder_.add_animationData(animationData);
   builder_.add_meshes(meshes);
@@ -535,10 +624,12 @@ inline flatbuffers::Offset<RModel> CreateRModelDirect(
     const std::vector<flatbuffers::Offset<flat::MaterialName>> *materials = nullptr,
     const std::vector<flatbuffers::Offset<flat::RMesh>> *meshes = nullptr,
     flatbuffers::Offset<flat::AnimationData> animationData = 0,
-    const std::vector<flatbuffers::Offset<flat::RAnimation>> *animations = nullptr) {
+    const std::vector<flatbuffers::Offset<flat::RAnimation>> *animations = nullptr,
+    const std::vector<flatbuffers::Offset<flat::GLTFMeshInfo>> *gltfMeshInfos = nullptr) {
   auto materials__ = materials ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialName>>(*materials) : 0;
   auto meshes__ = meshes ? _fbb.CreateVector<flatbuffers::Offset<flat::RMesh>>(*meshes) : 0;
   auto animations__ = animations ? _fbb.CreateVector<flatbuffers::Offset<flat::RAnimation>>(*animations) : 0;
+  auto gltfMeshInfos__ = gltfMeshInfos ? _fbb.CreateVector<flatbuffers::Offset<flat::GLTFMeshInfo>>(*gltfMeshInfos) : 0;
   return flat::CreateRModel(
       _fbb,
       assetName,
@@ -546,7 +637,8 @@ inline flatbuffers::Offset<RModel> CreateRModelDirect(
       materials__,
       meshes__,
       animationData,
-      animations__);
+      animations__,
+      gltfMeshInfos__);
 }
 
 inline const flat::RModel *GetRModel(const void *buf) {

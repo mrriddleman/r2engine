@@ -173,7 +173,7 @@ namespace r2::ecs
 			r2::anim::pose::Copy(*skeletalAnimationComponent.animationPose, *skeletalAnimationComponent.animModel->animSkeleton.mBindPose);
 			skeletalAnimationComponent.animationTime = util::MillisecondsToSeconds(skeletalAnimationComponent.startTime);
 
-			r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
+			r2::anim::pose::GetMatrixPalette(*skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
 
 			r2::sarr::Push(components, skeletalAnimationComponent);
 
@@ -238,7 +238,7 @@ namespace r2::ecs
 
 				skeletalAnimationComponent.currentAnimationIndex = static_cast<s32>(skeletalAnimationComponent.startingAnimationIndex);
 
-				r2::anim::pose::GetMatrixPalette(skeletalAnimationComponent.animModel->globalInverseTransform, *skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
+				r2::anim::pose::GetMatrixPalette(*skeletalAnimationComponent.animationPose, skeletalAnimationComponent.animModel->animSkeleton, skeletalAnimationComponent.shaderBones, 0);
 
 				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
 			}

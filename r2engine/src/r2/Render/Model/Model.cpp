@@ -46,12 +46,13 @@ namespace r2::draw
 	//}
 
 
-	u64 Model::MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking)
+	u64 Model::MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 numAnimations, u32 numGLTFMeshes, u32 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 memorySize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GLTFMeshInfo>::MemorySize(numGLTFMeshes), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
-
+			
 		if ( boneDataSize > 0)
 		{
 			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking);
@@ -71,6 +72,7 @@ namespace r2::draw
 
 			memorySize += anim::Skeleton::MemorySize(numJoints, memProperties);
 		}
+
 		
 
 		if (numAnimations > 0)

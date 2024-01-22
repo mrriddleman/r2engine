@@ -98,6 +98,12 @@ namespace r2::draw
 #endif
 	};
 
+	struct MeshRenderData
+	{
+		glm::mat4 globalTransform = glm::mat4(1);
+		glm::mat4 globalInvTransform = glm::mat4(1);
+	};
+
 	struct RenderBatch
 	{
 		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
@@ -118,6 +124,8 @@ namespace r2::draw
 		r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
 		r2::SArray<cmd::DrawState>* drawState = nullptr; //stuff to help generate the keys
 
+		r2::SArray<MeshRenderData>* meshRenderData = nullptr;
+
 #ifdef R2_EDITOR
 		r2::SArray<u32>* entityIDs = nullptr;
 
@@ -129,7 +137,8 @@ namespace r2::draw
 		r2::SArray<b32>* useSameBoneTransformsForInstances = nullptr;
 		PrimitiveType primitiveType = PrimitiveType::TRIANGLES;
 
-		static u64 MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u32 numModels, u32 numModelRefs, u32 numMeshes, u32 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking);
+
 	};
 
 struct BatchRenderOffsets
@@ -351,6 +360,7 @@ struct BatchRenderOffsets
 		ConstantConfigHandle mBloomConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mAAConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mColorCorrectionConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mMeshDataConfigHandle = InvalidConstantConfigHandle;
 
 		//--------------END Buffer Layout stuff-----------------
 
@@ -709,9 +719,7 @@ namespace r2::draw::renderer
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-
 		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
-
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	void DrawModels(

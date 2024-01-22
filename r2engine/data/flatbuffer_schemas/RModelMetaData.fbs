@@ -74,6 +74,7 @@ table RModelMetaData
 	skeletonMetaData:SkeletonMetaData;
 	originalPath:string;
 	animationMetaData:[RAnimationMetaData];
+	numGLTFMeshes:uint;
 }
 
 root_type RModelMetaData;

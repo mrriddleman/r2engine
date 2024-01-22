@@ -561,7 +561,7 @@ public:
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 0.0f, 100.0f, 0.0f));
-			dirLight.lightProperties.intensity = 2;
+			dirLight.lightProperties.intensity = 1;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
             r2::draw::renderer::AddDirectionLight(dirLight);
@@ -1212,7 +1212,10 @@ public:
         r2::SArray<r2::mat::MaterialName>* skyboxMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
         r2::sarr::Push(*skyboxMaterials, skyboxMaterialName);
 
+
+
         r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, *skyboxMaterials, nullptr);
+
 
         FREE(skyboxMaterials, *MEM_ENG_SCRATCH_PTR);
      //   FREE(skyboxShaderHandles, *MEM_ENG_SCRATCH_PTR);

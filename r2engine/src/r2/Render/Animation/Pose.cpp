@@ -36,7 +36,7 @@ namespace r2::anim
 			return result;
 		}
 
-		void GetMatrixPalette(const glm::mat4& globalInvTransform, const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
+		void GetMatrixPalette(const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset)
 		{
 			s32 size = (s32)Size(pose);
 			R2_CHECK((s32)r2::sarr::Capacity(*out) >= size, "The matrix palette is too small. We need: %i and have: %i", size, r2::sarr::Capacity(*out));
@@ -44,8 +44,6 @@ namespace r2::anim
 
 			r2::SArray<math::Transform>* tempTransforms =MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, math::Transform, pose.mJointTransforms->mSize);
 			r2::sarr::Fill(*tempTransforms, math::Transform{});
-
-			
 
 			for (s32 i = 0; i < size; ++i)
 			{
@@ -60,9 +58,6 @@ namespace r2::anim
 				}
 
 				tempTransforms->mData[i] = nextTransform;
-
-				out->mData[i + offset].globalInv = globalInvTransform; 
-
 				out->mData[i + offset].invBindPose = r2::sarr::At(*skeleton.mInvBindPose, i);
 
 			}

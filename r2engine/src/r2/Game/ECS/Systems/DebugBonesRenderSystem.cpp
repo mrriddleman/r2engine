@@ -49,18 +49,18 @@ namespace r2::ecs
 			const r2::draw::Model* model = nullptr;
 
 			glm::mat4 transformMatrix = transformComponent.modelMatrix;
-			if (renderComponent)
-			{
+			//if (renderComponent)
+			//{
 
-				r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent->assetModelName, r2::asset::RMODEL);
+			//	r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent->assetModelName, r2::asset::RMODEL);
 
-				//@NOTE(Serge): hopefully this never actually loads anything
-				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+			//	//@NOTE(Serge): hopefully this never actually loads anything
+			//	r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
-				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-				//@PERFORMANCE(Serge): this might be too slow when it comes to moving characters around
-				transformMatrix = transformMatrix * model->globalInverseTransform;
-			}
+			//	model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+			//	//@PERFORMANCE(Serge): this might be too slow when it comes to moving characters around
+			//	transformMatrix = transformMatrix * model->globalInverseTransform;
+			//}
 
 			r2::draw::renderer::DrawDebugBones(*debugBoneComponent.debugBones, transformMatrix, debugBoneComponent.color);
 			
@@ -78,10 +78,10 @@ namespace r2::ecs
 					DebugBoneComponent& debugBoneComponentJ = r2::sarr::At(*instanceDebugBonesComponent->instances, j);
 					TransformComponent& transformComponentJ = r2::sarr::At(*instancedTranformsComponent->instances, j);
 					glm::mat4 transformMatrix = transformComponentJ.modelMatrix;
-					if (model)
+					/*if (model)
 					{
 						transformMatrix *= model->globalInverseTransform;
-					}
+					}*/
 
 					r2::draw::renderer::DrawDebugBones(*debugBoneComponentJ.debugBones, transformMatrix, debugBoneComponentJ.color);
 				}

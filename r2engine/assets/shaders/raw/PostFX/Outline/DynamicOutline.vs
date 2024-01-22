@@ -4,7 +4,7 @@
 
 #include "Input/VertexLayouts/DynamicVertexInput.glsl"
 #include "Input/UniformBuffers/Matrices.glsl"
-#include "Common/ModelFunctions.glsl"
+#include "Common/AnimatedModelFunctions.glsl"
 #include "Common/CommonFunctions.glsl"
 
 out VS_OUT
@@ -18,7 +18,7 @@ invariant gl_Position;
 
 void main()
 {
-	mat4 vertexTransform = GetAnimatedModel(DrawID);
+	mat4 vertexTransform = GetAnimatedModel(DrawID, GetLocalMeshOrMaterialIndex(aTexCoord1));
 
 	mat3 normalMatrix = GetNormalMatrix(vertexTransform);
 

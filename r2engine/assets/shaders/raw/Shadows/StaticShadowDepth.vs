@@ -4,8 +4,10 @@
 
 #include "Input/VertexLayouts/StaticVertexInput.glsl"
 #include "Input/ShaderBufferObjects/ModelData.glsl"
+#include "Common/CommonFunctions.glsl"
+#include "Common/ModelFunctions.glsl"
 
 void main()
 {
-	gl_Position = models[DrawID] * vec4(aPos, 1.0);
+	gl_Position = GetStaticModel(DrawID, GetLocalMeshOrMaterialIndex(aTexCoord1)) * vec4(aPos, 1.0);
 }

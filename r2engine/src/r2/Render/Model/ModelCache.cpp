@@ -274,6 +274,24 @@ namespace r2::draw::modlche
 		return model;
 	}
 
+	bool HasModel(ModelCache* system, const ModelHandle& handle)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return false;
+		}
+
+		if (handle.assetCache != system->mModelCache->GetSlot())
+		{
+			R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
+			return false;
+		}
+
+		//@NOTE(Serge): this only works because we upload all of the Models at Renderer Creation time (only for the renderer)
+		return r2::shashmap::Has(*system->mModels, handle.handle);
+	}
+
 	void ReturnModel(ModelCache* system, const Model* model)
 	{
 		if (!system)

@@ -43,7 +43,7 @@ namespace r2::anim
 		math::Transform GetGlobalTransform(const Pose& pose, u32 index);
 		void SetLocalTransform(Pose& pose, u32 index, const math::Transform& transform);
 
-		void GetMatrixPalette(const glm::mat4& globalInvTransform, const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset);
+		void GetMatrixPalette(const Pose& pose, const Skeleton& skeleton, r2::SArray<r2::draw::ShaderBoneTransform>* out, u32 offset);
 
 #if defined( R2_DEBUG ) || defined(R2_EDITOR)
 		void GetDebugBones(const Pose& pose, r2::SArray<r2::draw::DebugBone>* outDebugBones);

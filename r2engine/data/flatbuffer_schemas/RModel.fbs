@@ -62,6 +62,13 @@ table AnimationData
 	jointNameStrings:[string];
 }
 
+table GLTFMeshInfo
+{
+	numPrimitives:uint;
+	globalInverseTransform:Matrix4;
+	globalTransform:Matrix4;
+}
+
 table RModel
 {
 	assetName:AssetName;
@@ -70,6 +77,7 @@ table RModel
 	meshes:[RMesh];
 	animationData:AnimationData;
 	animations:[RAnimation];
+	gltfMeshInfos:[GLTFMeshInfo];
 }
 
 root_type RModel;

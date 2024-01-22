@@ -199,6 +199,7 @@ namespace r2::draw
         void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
         void InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size);
         void InitForDispatchComputeIndirect(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 size);
+        void InitForMeshData(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 elementSize, u64 numDraws);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }

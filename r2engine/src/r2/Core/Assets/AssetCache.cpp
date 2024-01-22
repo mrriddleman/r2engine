@@ -170,6 +170,7 @@ namespace r2::asset
 
         R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset! Probably never loaded it!");
 
+
         AssetBuffer* assetBufferPtr = nullptr;
 
         if (bufferRef.mAssetBuffer != nullptr)
