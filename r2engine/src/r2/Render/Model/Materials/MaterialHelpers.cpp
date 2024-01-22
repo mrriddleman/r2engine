@@ -122,45 +122,6 @@ namespace r2::mat
 		return shaderHandle;
 	}
 
-	r2::draw::ShaderEffectPasses GetShaderEffectPassesForMaterialName(MaterialName materialName)
-	{	
-
-		
-		const auto* material = GetMaterialForMaterialName(materialName);
-
-		if (!material)
-		{
-			R2_CHECK(false, "Probably shouldn't ever happen?");
-			r2::draw::ShaderEffectPasses empty;
-			return empty;
-		}
-
-		if (!material->shaderEffectPasses())
-		{
-			R2_CHECK(false, "Probably shouldn't ever happen?");
-			r2::draw::ShaderEffectPasses empty;
-			return empty;
-		}
-
-		const auto* flatShaderEffectPasses = material->shaderEffectPasses()->shaderEffectPasses();
-		r2::draw::ShaderEffectPasses shaderEffectPasses;
-
-		for (u32 i = flat::eMeshPass_FORWARD; i < flat::eMeshPass_NUM_SHADER_EFFECT_PASSES; ++i)
-		{
-			flat::eMeshPass flatMeshPass = static_cast<flat::eMeshPass>(i);
-
-			const flat::ShaderEffect* flatShaderEffect = flatShaderEffectPasses->Get(flatMeshPass);
-
-			r2::draw::ShaderEffect shaderEffect;
-			shaderEffect.staticShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->staticShader());
-			shaderEffect.dynamicShaderHandle = r2::draw::shadersystem::FindShaderHandle(flatShaderEffect->dynamicShader());
-
-			shaderEffectPasses.meshPasses[flatMeshPass] = shaderEffect;
-		}
-
-		return shaderEffectPasses;
-	}
-
 	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName)
 	{
 		const flat::Material* material = GetMaterialForMaterialName(materialPack, materialName);

@@ -29,7 +29,7 @@ namespace r2::mat
 
 	u64 GetShaderNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
 	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName, flat::eMeshPass meshPass, r2::draw::eShaderEffectType shaderEffectType);
-	r2::draw::ShaderEffectPasses GetShaderEffectPassesForMaterialName(MaterialName materialName);
+
 
 
 	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialPack* materialPack, u64 materialName);
