@@ -86,14 +86,6 @@ namespace r2::ecs
 				r2::anim::pose::GetDebugBones(*animationComponent.animationPose, debugBonesToUse);
 			}
 #endif
-			/*r2::draw::PlayAnimationForAnimModel(
-				ticks,
-				animationComponent.startTime,
-				(bool)animationComponent.shouldLoop,
-				*animationComponent.animModel,
-				r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex),
-				*animationComponent.shaderBones, debugBonesToUse, 0);*/
-
 			if (instancedAnimationComponent && !animationComponent.shouldUseSameTransformsForAllInstances)
 			{
 				for (u32 j = 0; j < instancedAnimationComponent->numInstances; ++j)
@@ -129,14 +121,6 @@ namespace r2::ecs
 						debugBonesToUse = nullptr;
 					}
 #endif
-
-					//r2::draw::PlayAnimationForAnimModel(
-					//	ticks,
-					//	skeletalAnimationComponent.startTime,
-					//	(bool)skeletalAnimationComponent.shouldLoop,
-					//	*skeletalAnimationComponent.animModel,
-					//	r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimations, skeletalAnimationComponent.currentAnimationIndex),
-					//	*skeletalAnimationComponent.shaderBones, debugBonesToUse, 0);
 				}
 			}
 
