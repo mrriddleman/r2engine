@@ -189,12 +189,15 @@ namespace r2::draw::key
 			SORT_BATCH_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
 
 			SORT_KEY_BITS_LAYER = 0x8,
-			SORT_KEY_BITS_SHADER_ID = 0x18,
+			SORT_KEY_BITS_FORWARD_SHADER_ID = 0xC,
+			SORT_KEY_BITS_DEPTH_SHADER_ID = 0xC,
+
 			SORT_KEY_BITS_DRAW_STATE = 0x20,
 
 			KEY_VIEWPORT_LAYER_OFFSET = SORT_BATCH_KEY_BITS_TOTAL - SORT_KEY_BITS_LAYER,
-			KEY_SHADER_ID_OFFSET = KEY_VIEWPORT_LAYER_OFFSET - SORT_KEY_BITS_SHADER_ID,
-			KEY_DRAW_STATE_OFFSET = KEY_SHADER_ID_OFFSET - SORT_KEY_BITS_DRAW_STATE,
+			KEY_FORWARD_SHADER_ID_OFFSET = KEY_VIEWPORT_LAYER_OFFSET - SORT_KEY_BITS_FORWARD_SHADER_ID,
+			KEY_DEPTH_SHADER_ID_OFFSET = KEY_FORWARD_SHADER_ID_OFFSET - SORT_KEY_BITS_DEPTH_SHADER_ID,
+			KEY_DRAW_STATE_OFFSET = KEY_DEPTH_SHADER_ID_OFFSET - SORT_KEY_BITS_DRAW_STATE,
 		};
 	};
 
@@ -238,7 +241,7 @@ namespace r2::draw::key
 	void DecodeDepthKey(const DepthKey& key);
 
 	//Sort Batch
-	SortBatchKey GenerateSortBatchKey(u8 viewportLayer, r2::draw::ShaderHandle shader, u32 drawState);
+	SortBatchKey GenerateSortBatchKey(u8 viewportLayer, r2::draw::ShaderHandle forwardShader, r2::draw::ShaderHandle depthShader, u32 drawState);
 
 	//Render System Key
 	RenderSystemKey GenerateRenderSystemKey(bool hasMaterialOverrides, PrimitiveType primitiveType, u32 drawParamaters);

@@ -3348,6 +3348,8 @@ namespace r2::draw::renderer
 
 				//Here we're just going to base it on which layer / mesh pass we care about
 				ShaderHandle shaderHandleToUse = r2::draw::InvalidShader;
+				ShaderHandle depthShaderHandleToUse = r2::draw::InvalidShader;
+
 				flat::eMeshPass meshPass = flat::eMeshPass_FORWARD;
 
 				if (drawState.layer == DL_TRANSPARENT)
@@ -3359,7 +3361,12 @@ namespace r2::draw::renderer
 
 				R2_CHECK(shaderHandleToUse != r2::draw::InvalidShader, "We don't have a proper shader?");
 
-				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderHandleToUse, drawStateHash);
+				depthShaderHandleToUse = modelRef->isAnimated ? shaderEffectPasses.meshPasses[flat::eMeshPass_DEPTH].dynamicShaderHandle : shaderEffectPasses.meshPasses[flat::eMeshPass_DEPTH].staticShaderHandle;
+
+				//@TODO(Serge): add this back when we have proper shader effects setup
+				//R2_CHECK(depthShaderHandleToUse != r2::draw::InvalidShader, "We don't have a proper shader?");
+
+				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderHandleToUse, depthShaderHandleToUse, drawStateHash);
 
 				DrawCommandData* defaultDrawCommandData = nullptr;
 
@@ -3718,9 +3725,13 @@ namespace r2::draw::renderer
 
 				//non transparency - sort front to back
 				//@TODO(Serge): I'm not sure this does all of the requisite sorting - what about sorting between DrawCommandData?
-				//std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
-				//	return s1.cameraDepth < s2.cameraDepth;
-				//});
+				if (drawCommandData->shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].IsInvalid())
+				{
+					std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
+						return s1.cameraDepth < s2.cameraDepth;
+						});
+				}
+				
 
 				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 

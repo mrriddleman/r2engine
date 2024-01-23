@@ -18,6 +18,10 @@ namespace r2::draw
 	{
 		ShaderHandle staticShaderHandle = InvalidShader;
 		ShaderHandle dynamicShaderHandle = InvalidShader;
+
+		inline bool IsInvalid() const {
+			return staticShaderHandle == InvalidShader && dynamicShaderHandle == InvalidShader;
+		}
 	};
 
 	struct ShaderEffectPasses
