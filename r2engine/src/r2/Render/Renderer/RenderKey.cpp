@@ -185,7 +185,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u32 depth)
+	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, ShaderHandle shader, DrawLayer drawLayer)
 	{
 		DepthKey theKey;
 
@@ -193,8 +193,8 @@ namespace r2::draw::key
 
 		if (type == DepthKey::NORMAL)
 		{
-			theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
-			theKey.keyValue |= ENCODE_KEY_VALUE(depth, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
+			theKey.keyValue |= ENCODE_KEY_VALUE(drawLayer, DepthKey::DEPTH_KEY_BITS_DRAW_LAYER, DepthKey::DEPTH_KEY_DRAW_LAYER_OFFSET);
+			theKey.keyValue |= ENCODE_KEY_VALUE(shader, DepthKey::DEPTH_KEY_BITS_SHADER_ID, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
 		}
 		else
 		{
@@ -212,11 +212,11 @@ namespace r2::draw::key
 		ShaderHandle shaderHandle = InvalidShader;
 		if (type == DepthKey::NORMAL)
 		{
-			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
-			u16 depthValue = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
+			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_DRAW_LAYER, DepthKey::DEPTH_KEY_DRAW_LAYER_OFFSET);
 
+			shaderHandle = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_SHADER_ID, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
+			
 			r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
-			shaderHandle = r2::draw::renderer::GetDepthShaderHandle(isDynamic);
 		}
 		else if(type == DepthKey::COMPUTE || type == DepthKey::RESOLVE)
 		{

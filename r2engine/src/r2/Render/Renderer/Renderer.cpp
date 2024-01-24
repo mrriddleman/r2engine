@@ -3899,7 +3899,7 @@ namespace r2::draw::renderer
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
 		key::ShadowKey shadowClearKey = key::GenerateShadowKey(key::ShadowKey::CLEAR, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
-		key::DepthKey depthClearKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, false, 0);
+		key::DepthKey depthClearKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, r2::draw::renderer::GetDepthShaderHandle(false), DrawLayer::DL_WORLD);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthStencilOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS_SHADOWS, clearDepthOptions, *renderer.mDepthPrePassShadowBucket, depthClearKey, *renderer.mShadowArena);
@@ -4142,7 +4142,7 @@ namespace r2::draw::renderer
 					cmd::SetDefaultBlendState(shadowDrawBatch->state.blendState);
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, false, batchOffset.cameraDepth);
+				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_DEPTH].staticShaderHandle, r2::draw::DrawLayer::DL_WORLD);
 
 				if (batchOffset.drawState.layer != DL_TRANSPARENT)
 				{
@@ -4376,7 +4376,7 @@ namespace r2::draw::renderer
 					cmd::SetDefaultBlendState(shadowDrawBatch->state.blendState);
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, true, batchOffset.cameraDepth);
+				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, batchOffset.shaderEffectPasses.meshPasses[flat::eMeshPass_DEPTH].dynamicShaderHandle, r2::draw::DrawLayer::DL_CHARACTER);
 
 				if (batchOffset.drawState.layer != DL_TRANSPARENT)
 				{
@@ -4601,7 +4601,7 @@ namespace r2::draw::renderer
 		clearCompositeOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 
-		key::DepthKey aoKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionShader, false, 0);
+		key::DepthKey aoKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionShader, DL_SCREEN);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION, clearCompositeOptions, *renderer.mAmbientOcclusionBucket, aoKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionBucket, aoKey, 0);
 		aoDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4623,7 +4623,7 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
-		key::DepthKey aoDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mDenoiseShader, false, 0);
+		key::DepthKey aoDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mDenoiseShader, DL_SCREEN);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, 0);
 		aoDenoiseDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4648,7 +4648,7 @@ namespace r2::draw::renderer
 
 
 
-		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, false, 0);
+		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, DL_SCREEN);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoTemporalDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, 0);

@@ -17,6 +17,10 @@
 #include "r2/Core/File/PathUtils.h"
 #endif
 
+#ifdef R2_DEBUG
+#include "R2/Utils/Timer.h"
+#endif
+
 namespace r2::asset
 {
 	r2::math::Transform GetTransformFromFlatTransform(const flat::Transform* t)
@@ -176,6 +180,9 @@ namespace r2::asset
 
 	bool RModelAssetLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
+
+	//	PROFILE_SCOPE("RModelAssetLoader::LoadAsset");
+
 		void* dataPtr = assetBuffer.MutableData();
 
 		void* startOfArrayPtr = nullptr;
@@ -243,6 +250,7 @@ namespace r2::asset
 
 		for (flatbuffers::uoffset_t i = 0; i < flatMeshes->size(); ++i)
 		{
+		//	PROFILE_SCOPE("RModelAssetLoader::LoadAsset - Load 1 mesh");
 			r2::draw::Mesh* nextMeshPtr = new (startOfArrayPtr) r2::draw::Mesh();
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Mesh));
 

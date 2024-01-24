@@ -150,9 +150,9 @@ namespace r2::draw::key
 		|  Resolve(2)  | Shader Order |  ShaderID   |
 		+--------------+--------------+-------------+
 
-		+---2 bits-----+------1 bit-----+-29 bits-+
-		|   Normal(1)  | Static/Dynamic |  Depth  |
-		+--------------+----------------+---------+
+		+---2 bits-----+------6 bit-----+--24 bits---+
+		|   Normal(1)  |   Draw Layer   |  ShaderID  |
+		+--------------+----------------+------------+
 
 		+---2 bits-----+----6 bits----+---24 bits---+
 		|   Compute(0) | Shader Order |  Shader ID  | //compute
@@ -167,14 +167,13 @@ namespace r2::draw::key
 			DEPTH_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
 
 			DEPTH_KEY_BITS_DEPTH_TYPE = 0x2,
-			DEPTH_KEY_BITS_IS_DYNAMIC = 0x1,
-			DEPTH_KEY_BITS_DEPTH = 0x1D,
+			DEPTH_KEY_BITS_DRAW_LAYER = 0x6,
 			DEPTH_KEY_BITS_SHADER_ORDER = 0x6,
 			DEPTH_KEY_BITS_SHADER_ID = 0x18,
 
 			DEPTH_KEY_DEPTH_TYPE_OFFSET = DEPTH_KEY_BITS_TOTAL - DEPTH_KEY_BITS_DEPTH_TYPE,
-			DEPTH_KEY_IS_DYNAMIC_OFFSET = DEPTH_KEY_DEPTH_TYPE_OFFSET - DEPTH_KEY_BITS_IS_DYNAMIC,
-			DEPTH_KEY_DEPTH_OFFSET = DEPTH_KEY_IS_DYNAMIC_OFFSET - DEPTH_KEY_BITS_DEPTH,
+			DEPTH_KEY_DRAW_LAYER_OFFSET = DEPTH_KEY_DEPTH_TYPE_OFFSET - DEPTH_KEY_BITS_DRAW_LAYER,
+			DEPTH_KEY_DEPTH_OFFSET = DEPTH_KEY_DRAW_LAYER_OFFSET - DEPTH_KEY_BITS_SHADER_ID,
 			DEPTH_KEY_SHADER_ORDER_OFFSET = DEPTH_KEY_DEPTH_TYPE_OFFSET - DEPTH_KEY_BITS_SHADER_ORDER,
 			DEPTH_KEY_SHADER_ID_OFFSET = DEPTH_KEY_SHADER_ORDER_OFFSET - DEPTH_KEY_BITS_SHADER_ID
 		};
@@ -237,7 +236,7 @@ namespace r2::draw::key
 
 	//Depth
 	bool CompareDepthKey(const DepthKey& a, const DepthKey& b);
-	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u32 depth);
+	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, r2::draw::ShaderHandle, DrawLayer viewportLayer);
 	void DecodeDepthKey(const DepthKey& key);
 
 	//Sort Batch

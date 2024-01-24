@@ -3,7 +3,7 @@
 
 namespace r2::draw
 {
-	using ShaderHandle = u64;
+	using ShaderHandle = u32;
 	using ShaderName = u64;
 	static const ShaderHandle InvalidShader = 0;
 }

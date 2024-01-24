@@ -1034,9 +1034,9 @@
         colorParams: [
           {
             value: {
-              r: 0.867647,
-              g: 0.095696,
-              b: 0.072304,
+              r: 0.552887,
+              g: 0.852941,
+              b: 0.342849,
               a: 1.0
             }
           }
@@ -1518,7 +1518,6 @@
         ],
         shaderStageParams: [
           {
-            value: ""
           }
         ]
       }
@@ -1927,8 +1926,12 @@
             assetNameString: ""
           },
           {
-            assetName: 14695981039346656837,
-            assetNameString: ""
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
           },
           {
             assetName: 14695981039346656837,
