@@ -57,7 +57,7 @@
 		{
 			shaderName: "DynamicDepth",
 			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
-			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag.fs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/EmptyDepthFrag.fs",
 			geometryPath: "",
       		computePath: "",
       		binaryPath: "",
@@ -183,7 +183,7 @@
 		{
 			shaderName: "StaticDepth",
 			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
-			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag.fs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/EmptyDepthFrag.fs",
 			geometryPath: "",
       		computePath: "",
       		binaryPath: "",
@@ -322,6 +322,24 @@
 			geometryPath: "",
       		computePath: "",
      		binaryPath: "",
+      		partPath: ""
+		},
+		{
+			shaderName: "StaticDepthDiscard",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag_Discard.fs",
+			geometryPath: "",
+      		computePath: "",
+      		binaryPath: "",
+      		partPath: ""
+		},
+		{
+			shaderName: "DynamicDepthDiscard",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag_Discard.fs",
+			geometryPath: "",
+      		computePath: "",
+      		binaryPath: "",
       		partPath: ""
 		},
 

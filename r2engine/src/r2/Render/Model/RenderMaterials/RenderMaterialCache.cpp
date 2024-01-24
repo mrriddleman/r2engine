@@ -706,6 +706,11 @@ namespace r2::draw::rmat
 			{
 				gpuRenderMaterial->emissionStrength = floatParam->value();
 			}
+
+			if (floatParam->propertyType() == flat::ShaderPropertyType_ALPHA_CUTOFF)
+			{
+				gpuRenderMaterial->alphaCutoff = floatParam->value();
+			}
 		}
 
 		for (flatbuffers::uoffset_t i = 0; i < shaderParams->boolParams()->size(); ++i)

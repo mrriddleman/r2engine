@@ -36,6 +36,11 @@ namespace r2::draw
 		f32 heightScale = 0.0f;
 		f32 reflectance = 0.0f;
 		f32 emissionStrength = 0;
+
+		f32 alphaCutoff = 0.0f;
+		f32 unused1;
+		f32 unused2;
+		f32 unused3;
 	};
 	
 }

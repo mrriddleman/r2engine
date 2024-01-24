@@ -38,6 +38,11 @@ struct Material
 	float 	heightScale;
 	float	reflectance;
 	float 	emissionStrength;
+
+	float	alphaCutoff;
+	float	unused1;
+	float	unused2;
+	float	unused3;
 };
 
 layout (std430, binding = 1) buffer Materials

@@ -57,7 +57,7 @@
     {
       shaderName: 13212531284513343367,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag.fs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/EmptyDepthFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -183,7 +183,7 @@
     {
       shaderName: 8833047848476087300,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag.fs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/EmptyDepthFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -325,6 +325,24 @@
       partPath: ""
     },
     {
+      shaderName: 270464496646893190,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag_Discard.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
+      shaderName: 1538647196143951995,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthFrag_Discard.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",
@@ -442,6 +460,15 @@
       partPath: ""
     },
     {
+      shaderName: 18173627417491828388,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/AnimatedModelFunctions.glsl"
+    },
+    {
       shaderName: 5762959006479727521,
       vertexPath: "",
       fragmentPath: "",
@@ -467,6 +494,15 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/MaterialInput.glsl"
+    },
+    {
+      shaderName: 15688626074591178659,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/ModelFunctions.glsl"
     },
     {
       shaderName: 8129640347876616382,
@@ -539,6 +575,15 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/MaterialData.glsl"
+    },
+    {
+      shaderName: 13069907485506686211,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/MeshData.glsl"
     },
     {
       shaderName: 13053247283615891087,
@@ -629,6 +674,33 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/Vectors.glsl"
+    },
+    {
+      shaderName: 9189949443742896465,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/VertexLayouts/DebugVertexInput.glsl"
+    },
+    {
+      shaderName: 17682909831618943067,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/VertexLayouts/DynamicVertexInput.glsl"
+    },
+    {
+      shaderName: 11153407010243818636,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/VertexLayouts/StaticVertexInput.glsl"
     },
     {
       shaderName: 4133251505605567361,

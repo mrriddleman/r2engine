@@ -15,16 +15,14 @@ in VS_OUT
 
 void main()
 {
-	#ifdef DISCARD_ALPHA
 	Material m = GetMaterial(fs_in.drawID, fs_in.materialIndex);
 
-	//@TODO(Serge): fix this
+	//@TODO(Serge): add in the texCoords1
 	vec2 uv[2];
 	uv[0] = fs_in.texCoords.rg;
 	uv[1] = vec2(0);
 	vec4 sampledColor = SampleMaterialDiffuse(m, uv);
 
-	if(sampledColor.a < 0.5)
+	if(sampledColor.a < m.alphaCutoff)
 		discard;
-	#endif
 }
