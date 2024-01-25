@@ -326,6 +326,8 @@ struct BatchRenderOffsets
 		r2::draw::ShaderHandle mFinalCompositeShaderHandle;
 
 		r2::mat::MaterialName mDefaultOutlineMaterialName;
+		r2::mat::MaterialName mDefaultOutlineAlphaDiscardMaterialName;
+
 		//r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
 		//r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
 
@@ -674,7 +676,7 @@ namespace r2::draw::renderer
 	r2::draw::RenderMaterialCache* GetRenderMaterialCache();
 
 
-	r2::mat::MaterialName GetDefaultOutlineMaterialName();
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(bool alphaDiscard);
 	//r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
 	//const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
 

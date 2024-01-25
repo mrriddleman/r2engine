@@ -257,7 +257,7 @@ namespace r2::ecs
 
 			r2::SArray<r2::mat::MaterialName>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
 
-			r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineMaterialName());
+			r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineMaterialName(false));
 
 			r2::draw::renderer::DrawModelEntity(entity, *selectionComponent.selectedInstances, stencilDrawParams, renderComponent.gpuModelRefHandle, *mBatch.transforms, *outlineMaterialParams, shaderBoneTransforms);
 			FREE(outlineMaterialParams, *MEM_ENG_SCRATCH_PTR);

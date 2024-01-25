@@ -1,0 +1,197 @@
+{
+  assetName:{
+  assetName: "OutlineAlphaDiscard",
+  stringName: "OutlineAlphaDiscard",
+  },
+  shaderEffectPasses: {
+    shaderEffectPasses: [
+      {
+        assetName: 15443175597002161561,
+        assetNameString: "default_outline_effect",
+        staticShader: 5332172149138756703,
+        dynamicShader: 9614133454144883520,
+        staticVertexLayout:"VLT_DEFAULT_STATIC",
+        dynamicVertexLayout:"VLT_DEFAULT_DYNAMIC"
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: "depth_shader_effect_alpha_discard",
+        assetNameString: "depth_shader_effect_alpha_discard",
+        staticShader: "StaticDepthDiscard",
+        dynamicShader: "DynamicDepthDiscard",
+        staticVertexLayout: "VLT_DEFAULT_STATIC",
+        dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      },
+      {
+        assetName: 14695981039346656837,
+        assetNameString: ""
+      }
+    ]
+  },
+  shaderParams: {
+    ulongParams: [
+
+    ],
+    boolParams: [
+
+    ],
+    floatParams: [
+      {
+        propertyType: "ROUGHNESS"
+      },
+      {
+        propertyType: "METALLIC"
+      },
+      {
+        propertyType: "REFLECTANCE"
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION"
+      },
+      {
+        propertyType: "CLEAR_COAT"
+      },
+      {
+        propertyType: "CLEAR_COAT_ROUGHNESS"
+      },
+      {
+        propertyType: "HEIGHT_SCALE"
+      },
+      {
+        propertyType: "ANISOTROPY"
+      }
+    ],
+    colorParams: [
+      {
+        value: {
+          r: 1.0,
+          g: 0.647,
+          b: 0.0,
+          a: 1.0
+        }
+      }
+    ],
+    textureParams: [
+      {
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "NORMAL",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "EMISSION",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "METALLIC",
+        value: 
+        { 
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "ROUGHNESS",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "AMBIENT_OCCLUSION",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "HEIGHT",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      },
+      {
+        propertyType: "ANISOTROPY",
+        value: 
+        {
+          assetName:14695981039346656837,
+        },
+        packingType: "RGBA",
+        texturePack:
+        {
+          assetName:14695981039346656837,
+          stringName: ""
+        }
+      }
+    ],
+    stringParams: [
+
+    ],
+    shaderStageParams: [
+
+    ]
+  }
+}

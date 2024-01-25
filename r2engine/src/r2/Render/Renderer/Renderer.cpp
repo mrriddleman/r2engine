@@ -400,7 +400,7 @@ namespace r2::draw::renderer
 	//r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic);
 	//const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic);
 
-	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer);
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer, bool alphaDiscard);
 
 	void SetDefaultTransparencyBlendState(BlendState& blendState);
 	void SetDefaultTransparentCompositeBlendState(BlendState& blendState);
@@ -1279,12 +1279,21 @@ namespace r2::draw::renderer
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
 
 		newRenderer->mDefaultOutlineMaterialName.assetName.hashID = STRING_ID("Outline");
-
 		newRenderer->mDefaultOutlineMaterialName.packName.hashID = engineMaterialPack->assetName()->assetName();
+		
+		newRenderer->mDefaultOutlineAlphaDiscardMaterialName.assetName.hashID = STRING_ID("OutlineAlphaDiscard");
+		newRenderer->mDefaultOutlineAlphaDiscardMaterialName.packName.hashID = engineMaterialPack->assetName()->assetName();
 #ifdef R2_ASSET_PIPELINE
 		newRenderer->mDefaultOutlineMaterialName.assetName.assetNameString = "outline";
 		newRenderer->mDefaultOutlineMaterialName.packName.assetNameString = engineMaterialPack->assetName()->stringName()->str();
+
+		newRenderer->mDefaultOutlineAlphaDiscardMaterialName.assetName.assetNameString = "outline_alpha_discard";
+		newRenderer->mDefaultOutlineAlphaDiscardMaterialName.packName.assetNameString = engineMaterialPack->assetName()->stringName()->str();
 #endif
+
+		
+
+
 
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("MissingTexture"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
@@ -2875,8 +2884,13 @@ namespace r2::draw::renderer
 	//	return renderer.mDefaultOutlineRenderMaterialParams;
 	//}
 
-	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer)
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(Renderer& renderer, bool alphaDiscard)
 	{
+		if (alphaDiscard)
+		{
+			return renderer.mDefaultOutlineAlphaDiscardMaterialName;
+		}
+
 		return renderer.mDefaultOutlineMaterialName;
 	}
 
@@ -9417,9 +9431,9 @@ namespace r2::draw::renderer
 	}
 	*/
 
-	r2::mat::MaterialName GetDefaultOutlineMaterialName()
+	r2::mat::MaterialName GetDefaultOutlineMaterialName(bool alphaDiscard)
 	{
-		return  GetDefaultOutlineMaterialName(MENG.GetCurrentRendererRef());
+		return  GetDefaultOutlineMaterialName(MENG.GetCurrentRendererRef(), alphaDiscard);
 	}
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam()
