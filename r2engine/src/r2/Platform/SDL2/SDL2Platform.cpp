@@ -32,6 +32,7 @@
 #ifdef R2_IMGUI
 #include "backends/imgui_impl_sdl2.h"
 #endif
+#include "r2/Utils/Timer.h"
 
 namespace
 {
@@ -204,7 +205,8 @@ namespace r2
             int resizableFlag = app->IsWindowResizable() ? SDL_WINDOW_RESIZABLE : 0;
             int maximized = app->WindowShouldBeMaximized() ? SDL_WINDOW_MAXIMIZED : 0;
             setupParams.platformFlags = SDL_WINDOW_OPENGL | resizableFlag | maximized;
-
+          //  setupParams.flags.Set(draw::rendererimpl::VSYNC);
+            
             if(r2::draw::rendererimpl::PlatformInit(setupParams))
             {
                 mRunning = true;
@@ -338,14 +340,14 @@ namespace r2
         u64 endTime = startTime;
 
         u64 t = 0;
-        f64 k_desiredUpdateRate = 0.01666666 * 1000.0;
+        f64 k_desiredUpdateRate = 0.016666666 * 1000.0;
         const f64 dt = k_desiredUpdateRate;
         bool resync = false;
 
 		const u64 k_timeHistoryCount = 4;
 		u64 timeAverager[k_timeHistoryCount] = { dt, dt, dt, dt };
 
-        const u64 k_dtUpperToleranceMult = 8;
+        const f64 k_dtUpperToleranceMult = 8.0;
 
 		const f64 snap_frequencies[] = { dt,        //60fps
                               dt * 2.0,      //30fps
@@ -358,13 +360,22 @@ namespace r2
 
         
         const f64 vsync_maxerror = dt * .002;
-        const u32 k_ignoreFrames = 100;
+        const u32 k_ignoreFrames = 1000;
 
         u64 totalFrames = 0;
 
-        //auto tempCurrent = SDL_GetTicks();
-        //auto tempLast = tempCurrent;
+        auto tempCurrent = SDL_GetPerformanceCounter();
+        auto tempLast = tempCurrent;
         
+        f64 engineUpdateTimeHistory[10];
+        f64 engineRenderTimeHistory[10];
+
+        for (u32 i = 0; i < 10; ++i)
+        {
+            engineUpdateTimeHistory[i] = 0.0;
+            engineRenderTimeHistory[i] = 0.0;
+        }
+
         while (mRunning)
         {
 
@@ -381,53 +392,58 @@ namespace r2
                 delta = 0;
 			}
 
-			for (s64 snap : snap_frequencies) 
-            {
-				if (std::abs(delta - snap) <= vsync_maxerror) 
-                {
-                    delta = snap;
+			/*for (s64 snap : snap_frequencies)
+			{
+				if (std::abs(delta - snap) <= vsync_maxerror)
+				{
+					delta = snap;
 					break;
 				}
-			}
-
-            //first k_ignoreFrames frames are a wash
-            //just assume they're fine so we don't mess up the timing
-            if (totalFrames < k_ignoreFrames)
-            {
-                delta = dt;
-            }
-
-			//delta time averaging
-			/*for (u32 i = 0; i < k_timeHistoryCount - 1; i++) 
-            {
-				timeAverager[i] = timeAverager[i + 1];
 			}*/
-			
-            //timeAverager[totalFrames % k_timeHistoryCount] = delta;
 
-            //timeAverager[k_timeHistoryCount - 1] = delta;
-			
-            //delta = 0;
-			
-            //for (u32 i = 0; i < k_timeHistoryCount; i++)
-            //{
-            //    delta += timeAverager[i];
-            //}
-			
-            //delta /= k_timeHistoryCount;
+   //         //first k_ignoreFrames frames are a wash
+   //         //just assume they're fine so we don't mess up the timing
+   //        if (totalFrames < k_ignoreFrames)
+   //        {
+   //             delta = dt;
+   //        }
+
+			////delta time averaging
+			//for (u32 i = 0; i < k_timeHistoryCount - 1; i++) 
+   //         {
+			//	timeAverager[i] = timeAverager[i + 1];
+			//}
+			//
+   //       //  timeAverager[totalFrames % k_timeHistoryCount] = delta;
+
+   //         timeAverager[k_timeHistoryCount - 1] = delta;
+			//
+   //         delta = 0;
+			//
+   //         for (u32 i = 0; i < k_timeHistoryCount; i++)
+   //         {
+   //             delta += timeAverager[i];
+   //         }
+			//
+   //         delta /= k_timeHistoryCount;
 
 			accumulator += delta;
 
-			if (accumulator > dt * k_dtUpperToleranceMult) {
-				resync = true;
-			}
+			//if (accumulator > dt * k_dtUpperToleranceMult) {
+			//	resync = true;
+			//}
 
-			//timer resync if requested
-			if (resync) {
-				accumulator = 0;
-				delta = dt;
-				resync = false;
-			}
+			////timer resync if requested
+			//if (resync) {
+			//	accumulator = 0;
+			//	delta = dt;
+			//	resync = false; 
+
+			//	for (u32 i = 0; i < k_timeHistoryCount; i++)
+			//	{
+   //                 timeAverager[i] = dt;
+			//	}
+			//}
            
             ProcessEvents();
 
@@ -435,21 +451,58 @@ namespace r2
 
             while (accumulator >= dt)
             {
-				//tempCurrent = SDL_GetTicks();
-				//auto temp = tempCurrent - tempLast;
-				//tempLast = tempCurrent;
+				tempCurrent = SDL_GetPerformanceCounter();
+				auto temp = tempCurrent - tempLast;
+				tempLast = tempCurrent;
 
+             //   if (temp > 100)
+                {
+
+                    printf("Time: %f\n", (f64(temp) * k_millisecondsToSeconds) / (f64)k_frequency);
+                }
+
+                printf("Accum: %f\n", accumulator);
+               
+
+                r2::util::Timer engineTimer("Engine timer", false);
+                engineTimer.Start();
                 mEngine.Update();
+                f64 result = engineTimer.Stop();
+
+				for (u32 i = 0; i < 10 - 1; i++)
+				{
+					engineUpdateTimeHistory[i] = engineUpdateTimeHistory[i + 1];
+				}
+
+                engineUpdateTimeHistory[10 - 1] = result;
+
+
 				accumulator -= dt;
 
                 //t+= dt;
                 numGameUpdates++;
+
+            //    printf("Num Updated: %u\n", numGameUpdates);
             }
 
      //       printf("numGameUpdates: %d\n", numGameUpdates);
 
             float alpha = static_cast<f64>(accumulator) / static_cast<f64>(dt);
+
+			r2::util::Timer renderTimer("Render timer", false);
+            renderTimer.Start();
+
             mEngine.Render(alpha);
+
+			f64 result = renderTimer.Stop();
+
+			for (u32 i = 0; i < 10 - 1; i++)
+			{
+				engineRenderTimeHistory[i] = engineRenderTimeHistory[i + 1];
+			}
+
+            engineRenderTimeHistory[10 - 1] = result;
+
             
             r2::draw::rendererimpl::SwapScreens();
 
@@ -470,7 +523,6 @@ namespace r2
 				{
 
                     f64 msPerFrame = msDiff / (f64)frames;
-
                     if (totalFrames > k_ignoreFrames)
                     {
 						maxMSPerFrame = glm::max(maxMSPerFrame, msPerFrame);

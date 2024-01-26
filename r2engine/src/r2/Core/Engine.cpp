@@ -61,6 +61,7 @@
 #include "r2/Core/Assets/AssetReference.h"
 #endif
 
+#include "r2/Utils/Timer.h"
 
 namespace
 {
@@ -561,6 +562,9 @@ namespace r2
     
     void Engine::Update()
     {
+
+        PROFILE_SCOPE("Engine::Update");
+
 #ifdef R2_ASSET_PIPELINE
 		mAssetCommandHandler.Update();
 #endif

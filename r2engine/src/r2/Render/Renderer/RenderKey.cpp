@@ -3,6 +3,7 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/Renderer.h"
+#include "r2/Utils/Timer.h"
 
 namespace r2::draw::key
 {
@@ -187,6 +188,8 @@ namespace r2::draw::key
 
 	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, ShaderHandle shader, DrawLayer drawLayer)
 	{
+	//	PROFILE_SCOPE("GenerateDepthKey");
+
 		DepthKey theKey;
 
 		theKey.keyValue |= ENCODE_KEY_VALUE(type, DepthKey::DEPTH_KEY_BITS_DEPTH_TYPE, DepthKey::DEPTH_KEY_DEPTH_TYPE_OFFSET);

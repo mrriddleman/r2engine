@@ -29,6 +29,7 @@
 
 #include <filesystem>
 
+#include "r2/Utils/Timer.h"
 
 namespace
 {
@@ -1430,7 +1431,7 @@ namespace r2::draw::renderer
 		}
 
 		UpdateShaderVectors(renderer);
-	//	UpdateJitter(renderer);
+		//	UpdateJitter(renderer);
 
 		UpdateBloomDataIfNeeded(renderer);
 
@@ -1471,23 +1472,26 @@ namespace r2::draw::renderer
 
 			UpdateSMAADataIfNeeded(renderer);
 		}
-		
+
 		UpdateLighting(renderer);
-		
-		
+
+
 
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
 #endif
 
-		UpdateClusters(renderer); 
+		UpdateClusters(renderer);
 		UpdateSSRDataIfNeeded(renderer);
 
 		UpdateColorCorrectionIfNeeded(renderer);
 
 		BloomRenderPass(renderer);
 
+
 		PreRender(renderer);
+		
+
 
 	//	if (r2::sarr::Size(*s_optrRenderer->finalBatch.subcommands) == 0)
 		{
@@ -3431,6 +3435,7 @@ namespace r2::draw::renderer
 
 	void PreRender(Renderer& renderer)
 	{
+		PROFILE_SCOPE("PreRender");
 		//PreRender should be setting up the batches to render
 		static int MAX_NUM_GEOMETRY_SHADER_INVOCATIONS = shader::GetMaxNumberOfGeometryShaderInvocations();
 		const s32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
@@ -3823,8 +3828,6 @@ namespace r2::draw::renderer
 
 		subCommandsConstData->AddDataSize(subCommandsMemorySize);
 
-
-
 		//check to see if we need to rebuild the cluster volume tiles
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
 		{
@@ -3883,7 +3886,7 @@ namespace r2::draw::renderer
 			completeSubCommandsCMD->constantBufferHandle = subCommandsConstantBufferHandle;
 			completeSubCommandsCMD->count = subCommandsOffset;
 		}
-
+		
 		ClearSurfaceOptions clearGBufferOptions;
 		clearGBufferOptions.shouldClear = true;
 		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
@@ -3921,6 +3924,8 @@ namespace r2::draw::renderer
 		key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, 0);
 		BeginRenderPass<key::Basic>(renderer, RPT_CLUSTERS, clearGBufferOptions, *renderer.mClustersBucket, clusterKey, *renderer.mCommandArena);
 
+		
+
 		ClearSurfaceOptions shadowClearOptions;
 		shadowClearOptions.shouldClear = true;
 		shadowClearOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
@@ -3955,6 +3960,8 @@ namespace r2::draw::renderer
 
 
 		BeginRenderPass<key::Basic>(renderer, RPT_TRANSPARENT, transparentClearOptions, *renderer.mTransparentBucket, clearKey, *renderer.mCommandArena);
+		
+		
 
 #ifdef R2_EDITOR
 		ClearSurfaceOptions clearEditorPickingOptions;
@@ -3962,8 +3969,10 @@ namespace r2::draw::renderer
 		clearEditorPickingOptions.flags = cmd::CLEAR_COLOR_BUFFER ;
 		key::Basic clearEditorPickingKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, renderer.mEntityColorShader[0]);
 
-		BeginRenderPass<key::Basic>(renderer, RPT_EDITOR_PICKING, clearEditorPickingOptions, *renderer.mEditorPickingBucket, clearEditorPickingKey,*renderer.mCommandArena);
+		BeginRenderPass<key::Basic>(renderer, RPT_EDITOR_PICKING, clearEditorPickingOptions, *renderer.mEditorPickingBucket, clearEditorPickingKey, *renderer.mCommandArena);
 #endif
+
+		
 
 		//@NOTE(Serge): we need to figure out if we even need to separate the static and dynamic draw batches anymore
 		//				like having to do this twice is pretty dumb... We would need to add the bufferLayoutHandle and isDynamic (to choose the proper shader) to the BatchOffsets
@@ -4213,6 +4222,8 @@ namespace r2::draw::renderer
 				}
 			}
 		}
+
+		
 
 		const u64 numDynamicDrawBatches = r2::sarr::Size(*dynamicRenderBatchesOffsets);
 		for (u64 i = 0; i < numDynamicDrawBatches; ++i)
@@ -4520,7 +4531,7 @@ namespace r2::draw::renderer
 
 		EndRenderPass<key::Basic>(renderer, RPT_TRANSPARENT_COMPOSITE, *renderer.mTransparentBucket);
 
-
+		
 
 		const auto gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
 

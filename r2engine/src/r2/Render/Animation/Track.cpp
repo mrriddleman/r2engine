@@ -73,6 +73,7 @@ namespace r2::anim
 		float duration = endTime - startTime;
 		if (duration <= 0.0f)
 		{
+
 			return 0.0f;
 		}
 
@@ -205,6 +206,7 @@ namespace r2::anim
 		int thisFrame = FrameIndex(time, looping);
 		if (thisFrame < 0 || thisFrame >= (int)r2::sarr::Size(*mFrames) - 1)
 		{
+
 			return T();
 		}
 

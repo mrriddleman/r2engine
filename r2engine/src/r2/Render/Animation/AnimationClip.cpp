@@ -59,6 +59,7 @@ namespace r2::anim
 	{
 		if (math::NearZero(GetDuration()))
 		{
+			printf("Near Zero\n");
 			return 0.0f;
 		}
 

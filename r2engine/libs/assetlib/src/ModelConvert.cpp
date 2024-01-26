@@ -578,6 +578,14 @@ namespace r2::assets::assetlib
 		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
 	};
 
+	static ShaderEffect depthAlphaCutoffShaderEffect = {
+		{STRING_ID("depth_shader_effect_alpha_discard"), "depth_shader_effect_alpha_discard"},
+		{STRING_ID("StaticDepthDiscard"), "StaticDepthDiscard"},
+		{STRING_ID("DynamicDepthDiscard"), "DynamicDepthDiscard"},
+		flat::eVertexLayoutType_VLT_DEFAULT_STATIC,
+		flat::eVertexLayoutType_VLT_DEFAULT_DYNAMIC
+	};
+
 	static ShaderEffect directionShadowEffect = {
 		{STRING_ID("direction_shadow_effect"), "direction_shadow_effect"},
 		{STRING_ID("StaticShadowDepth"), "StaticShadowDepth"},
@@ -607,12 +615,14 @@ namespace r2::assets::assetlib
 	{
 		const std::string OPAQUE_FORWARD_PASS = "OPAQUE_FORWARD_PASS";
 		const std::string TRANSPARENT_FORWARD_PASS = "TRANSPARENT_FORWARD_PASS";
+		const std::string OPAQUE_ALPHA_DISCARD_FORWARD_PASS = "OPAQUE_ALPHA_DISCARD_FORWARD_PASS";
 	}
 
 	static std::unordered_map<std::string, ShaderEffectPasses> g_shaderEffectPassesMap =
 	{
 		{OPAQUE_FORWARD_PASS, {{forwardOpaqueShaderEffect, {}, depthShaderEffect, directionShadowEffect, pointShadowEffect, spotLightShadowEffect}, {}}},
-		{TRANSPARENT_FORWARD_PASS, {{{}, forwardTransparentShaderEffect, {}, {}, {}, {}}, {}}}
+		{TRANSPARENT_FORWARD_PASS, {{{}, forwardTransparentShaderEffect, {}, {}, {}, {}}, {}}},
+		{OPAQUE_ALPHA_DISCARD_FORWARD_PASS, {{forwardOpaqueShaderEffect, {}, depthAlphaCutoffShaderEffect, directionShadowEffect, pointShadowEffect, spotLightShadowEffect}, {}}},
 	};
 
 	struct MaterialData
@@ -914,10 +924,13 @@ namespace r2::assets::assetlib
 
 		//@TODO(Serge): add more sophisticated material mapping - we don't really have many shader effect passes setup yet so keep it simple for now
 
-		if (materialData.transparencyType == flat::eTransparencyType_OPAQUE || 
-			materialData.transparencyType == flat::eTransparencyType_MASK) //for now we use the same ones
+		if (materialData.transparencyType == flat::eTransparencyType_OPAQUE) //for now we use the same ones
 		{
 			materialData.shaderEffectPasses = g_shaderEffectPassesMap[OPAQUE_FORWARD_PASS];
+		}
+		else if (materialData.transparencyType == flat::eTransparencyType_MASK)
+		{
+			materialData.shaderEffectPasses = g_shaderEffectPassesMap[OPAQUE_ALPHA_DISCARD_FORWARD_PASS];
 		}
 		else if (materialData.transparencyType == flat::eTransparencyType_TRANSPARENT)
 		{
@@ -1121,7 +1134,7 @@ namespace r2::assets::assetlib
 		}
 		else
 		{
-			materialData.transparencyType = flat::eTransparencyType_OPAQUE; //this should be mask but...
+			materialData.transparencyType = flat::eTransparencyType_MASK; //this should be mask but...
 		}
 		
 		ShaderParameter<float> alphaCutoffParam;
