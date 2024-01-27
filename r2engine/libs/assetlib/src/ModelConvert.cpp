@@ -2334,10 +2334,10 @@ namespace r2::assets::assetlib
 		//go through all of the nodes to setup the correct transformations
 
 		//All we support at the moment
-		assert(gltf.scenes.size() == 1 && gltf.scenes[0].nodeIndices.size() == 1);
+		assert(gltf.scenes.size() == 1);
 
-		size_t rootSceneNode = gltf.scenes[0].nodeIndices[0];
-		for (size_t i = rootSceneNode; i < gltf.nodes.size(); ++i)
+		//size_t rootSceneNode = gltf.scenes[0].nodeIndices[0];
+		for (size_t i = 0; i < gltf.nodes.size(); ++i)
 		{
 			fastgltf::Node& node = gltf.nodes[i];
 			

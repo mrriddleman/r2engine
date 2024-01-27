@@ -698,6 +698,7 @@ namespace r2::edit
 
 							renderComponent.isAnimated = renderModel->animSkeleton.mBindPose != nullptr;
 
+
 							if (renderComponent.isAnimated)
 							{
 								renderComponent.drawParameters.layer = draw::DL_CHARACTER;
@@ -1190,6 +1191,9 @@ namespace r2::edit
 	{
 
 	}
+
+	
+
 }
 
 #endif

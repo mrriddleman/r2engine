@@ -38,6 +38,7 @@ namespace r2::edit
 
 		bool mOpenMaterialsWindow;
 		r2::mat::MaterialName mMaterialToEdit;
+		
 	};
 }
 

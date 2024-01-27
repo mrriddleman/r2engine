@@ -3361,21 +3361,31 @@ namespace r2::draw::renderer
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
 			{
 				const vb::MeshEntry& meshRef = r2::sarr::At(*modelRef->meshEntries, meshRefIndex);
-
+				
 				const ShaderEffectPasses& shaderEffectPasses = r2::sarr::At(*renderBatch.materialBatch.shaderEffectPasses, meshRef.materialIndex + materialBatchInfo.start); 
 
 				//Here we're just going to base it on which layer / mesh pass we care about
 				ShaderHandle shaderHandleToUse = r2::draw::InvalidShader;
 				ShaderHandle depthShaderHandleToUse = r2::draw::InvalidShader;
 
-				flat::eMeshPass meshPass = flat::eMeshPass_FORWARD;
+				DrawLayer drawLayerToUse = drawState.layer;
 
+				flat::eMeshPass meshPass = meshPass = flat::eMeshPass_FORWARD;
 				if (drawState.layer == DL_TRANSPARENT)
 				{
 					meshPass = flat::eMeshPass_TRANSPARENT;
 				}
 				
 				shaderHandleToUse = modelRef->isAnimated ? shaderEffectPasses.meshPasses[meshPass].dynamicShaderHandle : shaderEffectPasses.meshPasses[meshPass].staticShaderHandle;
+				
+				if (shaderHandleToUse == 0 && meshPass != flat::eMeshPass_TRANSPARENT)
+				{
+					shaderHandleToUse = modelRef->isAnimated ? shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].dynamicShaderHandle : shaderEffectPasses.meshPasses[flat::eMeshPass_TRANSPARENT].staticShaderHandle;
+					if (shaderHandleToUse != 0)
+					{
+						drawLayerToUse = DL_TRANSPARENT;
+					}
+				}
 
 				R2_CHECK(shaderHandleToUse != r2::draw::InvalidShader, "We don't have a proper shader?");
 
@@ -3384,7 +3394,7 @@ namespace r2::draw::renderer
 				//@TODO(Serge): add this back when we have proper shader effects setup
 				//R2_CHECK(depthShaderHandleToUse != r2::draw::InvalidShader, "We don't have a proper shader?");
 
-				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderHandleToUse, depthShaderHandleToUse, drawStateHash);
+				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawLayerToUse, shaderHandleToUse, depthShaderHandleToUse, drawStateHash);
 
 				DrawCommandData* defaultDrawCommandData = nullptr;
 
@@ -3401,6 +3411,7 @@ namespace r2::draw::renderer
 					drawCommandData->shaderEffectPasses = shaderEffectPasses;
 					drawCommandData->isDynamic = modelRef->isAnimated;
 					drawCommandData->drawState = drawState;
+					drawCommandData->drawState.layer = drawLayerToUse;
 					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
 					drawCommandData->cameraDepths = MAKE_SARRAY(*renderer.mPrePostRenderCommandArena, CameraDepth, drawCommandBatchSize);
 					
@@ -3435,7 +3446,7 @@ namespace r2::draw::renderer
 
 	void PreRender(Renderer& renderer)
 	{
-		PROFILE_SCOPE("PreRender");
+	//	PROFILE_SCOPE("PreRender");
 		//PreRender should be setting up the batches to render
 		static int MAX_NUM_GEOMETRY_SHADER_INVOCATIONS = shader::GetMaxNumberOfGeometryShaderInvocations();
 		const s32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
@@ -3594,8 +3605,6 @@ namespace r2::draw::renderer
 		{
 			
 			materialsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, prevFillCMD, materialsDataSize);
-
-			
 
 			ConstantBufferData* materialsConstData = GetConstData(renderer, materialsConstantBufferHandle);
 

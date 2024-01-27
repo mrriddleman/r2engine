@@ -233,8 +233,8 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-s", "--animationsamples" }, &arguments.animationSamples, "Number of animation samples");
 	args.Parse(agrc, argv);
 
-	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\Sponza\\Sponza.gltf";
-	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\Sponza";
+	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models\\AlphaBlendModeTest\\AlphaBlendModeTest.gltf";
+	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models\\AlphaBlendModeTest";
 	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialPack.mpak";
 	//arguments.rawMaterialsParentPath = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Materials\\generated_materials_test";
 	//arguments.engineTexturePacksManifestPath = "D:\\Projects\\r2engine\\r2engine\\assets_bin\\textures\\manifests\\engine_texture_pack.tman";

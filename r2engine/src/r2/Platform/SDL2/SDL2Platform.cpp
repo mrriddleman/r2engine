@@ -458,10 +458,10 @@ namespace r2
              //   if (temp > 100)
                 {
 
-                    printf("Time: %f\n", (f64(temp) * k_millisecondsToSeconds) / (f64)k_frequency);
+           //         printf("Time: %f\n", (f64(temp) * k_millisecondsToSeconds) / (f64)k_frequency);
                 }
 
-                printf("Accum: %f\n", accumulator);
+             //   printf("Accum: %f\n", accumulator);
                
 
                 r2::util::Timer engineTimer("Engine timer", false);

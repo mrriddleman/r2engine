@@ -563,7 +563,7 @@ namespace r2
     void Engine::Update()
     {
 
-        PROFILE_SCOPE("Engine::Update");
+     //   PROFILE_SCOPE("Engine::Update");
 
 #ifdef R2_ASSET_PIPELINE
 		mAssetCommandHandler.Update();
