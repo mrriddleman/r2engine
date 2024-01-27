@@ -9,6 +9,7 @@
 #include "r2/Editor/EditorAssetBrowser/EditorAssetPanel.h"
 #include "r2/Editor/EditorAssetBrowser/EditorLevelAssetPanel.h"
 #include "r2/Editor/EditorScenePanel.h"
+#include "r2/Editor/EditorLevelRenderSettingsPanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
@@ -70,6 +71,9 @@ namespace r2
 		mMainMenuBar = static_cast<edit::MainMenuBar*>( mEditorWidgets.back().get() );
 
 		R2_CHECK(mMainMenuBar != nullptr, "Should never happen");
+
+		std::unique_ptr<edit::LevelRenderSettingsPanel> levelRenderSettingsPanel = std::make_unique<edit::LevelRenderSettingsPanel>();
+		mEditorWidgets.push_back(std::move(levelRenderSettingsPanel));
 
 		std::unique_ptr<edit::InspectorPanel> inspectorPanel = std::make_unique<edit::InspectorPanel>();
 		mEditorWidgets.push_back(std::move(inspectorPanel));

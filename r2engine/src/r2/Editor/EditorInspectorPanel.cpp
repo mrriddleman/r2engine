@@ -451,8 +451,12 @@ namespace r2::edit
 
 		bool open = true;
 		
-		if (ImGui::Begin("Inspector", &open))
+		if (!ImGui::Begin("Inspector", &open))
 		{
+			ImGui::End();
+			return;
+		}
+
 			ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
 
 			if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
@@ -685,7 +689,7 @@ namespace r2::edit
 			}
 			
 			ImGui::End();
-		}
+		
 	}
 
 	void InspectorPanel::RegisterComponentWidget(const InspectorPanelComponentWidget& inspectorPanelComponentWidget)

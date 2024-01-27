@@ -96,7 +96,7 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 //	vec3 lookAt = center - dirLights[0].direction.xyz;
 //	mat4 lightView = LookAt(lightCameraPos, lookAt, GLOBAL_UP);
 
-	mat4 shadowCamera = Ortho_ZO(-0.5, 0.5, -0.5, 0.5, 0.1, 100);
+	mat4 shadowCamera = Ortho_ZO(-0.5, 0.5, -0.5, 0.5, 0.1, 1000);
 
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
