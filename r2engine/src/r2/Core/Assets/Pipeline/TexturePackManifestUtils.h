@@ -35,6 +35,7 @@ namespace r2::asset::pln::tex
 		s32 desiredMipLevels;
 		flat::MipMapFilter filter;
 		std::vector<TexturePackMetaFileMipLevel> mipLevels;
+		flat::TextureProcessType textureProcessType;
 	};
 
 	void MakeTexturePackMetaFileFromFlat(const flat::TexturePackMetaData* flatMeta, TexturePackMetaFile& metaFile);

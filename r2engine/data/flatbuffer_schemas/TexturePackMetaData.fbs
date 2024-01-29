@@ -27,6 +27,15 @@ enum MipMapFilter: byte
 	KAISER
 }
 
+enum TextureProcessType: byte
+{
+	NONE = 0,
+	CONVOLVED,
+	PREFILTER,
+	LUT_DFG,
+	LUT
+}
+
 table CubemapSideEntry
 {
 	textureName:string;
@@ -45,6 +54,7 @@ table TexturePackMetaData
 	mipLevels:[MipLevel];
 	desiredMipLevels:uint;
 	mipMapFilter:MipMapFilter;
+	textureProcessType:TextureProcessType;
 }
 
 root_type TexturePackMetaData;

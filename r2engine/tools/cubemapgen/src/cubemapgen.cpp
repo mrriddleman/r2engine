@@ -101,7 +101,7 @@ void SaveCubemap(const std::string& filename, const r2::ibl::Image& image);
 
 bool WriteFile(const std::string& filePath, void* data, size_t size);
 flat::CubemapSide GetCubemapSide(r2::ibl::Cubemap::Face face);
-bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& name, const std::vector<r2::ibl::Cubemap>& cubemap, bool writeMetaData = true);
+bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& name, const std::vector<r2::ibl::Cubemap>& cubemap, bool writeMetaData = true, flat::MipMapFilter = flat::MipMapFilter_BOX, flat::TextureProcessType = flat::TextureProcessType_NONE);
 
 
 int RunSystemCommand(const char* command)
@@ -378,7 +378,7 @@ void IBLDiffuseIrradiance(
 	std::vector<r2::ibl::Cubemap> cubemaps;
 	cubemaps.push_back(std::move(dst));
 
-	WriteAssetDirectory(outputDir, names, cubemaps);
+	WriteAssetDirectory(outputDir, names, cubemaps, true, flat::MipMapFilter_BOX, flat::TextureProcessType_CONVOLVED);
 }
 
 void IBLRoughnessPrefilter(
@@ -441,7 +441,7 @@ void IBLRoughnessPrefilter(
 		cubemapsToSave.push_back(std::move(dst));
 	}
 
-	WriteAssetDirectory(outputDir, levelNames, cubemapsToSave);
+	WriteAssetDirectory(outputDir, levelNames, cubemapsToSave, true, flat::MipMapFilter_BOX, flat::TextureProcessType_PREFILTER);
 }
 
 void IBLMipmapPrefilter(
@@ -486,7 +486,7 @@ void IBLLutDFG(
 	auto textureType = flat::TextureType_TEXTURE;
 	flatbuffers::FlatBufferBuilder builder;
 
-	auto data = flat::CreateTexturePackMetaData(builder, textureType);
+	auto data = flat::CreateTexturePackMetaData(builder, textureType, 0, 0, flat::MipMapFilter_BOX, flat::TextureProcessType_LUT_DFG);
 
 	builder.Finish(data);
 
@@ -506,7 +506,7 @@ void IBLLutDFG(
 	fs::remove(binPath);
 }
 
-bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& names, const std::vector<r2::ibl::Cubemap>& cubemaps, bool writeMetaData)
+bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& names, const std::vector<r2::ibl::Cubemap>& cubemaps, bool writeMetaData, flat::MipMapFilter mipMapFilter, flat::TextureProcessType processType)
 {
 	assert(names.size() <= cubemaps.size());
 
@@ -560,7 +560,7 @@ bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::st
 
 	if (writeMetaData)
 	{
-		auto data = flat::CreateTexturePackMetaData(builder, textureType, builder.CreateVector(mipLevels));
+		auto data = flat::CreateTexturePackMetaData(builder, textureType, builder.CreateVector(mipLevels), mipLevels.size(), mipMapFilter, processType);
 
 		builder.Finish(data);
 

@@ -22,6 +22,7 @@ namespace r2::edit
 	static const char* const* s_TextureTypeNames = flat::EnumNamesTextureType();
 	static const char* const* s_MipMapFilterTypeNames = flat::EnumNamesMipMapFilter();
 	static const char* const* s_CubeMapTypeNames = flat::EnumNamesCubemapSide();
+	static const char* const* s_TextureProcessTypeName = flat::EnumNamesTextureProcessType();
 
 	void TexturePackPanel(bool& windowOpen, const std::filesystem::path& path, r2::asset::pln::tex::TexturePackMetaFile& metaFile)
 	{
@@ -219,6 +220,22 @@ namespace r2::edit
 					if (ImGui::Selectable(s_MipMapFilterTypeNames[i], i == metaFile.filter))
 					{
 						metaFile.filter = static_cast<flat::MipMapFilter>( i );
+						break;
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::Text("Texture Process Type: ");
+			ImGui::SameLine();
+			if (ImGui::BeginCombo("##label textureprocesstype", s_TextureProcessTypeName[metaFile.textureProcessType]))
+			{
+				for (s32 i = flat::TextureProcessType_NONE; i <= flat::TextureProcessType_LUT_DFG; ++i)
+				{
+					if (ImGui::Selectable(s_TextureProcessTypeName[i], i == metaFile.textureProcessType))
+					{
+						metaFile.textureProcessType = static_cast<flat::TextureProcessType>(i);
 						break;
 					}
 				}

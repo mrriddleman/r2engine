@@ -170,5 +170,6 @@
     }
   ],
   desiredMipLevels: 1,
-  mipMapFilter: "BOX"
+  mipMapFilter: "BOX",
+  textureProcessType: "PREFILTER"
 }

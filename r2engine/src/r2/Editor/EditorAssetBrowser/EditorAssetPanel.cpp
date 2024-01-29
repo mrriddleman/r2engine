@@ -466,6 +466,8 @@ namespace r2::edit
 			mMetaFile.type = flat::TextureType_TEXTURE;
 			mMetaFile.desiredMipLevels = 1;
 			mMetaFile.filter = flat::MipMapFilter_BOX;
+			mMetaFile.textureProcessType = flat::TextureProcessType_NONE;
+
 			mMetaFile.mipLevels.clear();
 		
 		}

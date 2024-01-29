@@ -635,114 +635,6 @@ namespace r2::asset::pln::tex
 						return true;
 					}
 				}
-
-				/*for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->albedo()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->normal()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->normal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->metallic()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->metallic()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->roughness()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->roughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->occlusion()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->occlusion()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->emissive()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->emissive()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->anisotropy()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->anisotropy()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->height()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->height()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->detail()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->detail()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoat()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->clearCoat()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatRoughness()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->clearCoatRoughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}
-
-				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatNormal()->size(); ++filePathIndex)
-				{
-					if (std::filesystem::path(texturePack->clearCoatNormal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
-					{
-						delete[] manifestFileData;
-						return  true;
-					}
-				}*/
 			}
 		}
 
@@ -756,6 +648,7 @@ namespace r2::asset::pln::tex
 		metaFile.type = texturePackMetaData->type();
 		metaFile.desiredMipLevels = texturePackMetaData->desiredMipLevels();
 		metaFile.filter = texturePackMetaData->mipMapFilter();
+		metaFile.textureProcessType = texturePackMetaData->textureProcessType();
 
 		for (flatbuffers::uoffset_t i = 0; i < texturePackMetaData->mipLevels()->size(); ++i)
 		{
@@ -796,7 +689,7 @@ namespace r2::asset::pln::tex
 
 
 		//add the texture packs to the manifest
-		auto manifest = flat::CreateTexturePackMetaData(builder, metaFile.type, builder.CreateVector(mipLevels), metaFile.desiredMipLevels, metaFile.filter);
+		auto manifest = flat::CreateTexturePackMetaData(builder, metaFile.type, builder.CreateVector(mipLevels), metaFile.desiredMipLevels, metaFile.filter, metaFile.textureProcessType);
 
 		//generate the manifest
 		builder.Finish(manifest);
