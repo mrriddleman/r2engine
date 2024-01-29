@@ -6,6 +6,7 @@
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Render/Model/Textures/Texture.h"
+#include "R2/Render/Model/Textures/TexturePackMetaData_generated.h"
 
 namespace flat
 {
@@ -77,7 +78,7 @@ namespace r2::draw::texche
 	bool UnloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	bool UnloadTexture(TexturePacksCache& texturePacksCache, const tex::Texture& texture);
 
-	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName, bool useTextureProcess = false, flat::TextureProcessType processType = flat::TextureProcessType_NONE);
 
 	bool ReloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	bool ReloadTextureInTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
@@ -92,11 +93,11 @@ namespace r2::draw::texche
 	bool GetTexturesForFlatMaterial(TexturePacksCache& texturePacksCache, const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 	bool GetTexturesForMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
-	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack);
-	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials);
+	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, flat::TextureProcessType processType);
+	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials, flat::TextureProcessType processType);
 
-	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack);
-	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials);
+	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, flat::TextureProcessType processType);
+	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials, flat::TextureProcessType processType);
 
 	const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);
 	const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);

@@ -102,7 +102,7 @@ namespace r2::edit
 		if (iter == mDataSources.end())
 		{
 			mDataSources.push_back(renderSettingsWidget);
-
+			mDataSources.back()->Init();
 			std::sort(mDataSources.begin(), mDataSources.end(), [](const std::shared_ptr < LevelRenderSettingsDataSource>& w1, const std::shared_ptr < LevelRenderSettingsDataSource>& w2)
 				{
 					return w1->GetSortOrder() < w2->GetSortOrder();

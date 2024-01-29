@@ -494,7 +494,7 @@ namespace r2::asset::pln::tex
 				packAssetName, 
 				builder.CreateVector(textureAssetRefs),
 				packSize, numTexturesInPack,
-				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
+				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels), texturePackMetaData->desiredMipLevels(), texturePackMetaData->mipMapFilter(), texturePackMetaData->textureProcessType() ));
 
 			texturePacks.push_back(texturePack);
 

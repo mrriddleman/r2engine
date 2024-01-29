@@ -549,13 +549,13 @@ public:
         r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
-            const auto* prefilteredCubemap = r2::draw::texche::GetCubemapTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("NewportPrefiltered"));//gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
-            s32 numMips = prefilteredCubemap->numMipLevels;
+            //const auto* prefilteredCubemap = r2::draw::texche::GetCubemapTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("NewportPrefiltered"));//gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
+            //s32 numMips = prefilteredCubemap->numMipLevels;
 
-            r2::draw::renderer::AddSkyLight(
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);
+            //r2::draw::renderer::AddSkyLight(
+            //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),
+            //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),
+            //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);

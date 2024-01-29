@@ -507,7 +507,7 @@ namespace r2::assets::assetlib
 		//	}
 		//}
 
-		auto textureMetaData = flat::CreateTextureMetaData(builder, builder.CreateString(inputFilePath.string()), textureSize, textureFormat, flat::CompressionMode_LZ4, builder.CreateVector(metaMipInfo));
+		auto textureMetaData = flat::CreateTextureMetaData(builder, builder.CreateString(inputFilePath.string()), textureSize, textureFormat, flat::CompressionMode_LZ4, builder.CreateVector(metaMipInfo)  );
 		builder.Finish(textureMetaData, "rtex");
 
 		uint8_t* buf = builder.GetBufferPointer();

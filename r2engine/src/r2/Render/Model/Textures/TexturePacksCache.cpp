@@ -629,7 +629,7 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName)
+	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName, bool useTextureProcess, flat::TextureProcessType processType)
 	{
 		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
 		{
@@ -654,15 +654,66 @@ namespace r2::draw::texche
 
 		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
 		{
-			if (texturePacks->Get(i)->assetName()->assetName() == texturePackName)
+			const auto* texturePack = texturePacks->Get(i);
+
+			if (texturePack->assetName()->assetName() == texturePackName)
 			{
-				return texturePacks->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP;
+				const auto* metaData = texturePack->metaData();
+
+				bool result = metaData->type() == flat::TextureType::TextureType_CUBEMAP;
+				
+				if (useTextureProcess)
+				{
+					result = result && metaData->textureProcessType() == processType;
+				}
+
+				return result;
 			}
 		}
 
 		R2_CHECK(false, "Should never get here");
 		return false;
 	}
+
+	bool DoesTexturePackMatchProcessType(TexturePacksCache& texturePacksCache, u64 texturePackName, flat::TextureProcessType processType)
+	{
+		if (texturePacksCache.mAssetCache == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
+			return false;
+		}
+
+		s32 invalidIndex = -1;
+		s32 manifestIndex = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, invalidIndex);
+
+		if (manifestIndex == invalidIndex)
+		{
+			//	R2_CHECK(false, "We couldn't find the texture pack!");
+			return false;
+		}
+
+		const TexturePackManifestEntry& entry = r2::sarr::At(*texturePacksCache.mTexturePackManifests, manifestIndex);
+
+		const auto numTexturePacks = entry.flatTexturePacksManifest->texturePacks()->size();
+
+		const auto* texturePacks = entry.flatTexturePacksManifest->texturePacks();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			const auto* texturePack = texturePacks->Get(i);
+
+			if (texturePack->assetName()->assetName() == texturePackName)
+			{
+				const auto* metaData = texturePack->metaData();
+
+				return metaData->textureProcessType() == processType;
+			}
+		}
+
+		R2_CHECK(false, "Should never get here");
+		return false;
+	}
+
 
 	bool ReloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
@@ -1122,7 +1173,7 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack)
+	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, flat::TextureProcessType processType)
 	{
 		u32 count = 0;
 		const auto* materialPack = materialParamsPack->pack();
@@ -1134,7 +1185,7 @@ namespace r2::draw::texche
 
 			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
 			{
-				if (r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				if (r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName(), true, processType))
 				{
 					++count;
 					break;
@@ -1145,7 +1196,7 @@ namespace r2::draw::texche
 		return count;
 	}
 
-	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials)
+	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials, flat::TextureProcessType processType)
 	{
 		R2_CHECK(cubeMapMaterials != nullptr, "Need at least the cubemap materials array");
 
@@ -1158,7 +1209,7 @@ namespace r2::draw::texche
 
 			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
 			{
-				if (r2::draw::texche::IsTexturePackACubemap(texturePackCache, textureParams->Get(j)->texturePack()->assetName()))
+				if (r2::draw::texche::IsTexturePackACubemap(texturePackCache, textureParams->Get(j)->texturePack()->assetName(), true, processType))
 				{
 					r2::sarr::Push(*cubeMapMaterials, material);
 					break;
@@ -1170,7 +1221,7 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack)
+	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, flat::TextureProcessType processType)
 	{
 		u32 count = 0;
 		const auto* materialPack = materialParamsPack->pack();
@@ -1182,7 +1233,7 @@ namespace r2::draw::texche
 
 			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
 			{
-				if (!r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				if (DoesTexturePackMatchProcessType(texturePacksCache, textureParams->Get(j)->texturePack()->assetName(), processType))
 				{
 					++count;
 					break;
@@ -1193,7 +1244,7 @@ namespace r2::draw::texche
 		return count;
 	}
 
-	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials)
+	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials, flat::TextureProcessType processType)
 	{
 		R2_CHECK(textureMaterials != nullptr, "Need at least the cubemap materials array");
 
@@ -1206,7 +1257,7 @@ namespace r2::draw::texche
 
 			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
 			{
-				if (!r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				if (DoesTexturePackMatchProcessType(texturePacksCache, textureParams->Get(j)->texturePack()->assetName(), processType))
 				{
 					r2::sarr::Push(*textureMaterials, material);
 					break;

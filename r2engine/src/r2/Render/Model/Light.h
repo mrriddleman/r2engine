@@ -198,6 +198,7 @@ namespace r2::draw
 
 		SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight, s32 numPrefilteredMips);
 		SkyLightHandle AddSkyLight(LightSystem& system, const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips);
+
 		bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle);
 		SkyLight* GetSkyLightPtr(LightSystem& system, SkyLightHandle handle);
 		const SkyLight* GetSkyLightConstPtr(const LightSystem& system, SkyLightHandle handle);
@@ -265,7 +266,22 @@ namespace r2::draw
 
 
 			memset(&lightSystem->mSceneLighting, 0, sizeof(SceneLighting));
+			lightSystem->mSceneLighting.mSkyLight.lightProperties.lightID = -1;
 
+			for (u32 i = 0; i < light::MAX_NUM_POINT_LIGHTS; ++i)
+			{
+				lightSystem->mSceneLighting.mPointLights[i].lightProperties.lightID = -1;
+			}
+
+			for (u32 i = 0; i < light::MAX_NUM_DIRECTIONAL_LIGHTS; ++i)
+			{
+				lightSystem->mSceneLighting.mDirectionLights[i].lightProperties.lightID = -1;
+			}
+
+			for (u32 i = 0; i < light::MAX_NUM_SPOT_LIGHTS; ++i)
+			{
+				lightSystem->mSceneLighting.mSpotLights[i].lightProperties.lightID = -1;
+			}
 
 			InitLightIDs(*lightSystem);
 			ClearShadowMapPages(*lightSystem);

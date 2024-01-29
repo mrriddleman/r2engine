@@ -26,6 +26,9 @@ namespace r2::mat
 			return assetName.hashID == 0 || packName.hashID == 0;
 		}
 	};
+
+
+	
 }
 
 #endif // __MATERIAL_TYPES_H__

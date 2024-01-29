@@ -3,6 +3,8 @@
 #ifdef R2_EDITOR
 
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsDataSource.h"
+#include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 namespace r2::edit
 {
@@ -12,6 +14,7 @@ namespace r2::edit
 
 		SkylightRenderSettingsPanelWidget();
 		~SkylightRenderSettingsPanelWidget();
+		void Init() override;
 
 		void Update() override;
 
@@ -21,7 +24,18 @@ namespace r2::edit
 
 		void Shutdown() override;
 	private:
+		void PopulateSkylightMaterials();
 
+
+		std::vector<r2::asset::AssetName> mConvolvedMaterialNames;
+		std::vector<r2::asset::AssetName> mPrefilteredMaterialNames;
+		std::vector<u32> mPrefilteredMipLevels;
+		std::vector<r2::asset::AssetName> mLUTDFGMaterialNames;
+
+		r2::draw::tex::TextureAddress convolvedTextureAddress;
+		r2::draw::tex::TextureAddress prefilteredTextureAddress;
+		r2::draw::tex::TextureAddress lutDFGTextureAddress;
+		u32 numMips;
 	};
 }
 

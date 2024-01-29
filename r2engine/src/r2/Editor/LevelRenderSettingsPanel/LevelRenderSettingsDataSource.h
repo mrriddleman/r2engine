@@ -21,6 +21,7 @@ public:
 	}
 
 	virtual ~LevelRenderSettingsDataSource() {}
+	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Render() = 0;
 	virtual bool OnEvent(r2::evt::Event& e) = 0;

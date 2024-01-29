@@ -697,6 +697,7 @@ namespace r2::draw::renderer
 	SkyLightHandle AddSkyLight(const SkyLight& skylight, s32 numPrefilteredMips);
 	SkyLightHandle AddSkyLight(const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips);
 
+
 	const DirectionLight* GetDirectionLightConstPtr(DirectionLightHandle dirLightHandle);
 	DirectionLight* GetDirectionLightPtr(DirectionLightHandle dirLightHandle);
 
