@@ -708,6 +708,8 @@ namespace r2::draw::renderer
 
 	const SkyLight* GetSkyLightConstPtr(SkyLightHandle skyLightHandle);
 	SkyLight* GetSkyLightPtr(SkyLightHandle skyLightHandle);
+	bool HasSkylight();
+	SkyLightHandle GetCurrentSkylightHandle();
 
 	//@TODO(Serge): add the get light properties functions here
 

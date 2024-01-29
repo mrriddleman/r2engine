@@ -201,6 +201,8 @@ namespace r2::draw
 		bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle);
 		SkyLight* GetSkyLightPtr(LightSystem& system, SkyLightHandle handle);
 		const SkyLight* GetSkyLightConstPtr(const LightSystem& system, SkyLightHandle handle);
+		bool HasSkylight(const LightSystem& system);
+		SkyLightHandle GetCurrentSkylightHandle(LightSystem& system);
 
 		LightSystemHandle GenerateNewLightSystemHandle();
 

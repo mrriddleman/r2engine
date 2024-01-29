@@ -26,6 +26,8 @@ namespace r2::asset
 		virtual bool HasAsset(const Asset& asset) const override;
 		virtual AssetFile* GetAssetFile(const Asset& asset) override;
 
+		inline const flat::MaterialPack* GetMaterialPack() const { return mMaterialPackManifest; }
+
 #ifdef R2_ASSET_PIPELINE
 
 		virtual bool AddAssetReference(const AssetReference& assetReference) override;

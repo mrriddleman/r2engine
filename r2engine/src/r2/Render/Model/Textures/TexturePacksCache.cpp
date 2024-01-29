@@ -642,7 +642,7 @@ namespace r2::draw::texche
 
 		if (manifestIndex == invalidIndex)
 		{
-			R2_CHECK(false, "We couldn't find the texture pack!");
+		//	R2_CHECK(false, "We couldn't find the texture pack!");
 			return false;
 		}
 
@@ -650,11 +650,13 @@ namespace r2::draw::texche
 
 		const auto numTexturePacks = entry.flatTexturePacksManifest->texturePacks()->size();
 
+		const auto* texturePacks = entry.flatTexturePacksManifest->texturePacks();
+
 		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
 		{
-			if (entry.flatTexturePacksManifest->texturePacks()->Get(i)->assetName()->assetName() == texturePackName)
+			if (texturePacks->Get(i)->assetName()->assetName() == texturePackName)
 			{
-				return entry.flatTexturePacksManifest->texturePacks()->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP;
+				return texturePacks->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP;
 			}
 		}
 
@@ -1116,6 +1118,102 @@ namespace r2::draw::texche
 		GetTexturesForMaterialnternal(texturePacksCache, texturePacks, textures, cubemaps);
 
 		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack)
+	{
+		u32 count = 0;
+		const auto* materialPack = materialParamsPack->pack();
+
+		for (u32 i = 0; i < materialPack->size(); ++i)
+		{
+			const auto* material = materialPack->Get(i);
+			auto textureParams = material->shaderParams()->textureParams();
+
+			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
+			{
+				if (r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				{
+					++count;
+					break;
+				}
+			}
+		}
+
+		return count;
+	}
+
+	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials)
+	{
+		R2_CHECK(cubeMapMaterials != nullptr, "Need at least the cubemap materials array");
+
+		const auto* materialPack = materialParamsPack->pack();
+
+		for (u32 i = 0; i < materialPack->size(); ++i)
+		{
+			const auto* material = materialPack->Get(i);
+			auto textureParams = material->shaderParams()->textureParams();
+
+			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
+			{
+				if (r2::draw::texche::IsTexturePackACubemap(texturePackCache, textureParams->Get(j)->texturePack()->assetName()))
+				{
+					r2::sarr::Push(*cubeMapMaterials, material);
+					break;
+				}
+
+			}
+		}
+
+		return true;
+	}
+
+	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack)
+	{
+		u32 count = 0;
+		const auto* materialPack = materialParamsPack->pack();
+
+		for (u32 i = 0; i < materialPack->size(); ++i)
+		{
+			const auto* material = materialPack->Get(i);
+			auto textureParams = material->shaderParams()->textureParams();
+
+			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
+			{
+				if (!r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				{
+					++count;
+					break;
+				}
+			}
+		}
+
+		return count;
+	}
+
+	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials)
+	{
+		R2_CHECK(textureMaterials != nullptr, "Need at least the cubemap materials array");
+
+		const auto* materialPack = materialParamsPack->pack();
+
+		for (u32 i = 0; i < materialPack->size(); ++i)
+		{
+			const auto* material = materialPack->Get(i);
+			auto textureParams = material->shaderParams()->textureParams();
+
+			for (flatbuffers::uoffset_t j = 0; j < textureParams->size(); ++j)
+			{
+				if (!r2::draw::texche::IsTexturePackACubemap(texturePacksCache, textureParams->Get(j)->texturePack()->assetName()))
+				{
+					r2::sarr::Push(*textureMaterials, material);
+					break;
+				}
+
+			}
+		}
 
 		return true;
 	}

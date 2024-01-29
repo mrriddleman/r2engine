@@ -13,13 +13,14 @@ namespace r2::evt
 class LevelRenderSettingsDataSource
 {
 public:
-	LevelRenderSettingsDataSource(const std::string& title, s32 sortOrder)
+	LevelRenderSettingsDataSource(const std::string& title, s32 sortOrder = -1)
 		:mTitle(title)
 		,mSortOrder(sortOrder)
 	{
 		
 	}
 
+	virtual ~LevelRenderSettingsDataSource() {}
 	virtual void Update() = 0;
 	virtual void Render() = 0;
 	virtual bool OnEvent(r2::evt::Event& e) = 0;

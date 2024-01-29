@@ -92,6 +92,12 @@ namespace r2::draw::texche
 	bool GetTexturesForFlatMaterial(TexturePacksCache& texturePacksCache, const flat::Material* material, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 	bool GetTexturesForMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
+	u32 NumCubemapTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack);
+	bool GetAllCubemapMaterialsAndTexturesInMaterialPack(TexturePacksCache& texturePackCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* cubeMapMaterials);
+
+	u32 NumTexturesInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack);
+	bool GetAllTextureMaterialsInMaterialPack(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, r2::SArray<const flat::Material*>* textureMaterials);
+
 	const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);
 	const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(TexturePacksCache& texturePacksCache, const flat::MaterialPack* materialParamsPack, u64 materialName);
 	

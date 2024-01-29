@@ -9130,6 +9130,18 @@ namespace r2::draw::renderer
 		return lightsys::GetSkyLightPtr(*renderer.mLightSystem, skyLightHandle);
 	}
 
+	bool HasSkylight(Renderer& renderer)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for AddSkyLightthe renderer");
+		return lightsys::HasSkylight(*renderer.mLightSystem);
+	}
+
+	SkyLightHandle GetCurrentSkylightHandle(Renderer& renderer)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetCurrentSkylightHandle(*renderer.mLightSystem);
+	}
+
 	void RemoveDirectionLight(Renderer& renderer, DirectionLightHandle dirLightHandle)
 	{
 		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
@@ -9721,6 +9733,16 @@ namespace r2::draw::renderer
 	SkyLight* GetSkyLightPtr(SkyLightHandle skyLightHandle)
 	{
 		return GetSkyLightPtr(MENG.GetCurrentRendererRef(), skyLightHandle);
+	}
+
+	bool HasSkylight()
+	{
+		return HasSkylight(MENG.GetCurrentRendererRef());
+	}
+
+	SkyLightHandle GetCurrentSkylightHandle()
+	{
+		return GetCurrentSkylightHandle(MENG.GetCurrentRendererRef());
 	}
 
 	//@TODO(Serge): add the get light properties functions here

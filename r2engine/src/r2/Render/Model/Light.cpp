@@ -665,6 +665,11 @@ namespace r2::draw::lightsys
 
 	SkyLight* GetSkyLightPtr(LightSystem& system, SkyLightHandle handle)
 	{
+		if (handle.handle == -1)
+		{
+			return nullptr;
+		}
+
 		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == handle.handle)
 		{
 			SetShouldUpdateSkyLight(system);
@@ -676,12 +681,27 @@ namespace r2::draw::lightsys
 
 	const SkyLight* GetSkyLightConstPtr(const LightSystem& system, SkyLightHandle handle)
 	{
+		if (handle.handle == -1)
+		{
+			return nullptr;
+		}
+
 		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == handle.handle)
 		{
 			return &system.mSceneLighting.mSkyLight;
 		}
 
 		return nullptr;
+	}
+
+	bool HasSkylight(const LightSystem& system)
+	{
+		return system.mSceneLighting.mSkyLight.lightProperties.lightID != -1;
+	}
+
+	SkyLightHandle GetCurrentSkylightHandle(LightSystem& system)
+	{
+		return { system.mSystemHandle, system.mSceneLighting.mSkyLight.lightProperties.lightID };
 	}
 
 	LightSystemHandle GenerateNewLightSystemHandle()

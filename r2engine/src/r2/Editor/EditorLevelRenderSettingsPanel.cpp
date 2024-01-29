@@ -3,6 +3,11 @@
 #if defined(R2_EDITOR) && defined(R2_IMGUI)
 
 #include "r2/Editor/EditorLevelRenderSettingsPanel.h"
+
+//Widgets
+#include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SkylightRenderSettingsPanelWidget.h"
+
+
 #include "imgui.h"
 
 namespace r2::edit
@@ -22,6 +27,10 @@ namespace r2::edit
 	void LevelRenderSettingsPanel::Init(Editor* noptrEditor)
 	{
 		mnoptrEditor = noptrEditor;
+
+		std::shared_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_shared<r2::edit::SkylightRenderSettingsPanelWidget>();
+		RegisterLevelRenderSettingsWidget(skylightWidget);
+
 	}
 
 	void LevelRenderSettingsPanel::Shutdown()
