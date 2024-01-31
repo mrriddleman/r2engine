@@ -799,9 +799,11 @@ namespace r2::edit
 				{
 					meshPass == flat::eMeshPass_TRANSPARENT;
 				}
+				
+
 
 				const flat::Material* firstMaterial = GetMaterialForMaterialName(r2::sarr::At(*modelRef->materialNames, 0));
-				std::vector<r2::mat::MaterialParam> suitableMaterials = r2::mat::GetAllMaterialsThatMatchVertexLayout(meshPass, firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->staticVertexLayout(),
+				std::vector<r2::mat::MaterialParam> suitableMaterials = r2::mat::GetAllMaterialsThatMatchVertexLayout(renderComponent.drawParameters.layer, meshPass, firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->staticVertexLayout(),
 					firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->dynamicVertexLayout());
 
 				for (u32 j = 0; j < numMaterials; ++j)
@@ -912,6 +914,7 @@ namespace r2::edit
 							{
 								renderComponent.drawParameters.blendState.blendingEnabled = false;
 							}
+
 						}
 					}
 				}

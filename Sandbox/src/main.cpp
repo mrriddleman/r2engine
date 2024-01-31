@@ -371,24 +371,24 @@ public:
 
     virtual bool Init() override
     {
-        memoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("SandboxArea");
+        //memoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("SandboxArea");
 
-        R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Invalid memory area");
-        
-        r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
-        R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
+        //R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Invalid memory area");
+        //
+        //r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
+        //R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(4), 0);
-        R2_CHECK(result == true, "Failed to initialize memory area");
+        //auto result = sandBoxMemoryArea->Init(Megabytes(4), 0);
+        //R2_CHECK(result == true, "Failed to initialize memory area");
+        //
+        //subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4));
+        //R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
+        //
+        //auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
         
-        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4));
-        R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
+       // linearArenaPtr = EMPLACE_LINEAR_ARENA(*subMemoryArea);
         
-        auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
-        
-        linearArenaPtr = EMPLACE_LINEAR_ARENA(*subMemoryArea);
-        
-        R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
+       // R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
         
         mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
@@ -516,7 +516,7 @@ public:
         //    startingX -= 20.f / static_cast<float>(NUM_DRAWS);
         //}
 
-        mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
+      //  mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
 
         //mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
         //mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
@@ -1189,16 +1189,16 @@ public:
    //     }
 
         //Draw the Skybox
-		r2::SArray<glm::mat4>* skyboxModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
-		r2::sarr::Push(*skyboxModelMatrices, glm::mat4(1.0f));
+		//r2::SArray<glm::mat4>* skyboxModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+		//r2::sarr::Push(*skyboxModelMatrices, glm::mat4(1.0f));
 
-        drawWorldParams.layer = r2::draw::DL_SKYBOX;
+        //drawWorldParams.layer = r2::draw::DL_SKYBOX;
 
-#ifdef R2_ASSET_PIPELINE
-        r2::mat::MaterialName skyboxMaterialName = { {STRING_ID("NewportSkybox"), "newportskybox"}, materialParamsPackName };
-#else
-        r2::mat::MaterialName skyboxMaterialName = { {STRING_ID("NewportSkybox")}, materialParamsPackName };
-#endif
+//#ifdef R2_ASSET_PIPELINE
+//        r2::mat::MaterialName skyboxMaterialName = { {STRING_ID("NewportSkybox"), "newportskybox"}, materialParamsPackName };
+//#else
+//        r2::mat::MaterialName skyboxMaterialName = { {STRING_ID("NewportSkybox")}, materialParamsPackName };
+//#endif
         
 
 		/*  r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
@@ -1209,18 +1209,18 @@ public:
 
 		  r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
 		  r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);*/
-        r2::SArray<r2::mat::MaterialName>* skyboxMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
-        r2::sarr::Push(*skyboxMaterials, skyboxMaterialName);
+        //r2::SArray<r2::mat::MaterialName>* skyboxMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, 1);
+        //r2::sarr::Push(*skyboxMaterials, skyboxMaterialName);
 
 
 
-        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, *skyboxMaterials, nullptr);
+//        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, *skyboxMaterials, nullptr);
 
 
-        FREE(skyboxMaterials, *MEM_ENG_SCRATCH_PTR);
+  //      FREE(skyboxMaterials, *MEM_ENG_SCRATCH_PTR);
      //   FREE(skyboxShaderHandles, *MEM_ENG_SCRATCH_PTR);
     //    FREE(skyboxRenderParams, *MEM_ENG_SCRATCH_PTR);
-        FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
+  //      FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the axis
 #ifdef R2_DEBUG
@@ -1283,7 +1283,7 @@ public:
   //      FREE(mTransparentWindowMats, *linearArenaPtr);
   //      FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
 
-        FREE_EMPLACED_ARENA(linearArenaPtr);
+   //     FREE_EMPLACED_ARENA(linearArenaPtr);
     }
     
     virtual std::string GetSoundDefinitionPath() const override
@@ -1661,16 +1661,16 @@ public:
 #endif
 
 private:
-    r2::mem::MemoryArea::Handle memoryAreaHandle;
-    r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
+    //r2::mem::MemoryArea::Handle memoryAreaHandle;
+    //r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
     r2::cam::PerspectiveController mPersController;
 
-    r2::mem::LinearArena* linearArenaPtr;
+   // r2::mem::LinearArena* linearArenaPtr;
 
   //  r2::draw::vb::GPUModelRefHandle mSkeletonModelRefHandle;
  //   r2::draw::vb::GPUModelRefHandle mEllenModelRefHandle;
 
-    r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
+    //r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
 
     //r2::SArray<glm::mat4>* modelMats;
    // r2::SArray<glm::mat4>* animModelMats;

@@ -271,7 +271,7 @@ namespace r2::mat
 		return materialsToReturn;
 	}
 
-	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout)
+	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(r2::draw::DrawLayer drawLayer, flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout)
 	{
 		std::vector<MaterialParam> materialsToReturn = {};
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
@@ -308,7 +308,8 @@ namespace r2::mat
 
 				R2_CHECK(shaderEffect != nullptr, "Should always be valid");
 
-				if (shaderEffect->staticVertexLayout() == staticVertexLayout && shaderEffect->dynamicVertexLayout() == dynamicVertexLayout)
+				if (shaderEffect->staticVertexLayout() == staticVertexLayout && shaderEffect->dynamicVertexLayout() == dynamicVertexLayout ||
+					(drawLayer == draw::DL_SKYBOX && shaderEffect->dynamicVertexLayout() == 0 && shaderEffect->staticVertexLayout() != 0))
 				{
 					MaterialParam materialParam;
 					materialParam.flatMaterial = material;

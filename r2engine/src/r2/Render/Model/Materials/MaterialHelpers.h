@@ -50,7 +50,7 @@ namespace r2::mat
 		MaterialName materialName;
 	};
 
-	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout);
+	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(r2::draw::DrawLayer drawLayer, flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout);
 
 	MaterialName GetMaterialNameForPath(const std::string& path);
 
