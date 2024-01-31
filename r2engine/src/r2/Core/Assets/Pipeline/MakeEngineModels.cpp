@@ -215,7 +215,7 @@ namespace r2::asset::pln
 	void MakeSphereModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeConeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCylinderModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
-	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	//void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, u64 materialPackName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 
@@ -228,7 +228,7 @@ namespace r2::asset::pln
 		{"Cone.modl", MakeConeModel},
 		{"Cylinder.modl", MakeCylinderModel},
 		{"FullscreenTriangle.modl", MakeFullscreenTriangleModel},
-		{"Skybox.modl", MakeSkyboxModel},
+	//	{"Skybox.modl", MakeSkyboxModel},
 		
 		
 	};
@@ -253,7 +253,7 @@ namespace r2::asset::pln
 			MakeConeModel,
 			MakeCylinderModel,
 			MakeFullscreenTriangleModel,
-			MakeSkyboxModel,
+	//		MakeSkyboxModel,
 			
 		};
 
@@ -1483,14 +1483,14 @@ namespace r2::asset::pln
 		MakeModelInternal("Cylinder", "CylinderMesh", DEFAULT_MATERIAL.c_str(), materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
-	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
-	{
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, ENGINE_MATERIAL_PACK.c_str());
-		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+	//void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	//{
+	//	char materialsPath[r2::fs::FILE_PATH_LENGTH];
+	//	r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, ENGINE_MATERIAL_PACK.c_str());
+	//	const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
-		MakeModelInternal("Skybox", "CubeMesh", "Skybox", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
-	}
+	//	MakeModelInternal("Skybox", "CubeMesh", "Skybox", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
+	//}
 
 	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{

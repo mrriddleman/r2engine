@@ -800,11 +800,19 @@ namespace r2::edit
 					meshPass == flat::eMeshPass_TRANSPARENT;
 				}
 				
-
+				
 
 				const flat::Material* firstMaterial = GetMaterialForMaterialName(r2::sarr::At(*modelRef->materialNames, 0));
-				std::vector<r2::mat::MaterialParam> suitableMaterials = r2::mat::GetAllMaterialsThatMatchVertexLayout(renderComponent.drawParameters.layer, meshPass, firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->staticVertexLayout(),
-					firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->dynamicVertexLayout());
+
+				flat::eVertexLayoutType staticLayout = firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->staticVertexLayout();
+				flat::eVertexLayoutType dynamicLayout = firstMaterial->shaderEffectPasses()->shaderEffectPasses()->Get(meshPass)->dynamicVertexLayout();
+
+				if (renderComponent.drawParameters.layer == draw::DL_SKYBOX)
+				{
+					dynamicLayout = flat::eVertexLayoutType::eVertexLayoutType_VLT_NONE;
+				}
+
+				std::vector<r2::mat::MaterialParam> suitableMaterials = r2::mat::GetAllMaterialsThatMatchVertexLayout(renderComponent.drawParameters.layer, meshPass, staticLayout, dynamicLayout);
 
 				for (u32 j = 0; j < numMaterials; ++j)
 				{

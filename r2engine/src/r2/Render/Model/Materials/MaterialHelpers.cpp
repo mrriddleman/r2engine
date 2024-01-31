@@ -308,8 +308,7 @@ namespace r2::mat
 
 				R2_CHECK(shaderEffect != nullptr, "Should always be valid");
 
-				if (shaderEffect->staticVertexLayout() == staticVertexLayout && shaderEffect->dynamicVertexLayout() == dynamicVertexLayout ||
-					(drawLayer == draw::DL_SKYBOX && shaderEffect->dynamicVertexLayout() == 0 && shaderEffect->staticVertexLayout() != 0))
+				if (shaderEffect->staticVertexLayout() == staticVertexLayout && shaderEffect->dynamicVertexLayout() == dynamicVertexLayout || (drawLayer == draw::DL_SKYBOX && shaderEffect->dynamicVertexLayout() == 0 && shaderEffect->staticVertexLayout() != 0))
 				{
 					MaterialParam materialParam;
 					materialParam.flatMaterial = material;

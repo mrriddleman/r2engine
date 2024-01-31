@@ -97,14 +97,6 @@
     },
     {
       assetName: {
-        assetName: 8870793898742704040,
-        stringName: "models/skybox.modl"
-      },
-      binPath: "D:/Projects/r2engine/r2engine/assets_bin/models/Skybox.modl",
-      rawPath: "D:/Projects/r2engine/r2engine/assets/models/raw/Skybox.json"
-    },
-    {
-      assetName: {
         assetName: 12080199459528992917,
         stringName: "models/sphere.modl"
       },

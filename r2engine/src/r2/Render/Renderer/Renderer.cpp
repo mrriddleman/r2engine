@@ -353,7 +353,7 @@ namespace
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/cylinder.modl", r2::asset::MODEL));
 		
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/fullscreentriangle.modl", r2::asset::MODEL));
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("models/skybox.modl", r2::asset::MODEL));
+	//	r2::sarr::Push(*defaultModels, r2::asset::Asset("models/skybox.modl", r2::asset::MODEL));
 		
 
 		r2::draw::modlche::LoadModels(renderer.mModelCache, *defaultModels, *renderer.mDefaultModelHandles);
@@ -2926,7 +2926,7 @@ namespace r2::draw::renderer
 	//	
 
 		//@NOTE: because we can now re-use meshes for other models, we can re-use the CUBE mesh for the SKYBOX model
-		r2::sarr::Push(*renderer.mEngineModelRefs, GetDefaultModelRef(renderer, CUBE));
+		//r2::sarr::Push(*renderer.mEngineModelRefs, GetDefaultModelRef(renderer, CUBE));
 		//r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, UploadModel(fullScreenTriangleModel));
 	//	r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(QUAD));
 	}

@@ -123,7 +123,7 @@ namespace r2::draw
 		CONE,
 		CYLINDER,
 		FULLSCREEN_TRIANGLE,
-		SKYBOX,
+		
 		NUM_DEFAULT_MODELS,
 	};
 
