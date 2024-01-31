@@ -493,11 +493,11 @@ public:
         r2::util::Random randomizer;
         
         //color grading
-        const r2::draw::tex::Texture* colorGradingLUT = r2::draw::texche::GetAlbedoTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("ColorGradingLUT")); //gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
+        //const r2::draw::tex::Texture* colorGradingLUT = r2::draw::texche::GetAlbedoTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("ColorGradingLUT")); //gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
 
-        r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
-        r2::draw::renderer::SetColorGradingContribution(0.05);
-        r2::draw::renderer::EnableColorGrading(true);
+        //r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
+        //r2::draw::renderer::SetColorGradingContribution(0.05);
+        //r2::draw::renderer::EnableColorGrading(true);
 
         //float startingX = 10.0f;
 
@@ -558,9 +558,9 @@ public:
             //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);
 
 			r2::draw::DirectionLight dirLight;
-			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
+			dirLight.lightProperties.color = glm::vec4(1, 1, 1, 1.0f);
 
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 0.0f, 100.0f, 0.0f));
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(40.0f, 0.0f, 100.0f, 0.0f));
 			dirLight.lightProperties.intensity = 1;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
@@ -1026,14 +1026,14 @@ public:
 
     virtual void Render(float alpha) override
     {
-        r2::draw::DrawParameters drawWorldParams;
-        drawWorldParams.layer = r2::draw::DL_WORLD;
-        drawWorldParams.flags.Clear();
-        drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        //r2::draw::DrawParameters drawWorldParams;
+        //drawWorldParams.layer = r2::draw::DL_WORLD;
+        //drawWorldParams.flags.Clear();
+        //drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        r2::draw::renderer::SetDefaultCullState(drawWorldParams);
-        r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
-        r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
+        //r2::draw::renderer::SetDefaultCullState(drawWorldParams);
+        //r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
+        //r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
    //     r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
@@ -1072,10 +1072,10 @@ public:
         //r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
         //r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
 
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
+		//char materialsPath[r2::fs::FILE_PATH_LENGTH];
+  //      r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
 
-        u64 materialParamsPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
+  //      u64 materialParamsPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
         //draw transparent windows
   /*      const r2::draw::RenderMaterialParams* transparentWindowRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("TransparentWindow"));
         r2::draw::ShaderHandle transparentWindowShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("TransparentWindow"), materialParamsPackName });

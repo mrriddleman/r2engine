@@ -744,10 +744,12 @@ namespace r2::draw::renderer
 	void SetDefaultDrawParameters(DrawParameters& drawParameters);
 
 	void SetColorCorrection(const ColorCorrection& cc);
+
 	void SetColorGradingLUT(const tex::Texture* lut, u32 numSwatches);
 	void EnableColorGrading(bool isEnabled);
 	void SetColorGradingContribution(float contribution);
-
+	float GetColorGradingContribution();
+	bool IsColorGradingEnabled();
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);

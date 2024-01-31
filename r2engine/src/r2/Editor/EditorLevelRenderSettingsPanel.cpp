@@ -6,7 +6,7 @@
 
 //Widgets
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SkylightRenderSettingsPanelWidget.h"
-
+#include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/ColorGradingRenderSettingsPanelWidget.h"
 
 #include "imgui.h"
 
@@ -31,6 +31,8 @@ namespace r2::edit
 		std::shared_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_shared<r2::edit::SkylightRenderSettingsPanelWidget>();
 		RegisterLevelRenderSettingsWidget(skylightWidget);
 
+		std::shared_ptr<r2::edit::ColorGradingRenderSettingsPanelWidget> colorGradingWidget = std::make_shared<r2::edit::ColorGradingRenderSettingsPanelWidget>();
+		RegisterLevelRenderSettingsWidget(colorGradingWidget);
 	}
 
 	void LevelRenderSettingsPanel::Shutdown()

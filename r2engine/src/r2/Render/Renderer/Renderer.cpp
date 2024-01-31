@@ -464,7 +464,9 @@ namespace r2::draw::renderer
 
 	void SetColorGradingLUT(Renderer& renderer, const tex::TextureAddress& lut, f32 halfColX, f32 halfColY, f32 numSwatches);
 	void EnableColorGrading(Renderer& renderer, bool isEnabled);
+	bool IsColorGradingEnabled(Renderer& renderer);
 	void SetColorGradingContribution(Renderer& renderer, float contribution);
+	float GetColorGradingContribution(Renderer& renderer);
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
@@ -8963,11 +8965,21 @@ namespace r2::draw::renderer
 		renderer.mColorCorrectionNeedsUpdate = true;
 	}
 
+	bool IsColorGradingEnabled(Renderer& renderer)
+	{
+		return renderer.mColorGradingEnabled;
+	}
+
 	void SetColorGradingContribution(Renderer& renderer, float contribution)
 	{
 		renderer.mColorCorrectionData.mColorGradingContribution = glm::clamp(contribution, 0.0f, 1.0f);
 		
 		renderer.mColorCorrectionNeedsUpdate = true;
+	}
+
+	float GetColorGradingContribution(Renderer& renderer)
+	{
+		return renderer.mColorCorrectionData.mColorGradingContribution;
 	}
 
 	void UpdateColorCorrectionIfNeeded(Renderer& renderer)
@@ -8979,12 +8991,12 @@ namespace r2::draw::renderer
 
 			ColorCorrection colorCorrection = renderer.mColorCorrectionData;
 
-			if (renderer.mColorGradingEnabled)
+			if (!renderer.mColorGradingEnabled)
 			{
 				colorCorrection.mColorGradingContribution = 0.0f;
 			}
 
-			AddFillConstantBufferCommandFull(renderer, colorCorrectionConstantBufferHandle, &renderer.mColorCorrectionData, sizeof(renderer.mColorCorrectionData), 0);
+			AddFillConstantBufferCommandFull(renderer, colorCorrectionConstantBufferHandle, &colorCorrection, sizeof(renderer.mColorCorrectionData), 0);
 
 			renderer.mColorCorrectionNeedsUpdate = false;
 		}
@@ -9800,6 +9812,16 @@ namespace r2::draw::renderer
 	void SetColorGradingContribution(float contribution)
 	{
 		SetColorGradingContribution(MENG.GetCurrentRendererRef(), contribution);
+	}
+
+	bool IsColorGradingEnabled()
+	{
+		return IsColorGradingEnabled(MENG.GetCurrentRendererRef());
+	}
+
+	float GetColorGradingContribution()
+	{
+		return GetColorGradingContribution(MENG.GetCurrentRendererRef());
 	}
 
 	//------------------------------------------------------------------------------

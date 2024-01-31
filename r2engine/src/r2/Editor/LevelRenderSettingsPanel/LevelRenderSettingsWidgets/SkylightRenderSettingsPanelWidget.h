@@ -35,7 +35,7 @@ namespace r2::edit
 		r2::draw::tex::TextureAddress convolvedTextureAddress;
 		r2::draw::tex::TextureAddress prefilteredTextureAddress;
 		r2::draw::tex::TextureAddress lutDFGTextureAddress;
-		u32 numMips;
+		u32 mNumMips;
 	};
 }
 

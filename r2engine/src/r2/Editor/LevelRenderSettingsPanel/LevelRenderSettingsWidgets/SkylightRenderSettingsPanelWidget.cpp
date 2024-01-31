@@ -18,6 +18,7 @@ namespace r2::edit
 
 	SkylightRenderSettingsPanelWidget::SkylightRenderSettingsPanelWidget()
 		:LevelRenderSettingsDataSource("Skylight Settings")
+		,mNumMips(0)
 	{
 
 	}
@@ -30,7 +31,7 @@ namespace r2::edit
 
 	void SkylightRenderSettingsPanelWidget::Init()
 	{
-		numMips = 0;
+		mNumMips = 0;
 		PopulateSkylightMaterials();
 	}
 
@@ -144,7 +145,7 @@ namespace r2::edit
 					const auto* cubemapRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, mPrefilteredMaterialNames[i].hashID);
 
 					prefilteredTextureAddress = cubemapRenderMaterial->cubemap.texture;
-					numMips = mPrefilteredMipLevels[i];
+					mNumMips = mPrefilteredMipLevels[i];
 
 					needsUpdate = true;
 				}
@@ -175,7 +176,7 @@ namespace r2::edit
 
 		if (!r2::draw::renderer::HasSkylight())
 		{
-			bool disableCondition = lutDFGTextureAddress.containerHandle == 0 || convolvedTextureAddress.containerHandle == 0 || prefilteredTextureAddress.containerHandle == 0 || numMips == 0;
+			bool disableCondition = lutDFGTextureAddress.containerHandle == 0 || convolvedTextureAddress.containerHandle == 0 || prefilteredTextureAddress.containerHandle == 0 || mNumMips == 0;
 
 			if (disableCondition)
 			{
@@ -190,7 +191,7 @@ namespace r2::edit
 				newSkylight.prefilteredRoughnessTexture = prefilteredTextureAddress;
 				newSkylight.lutDFGTexture = lutDFGTextureAddress;
 
-				r2::draw::renderer::AddSkyLight(newSkylight, numMips);
+				r2::draw::renderer::AddSkyLight(newSkylight, mNumMips);
 			}
 
 			if (disableCondition)
