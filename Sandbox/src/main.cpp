@@ -400,8 +400,8 @@ public:
         mTransparentWindowModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
         mTransparentWindowDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);*/
 
-        r2::draw::DrawFlags drawFlags;
-        drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        //r2::draw::DrawFlags drawFlags;
+        //drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         
         r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
         r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();

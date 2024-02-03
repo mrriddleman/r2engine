@@ -54,9 +54,7 @@ namespace r2::draw
     enum DebugDrawType
     {
         DDT_LINES = 0,
-        DDT_MODELS,
-        DDT_LINES_TRANSPARENT,
-        DDT_MODELS_TRANSPARENT,
+        DDT_MODELS_GENERIC,
         NUM_DEBUG_DRAW_TYPES
     };
 
@@ -72,7 +70,8 @@ namespace r2::draw
         DL_HUD,
         DL_SCREEN,
        
-        DL_DEBUG //should always be last
+        DL_DEBUG, //should always be last
+        DL_DEBUG_TRANSPARENT
     };
 
 	extern u32 LESS;

@@ -168,9 +168,12 @@ struct BatchRenderOffsets
 
 	struct DebugDrawCommandData
 	{
-		ShaderHandle shaderID = InvalidShader;
 		PrimitiveType primitiveType = PrimitiveType::LINES;
 		b32 depthEnabled = false;
+		b32 filled = false;
+		r2::draw::ShaderHandle shaderHandle = r2::draw::InvalidShader;
+		flat::eMeshPass meshPass;
+		DrawLayer drawLayer;
 
 		r2::SArray<cmd::DrawBatchSubCommand>* debugModelDrawBatchCommands = nullptr;
 		r2::SArray<cmd::DrawDebugBatchSubCommand>* debugLineDrawBatchCommands = nullptr;
@@ -181,7 +184,6 @@ struct BatchRenderOffsets
 		DebugDrawType debugDrawType;
 
 		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
-		r2::draw::ShaderHandle shaderHandle = r2::draw::InvalidShader;
 
 		ConstantConfigHandle subCommandsConstantConfigHandle = InvalidConstantConfigHandle;
 		ConstantBufferHandle renderDebugConstantsConfigHandle = InvalidConstantConfigHandle;
@@ -189,12 +191,14 @@ struct BatchRenderOffsets
 		r2::SArray<DebugModelType>* debugModelTypesToDraw = nullptr;
 		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
 		r2::SArray<DebugVertex>* vertices = nullptr;
+
+		//@TODO(Serge): make a struct with these fields and only have 1 array
 		r2::SArray<DrawFlags>* drawFlags = nullptr;
 		r2::SArray<u32>* numInstances = nullptr;
+		r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
+		r2::SArray<flat::eMeshPass>* meshPasses = nullptr;
 
-		DebugDrawCommandData debugDrawCommandData[2]; //0 - depth, 1 - no depth
-
-		static u64 MemorySize(u32 maxDraws, bool hasDebugLines, u64 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u32 maxDraws, bool hasDebugLines, u32 numShaders, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
 #endif
@@ -609,12 +613,9 @@ struct BatchRenderOffsets
 		r2::mem::StackArena* mDebugCommandArena = nullptr;
 
 		r2::SArray<DebugRenderBatch>* mDebugRenderBatches = nullptr;
-
-
-		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = nullptr;
-		r2::SArray<BatchRenderOffsets>* transparentModelBatchRenderOffsets = nullptr;
 		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
-		r2::SArray<BatchRenderOffsets>* transparentLinesBatchRenderOffsets = nullptr;
+
+		r2::SArray<BatchRenderOffsets>* genericModelBatchRenderOffsets = nullptr;
 
 		r2::SArray<cmd::DrawBatchSubCommand>* modelDrawBatchSubCommands = nullptr;
 		r2::SArray<cmd::DrawDebugBatchSubCommand>* linesDrawBatchSubCommands = nullptr;

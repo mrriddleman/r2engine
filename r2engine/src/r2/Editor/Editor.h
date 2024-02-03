@@ -8,7 +8,7 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Utils/Random.h"
 
-
+#include "r2/Render/Model/Materials/MaterialTypes.h"
 
 namespace r2::evt
 {
@@ -110,6 +110,9 @@ namespace r2
 		s32 mEditorFileImageWidth;
 		s32 mEditorFileImageHeight;
 		u32 mEditorFileImage;
+
+		u64 mEngineMaterialPackName;
+		r2::mat::MaterialName mGridMaterialName;
 	};
 }
 

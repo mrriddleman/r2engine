@@ -104,6 +104,17 @@ namespace r2
 		}
 		
 		CreateNewLevel("NewGroup", "NewLevel");
+
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
+
+		mEngineMaterialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
+
+		#ifdef R2_ASSET_PIPELINE
+		mGridMaterialName = { {STRING_ID("EditorCartesianGrid"), "EditorCartesianGrid"}, mEngineMaterialPackName };
+		#else
+		mGridMaterialName = { {STRING_ID("EditorCartesianGrid")}, materialParamsPackName };
+		#endif
 	}
 
 	void Editor::Shutdown()
@@ -165,7 +176,6 @@ namespace r2
 
 	void Editor::Render()
 	{
-
 	}
 
 	void Editor::RenderImGui(u32 dockingSpaceID)
