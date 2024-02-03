@@ -342,7 +342,15 @@
       		binaryPath: "",
       		partPath: ""
 		},
-
+		{
+			shaderName: "GridShader",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/CartesianGrid.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/CartesianGrid.fs",
+			geometryPath: "",
+      		computePath: "",
+      		binaryPath: "",
+      		partPath: ""
+		},
 
 	],
   	basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"

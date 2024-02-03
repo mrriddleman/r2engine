@@ -580,6 +580,8 @@ namespace r2::draw::renderer
 
 	void DrawQuadInstanced(Renderer& renderer, const r2::SArray<glm::vec3>& centers, const r2::SArray<glm::vec2>& scales, const r2::SArray<glm::vec3>& normals, const r2::SArray<glm::vec4>& colors, bool filled, bool depthTest);
 
+	void DrawQuad(Renderer& renderer, const glm::mat4& mat, flat::eMeshPass meshPass, ShaderHandle shader, bool depthTest);
+
 	void DrawSphereInstanced(
 		Renderer& renderer,
 		const r2::SArray<glm::vec3>& centers,
@@ -1040,6 +1042,10 @@ namespace r2::draw::renderer
 
 		newRenderer->mEntityColorShader[1] = shadersystem::FindShaderHandle(STRING_ID("DynamicEntityColor"));
 		CheckIfValidShader(*newRenderer, newRenderer->mEntityColorShader[1], "DynamicEntityColor");
+
+
+		newRenderer->mGridShader = shadersystem::FindShaderHandle(STRING_ID("GridShader"));
+		CheckIfValidShader(*newRenderer, newRenderer->mGridShader, "GridShader");
 #endif
 
 
@@ -1058,6 +1064,9 @@ namespace r2::draw::renderer
 
 
 		//@TODO(Serge): get rid of this - it's a giant hack
+
+		
+
 		newRenderer->mStaticDirectionLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mShadowDepthShaders[0], "directionLightBatch");
 		newRenderer->mDynamicDirectionLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mShadowDepthShaders[1], "directionLightBatch");
 
@@ -7483,6 +7492,30 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void DrawQuad(Renderer& renderer, const glm::mat4& mat, flat::eMeshPass meshPass, ShaderHandle shader, bool depthTest)
+	{
+		static DebugRenderBatch& genericDebugRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS_GENERIC);
+
+		R2_CHECK(genericDebugRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		DrawFlags flags;
+		flags.Set(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		DebugRenderConstants constants;
+		constants.color = glm::vec4(1);
+		constants.modelMatrix = mat;
+
+		r2::sarr::Push(*genericDebugRenderBatch.debugRenderConstants, constants);
+
+		r2::sarr::Push(*genericDebugRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*genericDebugRenderBatch.debugModelTypesToDraw, DEBUG_QUAD);
+		r2::sarr::Push(*genericDebugRenderBatch.numInstances, static_cast<u32>(1));
+
+		r2::sarr::Push(*genericDebugRenderBatch.shaderHandles, shader);
+		r2::sarr::Push(*genericDebugRenderBatch.meshPasses, meshPass);
+	}
+
 	void DrawQuadInstanced(
 		Renderer& renderer,
 		const r2::SArray<glm::vec3>& centers,
@@ -9798,6 +9831,11 @@ namespace r2::draw::renderer
 		R2_CHECK(entityInstances.mSize == modelMatrices.mSize, "Should always be true");
 
 		DrawModels(MENG.GetCurrentRendererRef(), entities, entityInstances, numEntityInstancesPerEntity, drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialNamesPerMesh, boneTransforms);
+	}
+
+	void DrawGrid()
+	{
+		DrawQuad(MENG.GetCurrentRendererRef(), glm::mat4(2), flat::eMeshPass_TRANSPARENT, MENG.GetCurrentRendererRef().mGridShader, true);
 	}
 
 #endif

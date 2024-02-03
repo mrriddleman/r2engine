@@ -378,6 +378,9 @@ struct BatchRenderOffsets
 
 		//@TODO(Serge): figure out a nicer way to store all this stuff
 		//----------------------------------------------------------------
+#ifdef R2_EDITOR
+		ShaderHandle mGridShader;
+#endif
 		ShaderHandle mShadowSplitComputeShader;
 		ShaderHandle mShadowDepthShaders[2]; //0 - static, 1 - dynamic
 		ShaderHandle mDepthShaders[2];
@@ -807,6 +810,7 @@ namespace r2::draw::renderer
 		const r2::SArray<r2::mat::MaterialName>& materialNamesPerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
+	void DrawGrid();
 
 #endif
 

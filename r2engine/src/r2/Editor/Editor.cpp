@@ -176,6 +176,7 @@ namespace r2
 
 	void Editor::Render()
 	{
+		r2::draw::renderer::DrawGrid();
 	}
 
 	void Editor::RenderImGui(u32 dockingSpaceID)
