@@ -91,10 +91,9 @@ namespace r2
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
 
-	private:
+		void ToggleGrid();
 
-		
-		
+	private:
 
 		Level* mCurrentEditorLevel;
 
@@ -113,6 +112,7 @@ namespace r2
 
 		u64 mEngineMaterialPackName;
 		r2::mat::MaterialName mGridMaterialName;
+		bool mShowGrid;
 	};
 }
 

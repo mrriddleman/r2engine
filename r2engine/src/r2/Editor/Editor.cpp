@@ -59,6 +59,7 @@ namespace r2
 		, mEditorFolderImageHeight(0)
 		, mEditorFolderImage(0)
 		, mMainMenuBar(nullptr)
+		, mShowGrid(false)
 	{
 		
 	}
@@ -140,7 +141,7 @@ namespace r2
 					UndoLastAction();
 					return true;
 				}
-				else if (e.KeyCode() == r2::io::KEY_z && 
+				else if (e.KeyCode() == r2::io::KEY_z &&
 					((e.Modifiers() & r2::io::Key::CONTROL_PRESSED) == r2::io::Key::CONTROL_PRESSED) &&
 					((e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == r2::io::Key::SHIFT_PRESSED_KEY))
 				{
@@ -153,6 +154,12 @@ namespace r2
 					Save();
 					return true;
 				}
+				else if (e.KeyCode() == r2::io::KEY_g && ((e.Modifiers() & r2::io::Key::CONTROL_PRESSED) == r2::io::Key::CONTROL_PRESSED))
+				{
+					ToggleGrid();
+					return true;
+				}
+
 
 				return false;
 			});
@@ -176,7 +183,8 @@ namespace r2
 
 	void Editor::Render()
 	{
-		r2::draw::renderer::DrawGrid();
+		if(mShowGrid)
+			r2::draw::renderer::DrawGrid();
 	}
 
 	void Editor::RenderImGui(u32 dockingSpaceID)
@@ -608,6 +616,11 @@ namespace r2
 		{
 			mMainMenuBar->OpenCreateNewLevelWindow();
 		}
+	}
+
+	void Editor::ToggleGrid()
+	{
+		mShowGrid = !mShowGrid;
 	}
 
 	void Editor::AddModelToLevel(const r2::asset::AssetName& modelAsset)

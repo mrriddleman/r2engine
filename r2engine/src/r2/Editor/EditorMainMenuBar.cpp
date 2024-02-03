@@ -167,6 +167,11 @@ namespace r2::edit
 
 				}
 
+				if (ImGui::MenuItem("Show Grid"))
+				{
+
+				}
+
 				ImGui::EndMenu();
 			}
 
