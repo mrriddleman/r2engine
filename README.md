@@ -1,6 +1,6 @@
 # r2engine
 
-r2 is a full physically based rendering engine written in C++ and OpenGL4.5 from scratch since 2019.
+r2 is a full physically based rendering engine written in C++ and OpenGL4.5 from scratch since 2019. Under heavy development.
 
 ## Screenshots
 
