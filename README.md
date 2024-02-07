@@ -2,6 +2,10 @@
 
 r2 is a full physically based rendering engine written in C++ and OpenGL4.5 from scratch since 2019.
 
+## Screenshots
+
+![EngineScreenshot](https://github.com/mrriddleman/r2engine/assets/47239656/ce2bcc90-a2ff-4ed9-82cb-f8b087c30faa)
+
 ## Features:
 
 HDR Forward+ renderer using clustered shading for 1000s of lights
@@ -15,6 +19,8 @@ Image-based lighting
 SDSM Cascaded Shadow Mapping
 
 Physically based bloom
+
+Order Independent Transparency
 
 Screen-Space reflections
 
@@ -32,3 +38,4 @@ In-game editor using ImGui
 
 Custom Allocators and containers
 
+FMOD Studio Integration
