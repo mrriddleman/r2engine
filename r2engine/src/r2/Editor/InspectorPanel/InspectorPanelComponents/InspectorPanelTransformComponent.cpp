@@ -31,33 +31,53 @@ namespace r2::edit
 		ecs::TransformComponent* transformComponentPtr = static_cast<ecs::TransformComponent*>(componentData);
 		ecs::TransformComponent& transformComponent = *transformComponentPtr;
 
+		bool needsUpdate = false;
+
 		ImGui::Text("Position");
 
 		ImGui::Text("X Pos: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label xpos", &transformComponent.localTransform.position.x, 0.1f);
+		if (ImGui::DragFloat("##label xpos", &transformComponent.localTransform.position.x, 0.1f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Y Pos: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label ypos", &transformComponent.localTransform.position.y, 0.1f);
+		if (ImGui::DragFloat("##label ypos", &transformComponent.localTransform.position.y, 0.1f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Z Pos: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label zpos", &transformComponent.localTransform.position.z, 0.1f);
+		if (ImGui::DragFloat("##label zpos", &transformComponent.localTransform.position.z, 0.1f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Scale");
 
 		ImGui::Text("X Scale: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label xscale", &transformComponent.localTransform.scale.x, 0.01f, 0.01f, 1.0f);
+		if (ImGui::DragFloat("##label xscale", &transformComponent.localTransform.scale.x, 0.01f, 0.01f, 1.0f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Y Scale: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label yscale", &transformComponent.localTransform.scale.y, 0.01f, 0.01f, 1.0f);
+		if (ImGui::DragFloat("##label yscale", &transformComponent.localTransform.scale.y, 0.01f, 0.01f, 1.0f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Z Scale: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label zscale", &transformComponent.localTransform.scale.z, 0.01f, 0.01f, 1.0f);
+		if (ImGui::DragFloat("##label zscale", &transformComponent.localTransform.scale.z, 0.01f, 0.01f, 1.0f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Rotation");
 
@@ -66,23 +86,33 @@ namespace r2::edit
 
 		ImGui::Text("X Rot: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label xrot", &eulerAngles.x, 0.1f, -179.999f, 179.999f);
+		if (ImGui::DragFloat("##label xrot", &eulerAngles.x, 0.1f, -179.999f, 179.999f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Y Rot: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label yrot", &eulerAngles.y, 0.1f, -179.999f, 179.999f);
+		if (ImGui::DragFloat("##label yrot", &eulerAngles.y, 0.1f, -179.999f, 179.999f))
+		{
+			needsUpdate = true;
+		}
 
 		ImGui::Text("Z Rot: ");
 		ImGui::SameLine();
-		ImGui::DragFloat("##label zrot", &eulerAngles.z, 0.1f, -179.999f, 179.999f);
+		if (ImGui::DragFloat("##label zrot", &eulerAngles.z, 0.1f, -179.999f, 179.999f))
+		{
+			needsUpdate = true;
+		}
 
 		transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
 
-		if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(theEntity))
+		if (needsUpdate && !coordinator->HasComponent<ecs::TransformDirtyComponent>(theEntity))
 		{
 			ecs::TransformDirtyComponent transformDirtyComponent;
-			coordinator->AddComponent<ecs::TransformDirtyComponent>(theEntity, transformDirtyComponent);
+			coordinator->AddComponent<ecs::TransformDirtyComponent>(theEntity, transformDirtyComponent);	
 		}
+
 	}
 
 	bool InspectorPanelTransformDataSource::InstancesEnabled() const

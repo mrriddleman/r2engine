@@ -58,20 +58,6 @@ namespace r2::ecs
 
 			glm::mat4 worldTransform = math::ToMatrix(entityTransformComponent.accumTransform);
 
-			//RenderComponent* renderComponent = mnoptrCoordinator->GetComponentPtr<RenderComponent>(entity);
-			//const r2::draw::Model* model = nullptr;
-			//if (renderComponent)
-			//{
-			//	r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent->assetModelName, r2::asset::RMODEL);
-			//	
-			//	//@NOTE(Serge): hopefully this never actually loads anything
-			//	r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-
-			//	model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-			//	//@PERFORMANCE(Serge): this might be too slow when it comes to moving characters around
-			//	worldTransform = worldTransform * model->globalTransform;
-			//}
-
 			entityTransformComponent.modelMatrix = worldTransform;
 
 			InstanceComponentT<TransformComponent>* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(entity);
@@ -82,10 +68,6 @@ namespace r2::ecs
 					TransformComponent& tranformComponent = r2::sarr::At(*instanceComponent->instances, j);
 					tranformComponent.accumTransform = math::Combine(parentTransform, tranformComponent.localTransform);
 					glm::mat4 worldTransform = math::ToMatrix(tranformComponent.accumTransform);
-					//if (renderComponent)
-					//{
-					//	worldTransform = worldTransform * model->globalTransform;
-					//}
 					tranformComponent.modelMatrix = worldTransform;
 				}
 			}
