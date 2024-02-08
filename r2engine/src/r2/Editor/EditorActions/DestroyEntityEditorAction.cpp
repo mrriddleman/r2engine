@@ -50,7 +50,7 @@ namespace r2::edit
 
 		for (ecs::Entity e : mChildren)
 		{
-			mnoptrEditor->GetSceneGraph().Attach(e, mEntityToDestroy);
+			mnoptrEditor->GetSceneGraph().Attach(e, mEntityToDestroy, ecs::KEEP_GLOBAL);
 		}
 
 		r2::evt::EditorEntityCreatedEvent e(mEntityToDestroy);
@@ -64,7 +64,7 @@ namespace r2::edit
 
 		for (size_t i = 0; i < numChildren; ++i)
 		{
-			mnoptrEditor->GetSceneGraph().Attach(mChildren[i], mParentOfEntityToDestory);
+			mnoptrEditor->GetSceneGraph().Attach(mChildren[i], mParentOfEntityToDestory, ecs::KEEP_GLOBAL);
 		}
 
 		mnoptrEditor->GetEditorLevelConst().RemoveEntity(mEntityToDestroy);

@@ -11,7 +11,7 @@ namespace r2::edit
 	class AttachEntityEditorAction : public EditorAction
 	{
 	public:
-		AttachEntityEditorAction(Editor* editor, ecs::Entity entityToAttach, ecs::Entity oldParent, ecs::Entity newParent);
+		AttachEntityEditorAction(Editor* editor, ecs::Entity entityToAttach, ecs::Entity oldParent, ecs::Entity newParent, ecs::eHierarchyAttachmentType attachmentType);
 		virtual void Undo() override;
 		virtual void Redo() override;
 
@@ -19,6 +19,7 @@ namespace r2::edit
 		ecs::Entity mEntityToAttach;
 		ecs::Entity mOldParent;
 		ecs::Entity mNewParent;
+		ecs::eHierarchyAttachmentType mAttachmentType;
 	};
 }
 

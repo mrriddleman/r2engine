@@ -47,6 +47,7 @@ namespace r2::ecs
 			const TransformDirtyComponent& entityTransformDirtyComponent = mnoptrCoordinator->GetComponent<TransformDirtyComponent>(entity);
 
 			math::Transform parentTransform;
+
 			//now get the transform component of the parent if it exists
 			if (entityHeirarchComponent.parent != INVALID_ENTITY)
 			{
@@ -54,25 +55,7 @@ namespace r2::ecs
 				parentTransform = parentTransformComponent.accumTransform;
 			}
 
-			if ((entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY) == eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY &&
-				(entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY) == 0)
-			{
-				if (entityHeirarchComponent.parent == INVALID_ENTITY)
-				{
-					entityTransformComponent.localTransform = entityTransformComponent.accumTransform;
-				}
-				else
-				{
-					entityTransformComponent.localTransform = math::Combine(math::Inverse(parentTransform), entityTransformComponent.accumTransform);
-
-					entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
-				}
-			}
-			else
-			{
-				//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
-				entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
-			}
+			UpdateEntityTransformComponent(parentTransform, entityHeirarchComponent, entityTransformDirtyComponent, entityTransformComponent);
 
 			glm::mat4 worldTransform = math::ToMatrix(entityTransformComponent.accumTransform);
 
@@ -84,8 +67,11 @@ namespace r2::ecs
 				for (u32 j = 0; j < instanceComponent->numInstances; j++)
 				{
 					TransformComponent& tranformComponent = r2::sarr::At(*instanceComponent->instances, j);
-					tranformComponent.accumTransform = math::Combine(parentTransform, tranformComponent.localTransform);
+
+					UpdateEntityTransformComponent(parentTransform, entityHeirarchComponent, entityTransformDirtyComponent, tranformComponent);
+
 					glm::mat4 worldTransform = math::ToMatrix(tranformComponent.accumTransform);
+
 					tranformComponent.modelMatrix = worldTransform;
 				}
 			}
@@ -106,4 +92,54 @@ namespace r2::ecs
 
 		FREE(entitiesCopy, *MEM_ENG_SCRATCH_PTR);
 	}
+
+	void SceneGraphTransformUpdateSystem::UpdateEntityTransformComponent(const math::Transform& parentTransform, const HierarchyComponent& entityHeirarchComponent, const TransformDirtyComponent& entityTransformDirtyComponent, TransformComponent& entityTransformComponent)
+	{
+		if ((entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::ATTACHED_TO_PARENT_DIRTY) == eTransformDirtyFlags::ATTACHED_TO_PARENT_DIRTY)
+		{
+			if (entityTransformDirtyComponent.hierarchyAttachmentType == eHierarchyAttachmentType::KEEP_GLOBAL)
+			{
+				entityTransformComponent.localTransform = math::Combine(math::Inverse(parentTransform), entityTransformComponent.accumTransform);
+			}
+		}
+		else if ((entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::DETACHED_FROM_PARENT_DIRTY) == eTransformDirtyFlags::DETACHED_FROM_PARENT_DIRTY)
+		{
+			if (entityTransformDirtyComponent.hierarchyAttachmentType == eHierarchyAttachmentType::KEEP_GLOBAL)
+			{
+				entityTransformComponent.localTransform = entityTransformComponent.accumTransform;
+			}
+			else
+			{
+				TransformComponent& oldParentTransform = mnoptrCoordinator->GetComponent<TransformComponent>(entityTransformDirtyComponent.parent);
+
+				entityTransformComponent.localTransform = math::Combine(math::Inverse(oldParentTransform.accumTransform), entityTransformComponent.accumTransform);
+
+				entityTransformComponent.accumTransform = entityTransformComponent.localTransform;
+			}
+		}
+		else if ((entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY) == eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY &&
+			(entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY) == 0)
+		{
+			if (entityHeirarchComponent.parent == INVALID_ENTITY)
+			{
+				entityTransformComponent.localTransform = entityTransformComponent.accumTransform;
+			}
+			else
+			{
+				entityTransformComponent.localTransform = math::Combine(math::Inverse(parentTransform), entityTransformComponent.accumTransform);
+
+				entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
+			}
+		}
+		else
+		{
+			entityTransformComponent.accumTransform = entityTransformComponent.localTransform;
+			if (entityHeirarchComponent.parent != INVALID_ENTITY)
+			{
+				//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
+				entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
+			}
+		}
+	}
+
 }

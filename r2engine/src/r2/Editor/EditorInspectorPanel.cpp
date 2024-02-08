@@ -440,9 +440,6 @@ namespace r2::edit
 			transformToUse = *transform;
 			dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
 
-			//@TODO(Serge): so either we apply our parent transform here to make imguizmo to stick by the rendered object
-			//				OR we make the object completely local removing the parent transform... I think the former would be easier/better?
-
 			if (hierarchyComponentPtr && hierarchyComponentPtr->parent != ecs::INVALID_ENTITY)
 			{
 				const auto& parentTransform = coordinator->GetComponent<ecs::TransformComponent>(hierarchyComponentPtr->parent);
@@ -457,7 +454,6 @@ namespace r2::edit
 
 			transformToUse = *transform;
 		}
-
 
 		glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformToUse.rotation));
 
@@ -479,7 +475,6 @@ namespace r2::edit
 			{
 				*transform = transformToUse;
 			}
-
 
 			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(mSelectedEntity, dirtyFlags);			
 		}

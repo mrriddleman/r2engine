@@ -12,7 +12,17 @@ namespace r2::ecs
 	enum eTransformDirtyFlags : unsigned int
 	{
 		LOCAL_TRANSFORM_DIRTY = 1 << 0,
-		GLOBAL_TRANSFORM_DIRTY = 1 << 1
+		GLOBAL_TRANSFORM_DIRTY = 1 << 1,
+
+		ATTACHED_TO_PARENT_DIRTY = 1 << 2,
+		DETACHED_FROM_PARENT_DIRTY = 1 << 3
+	};
+
+	enum eHierarchyAttachmentType
+	{
+		NONE = 0,
+		KEEP_LOCAL,
+		KEEP_GLOBAL
 	};
 
 	using Entity = u64;

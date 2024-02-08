@@ -39,9 +39,9 @@ namespace r2::ecs
 		void LoadLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData);
 		void UnloadLevel(const Level& level);
 
-		void Attach(ecs::Entity entity, ecs::Entity parent);
-		void Detach(ecs::Entity entity);
-		void DetachChildren(ecs::Entity parent);
+		void Attach(ecs::Entity entity, ecs::Entity parent, eHierarchyAttachmentType attachmentType);
+		void Detach(ecs::Entity entity, eHierarchyAttachmentType attachmentType);
+		void DetachChildren(ecs::Entity parent, eHierarchyAttachmentType attachmentType);
 
 		void GetAllChildrenForEntity(ecs::Entity parent, r2::SArray<ecs::Entity>& children);
 		void GetAllEntitiesInSubTree(ecs::Entity parent, u32 parentIndex, r2::SArray<ecs::Entity>& entities);

@@ -108,7 +108,7 @@ namespace r2::ecs
 		mnoptrECSCoordinator->UnloadAllECSDataFromLevel(level);
 	}
 
-	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent)
+	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent, eHierarchyAttachmentType attachmentType)
 	{
 		R2_CHECK(entity != parent, "These shouldn't be the same?");
 		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
@@ -127,12 +127,15 @@ namespace r2::ecs
 		
 		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		heirarchyComponent.parent = parent;
+		
 
 		//We need to update the transforms of the entity
 		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
 		{
 			ecs::TransformDirtyComponent transformDirty;
-			transformDirty.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+			transformDirty.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY | ecs::eTransformDirtyFlags::ATTACHED_TO_PARENT_DIRTY;
+			transformDirty.hierarchyAttachmentType = attachmentType;
+
 			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, transformDirty);
 		}
 
@@ -190,13 +193,16 @@ namespace r2::ecs
 		}
 	}
 
-	void SceneGraph::Detach(ecs::Entity entity)
+	void SceneGraph::Detach(ecs::Entity entity, eHierarchyAttachmentType attachmentType)
 	{
 		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
 		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 
 		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
+
+		ecs::Entity oldParent = heirarchyComponent.parent;
+
 		heirarchyComponent.parent = ecs::INVALID_ENTITY;
 
 		//We need to update the transforms of the entity
@@ -204,6 +210,8 @@ namespace r2::ecs
 		{
 			ecs::TransformDirtyComponent transformDirty;
 			transformDirty.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+			transformDirty.parent = oldParent;
+			transformDirty.hierarchyAttachmentType = attachmentType;
 			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, transformDirty);
 		}
 
@@ -212,7 +220,7 @@ namespace r2::ecs
 		SetDirtyFlagOnHeirarchy(entity, index);
 	}
 
-	void SceneGraph::DetachChildren(ecs::Entity parent)
+	void SceneGraph::DetachChildren(ecs::Entity parent, eHierarchyAttachmentType attachmentType)
 	{
 		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
 		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
@@ -237,7 +245,7 @@ namespace r2::ecs
 
 		for (u32 i = 0; i < numChildren; ++i)
 		{
-			Detach(r2::sarr::At(*entitiesToUpdate, i));
+			Detach(r2::sarr::At(*entitiesToUpdate, i), attachmentType);
 		}
 
 		FREE(entitiesToUpdate, *MEM_ENG_SCRATCH_PTR);

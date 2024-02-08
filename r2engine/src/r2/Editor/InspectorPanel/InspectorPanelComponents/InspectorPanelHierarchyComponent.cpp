@@ -114,7 +114,7 @@ namespace r2::edit
 			if (ImGui::Selectable("No Parent", hierarchyComponent.parent == r2::ecs::INVALID_ENTITY))
 			{
 				//set no parent
-				mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent, r2::ecs::INVALID_ENTITY));
+				mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent, r2::ecs::INVALID_ENTITY, ecs::eHierarchyAttachmentType::KEEP_GLOBAL));
 			}
 
 			for (u32 i = 0; i < numEntities; ++i)
@@ -139,7 +139,7 @@ namespace r2::edit
 					//set the parent
 					if (hierarchyComponent.parent != nextEntity)
 					{
-						mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent, nextEntity));
+						mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent, nextEntity, ecs::eHierarchyAttachmentType::KEEP_GLOBAL));
 					}
 				}
 			}
@@ -173,7 +173,7 @@ namespace r2::edit
 	{
 		const ecs::HierarchyComponent& hierarchyComponent = coordinator->GetComponent<ecs::HierarchyComponent>(theEntity);
 
-		mnoptrEditor->PostNewAction(std::make_unique<edit::DetachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent));
+		mnoptrEditor->PostNewAction(std::make_unique<edit::DetachEntityEditorAction>(mnoptrEditor, theEntity, hierarchyComponent.parent, ecs::eHierarchyAttachmentType::KEEP_GLOBAL));
 
 		//This should probably be an action?
 		coordinator->RemoveComponent<ecs::HierarchyComponent>(theEntity);

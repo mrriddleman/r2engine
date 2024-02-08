@@ -3,11 +3,15 @@
 
 namespace r2::ecs
 {
-
-
 	struct TransformDirtyComponent
 	{
 		unsigned int dirtyFlags = 0;
+
+		//Only used for detach...
+		unsigned int parent = 0;
+
+		unsigned int hierarchyAttachmentType = 0;
+
 	};
 }
 

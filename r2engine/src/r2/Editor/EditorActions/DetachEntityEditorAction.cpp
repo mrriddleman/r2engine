@@ -9,17 +9,18 @@
 
 namespace r2::edit
 {
-	DetachEntityEditorAction::DetachEntityEditorAction(Editor* editor, ecs::Entity entityToDetach, ecs::Entity oldParent)
+	DetachEntityEditorAction::DetachEntityEditorAction(Editor* editor, ecs::Entity entityToDetach, ecs::Entity oldParent, ecs::eHierarchyAttachmentType attachmentType)
 		:EditorAction(editor)
 		,mEntityToDetach(entityToDetach)
 		,mOldParent(oldParent)
+		,mAttachmentType(attachmentType)
 	{
 
 	}
 
 	void DetachEntityEditorAction::Undo()
 	{
-		mnoptrEditor->GetSceneGraph().Attach(mEntityToDetach, mOldParent);
+		mnoptrEditor->GetSceneGraph().Attach(mEntityToDetach, mOldParent, mAttachmentType);
 
 		evt::EditorEntityAttachedToNewParentEvent e(mEntityToDetach, ecs::INVALID_ENTITY, mOldParent);
 
@@ -28,7 +29,7 @@ namespace r2::edit
 
 	void DetachEntityEditorAction::Redo()
 	{
-		mnoptrEditor->GetSceneGraph().Detach(mEntityToDetach);
+		mnoptrEditor->GetSceneGraph().Detach(mEntityToDetach, mAttachmentType);
 
 		evt::EditorEntityAttachedToNewParentEvent e(mEntityToDetach, mOldParent, ecs::INVALID_ENTITY);
 

@@ -359,7 +359,7 @@ namespace r2::edit
 				ecs::Entity oldParent = mnoptrEditor->GetSceneGraph().GetParent(payload_n->entity);
 
 				//post the action
-				mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, payload_n->entity, oldParent, newParent));
+				mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, payload_n->entity, oldParent, newParent, ecs::eHierarchyAttachmentType::KEEP_GLOBAL));
 
 			}
 			ImGui::EndDragDropTarget();

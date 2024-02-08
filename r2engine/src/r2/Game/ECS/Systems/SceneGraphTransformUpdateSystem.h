@@ -3,8 +3,18 @@
 
 #include "r2/Game/ECS/System.h"
 
+namespace r2::math
+{
+	struct Transform;
+}
+
 namespace r2::ecs
 {
+
+	struct HierarchyComponent;
+	struct TransformComponent;
+	struct TransformDirtyComponent;
+
 	//The purpose of this system is to update the modelMatrix of each entity if the entity needs it 
 	//ie. if there is a TransformDirtyComponent attached to the entity
 	//this way, we only update modelMatrices when needed instead of every frame
@@ -17,6 +27,8 @@ namespace r2::ecs
 		void Update();
 
 	private:
+
+		void UpdateEntityTransformComponent(const r2::math::Transform& parentTransform, const HierarchyComponent& entityHeirarchComponent, const TransformDirtyComponent& entityTransformDirtyComponent, TransformComponent& entityTransformComponent);
 	};
 }
 

@@ -10,18 +10,19 @@
 namespace r2::edit
 {
 
-	AttachEntityEditorAction::AttachEntityEditorAction(Editor* editor, ecs::Entity entityToAttach, ecs::Entity oldParent, ecs::Entity newParent)
+	AttachEntityEditorAction::AttachEntityEditorAction(Editor* editor, ecs::Entity entityToAttach, ecs::Entity oldParent, ecs::Entity newParent, ecs::eHierarchyAttachmentType attachmentType)
 		:EditorAction(editor)
 		,mEntityToAttach(entityToAttach)
 		,mOldParent(oldParent)
 		,mNewParent(newParent)
+		,mAttachmentType(attachmentType)
 	{
 
 	}
 
 	void AttachEntityEditorAction::Undo()
 	{
-		mnoptrEditor->GetSceneGraph().Attach(mEntityToAttach, mOldParent);
+		mnoptrEditor->GetSceneGraph().Attach(mEntityToAttach, mOldParent, mAttachmentType);
 
 		evt::EditorEntityAttachedToNewParentEvent e(mEntityToAttach, mNewParent, mOldParent);
 
@@ -30,7 +31,7 @@ namespace r2::edit
 
 	void AttachEntityEditorAction::Redo()
 	{
-		mnoptrEditor->GetSceneGraph().Attach(mEntityToAttach, mNewParent);
+		mnoptrEditor->GetSceneGraph().Attach(mEntityToAttach, mNewParent, mAttachmentType);
 
 		evt::EditorEntityAttachedToNewParentEvent e(mEntityToAttach, mOldParent, mNewParent);
 

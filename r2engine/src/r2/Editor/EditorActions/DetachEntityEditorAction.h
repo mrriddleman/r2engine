@@ -11,13 +11,14 @@ namespace r2::edit
 	class DetachEntityEditorAction : public EditorAction
 	{
 	public:
-		DetachEntityEditorAction(Editor* editor, ecs::Entity entityToDetach, ecs::Entity oldParent);
+		DetachEntityEditorAction(Editor* editor, ecs::Entity entityToDetach, ecs::Entity oldParent, ecs::eHierarchyAttachmentType attachmentType);
 		virtual void Undo() override;
 		virtual void Redo() override;
 
 	private:
 		ecs::Entity mEntityToDetach;
 		ecs::Entity mOldParent;
+		ecs::eHierarchyAttachmentType mAttachmentType;
 	};
 }
 
