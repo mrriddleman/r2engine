@@ -428,20 +428,60 @@ namespace r2::edit
 
 		glm::mat4 localMat = glm::mat4(1);
 
-		glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformComponent.localTransform.rotation));
+		math::Transform* transform = nullptr;
+		ecs::eTransformDirtyFlags dirtyFlags;
 
-		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale), glm::value_ptr(localMat));
+		math::Transform transformToUse;
+		const auto* hierarchyComponentPtr = coordinator->GetComponentPtr<ecs::HierarchyComponent>(mSelectedEntity);
+
+		if (static_cast<ImGuizmo::MODE>(mCurrentMode) == ImGuizmo::MODE::LOCAL)
+		{
+			transform = &transformComponent.localTransform;
+			transformToUse = *transform;
+			dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+
+			//@TODO(Serge): so either we apply our parent transform here to make imguizmo to stick by the rendered object
+			//				OR we make the object completely local removing the parent transform... I think the former would be easier/better?
+
+			if (hierarchyComponentPtr && hierarchyComponentPtr->parent != ecs::INVALID_ENTITY)
+			{
+				const auto& parentTransform = coordinator->GetComponent<ecs::TransformComponent>(hierarchyComponentPtr->parent);
+
+				transformToUse = math::Combine(parentTransform.accumTransform, transformToUse);
+			}
+		}
+		else
+		{
+			transform = &transformComponent.accumTransform;
+			dirtyFlags = ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY;
+
+			transformToUse = *transform;
+		}
+
+
+		glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformToUse.rotation));
+
+		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformToUse.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformToUse.scale), glm::value_ptr(localMat));
 
 		if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), static_cast<ImGuizmo::OPERATION>(mCurrentOperation), static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat)))
 		{
-			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale));
+			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformToUse.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformToUse.scale));
 
-			transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
+			transformToUse.rotation = glm::quat(glm::radians(eulerAngles));
 
-			if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(mSelectedEntity))
+			if (static_cast<ImGuizmo::MODE>(mCurrentMode) == ImGuizmo::MODE::LOCAL && (hierarchyComponentPtr && hierarchyComponentPtr->parent != ecs::INVALID_ENTITY) )
 			{
-				coordinator->AddComponent<ecs::TransformDirtyComponent>(mSelectedEntity, {});
+				const auto& parentTransform = coordinator->GetComponent<ecs::TransformComponent>(hierarchyComponentPtr->parent);
+
+				*transform = math::Combine(math::Inverse(parentTransform.accumTransform), transformToUse);
 			}
+			else
+			{
+				*transform = transformToUse;
+			}
+
+
+			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(mSelectedEntity, dirtyFlags);			
 		}
 	}
 

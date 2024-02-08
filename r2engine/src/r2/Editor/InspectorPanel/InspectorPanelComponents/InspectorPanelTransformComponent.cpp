@@ -8,28 +8,41 @@
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/SelectionComponent.h"
+#include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Editor/Editor.h"
 #include "imgui.h"
+#include "ImGuizmo.h"
 #include <glm/gtc/quaternion.hpp>
 
 namespace r2::edit
 {
 	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource()
 		:InspectorPanelComponentDataSource("Transform Component", 0, 0)
+		,mnoptrEditor(nullptr)
+		, mInspectorPanel(nullptr)
 	{
 	}
 
-	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator)
+	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator, const InspectorPanel* inspectorPanel)
 		:InspectorPanelComponentDataSource("Transform Component", coordinator->GetComponentType<ecs::TransformComponent>(), coordinator->GetComponentTypeHash<ecs::TransformComponent>())
 		,mnoptrEditor(noptrEditor)
+		,mInspectorPanel(inspectorPanel)
 	{
 	}
 
 	void InspectorPanelTransformDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{
 		ecs::TransformComponent* transformComponentPtr = static_cast<ecs::TransformComponent*>(componentData);
-		ecs::TransformComponent& transformComponent = *transformComponentPtr;
+
+		r2::math::Transform* transform = &transformComponentPtr->localTransform;
+
+		ecs::eTransformDirtyFlags dirtyFlags = ecs::LOCAL_TRANSFORM_DIRTY;
+		if (mInspectorPanel->GetCurrentMode() == ImGuizmo::MODE::WORLD)
+		{
+			transform = &transformComponentPtr->accumTransform;
+			dirtyFlags = ecs::GLOBAL_TRANSFORM_DIRTY;
+		}
 
 		bool needsUpdate = false;
 
@@ -37,21 +50,21 @@ namespace r2::edit
 
 		ImGui::Text("X Pos: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label xpos", &transformComponent.localTransform.position.x, 0.1f))
+		if (ImGui::DragFloat("##label xpos", &transform->position.x, 0.1f))
 		{
 			needsUpdate = true;
 		}
 
 		ImGui::Text("Y Pos: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label ypos", &transformComponent.localTransform.position.y, 0.1f))
+		if (ImGui::DragFloat("##label ypos", &transform->position.y, 0.1f))
 		{
 			needsUpdate = true;
 		}
 
 		ImGui::Text("Z Pos: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label zpos", &transformComponent.localTransform.position.z, 0.1f))
+		if (ImGui::DragFloat("##label zpos", &transform->position.z, 0.1f))
 		{
 			needsUpdate = true;
 		}
@@ -60,28 +73,28 @@ namespace r2::edit
 
 		ImGui::Text("X Scale: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label xscale", &transformComponent.localTransform.scale.x, 0.01f, 0.01f, 1.0f))
+		if (ImGui::DragFloat("##label xscale", &transform->scale.x, 0.01f, 0.01f, 1.0f))
 		{
 			needsUpdate = true;
 		}
 
 		ImGui::Text("Y Scale: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label yscale", &transformComponent.localTransform.scale.y, 0.01f, 0.01f, 1.0f))
+		if (ImGui::DragFloat("##label yscale", &transform->scale.y, 0.01f, 0.01f, 1.0f))
 		{
 			needsUpdate = true;
 		}
 
 		ImGui::Text("Z Scale: ");
 		ImGui::SameLine();
-		if (ImGui::DragFloat("##label zscale", &transformComponent.localTransform.scale.z, 0.01f, 0.01f, 1.0f))
+		if (ImGui::DragFloat("##label zscale", &transform->scale.z, 0.01f, 0.01f, 1.0f))
 		{
 			needsUpdate = true;
 		}
 
 		ImGui::Text("Rotation");
 
-		glm::vec3 eulerAngles = glm::eulerAngles(transformComponent.localTransform.rotation);
+		glm::vec3 eulerAngles = glm::eulerAngles(transform->rotation);
 		eulerAngles = glm::degrees(eulerAngles);
 
 		ImGui::Text("X Rot: ");
@@ -105,12 +118,14 @@ namespace r2::edit
 			needsUpdate = true;
 		}
 
-		transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
+		transform->rotation = glm::quat(glm::radians(eulerAngles));
 
 		if (needsUpdate && !coordinator->HasComponent<ecs::TransformDirtyComponent>(theEntity))
 		{
 			ecs::TransformDirtyComponent transformDirtyComponent;
-			coordinator->AddComponent<ecs::TransformDirtyComponent>(theEntity, transformDirtyComponent);	
+			transformDirtyComponent.dirtyFlags = dirtyFlags;
+
+			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, dirtyFlags);
 		}
 
 	}

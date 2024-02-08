@@ -49,7 +49,7 @@ namespace r2::edit
 
 		u32 sortOrder = 0;
 
-		std::shared_ptr<InspectorPanelTransformDataSource> transformDataSource = std::make_shared<InspectorPanelTransformDataSource>(editor,coordinator);
+		std::shared_ptr<InspectorPanelTransformDataSource> transformDataSource = std::make_shared<InspectorPanelTransformDataSource>(editor,coordinator, &inspectorPanel);
 		std::shared_ptr<InspectorPanelAudioListenerComponentDataSource> audioListenerDataSource = std::make_shared<InspectorPanelAudioListenerComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelAudioEmitterComponentDataSource> audioEmitterDataSource = std::make_shared<InspectorPanelAudioEmitterComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelDebugBoneComponentDataSource> debugBonesDataSource = std::make_shared<InspectorPanelDebugBoneComponentDataSource>(coordinator);

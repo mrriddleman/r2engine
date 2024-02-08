@@ -77,6 +77,8 @@ namespace r2::ecs
 		mnoptrECSCoordinator->AddComponent<ecs::TransformComponent>(newEntity, transformComponent);
 
 		ecs::TransformDirtyComponent dirty;
+		dirty.dirtyFlags = ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY | ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+
 		mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(newEntity, dirty);
 
 		return newEntity;
@@ -96,6 +98,7 @@ namespace r2::ecs
 		mnoptrECSCoordinator->LoadAllECSDataFromLevel(ecsWorld, level, levelData);
 
 		ecs::TransformDirtyComponent dirty;
+		dirty.dirtyFlags = ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY | ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
 
 		mnoptrECSCoordinator->AddComponentToAllEntities<ecs::TransformDirtyComponent>(dirty);
 	}
@@ -124,6 +127,15 @@ namespace r2::ecs
 		
 		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		heirarchyComponent.parent = parent;
+
+		//We need to update the transforms of the entity
+		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
+		{
+			ecs::TransformDirtyComponent transformDirty;
+			transformDirty.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, transformDirty);
+		}
+
 
 		//essentially what we need to do here is to sort the entities in the SceneGraphSystem such that
 		//parents always come before their children based on their heirarchy component
@@ -187,6 +199,14 @@ namespace r2::ecs
 		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		heirarchyComponent.parent = ecs::INVALID_ENTITY;
 
+		//We need to update the transforms of the entity
+		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
+		{
+			ecs::TransformDirtyComponent transformDirty;
+			transformDirty.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, transformDirty);
+		}
+
 		s64 index = r2::sarr::IndexOf(*mnoptrSceneGraphSystem->mEntities, entity);
 
 		SetDirtyFlagOnHeirarchy(entity, index);
@@ -232,6 +252,7 @@ namespace r2::ecs
 		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
 		{
 			ecs::TransformDirtyComponent c;
+			c.dirtyFlags = ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
 			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, c);
 		}
 
@@ -341,4 +362,32 @@ namespace r2::ecs
 	{
 		return mnoptrECSCoordinator;
 	}
+
+	void SceneGraph::UpdateTransformForEntity(ecs::Entity entity, ecs::eTransformDirtyFlags dirtyFlags)
+	{
+		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
+		{
+			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, { dirtyFlags });
+		}
+
+		//@TODO(Serge): might be useful for the scene graph to have this memory pre-allocated at all times - dunno
+		r2::SArray<ecs::Entity>* children = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);
+
+		GetAllChildrenForEntity(entity, *children);
+
+		const auto numChildren = r2::sarr::Size(*children);
+
+		for (u32 i = 0; i < numChildren; ++i)
+		{
+			ecs::Entity child = r2::sarr::At(*children, i);
+
+			if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(child))
+			{
+				mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(child, { ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY });
+			}
+		}
+
+		FREE( children, *MEM_ENG_SCRATCH_PTR);
+	}
+
 }

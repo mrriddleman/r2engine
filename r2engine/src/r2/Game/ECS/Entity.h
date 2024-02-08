@@ -8,6 +8,13 @@
 
 namespace r2::ecs
 {
+
+	enum eTransformDirtyFlags : unsigned int
+	{
+		LOCAL_TRANSFORM_DIRTY = 1 << 0,
+		GLOBAL_TRANSFORM_DIRTY = 1 << 1
+	};
+
 	using Entity = u64;
 	
 	static const Entity INVALID_ENTITY = 0;

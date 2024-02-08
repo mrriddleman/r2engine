@@ -10,11 +10,13 @@ namespace r2
 
 namespace r2::edit
 {
+	class InspectorPanel;
+
 	class InspectorPanelTransformDataSource : public InspectorPanelComponentDataSource
 	{
 	public:
 		InspectorPanelTransformDataSource();
-		InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator);
+		InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator, const InspectorPanel* inspectorPanel);
 
 		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
 
@@ -31,6 +33,7 @@ namespace r2::edit
 		virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances) override;
 	private:
 		r2::Editor* mnoptrEditor;
+		const InspectorPanel* mInspectorPanel;
 	};
 }
 

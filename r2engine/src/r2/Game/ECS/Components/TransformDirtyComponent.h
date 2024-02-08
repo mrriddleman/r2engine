@@ -3,9 +3,11 @@
 
 namespace r2::ecs
 {
+
+
 	struct TransformDirtyComponent
 	{
-		unsigned int dirty = 0;
+		unsigned int dirtyFlags = 0;
 	};
 }
 

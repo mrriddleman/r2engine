@@ -32,6 +32,8 @@ namespace r2::edit
 
 		Editor* GetEditor();
 
+		inline s32 GetCurrentMode() const { return mCurrentMode; }
+
 	private:
 
 		InspectorPanelComponentWidget* GetComponentWidgetForComponentTypeHash(u64 componentTypeHash);

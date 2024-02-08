@@ -44,17 +44,35 @@ namespace r2::ecs
 			//get the heirarch component and the transform component of the entity
 			const HierarchyComponent& entityHeirarchComponent = mnoptrCoordinator->GetComponent<HierarchyComponent>(entity);
 			TransformComponent& entityTransformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(entity);
+			const TransformDirtyComponent& entityTransformDirtyComponent = mnoptrCoordinator->GetComponent<TransformDirtyComponent>(entity);
 
 			math::Transform parentTransform;
 			//now get the transform component of the parent if it exists
 			if (entityHeirarchComponent.parent != INVALID_ENTITY)
 			{
-				TransformComponent& parentTransformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(entity);
+				TransformComponent& parentTransformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(entityHeirarchComponent.parent);
 				parentTransform = parentTransformComponent.accumTransform;
 			}
 
-			//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
-			entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
+			if ((entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY) == eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY &&
+				(entityTransformDirtyComponent.dirtyFlags & eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY) == 0)
+			{
+				if (entityHeirarchComponent.parent == INVALID_ENTITY)
+				{
+					entityTransformComponent.localTransform = entityTransformComponent.accumTransform;
+				}
+				else
+				{
+					entityTransformComponent.localTransform = math::Combine(math::Inverse(parentTransform), entityTransformComponent.accumTransform);
+
+					entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
+				}
+			}
+			else
+			{
+				//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
+				entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
+			}
 
 			glm::mat4 worldTransform = math::ToMatrix(entityTransformComponent.accumTransform);
 

@@ -50,6 +50,8 @@ namespace r2::ecs
 		s32 GetEntityIndex(ecs::Entity entity);
 		ecs::Entity GetParent(ecs::Entity entity);
 
+		void UpdateTransformForEntity(ecs::Entity entity, ecs::eTransformDirtyFlags dirtyFlags);
+
 		ecs::ECSCoordinator* GetECSCoordinator() const;
 
 	private:
