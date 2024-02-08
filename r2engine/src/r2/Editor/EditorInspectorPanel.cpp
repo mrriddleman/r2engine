@@ -76,6 +76,7 @@ namespace r2::edit
 
 					mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, entityInstance.entityId, entityInstance.instanceId, mSelectedEntity, mCurrentInstance));
 				}
+
 				
 				return false;
 			});
@@ -144,6 +145,19 @@ namespace r2::edit
 				if (mSelectedEntity == r2::ecs::INVALID_ENTITY)
 				{
 					return false;
+				}
+
+
+				if (keyEvent.KeyCode() == r2::io::KEY_a && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) == r2::io::ALT_PRESSED))
+				{
+					ecs::Entity lastEntity = mSelectedEntity;
+					s32 lastInstance = mCurrentInstance;
+
+					mSelectedEntity = ecs::INVALID_ENTITY;
+					mCurrentInstance = 0;
+
+					mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, ecs::INVALID_ENTITY, 0, lastEntity, lastInstance));
+					return true;
 				}
 				
 				ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
