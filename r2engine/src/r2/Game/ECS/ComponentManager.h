@@ -17,6 +17,7 @@
 #include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
 #include "r2/Game/ECS/Serialization/AudioListenerComponentSerialization.h"
 #include "r2/Game/ECS/Serialization/AudioEmitterComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/PointLightComponentSerialization.h"
 
 namespace r2::ecs
 {

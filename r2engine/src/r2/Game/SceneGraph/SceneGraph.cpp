@@ -93,20 +93,6 @@ namespace r2::ecs
 		mnoptrECSCoordinator->DestroyEntity(entity);
 	}
 
-	void SceneGraph::LoadLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData)
-	{
-		mnoptrECSCoordinator->LoadAllECSDataFromLevel(ecsWorld, level, levelData);
-
-		ecs::TransformDirtyComponent dirty;
-		dirty.dirtyFlags = ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY | ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
-
-		mnoptrECSCoordinator->AddComponentToAllEntities<ecs::TransformDirtyComponent>(dirty);
-	}
-
-	void SceneGraph::UnloadLevel(const Level& level)
-	{
-		mnoptrECSCoordinator->UnloadAllECSDataFromLevel(level);
-	}
 
 	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent, eHierarchyAttachmentType attachmentType)
 	{

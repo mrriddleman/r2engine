@@ -14,6 +14,8 @@
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+#include "r2/Game/ECS/Components/LightUpdateComponent.h"
+#include "r2/Game/ECS/Components/PointLightComponent.h"
 
 #include "r2/Game/ECS/Systems/AudioEmitterSystem.h"
 #include "r2/Game/ECS/Systems/AudioListenerSystem.h"
@@ -21,6 +23,7 @@
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Game/ECS/Systems/SceneGraphSystem.h"
 #include "r2/Game/ECS/Systems/SceneGraphTransformUpdateSystem.h"
+#include "r2/Game/ECS/Systems/LightingUpdateSystem.h"
 
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
@@ -116,7 +119,11 @@ namespace r2::ecs
 		moptrAudioListenerSystem->Update();
 
 		mSceneGraph.Update();
+
 		moptrSkeletalAnimationSystem->Update();
+
+		//Should be always after the scene graph
+		moptrLightingUpdateSystem->Update();
 
 		//These should probably be near the last things to update so the game has the ability to add audio events
 		moptrAudioEmitterSystem->Update();
@@ -133,8 +140,32 @@ namespace r2::ecs
 
 	bool ECSWorld::LoadLevel(const Level& level, const flat::LevelData* levelData)
 	{
-		mSceneGraph.LoadLevel(*this, level, levelData);
+		//@TODO(Serge): I think we actually want to have callbacks for components after we load a level
+		//				Then we could register those callbacks when we register a component and call them for each type that needs it
+		//				Doing manually for now
 
+		mECSCoordinator->LoadAllECSDataFromLevel(*this, level, levelData);
+
+
+		//making some temp entities for use when getting entities with specific component types
+		r2::SArray<ecs::Entity>* tempEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, MAX_NUM_ENTITIES);
+
+		ecs::TransformDirtyComponent dirty;
+		dirty.dirtyFlags = ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY | ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+
+		mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::TransformComponent>(), *tempEntities);
+
+		mECSCoordinator->AddComponentToAllEntities<ecs::TransformDirtyComponent>(dirty, *tempEntities);
+
+
+		mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::PointLightComponent>(), *tempEntities);
+
+		ecs::LightUpdateComponent lightUpdateComponent;
+		lightUpdateComponent.flags.Set(POINT_LIGHT_UPDATE);
+		mECSCoordinator->AddComponentToAllEntities<ecs::LightUpdateComponent>(lightUpdateComponent, *tempEntities);
+
+		
+		FREE(tempEntities, *MEM_ENG_SCRATCH_PTR);
 		PostLoadLevel(level, levelData);
 
 		return true;
@@ -206,7 +237,7 @@ namespace r2::ecs
 
 	bool ECSWorld::UnloadLevel(const Level& level)
 	{
-		mSceneGraph.UnloadLevel(level);
+		mECSCoordinator->UnloadAllECSDataFromLevel(level);
 		return true;
 	}
 
@@ -311,6 +342,13 @@ namespace r2::ecs
 		}
 	}
 
+	void ECSWorld::FreePointLightComponent(void* pointLightComponentData)
+	{
+		ecs::PointLightComponent* pointLightComponent = static_cast<ecs::PointLightComponent*>(pointLightComponentData);
+
+		r2::draw::renderer::RemovePointLight(pointLightComponent->pointLightHandle);
+	}
+
 #ifdef R2_DEBUG
 	void ECSWorld::FreeDebugBoneComponent(void* data)
 	{
@@ -383,7 +421,7 @@ namespace r2::ecs
 		FreeComponentFunc freeSkeletalAnimationComponentFunc = std::bind(&ECSWorld::FreeSkeletalAnimationComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedSkeletalAnimationComponentFunc = std::bind(&ECSWorld::FreeInstancedSkeletalAnimationComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedTransformComponentFunc = std::bind(&ECSWorld::FreeInstancedTransformComponent, this, std::placeholders::_1);
-
+		FreeComponentFunc freePointLightComponentFunc = std::bind(&ECSWorld::FreePointLightComponent, this, std::placeholders::_1);
 #ifdef R2_DEBUG
 		FreeComponentFunc freeDebugBoneComponent = std::bind(&ECSWorld::FreeDebugBoneComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedDebugBoneComponent = std::bind(&ECSWorld::FreeInstancedDebugBoneComponent, this, std::placeholders::_1);
@@ -411,6 +449,9 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena, "InstancedTranfromComponent", true, true, freeInstancedTransformComponentFunc);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena, "InstancedSkeletalAnimationComponent", true, true, freeInstancedSkeletalAnimationComponentFunc);
 
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::LightUpdateComponent>(*mArena, "LightingUpdateComponent", false, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena, "PointLightComponent", true, false, freePointLightComponentFunc);
+
 #ifdef R2_DEBUG
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, false, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena, "DebugBoneComponent", false, false, freeDebugBoneComponent);
@@ -437,6 +478,8 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena);
 #endif
 
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena);
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::LightUpdateComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena);
 
@@ -460,6 +503,8 @@ namespace r2::ecs
 		const auto renderComponentType = mECSCoordinator->GetComponentType<ecs::RenderComponent>();
 		const auto skeletalAnimationComponentType = mECSCoordinator->GetComponentType<ecs::SkeletalAnimationComponent>();
 		const auto heirarchyComponentType = mECSCoordinator->GetComponentType<ecs::HierarchyComponent>();
+		const auto lightUpdateComponentType = mECSCoordinator->GetComponentType<ecs::LightUpdateComponent>();
+
 #ifdef R2_DEBUG
 		const auto debugRenderComponentType = mECSCoordinator->GetComponentType<ecs::DebugRenderComponent>();
 		const auto debugBoneComponentType = mECSCoordinator->GetComponentType<ecs::DebugBoneComponent>();
@@ -559,10 +604,27 @@ namespace r2::ecs
 
 		mECSCoordinator->SetSystemSignature<ecs::SceneGraphTransformUpdateSystem>(systemUpdateSignature);
 
+
+
+
+		moptrLightingUpdateSystem = (ecs::LightingUpdateSystem*)mECSCoordinator->RegisterSystem<r2::mem::StackArena, ecs::LightingUpdateSystem>(*mArena);
+
+		if (moptrLightingUpdateSystem == nullptr)
+		{
+			R2_CHECK(false, "Couldn't register the LightingUpdateSystem");
+			return;
+		}
+
+		ecs::Signature lightingUpdateSystemSignature;
+		lightingUpdateSystemSignature.set(transformComponentType); //maybe should be optional for direction light?
+		lightingUpdateSystemSignature.set(lightUpdateComponentType);
+
+		mECSCoordinator->SetSystemSignature<ecs::LightingUpdateSystem>(lightingUpdateSystemSignature);
 	}
 
 	void ECSWorld::UnRegisterEngineSystems()
 	{
+		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::LightingUpdateSystem>(*mArena);
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::SceneGraphTransformUpdateSystem>(*mArena);
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::SceneGraphSystem>(*mArena);
 
@@ -576,8 +638,12 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::SkeletalAnimationSystem>(*mArena);
 		moptrRenderSystem->Shutdown<mem::StackArena>(*mArena);
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::RenderSystem>(*mArena);
+		
 	}
 
+
+	//@TODO(Serge): Ultimately when we make more components from outside of this system, this won't work since we'll have no idea what components to add here
+	//				We'll need to pass in some extra memory or do this a different way
 	u64 ECSWorld::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems)
 	{
 		u32 maxNumModels = r2::draw::renderer::GetMaxNumModelsLoadedAtOneTimePerLayout();
@@ -608,7 +674,7 @@ namespace r2::ecs
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::SceneGraphTransformUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 
 		memorySize += r2::ecs::RenderSystem::MemorySize(maxNumInstances, avgMaxNumMeshesPerModel*maxNumModels, maxNumBones, memProperties);
-
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::LightingUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 
 #ifdef R2_DEBUG
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::DebugRenderSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
@@ -627,6 +693,10 @@ namespace r2::ecs
 		memorySize += ComponentArray<AudioParameterComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<AudioEmitterActionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<EditorComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+
+		memorySize += ComponentArray<PointLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<LightUpdateComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+
 #ifdef R2_EDITOR
 		memorySize += ComponentArray<SelectionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif

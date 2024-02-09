@@ -36,9 +36,6 @@ namespace r2::ecs
 		ecs::Entity CreateEntity(ecs::Entity parent);
 		void DestroyEntity(ecs::Entity entity);
 
-		void LoadLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData);
-		void UnloadLevel(const Level& level);
-
 		void Attach(ecs::Entity entity, ecs::Entity parent, eHierarchyAttachmentType attachmentType);
 		void Detach(ecs::Entity entity, eHierarchyAttachmentType attachmentType);
 		void DetachChildren(ecs::Entity parent, eHierarchyAttachmentType attachmentType);

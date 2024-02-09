@@ -41,7 +41,7 @@ namespace r2::ecs
 			//do the update of the matrices here
 			ecs::Entity entity = r2::sarr::At(*mEntities, i);
 
-			//get the heirarch component and the transform component of the entity
+			//get the hierarchy component and the transform component of the entity
 			const HierarchyComponent& entityHeirarchComponent = mnoptrCoordinator->GetComponent<HierarchyComponent>(entity);
 			TransformComponent& entityTransformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(entity);
 			const TransformDirtyComponent& entityTransformDirtyComponent = mnoptrCoordinator->GetComponent<TransformDirtyComponent>(entity);

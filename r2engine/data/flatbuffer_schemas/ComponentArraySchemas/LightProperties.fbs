@@ -1,0 +1,33 @@
+namespace flat;
+
+struct LightColor
+{
+	r:float;
+	g:float;
+	b:float;
+	a:float;
+}
+
+struct LightPosition
+{
+	x:float;
+	y:float;
+	z:float;
+	w:float;
+}
+
+struct ShadowInfo
+{
+	castsShadows:uint;
+	useSoftShadows:uint;
+}
+
+table LightProperties
+{
+	lightColor:LightColor;
+	shadowInfo:ShadowInfo;
+	fallOff:float;
+	intensity:float;
+}
+
+root_type LightProperties;

@@ -134,4 +134,25 @@ namespace r2::ecs
 
 		return memorySize;
 	}
+
+	void ECSCoordinator::GetAllEntitiesWithComponent(ComponentType componentType, r2::SArray<ecs::Entity>& outEntities)
+	{
+		r2::sarr::Clear(outEntities);
+
+		const r2::SArray<Entity>& entities = mEntityManager->GetCreatedEntities();
+
+		const auto numLivingEntities = r2::sarr::Size(entities);
+
+		for (u32 i = 0; i < numLivingEntities; ++i)
+		{
+			auto nextEntity = r2::sarr::At(entities, i);
+
+			const auto signature = mEntityManager->GetSignature(nextEntity);
+
+			if (signature.test(componentType))
+			{
+				r2::sarr::Push(outEntities, nextEntity);
+			}
+		}
+	}
 }

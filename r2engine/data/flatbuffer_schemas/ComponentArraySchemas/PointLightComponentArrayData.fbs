@@ -1,0 +1,15 @@
+include "LightProperties.fbs";
+
+namespace flat;
+
+table PointLightData
+{
+	lightProperties:LightProperties;
+}
+
+table PointLightComponentArrayData
+{
+	pointLightComponentArray:[PointLightData];
+}
+
+root_type PointLightComponentArrayData;

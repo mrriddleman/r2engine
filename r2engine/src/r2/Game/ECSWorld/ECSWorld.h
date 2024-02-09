@@ -34,6 +34,7 @@ namespace r2::ecs
 	class AudioEmitterSystem;
 	class SceneGraphSystem;
 	class SceneGraphTransformUpdateSystem;
+	class LightingUpdateSystem;
 
 #ifdef R2_DEBUG
 	class DebugBonesRenderSystem;
@@ -115,6 +116,7 @@ namespace r2::ecs
 		void FreeSkeletalAnimationComponent(void* skeletalAnimationComponent);
 		void FreeInstancedSkeletalAnimationComponent(void* instancedSkeletalAnimationComponent);
 		void FreeInstancedTransformComponent(void* instancedTransformComponent);
+		void FreePointLightComponent(void* pointLightComponentData);
 
 #ifdef R2_DEBUG
 		void FreeDebugBoneComponent(void* debugBoneComponent);
@@ -142,6 +144,8 @@ namespace r2::ecs
 
 		r2::ecs::SceneGraphSystem* moptrSceneGraphSystem;
 		r2::ecs::SceneGraphTransformUpdateSystem* moptrSceneGraphTransformUpdateSystem;
+
+		r2::ecs::LightingUpdateSystem* moptrLightingUpdateSystem;
 
 #ifdef R2_DEBUG
 		r2::ecs::DebugRenderSystem* moptrDebugRenderSystem;
