@@ -37,6 +37,11 @@ namespace r2::cam
         float mNear;
         float mFar;
 
+        float yaw;
+        float pitch;
+		float lastX;
+		float lastY;
+
         bool mRightMouseButtonHeld;
     };
 }

@@ -222,33 +222,41 @@ namespace r2::cam
 
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
     {
-        glm::vec3 facingDir(0.0f);
-        glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
-        facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
-        
-        yawDir += upDir;
-        
-        if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
-        {
-            yawDir.x *= cos(glm::radians(yaw));
-            yawDir.z *= sin(glm::radians(yaw));
-        }
-        else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
-        {
-            yawDir.x *= cos(glm::radians(yaw));
-            yawDir.y *= -sin(glm::radians(yaw));
-        }
-        else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
-        {
-            yawDir.z *= cos(glm::radians(yaw));
-            yawDir.y *= sin(glm::radians(yaw));
-        }
-        else
-        {
-            R2_CHECK(false, "Up direction not supported!");
-        }
-        
-        return glm::normalize(facingDir * yawDir);
+
+
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+       
+		front.z = sin(glm::radians(pitch));
+        return glm::normalize(front);
+        //glm::vec3 facingDir(0.0f);
+        //glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
+        //facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
+        //
+        //yawDir += upDir;
+        //
+        //if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
+        //{
+        //    yawDir.x *= cos(glm::radians(yaw));
+        //    yawDir.z *= sin(glm::radians(yaw));
+        //}
+        //else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
+        //{
+        //    yawDir.x *= cos(glm::radians(yaw));
+        //    yawDir.y *= -sin(glm::radians(yaw));
+        //}
+        //else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
+        //{
+        //    yawDir.z *= cos(glm::radians(yaw));
+        //    yawDir.y *= sin(glm::radians(yaw));
+        //}
+        //else
+        //{
+        //    R2_CHECK(false, "Up direction not supported!");
+        //}
+        //
+        //return glm::normalize(facingDir * yawDir);
     }
     
     r2::math::Ray CalculateRayFromMousePosition(const Camera& cam, u32 mouseX, u32 mouseY)

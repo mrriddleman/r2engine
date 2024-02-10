@@ -7,15 +7,30 @@
 #include "r2pch.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "r2/Platform/Platform.h"
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/vector_angle.hpp>
+
 namespace r2::cam
 {
     
-//    static float yaw = -90.f, pitch=-37.f;
-
-    static float yaw = 0.f, pitch=0.f;
     void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing)
     {
-        
+		glm::vec3 yawFacing = glm::normalize(glm::vec3(facing.x, facing.y, 0));
+        yaw = -glm::degrees(glm::angle(glm::vec3(1, 0, 0), yawFacing));
+        pitch = 0.0f;
+
+        if (math::NearZero(glm::dot(facing, glm::vec3(1, 0, 0))))
+        {
+            pitch = glm::degrees(glm::angle(facing, glm::vec3(0, 1, 0)));
+        }
+        else
+        {
+            pitch = glm::degrees(glm::angle(facing, glm::vec3(1, 0, 0)));
+        }
+
+		lastX = (f32)CENG.DisplaySize().width / 2.0f;
+        lastY = (f32)CENG.DisplaySize().height / 2.0f;
+
         mCameraMoveSpeed = camMoveSpeed;
         mFOV = fov; 
         mAspect = aspect;
@@ -23,8 +38,6 @@ namespace r2::cam
         mFar = far;
         mRightMouseButtonHeld = false;
         InitPerspectiveCam(mCamera, fov, aspect, near, far, position, facing);
-
-        //SetFacingDir(mCamera, pitch, yaw);
     }
     
     void PerspectiveController::Update()
@@ -121,8 +134,7 @@ namespace r2::cam
               return false;
         });
 
-        static float lastX = (f32)CENG.DisplaySize().width/2.0f;
-        static float lastY = (f32)CENG.DisplaySize().height/2.0f;
+        
         
 
         dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e) {
@@ -148,13 +160,15 @@ namespace r2::cam
             return true;
         });
 
-        dispatcher.Dispatch<r2::evt::MouseMovedEvent>([this](const r2::evt::MouseMovedEvent& e){
-            
+        dispatcher.Dispatch<r2::evt::MouseMovedEvent>([this](const r2::evt::MouseMovedEvent& e) {
+
             if (!mRightMouseButtonHeld)
             {
+				lastX = (f32)e.X();
+				lastY = (f32)e.Y();
                 return true;
             }
-            
+
             float xOffset = e.X() - lastX;
             float yOffset = lastY - e.Y();
             
@@ -167,6 +181,15 @@ namespace r2::cam
             
             yaw += xOffset;
             pitch += yOffset;
+
+			if (yaw >= 360.0f)
+			{
+                yaw -= 360.0f;
+			}
+			if (yaw < 0.0)
+			{
+                yaw += 360.0f;
+			}
             
             if (pitch > 89.0f)
                 pitch = 89.0f;
