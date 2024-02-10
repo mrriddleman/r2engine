@@ -43,7 +43,7 @@ namespace r2::edit
 			transform = &transformComponentPtr->accumTransform;
 			dirtyFlags = ecs::GLOBAL_TRANSFORM_DIRTY;
 		}
-
+		
 		bool needsUpdate = false;
 
 		ImGui::Text("Position");

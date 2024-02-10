@@ -8,7 +8,7 @@
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/Systems/SceneGraphSystem.h"
 #include "r2/Game/ECS/Systems/SceneGraphTransformUpdateSystem.h"
-
+#include "R2/Game/ECS/Components/LightUpdateComponent.h"
 
 namespace r2::ecs
 {
@@ -363,6 +363,16 @@ namespace r2::ecs
 		{
 			mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(entity, { dirtyFlags });
 		}
+
+
+		//Hack for the editor
+		if (mnoptrECSCoordinator->HasComponent<ecs::PointLightComponent>(entity) && ! mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
+		{
+			ecs::LightUpdateComponent lightUpdateComponent;
+			lightUpdateComponent.flags.Set(POINT_LIGHT_UPDATE);
+			mnoptrECSCoordinator->AddComponent<ecs::LightUpdateComponent>(entity, lightUpdateComponent);
+		}
+
 
 		//@TODO(Serge): might be useful for the scene graph to have this memory pre-allocated at all times - dunno
 		r2::SArray<ecs::Entity>* children = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);

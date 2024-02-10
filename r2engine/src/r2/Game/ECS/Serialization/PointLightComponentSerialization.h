@@ -24,13 +24,12 @@ namespace r2::ecs
 		{
 			const PointLightComponent& pointLightComponent = r2::sarr::At(components, i);
 	
-			flat::PointLightDataBuilder pointlightComponentBuilder(fbb);
-
 			flat::LightColor lightColor(pointLightComponent.lightProperties.color.r, pointLightComponent.lightProperties.color.g, pointLightComponent.lightProperties.color.b, pointLightComponent.lightProperties.color.a);
 			flat::ShadowInfo shadowInfo(pointLightComponent.lightProperties.castsShadowsUseSoftShadows.x, pointLightComponent.lightProperties.castsShadowsUseSoftShadows.y);
 
 			auto flatLightProperties = flat::CreateLightProperties(fbb, &lightColor, &shadowInfo, pointLightComponent.lightProperties.fallOff, pointLightComponent.lightProperties.intensity);
-			
+
+			flat::PointLightDataBuilder pointlightComponentBuilder(fbb);
 			pointlightComponentBuilder.add_lightProperties(flatLightProperties);
 			
 			r2::sarr::Push(*pointLightComponents, pointlightComponentBuilder.Finish());

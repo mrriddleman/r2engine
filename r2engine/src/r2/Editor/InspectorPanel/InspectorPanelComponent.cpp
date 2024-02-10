@@ -33,6 +33,8 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioEmitterComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelSkeletalAnimationComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelRenderComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelPointLightComponent.h"
+
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 
@@ -57,6 +59,7 @@ namespace r2::edit
 		std::shared_ptr<InspectorPanelHierarchyComponentDataSource> hierarchyDataSource = std::make_shared<InspectorPanelHierarchyComponentDataSource>(editor, coordinator);
 		std::shared_ptr<InspectorPanelRenderComponentDataSource> renderDataSource = std::make_shared<InspectorPanelRenderComponentDataSource>(editor, coordinator);
 		std::shared_ptr<InspectorPanelSkeletonAnimationComponentDataSource> skeletalAnimationDataSource = std::make_shared<InspectorPanelSkeletonAnimationComponentDataSource>(coordinator);
+		std::shared_ptr<InspectorPanelPointLightDataSource> pointLightDataSource = std::make_shared<InspectorPanelPointLightDataSource>(editor, coordinator, &inspectorPanel);
 
 		InspectorPanelComponentWidget transformComponentWidget = InspectorPanelComponentWidget(sortOrder++, transformDataSource );
 		inspectorPanel.RegisterComponentWidget(transformComponentWidget);
@@ -81,6 +84,9 @@ namespace r2::edit
 
 		InspectorPanelComponentWidget debugBonesComponentWidget = InspectorPanelComponentWidget(sortOrder++, debugBonesDataSource);
 		inspectorPanel.RegisterComponentWidget(debugBonesComponentWidget); 
+
+		InspectorPanelComponentWidget pointLightComponentWidget = InspectorPanelComponentWidget(sortOrder++, pointLightDataSource);
+		inspectorPanel.RegisterComponentWidget(pointLightComponentWidget);
 	}
 
 	InspectorPanelComponentWidget::InspectorPanelComponentWidget()
@@ -111,6 +117,7 @@ namespace r2::edit
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		bool open = ImGui::TreeNodeEx(nodeName.c_str(), flags, "%s", nodeName.c_str());
+		bool wasOpen = open;
 
 		const bool shouldDisableComponentDelete = mComponentDataSource->ShouldDisableRemoveComponentButton();
 		if (shouldDisableComponentDelete)
@@ -124,12 +131,12 @@ namespace r2::edit
 		ImGui::PushItemWidth(50);
 		ImGui::SameLine(size.x - 50);
 
-		bool wasDeleted = false;
+
 		if (ImGui::SmallButton("Delete"))
 		{
 			mComponentDataSource->DeleteComponent(coordinator, theEntity);
 			open = false;
-			wasDeleted = true;
+
 		}
 
 		ImGui::PopItemWidth();
@@ -146,7 +153,7 @@ namespace r2::edit
 			mComponentDataSource->DrawComponentData(componentData, coordinator, theEntity);
 		}
 
-		if (open || wasDeleted)
+		if (wasOpen)
 		{
 			ImGui::TreePop();
 		}
