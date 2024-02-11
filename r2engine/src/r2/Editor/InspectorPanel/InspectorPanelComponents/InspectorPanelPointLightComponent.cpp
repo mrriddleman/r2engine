@@ -124,11 +124,13 @@ namespace r2::edit
 	void InspectorPanelPointLightDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{
 		ecs::PointLightComponent newPointLightComponent;
+		newPointLightComponent.lightProperties.intensity = 1.0f;
+		newPointLightComponent.lightProperties.fallOff = 0;
 
 		r2::draw::PointLight newPointLight;
 		newPointLight.lightProperties = newPointLightComponent.lightProperties;
 		newPointLight.position = glm::vec4(0);
-		newPointLight.lightProperties.fallOff = 0;
+
 
 		const ecs::TransformComponent* transformComponentPtr = coordinator->GetComponentPtr<ecs::TransformComponent>(theEntity);
 		if (transformComponentPtr)

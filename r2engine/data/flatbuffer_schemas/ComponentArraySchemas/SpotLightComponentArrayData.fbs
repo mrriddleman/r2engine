@@ -1,0 +1,17 @@
+include "LightProperties.fbs";
+
+namespace flat;
+
+table SpotLightData
+{
+	lightProperties:LightProperties;
+	innerCutoffAngle:float;
+	outerCutoffAngle:float;
+}
+
+table SpotLightComponentArrayData
+{
+	spotLightComponentArray:[SpotLightData];
+}
+
+root_type SpotLightComponentArrayData;

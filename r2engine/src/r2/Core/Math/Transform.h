@@ -16,6 +16,7 @@ namespace r2::math
 	};
 
 	void Combine(const Transform& a, const Transform& b, Transform& r);
+	glm::vec3 QuatMult(const glm::quat& q, const glm::vec3& v);
 
 	Transform Combine(const Transform& a, const Transform& b);
 	Transform Inverse(const Transform& t);

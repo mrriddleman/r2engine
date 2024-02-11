@@ -16,6 +16,7 @@
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/Components/LightUpdateComponent.h"
 #include "r2/Game/ECS/Components/PointLightComponent.h"
+#include "r2/Game/ECS/Components/SpotLightComponent.h"
 
 #include "r2/Game/ECS/Systems/AudioEmitterSystem.h"
 #include "r2/Game/ECS/Systems/AudioListenerSystem.h"
@@ -162,9 +163,29 @@ namespace r2::ecs
 
 		ecs::LightUpdateComponent lightUpdateComponent;
 		lightUpdateComponent.flags.Set(POINT_LIGHT_UPDATE);
+
 		mECSCoordinator->AddComponentToAllEntities<ecs::LightUpdateComponent>(lightUpdateComponent, *tempEntities);
 
-		
+
+		lightUpdateComponent.flags.Clear();
+		lightUpdateComponent.flags.Set(SPOT_LIGHT_UPDATE);
+		mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::SpotLightComponent>(), *tempEntities);
+
+		const auto numSpotLightEntities = r2::sarr::Size(*tempEntities);
+		for (u32 i = 0; i < numSpotLightEntities; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(*tempEntities, i);
+			ecs::LightUpdateComponent* lightUpdateComponentPtr = mECSCoordinator->GetComponentPtr<ecs::LightUpdateComponent>(e);
+			if (lightUpdateComponentPtr != nullptr)
+			{
+				lightUpdateComponentPtr->flags.Set(SPOT_LIGHT_UPDATE);
+			}
+			else
+			{
+				mECSCoordinator->AddComponent<ecs::LightUpdateComponent>(e, lightUpdateComponent);
+			}
+		}
+
 		FREE(tempEntities, *MEM_ENG_SCRATCH_PTR);
 		PostLoadLevel(level, levelData);
 
@@ -349,6 +370,13 @@ namespace r2::ecs
 		r2::draw::renderer::RemovePointLight(pointLightComponent->pointLightHandle);
 	}
 
+	void ECSWorld::FreeSpotLightComponent(void* spotLightComponentData)
+	{
+		ecs::SpotLightComponent* spotLightComponent = static_cast<ecs::SpotLightComponent*>(spotLightComponentData);
+
+		r2::draw::renderer::RemoveSpotLight(spotLightComponent->spotLightHandle);
+	}
+
 #ifdef R2_DEBUG
 	void ECSWorld::FreeDebugBoneComponent(void* data)
 	{
@@ -422,6 +450,8 @@ namespace r2::ecs
 		FreeComponentFunc freeInstancedSkeletalAnimationComponentFunc = std::bind(&ECSWorld::FreeInstancedSkeletalAnimationComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedTransformComponentFunc = std::bind(&ECSWorld::FreeInstancedTransformComponent, this, std::placeholders::_1);
 		FreeComponentFunc freePointLightComponentFunc = std::bind(&ECSWorld::FreePointLightComponent, this, std::placeholders::_1);
+		FreeComponentFunc freeSpotLightComponentFunc = std::bind(&ECSWorld::FreeSpotLightComponent, this, std::placeholders::_1);
+
 #ifdef R2_DEBUG
 		FreeComponentFunc freeDebugBoneComponent = std::bind(&ECSWorld::FreeDebugBoneComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedDebugBoneComponent = std::bind(&ECSWorld::FreeInstancedDebugBoneComponent, this, std::placeholders::_1);
@@ -451,6 +481,7 @@ namespace r2::ecs
 
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::LightUpdateComponent>(*mArena, "LightingUpdateComponent", false, false, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena, "PointLightComponent", true, false, freePointLightComponentFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena, "SpotLightComponent", true, false, freeSpotLightComponentFunc);
 
 #ifdef R2_DEBUG
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, false, nullptr);
@@ -477,7 +508,7 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena);
 #endif
-
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::LightUpdateComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena);
@@ -695,6 +726,7 @@ namespace r2::ecs
 		memorySize += ComponentArray<EditorComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 
 		memorySize += ComponentArray<PointLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<SpotLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<LightUpdateComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 
 #ifdef R2_EDITOR

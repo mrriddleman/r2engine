@@ -365,12 +365,29 @@ namespace r2::ecs
 		}
 
 
-		//Hack for the editor
-		if (mnoptrECSCoordinator->HasComponent<ecs::PointLightComponent>(entity) && ! mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
+		//@TODO(Serge): Hack for the editor! Clean up 
+		if (mnoptrECSCoordinator->HasComponent<ecs::PointLightComponent>(entity) && !mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
 		{
 			ecs::LightUpdateComponent lightUpdateComponent;
 			lightUpdateComponent.flags.Set(POINT_LIGHT_UPDATE);
 			mnoptrECSCoordinator->AddComponent<ecs::LightUpdateComponent>(entity, lightUpdateComponent);
+		}
+		else if(mnoptrECSCoordinator->HasComponent<ecs::PointLightComponent>(entity) && mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
+		{
+			LightUpdateComponent& lightUpdateComponent = mnoptrECSCoordinator->GetComponent<ecs::LightUpdateComponent>(entity);
+			lightUpdateComponent.flags.Set(POINT_LIGHT_UPDATE);
+		}
+
+		if (mnoptrECSCoordinator->HasComponent<ecs::SpotLightComponent>(entity) && !mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
+		{
+			ecs::LightUpdateComponent lightUpdateComponent;
+			lightUpdateComponent.flags.Set(SPOT_LIGHT_UPDATE);
+			mnoptrECSCoordinator->AddComponent<ecs::LightUpdateComponent>(entity, lightUpdateComponent);
+		}
+		else if (mnoptrECSCoordinator->HasComponent<ecs::SpotLightComponent>(entity) && mnoptrECSCoordinator->HasComponent<ecs::LightUpdateComponent>(entity))
+		{
+			LightUpdateComponent& lightUpdateComponent = mnoptrECSCoordinator->GetComponent<ecs::LightUpdateComponent>(entity);
+			lightUpdateComponent.flags.Set(SPOT_LIGHT_UPDATE);
 		}
 
 

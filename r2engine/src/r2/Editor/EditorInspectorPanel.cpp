@@ -590,8 +590,7 @@ namespace r2::edit
 				
 				const bool hasTransformComponent = coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity);
 
-				if ( hasTransformComponent &&
-					coordinator->HasComponent<ecs::RenderComponent>(mSelectedEntity))
+				if ( hasTransformComponent)
 				{
 
 					//ImGuizmo stuff here since it has a position + render component

@@ -117,6 +117,7 @@ namespace r2::ecs
 		void FreeInstancedSkeletalAnimationComponent(void* instancedSkeletalAnimationComponent);
 		void FreeInstancedTransformComponent(void* instancedTransformComponent);
 		void FreePointLightComponent(void* pointLightComponentData);
+		void FreeSpotLightComponent(void* spotLightComponentData);
 
 #ifdef R2_DEBUG
 		void FreeDebugBoneComponent(void* debugBoneComponent);

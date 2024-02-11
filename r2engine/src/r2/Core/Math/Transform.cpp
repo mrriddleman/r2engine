@@ -35,7 +35,7 @@ namespace r2::math
 		r.z = v1.x * v2.y - v1.y * v2.x;
 	}
 
-	inline glm::vec3 QuatMult(const glm::quat& q, const glm::vec3& v)
+	glm::vec3 QuatMult(const glm::quat& q, const glm::vec3& v)
 	{
 		glm::vec3 qv = { q.x, q.y, q.z };
 		glm::vec3 t = {};

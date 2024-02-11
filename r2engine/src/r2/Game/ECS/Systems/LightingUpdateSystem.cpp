@@ -9,7 +9,10 @@
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/PointLightComponent.h"
 #include "r2/Game/ECS/Components/LightUpdateComponent.h"
+#include "r2/Game/ECS/Components/SpotLightComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+
+#include <glm/gtx/quaternion.hpp>
 
 namespace r2::ecs
 {
@@ -53,7 +56,18 @@ namespace r2::ecs
 			}
 
 			//@TODO(Serge): the rest of the lights
+			if (lightUpdateComponent.flags.IsSet(SPOT_LIGHT_UPDATE))
+			{
+				const SpotLightComponent& spotLightComponent = mnoptrCoordinator->GetComponent<SpotLightComponent>(entity);
 
+				auto* spotLight = r2::draw::renderer::GetSpotLightPtr(spotLightComponent.spotLightHandle);
+
+				spotLight->lightProperties = spotLightComponent.lightProperties;
+				spotLight->position = glm::vec4(transformComponent.accumTransform.position, spotLightComponent.innerCutoffAngle);
+
+				glm::vec3 newDirection = glm::rotate(transformComponent.accumTransform.rotation, glm::vec3(0, 0, -1));
+				spotLight->direction = glm::vec4(newDirection, spotLightComponent.outerCutoffAngle);
+			}
 		}
 
 		//We need to make a copy here because we're changing the signature of the entities such that they won't belong 
