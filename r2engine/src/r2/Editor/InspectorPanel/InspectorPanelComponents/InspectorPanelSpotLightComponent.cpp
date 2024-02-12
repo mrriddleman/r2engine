@@ -83,12 +83,14 @@ namespace r2::edit
 		if (ImGui::Checkbox("Cast Shadows", &castsShadows))
 		{
 			spotLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.x = castsShadows ? 1u : 0u;
+			needsUpdate = true;
 		}
 
 		bool softShadows = spotLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.y > 0u;
 		if (ImGui::Checkbox("Soft Shadows", &softShadows))
 		{
 			spotLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.y = softShadows ? 1u : 0u;
+			needsUpdate = true;
 		}
 
 		if (needsUpdate)
@@ -165,6 +167,8 @@ namespace r2::edit
 		}
 
 		newSpotLightComponent.spotLightHandle = r2::draw::renderer::AddSpotLight(newSpotLight);
+
+		newSpotLightComponent.lightProperties = r2::draw::renderer::GetSpotLightConstPtr(newSpotLightComponent.spotLightHandle)->lightProperties;
 
 		//This should probably be an action?
 		coordinator->AddComponent<ecs::SpotLightComponent>(theEntity, newSpotLightComponent);

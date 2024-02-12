@@ -63,12 +63,14 @@ namespace r2::edit
 		if (ImGui::Checkbox("Cast Shadows", &castsShadows))
 		{
 			pointLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.x = castsShadows ? 1u : 0u;
+			needsUpdate = true;
 		}
 
 		bool softShadows = pointLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.y > 0u;
 		if (ImGui::Checkbox("Soft Shadows", &softShadows))
 		{
 			pointLightComponentPtr->lightProperties.castsShadowsUseSoftShadows.y = softShadows ? 1u : 0u;
+			needsUpdate = true;
 		}
 
 		if (needsUpdate)
@@ -140,8 +142,12 @@ namespace r2::edit
 
 		newPointLightComponent.pointLightHandle = r2::draw::renderer::AddPointLight(newPointLight);
 
+		newPointLightComponent.lightProperties = r2::draw::renderer::GetPointLightConstPtr(newPointLightComponent.pointLightHandle)->lightProperties;
+
 		//This should probably be an action?
 		coordinator->AddComponent<ecs::PointLightComponent>(theEntity, newPointLightComponent);
+
+		
 	}
 
 	void InspectorPanelPointLightDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 numInstances)

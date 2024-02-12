@@ -76,6 +76,10 @@ namespace r2::ecs
 
 			pointLightComponent.pointLightHandle = r2::draw::renderer::AddPointLight(newPointLight);
 
+			//@NOTE(Serge): we're making sure to set the light handle of the light properties
+			pointLightComponent.lightProperties = r2::draw::renderer::GetPointLightConstPtr(pointLightComponent.pointLightHandle)->lightProperties;
+
+
 			r2::sarr::Push(components, pointLightComponent);
 		}
 	}

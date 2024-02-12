@@ -79,6 +79,9 @@ namespace r2::ecs
 			newSpotLight.direction = glm::vec4(0, 0, -1, spotLightComponent.outerCutoffAngle);
 			spotLightComponent.spotLightHandle = r2::draw::renderer::AddSpotLight(newSpotLight);
 
+			//@NOTE(Serge): we're making sure to set the light handle of the light properties
+			spotLightComponent.lightProperties = r2::draw::renderer::GetSpotLightConstPtr(spotLightComponent.spotLightHandle)->lightProperties;
+
 			r2::sarr::Push(components, spotLightComponent);
 		}
 	}

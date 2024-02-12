@@ -21,13 +21,13 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 
-		void RegisterLevelRenderSettingsWidget(std::shared_ptr<LevelRenderSettingsDataSource> renderSettingsWidget);
+		void RegisterLevelRenderSettingsWidget(std::unique_ptr<LevelRenderSettingsDataSource> renderSettingsWidget);
 
 		Editor* GetEditor();
 
 	private:
 		Editor* mnoptrEditor;
-		std::vector<std::shared_ptr<LevelRenderSettingsDataSource>> mDataSources;
+		std::vector<std::unique_ptr<LevelRenderSettingsDataSource>> mDataSources;
 	};
 }
 

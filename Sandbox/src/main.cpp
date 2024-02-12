@@ -557,14 +557,14 @@ public:
             //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),
             //    *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);
 
-			r2::draw::DirectionLight dirLight;
-			dirLight.lightProperties.color = glm::vec4(1, 1, 1, 1.0f);
+			//r2::draw::DirectionLight dirLight;
+			//dirLight.lightProperties.color = glm::vec4(1, 1, 1, 1.0f);
 
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(40.0f, 0.0f, 100.0f, 0.0f));
-			dirLight.lightProperties.intensity = 1;
-            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(40.0f, 0.0f, 100.0f, 0.0f));
+			//dirLight.lightProperties.intensity = 1;
+   //         dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+   //         r2::draw::renderer::AddDirectionLight(dirLight);
 
             //r2::draw::DirectionLight dirLight2;
             //dirLight2.lightProperties.color = glm::vec4(1.0f);

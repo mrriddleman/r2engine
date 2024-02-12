@@ -7,6 +7,7 @@
 //Widgets
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SkylightRenderSettingsPanelWidget.h"
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/ColorGradingRenderSettingsPanelWidget.h"
+#include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SunlightRenderSettingsPanelWidget.h"
 
 #include "imgui.h"
 
@@ -28,11 +29,14 @@ namespace r2::edit
 	{
 		mnoptrEditor = noptrEditor;
 
-		std::shared_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_shared<r2::edit::SkylightRenderSettingsPanelWidget>();
-		RegisterLevelRenderSettingsWidget(skylightWidget);
+		std::unique_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_unique<r2::edit::SkylightRenderSettingsPanelWidget>();
+		RegisterLevelRenderSettingsWidget(std::move(skylightWidget));
 
-		std::shared_ptr<r2::edit::ColorGradingRenderSettingsPanelWidget> colorGradingWidget = std::make_shared<r2::edit::ColorGradingRenderSettingsPanelWidget>();
-		RegisterLevelRenderSettingsWidget(colorGradingWidget);
+		std::unique_ptr<r2::edit::ColorGradingRenderSettingsPanelWidget> colorGradingWidget = std::make_unique<r2::edit::ColorGradingRenderSettingsPanelWidget>();
+		RegisterLevelRenderSettingsWidget(std::move(colorGradingWidget));
+
+		std::unique_ptr<r2::edit::SunLightRenderSettingsPanelWidget> sunlightWidget = std::make_unique<r2::edit::SunLightRenderSettingsPanelWidget>();
+		RegisterLevelRenderSettingsWidget(std::move(sunlightWidget));
 	}
 
 	void LevelRenderSettingsPanel::Shutdown()
@@ -92,20 +96,20 @@ namespace r2::edit
 		return mnoptrEditor;
 	}
 
-	void LevelRenderSettingsPanel::RegisterLevelRenderSettingsWidget(std::shared_ptr<LevelRenderSettingsDataSource> renderSettingsWidget)
+	void LevelRenderSettingsPanel::RegisterLevelRenderSettingsWidget(std::unique_ptr<LevelRenderSettingsDataSource> renderSettingsWidget)
 	{
 		auto componentType = renderSettingsWidget->GetTitle();
 
-		auto iter = std::find_if(mDataSources.begin(), mDataSources.end(), [&](const std::shared_ptr<LevelRenderSettingsDataSource>& widget)
+		auto iter = std::find_if(mDataSources.begin(), mDataSources.end(), [&](const std::unique_ptr<LevelRenderSettingsDataSource>& widget)
 			{
 				return widget->GetTitle() == componentType;
 			});
 
 		if (iter == mDataSources.end())
 		{
-			mDataSources.push_back(renderSettingsWidget);
+			mDataSources.push_back(std::move(renderSettingsWidget));
 			mDataSources.back()->Init();
-			std::sort(mDataSources.begin(), mDataSources.end(), [](const std::shared_ptr < LevelRenderSettingsDataSource>& w1, const std::shared_ptr < LevelRenderSettingsDataSource>& w2)
+			std::sort(mDataSources.begin(), mDataSources.end(), [](const std::unique_ptr < LevelRenderSettingsDataSource>& w1, const std::unique_ptr < LevelRenderSettingsDataSource>& w2)
 				{
 					return w1->GetSortOrder() < w2->GetSortOrder();
 				});
