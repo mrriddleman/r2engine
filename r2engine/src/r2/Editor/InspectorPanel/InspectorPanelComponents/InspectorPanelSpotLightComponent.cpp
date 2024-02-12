@@ -102,6 +102,12 @@ namespace r2::edit
 				coordinator->AddComponent<ecs::LightUpdateComponent>(theEntity, lightUpdate);
 			}
 		}
+
+		const ecs::TransformComponent& transformComponent = coordinator->GetComponent<ecs::TransformComponent>(theEntity);
+
+		glm::vec3 direction = glm::rotate(transformComponent.accumTransform.rotation, glm::vec3(0, 0, 1)); //0, 0, 1 - because that's the initial direction of a cone
+		
+		r2::draw::renderer::DrawCone(transformComponent.accumTransform.position - glm::vec3(0, 0, 0.5), direction, glm::acos(spotLightComponentPtr->outerCutoffAngle), 1, spotLightComponentPtr->lightProperties.color, true);
 	}
 
 	bool InspectorPanelSpotLightDataSource::InstancesEnabled() const

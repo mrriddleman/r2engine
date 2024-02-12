@@ -81,9 +81,11 @@ namespace r2::edit
 				lightUpdate.flags.Set(ecs::POINT_LIGHT_UPDATE);
 				coordinator->AddComponent<ecs::LightUpdateComponent>(theEntity, lightUpdate);
 			}
-
-
 		}
+
+		const ecs::TransformComponent& transformComponent = coordinator->GetComponent<ecs::TransformComponent>(theEntity);
+
+		r2::draw::renderer::DrawSphere(transformComponent.accumTransform.position, 1, pointLightComponentPtr->lightProperties.color, true);
 	}
 
 	bool InspectorPanelPointLightDataSource::InstancesEnabled() const
@@ -146,6 +148,9 @@ namespace r2::edit
 
 		//This should probably be an action?
 		coordinator->AddComponent<ecs::PointLightComponent>(theEntity, newPointLightComponent);
+
+
+
 
 		
 	}
