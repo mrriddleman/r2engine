@@ -97,13 +97,6 @@ namespace r2
 		mEditorFileImage = edit::CreateTextureFromFile((editorFolderPath / "FileIcon.png").string(), mEditorFileImageWidth, mEditorFileImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
 		IM_ASSERT(mEditorFileImage != 0);
 
-
-		//now init all of the widgets
-		for (const auto& widget : mEditorWidgets)
-		{
-			widget->Init(this);
-		}
-		
 		CreateNewLevel("NewGroup", "NewLevel");
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
@@ -111,11 +104,19 @@ namespace r2
 
 		mEngineMaterialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
 
-		#ifdef R2_ASSET_PIPELINE
+#ifdef R2_ASSET_PIPELINE
 		mGridMaterialName = { {STRING_ID("EditorCartesianGrid"), "EditorCartesianGrid"}, mEngineMaterialPackName };
-		#else
+#else
 		mGridMaterialName = { {STRING_ID("EditorCartesianGrid")}, materialParamsPackName };
-		#endif
+#endif
+
+		//now init all of the widgets
+		for (const auto& widget : mEditorWidgets)
+		{
+			widget->Init(this);
+		}
+		
+		
 	}
 
 	void Editor::Shutdown()

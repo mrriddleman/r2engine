@@ -18,8 +18,8 @@
 namespace r2::edit
 {
 
-	SunLightRenderSettingsPanelWidget::SunLightRenderSettingsPanelWidget()
-		:LevelRenderSettingsDataSource("Sunlight Settings")
+	SunLightRenderSettingsPanelWidget::SunLightRenderSettingsPanelWidget(r2::Editor* noptrEditor)
+		:LevelRenderSettingsDataSource(noptrEditor, "Sunlight Settings")
 		, mDirectionLightHandle({})
 		, mDirection({0, 0, -1})
 		, mPosition({0, 0, 5})

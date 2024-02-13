@@ -450,40 +450,40 @@ public:
 
         //@TODO(Serge): get rid of all of this once the engine can sustain itself
         //              at the moment we still need this for skybox and color grading
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
+		//char materialsPath[r2::fs::FILE_PATH_LENGTH];
+  //      r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");//"SandboxMaterialParamsPack.mppk");
 
-		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
+		//char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		//r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
 
-        r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+  //      r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
+		//const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
 
-		const flat::MaterialPack* gameMaterialPack = flat::GetMaterialPack(materialManifestData);
+		//const flat::MaterialPack* gameMaterialPack = flat::GetMaterialPack(materialManifestData);
 
-        r2::draw::texche::LoadMaterialTextures(texturePacksCache, gameMaterialPack);
-		//gameAssetManager.LoadMaterialTextures(gameMaterialPack);
+  //      r2::draw::texche::LoadMaterialTextures(texturePacksCache, gameMaterialPack);
+		////gameAssetManager.LoadMaterialTextures(gameMaterialPack);
 
-		u32 totalNumberOfTextures = 0;
-		u32 totalNumberOfTexturePacks = 0;
-		u32 totalNumCubemaps = 0;
-		u32 cacheSize = 0;
-		r2::draw::texche::GetTexturePacksCacheSizes(texturePackPath, totalNumberOfTextures, totalNumberOfTexturePacks, totalNumCubemaps, cacheSize);
+		//u32 totalNumberOfTextures = 0;
+		//u32 totalNumberOfTexturePacks = 0;
+		//u32 totalNumCubemaps = 0;
+		//u32 cacheSize = 0;
+		//r2::draw::texche::GetTexturePacksCacheSizes(texturePackPath, totalNumberOfTextures, totalNumberOfTexturePacks, totalNumCubemaps, cacheSize);
 
-		r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
-		r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
+		//r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
+		//r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-        r2::draw::texche::GetTexturesForMaterialPack(texturePacksCache, gameMaterialPack, gameTextures, gameCubemaps);
+  //      r2::draw::texche::GetTexturesForMaterialPack(texturePacksCache, gameMaterialPack, gameTextures, gameCubemaps);
 
-		//gameAssetManager.GetTexturesForMaterialPack(gameMaterialPack, gameTextures, gameCubemaps);
+		////gameAssetManager.GetTexturesForMaterialPack(gameMaterialPack, gameTextures, gameCubemaps);
 
-        r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
-		r2::draw::rmat::UploadMaterialTextureParamsArray(*renderMaterialCache, gameMaterialPack, gameTextures, gameCubemaps);
+  //      r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+		//r2::draw::rmat::UploadMaterialTextureParamsArray(*renderMaterialCache, gameMaterialPack, gameTextures, gameCubemaps);
 
-		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
-		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
+		//FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
+		//FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 
     //    auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
       //  mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
@@ -497,7 +497,7 @@ public:
 
         //r2::sarr::Push(*modelMats, sponzaModelMatrix);
 
-        r2::util::Random randomizer;
+   //     r2::util::Random randomizer;
         
         //color grading
         //const r2::draw::tex::Texture* colorGradingLUT = r2::draw::texche::GetAlbedoTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("ColorGradingLUT")); //gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
@@ -553,7 +553,7 @@ public:
 
         //FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
 
-        r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
+  //      r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
             //const auto* prefilteredCubemap = r2::draw::texche::GetCubemapTextureForMaterialName(texturePacksCache, gameMaterialPack, STRING_ID("NewportPrefiltered"));//gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 

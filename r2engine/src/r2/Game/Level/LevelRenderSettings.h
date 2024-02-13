@@ -19,6 +19,10 @@ namespace r2
 		r2::SArray<r2::Camera*>* mCameras = nullptr;
 		s32 mCurrentCameraIndex = -1;
 
+
+
+
+
 		static u32 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
 	};
 }

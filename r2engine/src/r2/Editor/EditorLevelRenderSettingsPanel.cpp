@@ -29,13 +29,13 @@ namespace r2::edit
 	{
 		mnoptrEditor = noptrEditor;
 
-		std::unique_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_unique<r2::edit::SkylightRenderSettingsPanelWidget>();
+		std::unique_ptr<r2::edit::SkylightRenderSettingsPanelWidget> skylightWidget = std::make_unique<r2::edit::SkylightRenderSettingsPanelWidget>(mnoptrEditor);
 		RegisterLevelRenderSettingsWidget(std::move(skylightWidget));
 
-		std::unique_ptr<r2::edit::ColorGradingRenderSettingsPanelWidget> colorGradingWidget = std::make_unique<r2::edit::ColorGradingRenderSettingsPanelWidget>();
+		std::unique_ptr<r2::edit::ColorGradingRenderSettingsPanelWidget> colorGradingWidget = std::make_unique<r2::edit::ColorGradingRenderSettingsPanelWidget>(mnoptrEditor);
 		RegisterLevelRenderSettingsWidget(std::move(colorGradingWidget));
 
-		std::unique_ptr<r2::edit::SunLightRenderSettingsPanelWidget> sunlightWidget = std::make_unique<r2::edit::SunLightRenderSettingsPanelWidget>();
+		std::unique_ptr<r2::edit::SunLightRenderSettingsPanelWidget> sunlightWidget = std::make_unique<r2::edit::SunLightRenderSettingsPanelWidget>(mnoptrEditor);
 		RegisterLevelRenderSettingsWidget(std::move(sunlightWidget));
 	}
 

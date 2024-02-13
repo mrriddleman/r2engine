@@ -11,13 +11,18 @@
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "R2/Render/Model/Textures/TexturePackMetaData_generated.h"
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
+
+#include "r2/Game/Level/LevelManager.h"
 #include "imgui.h"
+
+#include "r2/Editor/Editor.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::edit
 {
 
-	SkylightRenderSettingsPanelWidget::SkylightRenderSettingsPanelWidget()
-		:LevelRenderSettingsDataSource("Skylight Settings")
+	SkylightRenderSettingsPanelWidget::SkylightRenderSettingsPanelWidget(r2::Editor* noptrEditor)
+		:LevelRenderSettingsDataSource(noptrEditor, "Skylight Settings")
 		,mNumMips(0)
 	{
 
@@ -234,7 +239,6 @@ namespace r2::edit
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 		r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
-		
 
 		u32 numMaterialManifests = r2::asset::lib::GetManifestCountForType(assetLib, asset::MATERIAL_PACK_MANIFEST);
 
@@ -273,9 +277,17 @@ namespace r2::edit
 		{
 			const flat::Material* convolvedMaterial = r2::sarr::At(*convolvedCubemapMaterials, i);
 
+
 			r2::asset::AssetName assetName;
 			r2::asset::MakeAssetNameFromFlatAssetName(convolvedMaterial->assetName(), assetName);
-			mConvolvedMaterialNames.push_back(assetName);
+
+			
+			if (IsInLevelMaterialList(assetName))
+			{
+				mConvolvedMaterialNames.push_back(assetName);
+			}
+
+			
 		}
 
 		for (u32 i = 0; i < numPrefilteredCubemaps; ++i)
@@ -300,7 +312,10 @@ namespace r2::edit
 
 			r2::asset::AssetName assetName;
 			r2::asset::MakeAssetNameFromFlatAssetName(prefilteredMaterial->assetName(), assetName);
-			mPrefilteredMaterialNames.push_back(assetName);
+			if (IsInLevelMaterialList(assetName))
+			{
+				mPrefilteredMaterialNames.push_back(assetName);
+			}
 		}
 
 		for (u32 i = 0; i < numTextures; ++i)
@@ -309,7 +324,11 @@ namespace r2::edit
 
 			r2::asset::AssetName assetName;
 			r2::asset::MakeAssetNameFromFlatAssetName(lutDFGMaterial->assetName(), assetName);
-			mLUTDFGMaterialNames.push_back(assetName);
+
+			if (IsInLevelMaterialList(assetName))
+			{
+				mLUTDFGMaterialNames.push_back(assetName);
+			}
 		}
 
 		FREE(textureMaterials, *MEM_ENG_SCRATCH_PTR);

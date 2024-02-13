@@ -12,7 +12,7 @@ namespace r2::edit
 	{
 	public:
 
-		SkylightRenderSettingsPanelWidget();
+		SkylightRenderSettingsPanelWidget(r2::Editor* noptrEditor);
 		~SkylightRenderSettingsPanelWidget();
 		void Init() override;
 

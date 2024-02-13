@@ -16,8 +16,8 @@
 namespace r2::edit 
 {
 	
-	ColorGradingRenderSettingsPanelWidget::ColorGradingRenderSettingsPanelWidget()
-		:LevelRenderSettingsDataSource("Color Grading Settings")
+	ColorGradingRenderSettingsPanelWidget::ColorGradingRenderSettingsPanelWidget(r2::Editor* noptrEditor)
+		:LevelRenderSettingsDataSource(noptrEditor, "Color Grading Settings")
 	{
 
 	}
@@ -172,7 +172,11 @@ namespace r2::edit
 
 			R2_CHECK(temp.materialPack != nullptr, "Should never happen");
 
-			mColorGradingMaterials.push_back(temp);
+			if (IsInLevelMaterialList(assetName))
+			{
+				mColorGradingMaterials.push_back(temp);
+			}
+			
 		}
 
 		FREE(textureMaterials, *MEM_ENG_SCRATCH_PTR);

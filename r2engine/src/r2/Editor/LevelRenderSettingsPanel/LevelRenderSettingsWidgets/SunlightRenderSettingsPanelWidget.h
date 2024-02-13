@@ -11,7 +11,7 @@ namespace r2::edit
 	{
 	public:
 
-		SunLightRenderSettingsPanelWidget();
+		SunLightRenderSettingsPanelWidget(r2::Editor* noptrEditor);
 		~SunLightRenderSettingsPanelWidget();
 		void Init() override;
 

@@ -17,7 +17,7 @@ namespace r2::edit
 	{
 	public:
 
-		ColorGradingRenderSettingsPanelWidget();
+		ColorGradingRenderSettingsPanelWidget(r2::Editor* noptrEditor);
 		~ColorGradingRenderSettingsPanelWidget();
 		void Init() override;
 
