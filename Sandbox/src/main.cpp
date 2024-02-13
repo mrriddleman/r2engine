@@ -389,8 +389,15 @@ public:
        // linearArenaPtr = EMPLACE_LINEAR_ARENA(*subMemoryArea);
         
        // R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
-        
-        mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mCamera.fov = glm::radians(70.0f);
+        mCamera.aspectRatio = static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height);
+        mCamera.nearPlane = 0.1;
+        mCamera.farPlane = 1000.0f;
+
+
+        mPersController.SetCamera(&mCamera, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
+
+   //     mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         //modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -645,30 +652,30 @@ public:
     {
 		r2::evt::EventDispatcher dispatcher(e);
 
-		dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
-			{
-                if (!ShouldKeepAspectRatio())
-                {
-                    mPersController.SetAspect(static_cast<float>(e.NewWidth()) / static_cast<float>(e.NewHeight()));
-                }
+		//dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
+		//	{
+  //              if (!ShouldKeepAspectRatio())
+  //              {
+  //                  mPersController.SetAspect(static_cast<float>(e.NewWidth()) / static_cast<float>(e.NewHeight()));
+  //              }
 
-				//r2::draw::renderer::WindowResized(e.Width(), e.Height());
-				// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
-				return true;
-			});
+		//		//r2::draw::renderer::WindowResized(e.Width(), e.Height());
+		//		// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
+		//		return true;
+		//	});
 
-		dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
-			{
-				if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
-				{
-					r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
+		//dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
+		//	{
+		//		if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
+		//		{
+		//			r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
 
-					//  r2::draw::OpenGLDrawRay(ray);
-					return true;
-				}
+		//			//  r2::draw::OpenGLDrawRay(ray);
+		//			return true;
+		//		}
 
-				return false;
-			});
+		//		return false;
+		//	});
 
 		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
 			if (e.KeyCode() == r2::io::KEY_LEFT)
@@ -1663,6 +1670,9 @@ public:
 private:
     //r2::mem::MemoryArea::Handle memoryAreaHandle;
     //r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
+
+
+    r2::Camera mCamera;
     r2::cam::PerspectiveController mPersController;
 
    // r2::mem::LinearArena* linearArenaPtr;

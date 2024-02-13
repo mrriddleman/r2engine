@@ -13,69 +13,67 @@
 namespace r2::cam
 {
     
-    void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing)
-    {
-		glm::vec3 yawFacing = glm::normalize(glm::vec3(facing.x, facing.y, 0));
-        yaw = -glm::degrees(glm::angle(glm::vec3(1, 0, 0), yawFacing));
-        pitch = 0.0f;
+  //  void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing)
+  //  {
+		//glm::vec3 yawFacing = glm::normalize(glm::vec3(facing.x, facing.y, 0));
+  //      yaw = -glm::degrees(glm::angle(glm::vec3(1, 0, 0), yawFacing));
+  //      pitch = 0.0f;
 
-        if (math::NearZero(glm::dot(facing, glm::vec3(1, 0, 0))))
-        {
-            pitch = glm::degrees(glm::angle(facing, glm::vec3(0, 1, 0)));
-        }
-        else
-        {
-            pitch = glm::degrees(glm::angle(facing, glm::vec3(1, 0, 0)));
-        }
+  //      if (math::NearZero(glm::dot(facing, glm::vec3(1, 0, 0))))
+  //      {
+  //          pitch = glm::degrees(glm::angle(facing, glm::vec3(0, 1, 0)));
+  //      }
+  //      else
+  //      {
+  //          pitch = glm::degrees(glm::angle(facing, glm::vec3(1, 0, 0)));
+  //      }
 
-		lastX = (f32)CENG.DisplaySize().width / 2.0f;
-        lastY = (f32)CENG.DisplaySize().height / 2.0f;
+		//lastX = (f32)CENG.DisplaySize().width / 2.0f;
+  //      lastY = (f32)CENG.DisplaySize().height / 2.0f;
 
-        mCameraMoveSpeed = camMoveSpeed;
-        mFOV = fov; 
-        mAspect = aspect;
-        mNear = near;
-        mFar = far;
-        mRightMouseButtonHeld = false;
-        InitPerspectiveCam(mCamera, fov, aspect, near, far, position, facing);
-    }
+  //      mCameraMoveSpeed = camMoveSpeed;
+  //      //mFOV = fov; 
+  //      //mAspect = aspect;
+  //      //mNear = near;
+  //      //mFar = far;
+  //      mRightMouseButtonHeld = false;
+  //      InitPerspectiveCam(mCamera, fov, aspect, near, far, position, facing);
+  //  }
     
     void PerspectiveController::Update()
     {
         float speed = util::MillisecondsToSeconds(CPLAT.TickRate()) * mCameraMoveSpeed;
         
-        glm::vec3 deltaMove = mCamera.facing * speed;
+        glm::vec3 deltaMove = mCameraPtr->facing * speed;
         
         if(mDirectionPressed.IsSet(FORWARD))
         {
-            MoveCameraBy(mCamera, deltaMove);
+            MoveCameraBy(*mCameraPtr, deltaMove);
         }
         else if(mDirectionPressed.IsSet(BACKWARD))
         {
-            MoveCameraBy(mCamera, -deltaMove);
+            MoveCameraBy(*mCameraPtr, -deltaMove);
         }
         else if(mDirectionPressed.IsSet(LEFT))
         {
-            MoveCameraBy(mCamera, cam::GetWorldRight(mCamera) * -speed);
+            MoveCameraBy(*mCameraPtr, cam::GetWorldRight(*mCameraPtr) * -speed);
         }
         else if(mDirectionPressed.IsSet(RIGHT))
         {
-             
-
-            MoveCameraBy(mCamera, cam::GetWorldRight(mCamera) * speed);
+            MoveCameraBy(*mCameraPtr, cam::GetWorldRight(*mCameraPtr) * speed);
         }
     }
     
     void PerspectiveController::SetAspect(float aspect)
     {
-        mAspect = aspect;
-        SetPerspectiveCam(mCamera, mFOV, aspect, mNear, mFar);
+
+        SetPerspectiveCam(*mCameraPtr, mCameraPtr->fov, aspect, mCameraPtr->nearPlane, mCameraPtr->farPlane);
     }
     
     void PerspectiveController::SetFOV(float fov)
     {
-        mFOV = fov;
-        SetPerspectiveCam(mCamera, fov, mAspect, mNear, mFar);
+
+        SetPerspectiveCam(*mCameraPtr, fov, mCameraPtr->aspectRatio, mCameraPtr->nearPlane, mCameraPtr->farPlane);
     }
     
     void PerspectiveController::OnEvent(r2::evt::Event& event)
@@ -199,22 +197,56 @@ namespace r2::cam
             
            // R2_LOGI("pitch: %f, yaw: %f", pitch, yaw);
             
-            SetFacingDir(mCamera, pitch, yaw);
+            SetFacingDir(*mCameraPtr, pitch, yaw);
             
             return true;
         });
 
         dispatcher.Dispatch<r2::evt::MouseWheelEvent>([this](const r2::evt::MouseWheelEvent&e){
             
-            if(mFOV >= 1.0f && mFOV <= 90.0f)
-                mFOV -= e.YAmount();
-            if(mFOV <= 1.0f)
-                mFOV = 1.0f;
-			if (mFOV >= 90.0f)
-				mFOV = 90.0f;
+            float fovDegrees = glm::degrees(mCameraPtr->fov);
+
+            if(fovDegrees >= 1.0f && fovDegrees <= 90.0f)
+                fovDegrees -= e.YAmount();
+            if(fovDegrees <= 1.0f)
+                fovDegrees = 1.0f;
+			if (fovDegrees >= 90.0f)
+                fovDegrees = 90.0f;
             
-            SetPerspectiveCam(mCamera, mFOV, mAspect, mNear, mFar);
+            SetPerspectiveCam(*mCameraPtr, glm::radians(fovDegrees), mCameraPtr->aspectRatio, mCameraPtr->nearPlane, mCameraPtr->farPlane);
             return true;
         });
     }
+
+	void PerspectiveController::SetCamera(Camera* cameraPtr, const glm::vec3& position, const glm::vec3& facing, float camMoveSpeed)
+	{
+        R2_CHECK(cameraPtr != nullptr, "Should never happen!");
+        
+        mCameraPtr = cameraPtr;
+
+		glm::vec3 yawFacing = glm::normalize(glm::vec3(facing.x, facing.y, 0));
+		yaw = -glm::degrees(glm::angle(glm::vec3(1, 0, 0), yawFacing));
+		pitch = 0.0f;
+
+		if (math::NearZero(glm::dot(facing, glm::vec3(1, 0, 0))))
+		{
+			pitch = glm::degrees(glm::angle(facing, glm::vec3(0, 1, 0)));
+		}
+		else
+		{
+			pitch = glm::degrees(glm::angle(facing, glm::vec3(1, 0, 0)));
+		}
+
+		lastX = (f32)CENG.DisplaySize().width / 2.0f;
+		lastY = (f32)CENG.DisplaySize().height / 2.0f;
+
+		mCameraMoveSpeed = camMoveSpeed;
+		//mFOV = fov; 
+		//mAspect = aspect;
+		//mNear = near;
+		//mFar = far;
+		mRightMouseButtonHeld = false;
+		InitPerspectiveCam(*mCameraPtr, mCameraPtr->fov, mCameraPtr->aspectRatio, mCameraPtr->nearPlane, mCameraPtr->farPlane, position, facing);
+	}
+
 }

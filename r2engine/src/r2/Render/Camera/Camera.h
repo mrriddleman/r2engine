@@ -38,22 +38,22 @@ namespace r2::cam
     
     void InitOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far, const glm::vec3& position);
     
-    void SetPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far);
+    void SetPerspectiveCam(Camera& cam, float fovRadians, float aspect, float near, float far);
     void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far);
     void MoveCameraTo(Camera& cam, const glm::vec3& pos);
     void MoveCameraBy(Camera& cam, const glm::vec3& offset);
     void SetFacingDir(Camera& cam, float pitch, float yaw);
     void SetFacingDir(Camera& cam, const glm::vec3& facingDir);
-    void SetFOV(Camera& cam, float fovDegrees);
-    void GetFrustumSplits(const Camera& cam, float frustumSplits[NUM_FRUSTUM_SPLITS]);
+    void SetFOV(Camera& cam, float fovRadians);
+//    void GetFrustumSplits(const Camera& cam, float frustumSplits[NUM_FRUSTUM_SPLITS]);
 
     glm::vec3 GetWorldRight(const Camera& cam);
     glm::vec3 GetWorldUp(const Camera& cam);
     glm::vec3 GetWorldForward(const Camera& cam);
 
-    void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
-    void GetFrustumCorners(const glm::mat4& proj, const glm::mat4& view, glm::vec3 outCorners[NUM_FRUSTUM_CORNERS]);
-    glm::vec3 GetFrustumCenter(const glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
+    //void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
+    //void GetFrustumCorners(const glm::mat4& proj, const glm::mat4& view, glm::vec3 outCorners[NUM_FRUSTUM_CORNERS]);
+    //glm::vec3 GetFrustumCenter(const glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
 
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
     
@@ -88,7 +88,7 @@ namespace r2
 		float aspectRatio = 16.0f / 9.0f;
         float exposure = 1.0f;
         b32 isPerspectiveCam = false;
-        glm::mat4 frustumProjections[cam::NUM_FRUSTUM_SPLITS];
+      //  glm::mat4 frustumProjections[cam::NUM_FRUSTUM_SPLITS];
 
 	};
 }

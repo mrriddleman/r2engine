@@ -17,25 +17,26 @@ namespace r2::cam
     {
     public:
         
-        void Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing);
+      //  void Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing);
+
+
+        void SetCamera(Camera* cameraPtr, const glm::vec3& position, const glm::vec3& facing, float camMoveSpeed);
+
         void OnEvent(r2::evt::Event& e);
         void Update();
         
         void SetAspect(float aspect);
         void SetFOV(float fov);
         
-        const Camera& GetCamera() const {return mCamera;}
-        Camera* GetCameraPtr() { return &mCamera; }
+        const Camera& GetCamera() const {return *mCameraPtr;}
+        Camera* GetCameraPtr() { return mCameraPtr; }
+
     private:
 
-        Camera mCamera;
+        Camera* mCameraPtr;
         CameraDirectionPressed mDirectionPressed;
         
         float mCameraMoveSpeed;
-        float mFOV;
-        float mAspect;
-        float mNear;
-        float mFar;
 
         float yaw;
         float pitch;

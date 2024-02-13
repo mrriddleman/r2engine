@@ -11,50 +11,50 @@ namespace r2::draw::light
 namespace r2::draw::light
 {
 
-	void GetDirectionalLightSpaceMatrices(LightSpaceMatrixData& lightSpaceMatrixData, const Camera& cam, const glm::vec3& lightDir, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS])
-	{
-		glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS];
-		
-		for (u32 i = 0; i < r2::cam::NUM_FRUSTUM_SPLITS; ++i)
-		{
-			cam::GetFrustumCorners(cam.frustumProjections[i], cam.view, frustumCorners);
+	//void GetDirectionalLightSpaceMatrices(LightSpaceMatrixData& lightSpaceMatrixData, const Camera& cam, const glm::vec3& lightDir, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS])
+	//{
+	//	glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS];
+	//	
+	//	for (u32 i = 0; i < r2::cam::NUM_FRUSTUM_SPLITS; ++i)
+	//	{
+	//		cam::GetFrustumCorners(cam.frustumProjections[i], cam.view, frustumCorners);
 
-			GetDirectionalLightSpaceMatricesForCascade(lightSpaceMatrixData, lightDir, i, zMult, shadowMapSizes, frustumCorners);
-		}
-	}
+	//		GetDirectionalLightSpaceMatricesForCascade(lightSpaceMatrixData, lightDir, i, zMult, shadowMapSizes, frustumCorners);
+	//	}
+	//}
 
-	//Credit: http://www.alextardif.com/shadowmapping.html
-	void GetDirectionalLightSpaceMatricesForCascade(LightSpaceMatrixData& lightSpaceMatrixData, const glm::vec3& lightDir, u32 cascadeIndex, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS], const glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS])
-	{
-		glm::vec3 frustumCenter = cam::GetFrustumCenter(frustumCorners);
+	////Credit: http://www.alextardif.com/shadowmapping.html
+	//void GetDirectionalLightSpaceMatricesForCascade(LightSpaceMatrixData& lightSpaceMatrixData, const glm::vec3& lightDir, u32 cascadeIndex, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS], const glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS])
+	//{
+	//	glm::vec3 frustumCenter = cam::GetFrustumCenter(frustumCorners);
 
-		const float diameter = glm::length((frustumCorners[0] - frustumCorners[6]));
-		const float radius = diameter / 2.0f;
+	//	const float diameter = glm::length((frustumCorners[0] - frustumCorners[6]));
+	//	const float radius = diameter / 2.0f;
 
-		float texelsPerUnit = (float)shadowMapSizes[cascadeIndex] / diameter;
+	//	float texelsPerUnit = (float)shadowMapSizes[cascadeIndex] / diameter;
 
-		glm::mat4 scalar = glm::mat4(1.0f);
-		scalar = glm::scale(scalar, glm::vec3(texelsPerUnit));
+	//	glm::mat4 scalar = glm::mat4(1.0f);
+	//	scalar = glm::scale(scalar, glm::vec3(texelsPerUnit));
 
-		constexpr glm::vec3 ZERO = glm::vec3(0.0f);
-		glm::vec3 baseLookAt = -lightDir;
+	//	constexpr glm::vec3 ZERO = glm::vec3(0.0f);
+	//	glm::vec3 baseLookAt = -lightDir;
 
-		glm::mat4 lookAtMat = glm::lookAt(ZERO, baseLookAt, math::GLOBAL_UP) * scalar;
-		glm::mat4 lookAtMatInv = glm::inverse(lookAtMat);
+	//	glm::mat4 lookAtMat = glm::lookAt(ZERO, baseLookAt, math::GLOBAL_UP) * scalar;
+	//	glm::mat4 lookAtMatInv = glm::inverse(lookAtMat);
 
-		frustumCenter = lookAtMat * glm::vec4(frustumCenter, 1.0f);
-		frustumCenter.x = (float)floor(frustumCenter.x);
-		frustumCenter.y = (float)floor(frustumCenter.y);
-		frustumCenter = lookAtMatInv * glm::vec4(frustumCenter, 1.0f);
+	//	frustumCenter = lookAtMat * glm::vec4(frustumCenter, 1.0f);
+	//	frustumCenter.x = (float)floor(frustumCenter.x);
+	//	frustumCenter.y = (float)floor(frustumCenter.y);
+	//	frustumCenter = lookAtMatInv * glm::vec4(frustumCenter, 1.0f);
 
-		glm::vec3 eye = frustumCenter - (lightDir * diameter);
+	//	glm::vec3 eye = frustumCenter - (lightDir * diameter);
 
-		lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = glm::lookAt(eye, frustumCenter, math::GLOBAL_UP);
+	//	lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = glm::lookAt(eye, frustumCenter, math::GLOBAL_UP);
 
-		constexpr float mult = 1.25f;
+	//	constexpr float mult = 1.25f;
 
-		lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = glm::ortho(-radius * mult, radius * mult, -radius * mult, radius * mult, -radius * zMult, radius * zMult);
-	}
+	//	lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = glm::ortho(-radius * mult, radius * mult, -radius * mult, radius * mult, -radius * zMult, radius * zMult);
+	//}
 
 }
 
