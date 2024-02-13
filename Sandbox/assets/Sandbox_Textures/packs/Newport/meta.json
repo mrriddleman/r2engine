@@ -29,7 +29,5 @@
       ]
     }
   ],
-  desiredMipLevels: 1,
-  mipMapFilter: "BOX"
-
+  desiredMipLevels: 1
 }

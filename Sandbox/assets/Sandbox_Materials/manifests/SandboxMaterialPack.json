@@ -421,6 +421,1115 @@
     },
     {
       assetName: {
+        assetName: 15010038039957187060,
+        stringName: "matbed"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 17104973902174114554,
+              stringName: "alphablendmodetest_textures/albedo/matbed_basecolor.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 11618294709935210272,
+              stringName: "alphablendmodetest_textures/metallic/matbed_occlusionroughnessmetallic.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 11618294709935210272,
+              stringName: "alphablendmodetest_textures/metallic/matbed_occlusionroughnessmetallic.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 14544946836203305355,
+              stringName: "alphablendmodetest_textures/normal/matbed_normal.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          },
+          {
+            propertyType: "AMBIENT_OCCLUSION",
+            value: {
+              assetName: 11618294709935210272,
+              stringName: "alphablendmodetest_textures/metallic/matbed_occlusionroughnessmetallic.rtex"
+            },
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 6748356692313164032,
+        stringName: "matblend"
+      },
+      transparencyType: "TRANSPARENT",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 8291330512872998603,
+            assetNameString: "forward_transparent_shader_effect",
+            staticShader: 12135062320484436070,
+            dynamicShader: 7039749134391479097,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetNameString: ""
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 0.8
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3121392670518530668,
+              stringName: "alphablendmodetest_textures/albedo/alphablendlabels.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 17771720495959466177,
+        stringName: "matcutoff25"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.25
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 0.8
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3121392670518530668,
+              stringName: "alphablendmodetest_textures/albedo/alphablendlabels.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 17776501172517981480,
+        stringName: "matcutoff75"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.75
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 0.8
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3121392670518530668,
+              stringName: "alphablendmodetest_textures/albedo/alphablendlabels.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8603110027761261541,
+        stringName: "matcutoffdefault"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 0.8
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3121392670518530668,
+              stringName: "alphablendmodetest_textures/albedo/alphablendlabels.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 1273557420115501375,
+        stringName: "matmushroom"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 14534105320916821254,
+              stringName: "truffleman/albedo/matmushroom_basecolor.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 12049852264319162133,
+              stringName: "truffleman/metallic/matmushroom_metallicroughness.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 12049852264319162133,
+              stringName: "truffleman/metallic/matmushroom_metallicroughness.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 12017289560412694315,
+              stringName: "truffleman/normal/matmushroom_normal.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 14921844777240453111,
+        stringName: "matmushroombody"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 15575625725256927634,
+              stringName: "truffleman/albedo/matmushroombody_basecolor.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 768488622922088721,
+              stringName: "truffleman/metallic/matmushroombody_metallicroughness.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 768488622922088721,
+              stringName: "truffleman/metallic/matmushroombody_metallicroughness.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 15405483404526029383,
+              stringName: "truffleman/normal/matmushroombody_normal.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 6071064945989093947,
+              stringName: "truffleman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 2198518954639770982,
+        stringName: "matopaque"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 0.8
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3121392670518530668,
+              stringName: "alphablendmodetest_textures/albedo/alphablendlabels.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 4336029568415640498,
+              stringName: "AlphaBlendModeTest_Textures"
+            },
+            minFilter: "NEAREST",
+            magFilter: "NEAREST"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
         assetName: 11939199546922744086,
         stringName: "NewportConvolved"
       },
@@ -1173,6 +2282,4198 @@
               assetName: 15406085935930000306,
               stringName: "newport"
             }
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771726891566451521,
+        stringName: "sponza_material_0"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 13459973682508036682,
+              stringName: "sponza/albedo/5061699253647017043.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 13520855206419045137,
+              stringName: "sponza/metallic/11872827283454512094.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 13520855206419045137,
+              stringName: "sponza/metallic/11872827283454512094.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 2998957336377958315,
+              stringName: "sponza/normal/8773302468495022225.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771725792054823310,
+        stringName: "sponza_material_1"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 6943833634136520402,
+              stringName: "sponza/albedo/7268504077753552595.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 12986939270339573473,
+              stringName: "sponza/metallic/8503262930880235456.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 12986939270339573473,
+              stringName: "sponza/metallic/8503262930880235456.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 5969612409461271589,
+              stringName: "sponza/normal/4477655471536070370.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065787179140271578,
+        stringName: "sponza_material_10"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 15715411768049146126,
+              stringName: "sponza/albedo/7441062115984513793.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 1322291627988490193,
+              stringName: "sponza/metallic/8114461559286000061.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 1322291627988490193,
+              stringName: "sponza/metallic/8114461559286000061.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 6609127135623179667,
+              stringName: "sponza/normal/6667038893015345571.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065788278651899789,
+        stringName: "sponza_material_11"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 15897594446743142470,
+              stringName: "sponza/albedo/11490520546946913238.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 3458730591926785923,
+              stringName: "sponza/metallic/3455394979645218238.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 3458730591926785923,
+              stringName: "sponza/metallic/3455394979645218238.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 10621683913463961771,
+              stringName: "sponza/normal/3628158980083700836.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065784980117015156,
+        stringName: "sponza_material_12"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 11114429244299537308,
+              stringName: "sponza/albedo/6151467286084645207.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 6307434074906228974,
+              stringName: "sponza/metallic/8783994986360286082.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 6307434074906228974,
+              stringName: "sponza/metallic/8783994986360286082.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 13806604758815533751,
+              stringName: "sponza/normal/7645212358685992005.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065786079628643367,
+        stringName: "sponza_material_13"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 6532118057148726938,
+              stringName: "sponza/albedo/4975155472559461469.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 14690084676174885226,
+              stringName: "sponza/metallic/3371964815757888145.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 14690084676174885226,
+              stringName: "sponza/metallic/3371964815757888145.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 12879720757010877325,
+              stringName: "sponza/normal/2299742237651021498.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065782781093758734,
+        stringName: "sponza_material_14"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 10133915010748211346,
+              stringName: "sponza/albedo/4675343432951571524.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 16932007811600427417,
+              stringName: "sponza/normal/7056944414013900257.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065783880605386945,
+        stringName: "sponza_material_15"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 12142643605602856702,
+              stringName: "sponza/albedo/2775690330959970771.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 8693301080638463630,
+              stringName: "sponza/normal/2374361008830720677.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065780582070502312,
+        stringName: "sponza_material_16"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 117861230168359056,
+              stringName: "sponza/albedo/2185409758123873465.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 8256319822413219366,
+              stringName: "sponza/metallic/7815564343179553343.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 447028236078383837,
+              stringName: "sponza/normal/332936164838540657.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065781681582130523,
+        stringName: "sponza_material_17"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 17065171054310952003,
+              stringName: "sponza/albedo/17876391417123941155.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 1626114565491962929,
+              stringName: "sponza/normal/6593109234861095314.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065778383047245890,
+        stringName: "sponza_material_18"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3418705563093627197,
+              stringName: "sponza/albedo/11474523244911310074.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 8819305553315486722,
+              stringName: "sponza/normal/4601176305987539675.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8065779482558874101,
+        stringName: "sponza_material_19"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 5440042956170169063,
+              stringName: "sponza/albedo/9288698199695299068.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 13850718670552377923,
+              stringName: "sponza/metallic/466164707995436622.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 13968232786405990221,
+              stringName: "sponza/normal/4910669866631290573.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771724692543195099,
+        stringName: "sponza_material_2"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 12685420089048241241,
+              stringName: "sponza/albedo/white.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8064795419651814481,
+        stringName: "sponza_material_20"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 88856667988396022,
+              stringName: "sponza/albedo/16275776544635328252.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 9655237313350957661,
+              stringName: "sponza/metallic/1219024358953944284.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 9655237313350957661,
+              stringName: "sponza/metallic/1219024358953944284.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 13312444671963589446,
+              stringName: "sponza/normal/14170708867020035030.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8064794320140186270,
+        stringName: "sponza_material_21"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 8163608996704689077,
+              stringName: "sponza/albedo/755318871556304029.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 15271771113314728577,
+              stringName: "sponza/metallic/2411100444841994089.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 15271771113314728577,
+              stringName: "sponza/metallic/2411100444841994089.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 654756865241454098,
+              stringName: "sponza/normal/3827035219084910048.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8064793220628558059,
+        stringName: "sponza_material_22"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 10395804237716770730,
+              stringName: "sponza/albedo/8481240838833932244.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 7271676636954397093,
+              stringName: "sponza/metallic/17556969131407844942.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 7271676636954397093,
+              stringName: "sponza/metallic/17556969131407844942.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 10580506633510871855,
+              stringName: "sponza/normal/10381718147657362067.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8064792121116929848,
+        stringName: "sponza_material_23"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 16291688997862788631,
+              stringName: "sponza/albedo/6772804448157695701.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 14073536022307886586,
+              stringName: "sponza/metallic/13196865903111448057.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 14073536022307886586,
+              stringName: "sponza/metallic/13196865903111448057.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 7393596504137874014,
+              stringName: "sponza/normal/759203620573749278.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 8064799817698327325,
+        stringName: "sponza_material_24"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 4438131070929789138,
+              stringName: "sponza/albedo/2969916736137545357.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 16179446132711680672,
+              stringName: "sponza/metallic/8747919177698443163.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 16179446132711680672,
+              stringName: "sponza/metallic/8747919177698443163.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 11461059644124115629,
+              stringName: "sponza/normal/14118779221266351425.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771723593031566888,
+        stringName: "sponza_material_3"
+      },
+      transparencyType: "MASK",
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 4268956762567389964,
+            assetNameString: "depth_shader_effect_alpha_discard",
+            staticShader: 270464496646893190,
+            dynamicShader: 1538647196143951995,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 9198756674974329970,
+              stringName: "sponza/albedo/8006627369776289000.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 14525595583333137932,
+              stringName: "sponza/metallic/715093869573992647.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 14525595583333137932,
+              stringName: "sponza/metallic/715093869573992647.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 12767564925174330283,
+              stringName: "sponza/normal/12501374198249454378.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771731289612964365,
+        stringName: "sponza_material_4"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 1159714686818938111,
+              stringName: "sponza/albedo/8750083169368950601.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 15086018262463772007,
+              stringName: "sponza/metallic/16885566240357350108.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 15086018262463772007,
+              stringName: "sponza/metallic/16885566240357350108.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 10414372034366305725,
+              stringName: "sponza/normal/13982482287905699490.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771730190101336154,
+        stringName: "sponza_material_5"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 9449369332499046033,
+              stringName: "sponza/albedo/5792855332885324923.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 12061951680829150190,
+              stringName: "sponza/metallic/11968150294050148237.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 12061951680829150190,
+              stringName: "sponza/metallic/11968150294050148237.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 5298947125007223408,
+              stringName: "sponza/normal/16299174074766089871.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771729090589707943,
+        stringName: "sponza_material_6"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 1876365764808534256,
+              stringName: "sponza/albedo/14650633544276105767.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 2650041923814798727,
+              stringName: "sponza/metallic/4871783166746854860.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 2650041923814798727,
+              stringName: "sponza/metallic/4871783166746854860.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 14089808394595118092,
+              stringName: "sponza/normal/2051777328469649772.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771727991078079732,
+        stringName: "sponza_material_7"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 14168699856865940632,
+              stringName: "sponza/albedo/15295713303328085182.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 12092170428558657381,
+              stringName: "sponza/metallic/9916269861720640319.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 12092170428558657381,
+              stringName: "sponza/metallic/9916269861720640319.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 10719836979340884588,
+              stringName: "sponza/normal/10388182081421875623.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771718095473425833,
+        stringName: "sponza_material_8"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3167470172417465670,
+              stringName: "sponza/albedo/6047387724914829168.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 5844469145068071865,
+              stringName: "sponza/metallic/8051790464816141987.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 5844469145068071865,
+              stringName: "sponza/metallic/8051790464816141987.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 3357278792012791113,
+              stringName: "sponza/normal/15722799267630235092.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 7771716995961797622,
+        stringName: "sponza_material_9"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED"
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 1.0
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.588,
+              g: 0.588,
+              b: 0.588,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3021860056773991573,
+              stringName: "sponza/albedo/5823059166183034438.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 1284348387821626884,
+              stringName: "sponza/metallic/13824894030729245199.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 1284348387821626884,
+              stringName: "sponza/metallic/13824894030729245199.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 17130015246423892402,
+              stringName: "sponza/normal/14267839433702832875.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 16503806373553748554,
+              stringName: "Sponza"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          }
+        ],
+        stringParams: [
+
+        ],
+        shaderStageParams: [
+
+        ]
+      }
+    },
+    {
+      assetName: {
+        assetName: 14578513441358881666,
+        stringName: "ti-pche_mat"
+      },
+      shaderEffectPasses: {
+        shaderEffectPasses: [
+          {
+            assetName: 17478432312770277864,
+            assetNameString: "forward_opaque_shader_effect",
+            staticShader: 3292306756035476612,
+            dynamicShader: 3766703618186070365,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetNameString: ""
+          },
+          {
+            assetName: 7375268703464826122,
+            assetNameString: "depth_shader_effect",
+            staticShader: 8833047848476087300,
+            dynamicShader: 13212531284513343367,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 1677822248225226985,
+            assetNameString: "direction_shadow_effect",
+            staticShader: 13510344869207716212,
+            dynamicShader: 16072647257208596960,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 16974676560190486050,
+            assetNameString: "point_shadow_effect",
+            staticShader: 14902893998735471386,
+            dynamicShader: 8182487414207287337,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          },
+          {
+            assetName: 15326242058090129472,
+            assetNameString: "spotlight_shadow_effect",
+            staticShader: 14930033009169502222,
+            dynamicShader: 12180725488998902253,
+            staticVertexLayout: "VLT_DEFAULT_STATIC",
+            dynamicVertexLayout: "VLT_DEFAULT_DYNAMIC"
+          }
+        ]
+      },
+      shaderParams: {
+        ulongParams: [
+
+        ],
+        boolParams: [
+          {
+            propertyType: "DOUBLE_SIDED",
+            value: true
+          },
+          {
+            propertyType: "UNLIT"
+          }
+        ],
+        floatParams: [
+          {
+            propertyType: "ALPHA_CUTOFF",
+            value: 0.5
+          },
+          {
+            propertyType: "METALLIC",
+            value: 0.637002
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: 1.0
+          },
+          {
+            propertyType: "EMISSION_STRENGTH",
+            value: 1.0
+          }
+        ],
+        colorParams: [
+          {
+            value: {
+              r: 0.0,
+              g: 0.0,
+              b: 0.0,
+              a: 1.0
+            }
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              r: 0.646751,
+              g: 0.646751,
+              b: 0.646751,
+              a: 1.0
+            }
+          }
+        ],
+        textureParams: [
+          {
+            value: {
+              assetName: 3160866750350176345,
+              stringName: "chaman/albedo/ti-pche_mat_basecolor.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 13463756511343036343,
+              stringName: "chaman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "METALLIC",
+            value: {
+              assetName: 11637491208105831118,
+              stringName: "chaman/metallic/ti-pche_mat_metallicroughness.rtex"
+            },
+            packingType: "B",
+            texturePack: {
+              assetName: 13463756511343036343,
+              stringName: "chaman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "ROUGHNESS",
+            value: {
+              assetName: 11637491208105831118,
+              stringName: "chaman/metallic/ti-pche_mat_metallicroughness.rtex"
+            },
+            packingType: "G",
+            texturePack: {
+              assetName: 13463756511343036343,
+              stringName: "chaman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "NORMAL",
+            value: {
+              assetName: 6122454983301276746,
+              stringName: "chaman/normal/ti-pche_mat_normal.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 13463756511343036343,
+              stringName: "chaman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
+          },
+          {
+            propertyType: "EMISSION",
+            value: {
+              assetName: 2893335198689167938,
+              stringName: "chaman/emissive/ti-pche_mat_emissive.rtex"
+            },
+            packingType: "RGBA",
+            texturePack: {
+              assetName: 13463756511343036343,
+              stringName: "chaman"
+            },
+            minFilter: "LINEAR_MIPMAP_LINEAR"
           }
         ],
         stringParams: [
