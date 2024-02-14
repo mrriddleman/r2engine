@@ -9,6 +9,8 @@
 #include "r2/Utils/Random.h"
 
 #include "r2/Render/Model/Materials/MaterialTypes.h"
+#include "r2/Render/Camera/Camera.h"
+#include "r2/Render/Camera/PerspectiveCameraController.h"
 
 namespace r2::evt
 {
@@ -81,7 +83,6 @@ namespace r2
 		ecs::SceneGraph& GetSceneGraph();
 		ecs::ECSCoordinator* GetECSCoordinator();
 
-
 		void OpenCreateNewLevelModal();
 
 		void AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name);
@@ -92,6 +93,8 @@ namespace r2
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }
 
 		void ToggleGrid();
+
+		void SetRenderToEditorCamera();
 
 	private:
 
@@ -113,6 +116,10 @@ namespace r2
 		u64 mEngineMaterialPackName;
 		r2::mat::MaterialName mGridMaterialName;
 		bool mShowGrid;
+
+		r2::Camera mEditorCamera;
+		r2::cam::PerspectiveController mPerspectiveController;
+
 	};
 }
 

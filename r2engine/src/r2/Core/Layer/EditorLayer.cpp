@@ -59,6 +59,11 @@ namespace r2
 
 				editor.ReloadLevel();
 
+				if (mEnabled)
+				{
+					editor.SetRenderToEditorCamera();
+				}
+
 				return true;
 			}
 

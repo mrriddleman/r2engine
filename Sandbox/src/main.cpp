@@ -365,9 +365,9 @@ class Sandbox: public r2::Application
 {
 public:
     
-    const u64 NUM_DRAWS = 15;
-    const u64 NUM_DRAW_COMMANDS = 30;
-    const u64 NUM_BONES = 1000;
+    //const u64 NUM_DRAWS = 15;
+    //const u64 NUM_DRAW_COMMANDS = 30;
+    //const u64 NUM_BONES = 1000;
 
     virtual bool Init() override
     {
@@ -389,16 +389,16 @@ public:
        // linearArenaPtr = EMPLACE_LINEAR_ARENA(*subMemoryArea);
         
        // R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
-        mCamera.fov = glm::radians(70.0f);
-        mCamera.aspectRatio = static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height);
-        mCamera.nearPlane = 0.1;
-        mCamera.farPlane = 1000.0f;
+   //     mCamera.fov = glm::radians(70.0f);
+   //     mCamera.aspectRatio = static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height);
+   //     mCamera.nearPlane = 0.1;
+   //     mCamera.farPlane = 1000.0f;
 
 
-        mPersController.SetCamera(&mCamera, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
+   //     mPersController.SetCamera(&mCamera, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
 
-   //     mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
+   ////     mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+   //     r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         //modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         /*animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -410,8 +410,8 @@ public:
         //r2::draw::DrawFlags drawFlags;
         //drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         
-        r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-        r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
+    //    r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+    //    r2::draw::TexturePacksCache& texturePacksCache = CENG.GetTexturePacksCache();
 
 		//mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
 		//mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
@@ -986,27 +986,27 @@ public:
 			return false;
 		});
 
-		mPersController.OnEvent(e);
+		//mPersController.OnEvent(e);
     }
     
     virtual void Update() override
     {
-        mPersController.Update();
+   //     mPersController.Update();
 
-        //update listener
-        {
-			const r2::Camera& camera = mPersController.GetCamera();
+   //     //update listener
+   //     {
+			//const r2::Camera& camera = mPersController.GetCamera();
 
-			r2::audio::AudioEngine audioEngine;
+			//r2::audio::AudioEngine audioEngine;
 
-			r2::audio::AudioEngine::Attributes3D attributes;
-			attributes.position = camera.position;
-			attributes.look = camera.facing;
-			attributes.up = camera.up;
-			attributes.velocity = glm::vec3(0);
+			//r2::audio::AudioEngine::Attributes3D attributes;
+			//attributes.position = camera.position;
+			//attributes.look = camera.facing;
+			//attributes.up = camera.up;
+			//attributes.velocity = glm::vec3(0);
 
-			audioEngine.SetListener3DAttributes(r2::audio::AudioEngine::DEFAULT_LISTENER, attributes);
-        }
+			//audioEngine.SetListener3DAttributes(r2::audio::AudioEngine::DEFAULT_LISTENER, attributes);
+   //     }
 
         //r2::sarr::Clear(*mSkeletonBoneTransforms);
         //r2::sarr::Clear(*mEllenBoneTransforms);
@@ -1430,8 +1430,6 @@ public:
         return r2::ecs::MAX_NUM_COMPONENTS;
     }
 
-    
-
 	std::string GetLevelPackDataBinPath() const
 	{
 		return SANDBOX_LEVELS_DIR_BIN;
@@ -1464,63 +1462,6 @@ public:
     }
 
 #ifdef R2_ASSET_PIPELINE
-
-	virtual bool AddLooseAssetFiles(std::vector<r2::asset::AssetReferenceAndType>& assetReferences) const override
-	{
-		//char modelFilePath[r2::fs::FILE_PATH_LENGTH];
-
-		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
-
-
-  //      std::filesystem::path modelDirRawPath = SANDBOX_MODELS_DIR_RAW;
-
-  //      r2::asset::AssetReferenceAndType microbat;
-  //      microbat.type = r2::asset::RMODEL;
-  //      microbat.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "MicroBat/micro_bat.fbx", r2::asset::RMODEL);
-  //      assetReferences.push_back(microbat);
-
-//		r2::asset::RawAssetFile* batModelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)batModelFile);
-
-
-		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
-
-		//r2::asset::AssetReferenceAndType skeleton;
-  //      skeleton.type = r2::asset::RMODEL;
-  //      skeleton.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Skeleton/skeleton_archer_allinone.fbx", r2::asset::RMODEL);
-		//assetReferences.push_back(skeleton);
-
-	//	r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonFile);
-
-
-		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
-
-		//r2::asset::AssetReferenceAndType ellen;
-  //      ellen.type = r2::asset::RMODEL;
-  //      ellen.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Ellen/EllenIdle.fbx", r2::asset::RMODEL);
-		//assetReferences.push_back(ellen);
-
-	//	r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenFile);
-
-
-//		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
-////
-//		r2::asset::AssetReferenceAndType sponza;
-//        sponza.type = r2::asset::RMODEL;
-//        sponza.assetReference = r2::asset::CreateNewAssetReference(modelFilePath, modelDirRawPath / "Sponza/Sponza.gltf", r2::asset::RMODEL);
-//		assetReferences.push_back(sponza);
-	//	r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-	//	r2::sarr::Push(*fileList, (r2::asset::AssetFile*)sponzaFile);
-
-
-		return true;
-	}
 
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {
@@ -1672,8 +1613,8 @@ private:
     //r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
 
 
-    r2::Camera mCamera;
-    r2::cam::PerspectiveController mPersController;
+  //  r2::Camera mCamera;
+  //  r2::cam::PerspectiveController mPersController;
 
    // r2::mem::LinearArena* linearArenaPtr;
 

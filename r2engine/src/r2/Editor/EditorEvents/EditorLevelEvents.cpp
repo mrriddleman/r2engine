@@ -4,7 +4,7 @@
 
 namespace r2::evt
 {
-	const r2::LevelName& EditorLevelEvent::GetEditorLevel() const
+	const r2::LevelName& EditorLevelEvent::GetLevel() const
 	{
 		return mLevel;
 	}

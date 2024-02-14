@@ -30,7 +30,8 @@ namespace r2
 		r2::SArray<r2::asset::AssetName>* modelAssets,
 		r2::SArray<r2::mat::MaterialName>* materials,
 		r2::SArray<r2::asset::AssetName>* soundBanks,
-		r2::SArray<ecs::Entity>* entities)
+		r2::SArray<ecs::Entity>* entities,
+		const r2::LevelRenderSettings& levelRenderSettings)
 	{
 		
 		mVersion = version;
@@ -42,6 +43,8 @@ namespace r2
 		mMaterials = materials;
 		mSoundBanks = soundBanks;
 		mEntities = entities;
+
+		mLevelRenderSettings = levelRenderSettings;
 
 		return true;
 	}
@@ -113,7 +116,8 @@ namespace r2
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetName>::MemorySize(numModelAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numTexturePacks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetName>::MemorySize(numSoundBanks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntities), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntities), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
+			LevelRenderSettings::MemorySize(memoryProperties);
 	}
 
 	r2::SArray<r2::asset::AssetName>* Level::GetModelAssets() const
@@ -154,4 +158,20 @@ namespace r2
 	{
 		r2::sarr::Clear(*mEntities);
 	}
+
+	bool Level::AddCamera(const r2::Camera& camera)
+	{
+		return mLevelRenderSettings.AddCamera(camera);
+	}
+
+	bool Level::SetCameraIndex(s32 index)
+	{
+		return mLevelRenderSettings.SetCurrentCamera(index);
+	}
+
+	r2::Camera* Level::GetCurrentCamera()
+	{
+		return mLevelRenderSettings.GetCurrentCamera();
+	}
+
 }

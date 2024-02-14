@@ -7,6 +7,10 @@
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Platform/Platform.h"
+#include "r2/Core/Engine.h"
+#include "r2/Game/Level/LevelManager.h"
+
 
 namespace r2::ecs
 {
@@ -75,13 +79,30 @@ namespace r2::ecs
 			}
 
 			r2::audio::AudioEngine::Attributes3D attributes;
-			attributes.up = upVec;
-			attributes.look = forwardVec;
-			attributes.velocity = glm::vec3(0); //@TODO(Serge): maybe have a velocity component later...
-			attributes.position = position;
+			Level* currentLevel = CENG.GetLevelManager().GetCurrentLevel();
+			
+			if (currentLevel == nullptr)
+			{
+				attributes.up = upVec;
+				attributes.look = forwardVec;
+				attributes.velocity = glm::vec3(0); //@TODO(Serge): maybe have a velocity component later...
+				attributes.position = position;
+			}
+			else
+			{
+				Camera* camera = currentLevel->GetCurrentCamera();
 
+				attributes.up = glm::normalize(camera->up);
+				attributes.look = glm::normalize(camera->facing);
+				attributes.velocity = glm::vec3(0); //@TODO(Serge): maybe have a velocity component later...
+				attributes.position = camera->position;
+			}
+			
 			audioEngine.SetListener3DAttributes(listenerComponent.listener, attributes);
 		}
+
+
+
 	}
 
 }

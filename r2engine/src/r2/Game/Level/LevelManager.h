@@ -43,7 +43,7 @@ namespace r2
 			u32 maxNumLevels);
 		void Shutdown();
 
-		Level* MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName);
+		Level* MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName, const r2::Camera& defaultCamera);
 
 		Level* LoadLevel(const char* levelURI);
 		Level* LoadLevel(LevelName levelName);
@@ -75,13 +75,13 @@ namespace r2
 		void ImportMaterialToLevel(Level* level, const r2::mat::MaterialName& materialName);
 #endif
 
+		void SetCurrentLevel(LevelName level);
+		Level* GetCurrentLevel();
 	private:
 		
 		Level* FindLoadedLevel(LevelName levelname, s32& index);
 		void LoadLevelData(Level& level, const flat::LevelData* levelData);
 		void UnLoadLevelData(const Level& level);
-
-		
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
@@ -91,6 +91,8 @@ namespace r2
 		r2::mem::FreeListArena* mLevelArena;
 
 		r2::SArray<Level>* mLoadedLevels;
+
+		s32 mCurrentLevel;
 	};
 }
 

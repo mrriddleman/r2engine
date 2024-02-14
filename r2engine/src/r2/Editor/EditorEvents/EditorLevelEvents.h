@@ -11,7 +11,7 @@ namespace r2::evt
 	class EditorLevelEvent : public EditorEvent
 	{
 	public:
-		const LevelName& GetEditorLevel() const;
+		const LevelName& GetLevel() const;
 		EVENT_CLASS_CATEGORY(ECAT_EDITOR | ECAT_EDITOR_LEVEL)
 	protected:
 		EditorLevelEvent(const LevelName& level, bool shouldConsume);

@@ -6,6 +6,7 @@
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Game/ECS/Entity.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
+#include "r2/Game/Level/LevelRenderSettings.h"
 
 namespace flat
 {
@@ -32,7 +33,8 @@ namespace r2
 			r2::SArray<r2::asset::AssetName>* modelAssets,
 			r2::SArray<r2::mat::MaterialName>* materials,
 			r2::SArray<r2::asset::AssetName>* soundBanks,
-			r2::SArray<ecs::Entity>* entities);
+			r2::SArray<ecs::Entity>* entities,
+			const r2::LevelRenderSettings& levelRenderSettings);
 
 		void Shutdown();
 
@@ -58,6 +60,10 @@ namespace r2
 		void RemoveEntity(ecs::Entity e) const;
 		void ClearAllEntities() const;
 
+		bool AddCamera(const r2::Camera& camera);
+		bool SetCameraIndex(s32 index);
+		Camera* GetCurrentCamera();
+		
 		static u64 MemorySize(u32 numModelAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
@@ -68,6 +74,8 @@ namespace r2
 		u32 mVersion;
 		char mLevelName[r2::fs::FILE_PATH_LENGTH];
 		char mGroupName[r2::fs::FILE_PATH_LENGTH];
+
+		LevelRenderSettings mLevelRenderSettings;
 
 		//we're going to add in arrays for each type of asset handle
 		r2::SArray<r2::asset::AssetName>* mModelAssets;

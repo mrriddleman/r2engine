@@ -97,6 +97,16 @@ namespace r2
 		mEditorFileImage = edit::CreateTextureFromFile((editorFolderPath / "FileIcon.png").string(), mEditorFileImageWidth, mEditorFileImageHeight, r2::draw::tex::WRAP_MODE_CLAMP_TO_EDGE, r2::draw::tex::FILTER_LINEAR, r2::draw::tex::FILTER_LINEAR);
 		IM_ASSERT(mEditorFileImage != 0);
 
+
+		mEditorCamera.fov = glm::radians(70.0f);
+		mEditorCamera.aspectRatio = static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height);
+		mEditorCamera.nearPlane = 0.1;
+		mEditorCamera.farPlane = 1000.0f;
+
+		mPerspectiveController.SetCamera(&mEditorCamera, glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
+
+		r2::draw::renderer::SetRenderCamera(&mEditorCamera);
+
 		CreateNewLevel("NewGroup", "NewLevel");
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
@@ -115,7 +125,6 @@ namespace r2
 		{
 			widget->Init(this);
 		}
-		
 		
 	}
 
@@ -171,11 +180,13 @@ namespace r2
 			widget->OnEvent(e);
 		}
 
-		
+		mPerspectiveController.OnEvent(e);
 	}
 
 	void Editor::Update()
 	{
+		mPerspectiveController.Update();
+
 		for (const auto& widget : mEditorWidgets)
 		{
 			widget->Update();
@@ -299,7 +310,7 @@ namespace r2
 
 		LevelName levelName = r2::asset::MakeAssetNameFromPath(levelURI.string().c_str(), r2::asset::LEVEL);
 
-		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelNameStr.c_str(), groupName.c_str(), levelName);
+		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelNameStr.c_str(), groupName.c_str(), levelName, mEditorCamera);
 
 		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName(), "");
 
@@ -355,245 +366,24 @@ namespace r2
 	}
 
 	void Editor::PostEditorEvent(r2::evt::EditorEvent& e)
-	{
-		//@TODO(Serge): listen to the entity creation event and add in the appropriate components for testing
-		//@NOTE: all test code!				
+	{		
 		r2::evt::EventDispatcher dispatcher(e);
 
-//		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
-//			{
-//				GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-//				r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
-//
-//				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
-//
-//
-//				r2::asset::AssetName modelAssetName;
-//				modelAssetName.hashID = microbatAsset.HashID();
-//#ifdef R2_ASSET_PIPELINE
-//				modelAssetName.assetNameString = "micro_bat.rmdl";
-//#endif
-//				AddModelToLevel(modelAssetName);
-//
-//				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelAssetName);
-//
-//
-//				
-//
-//				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(microbatAnimModel->assetName);
-//
-//
-//
-//				ecs::RenderComponent renderComponent;
-//				renderComponent.assetModelName = microbatAnimModel->assetName;
-//
-//
-//				renderComponent.optrMaterialOverrideNames = nullptr;
-//				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-//				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;
-//				renderComponent.isAnimated = true;
-//				renderComponent.drawParameters.layer = r2::draw::DL_CHARACTER;
-//				renderComponent.drawParameters.flags.Clear();
-//				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-//
-//				r2::draw::renderer::SetDefaultCullState(renderComponent.drawParameters);
-//				r2::draw::renderer::SetDefaultStencilState(renderComponent.drawParameters);
-//				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);
-//				
-//
-//				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
-//
-//				skeletalAnimationComponent.animModelAssetName.hashID = microbatAsset.HashID();
-//#ifdef R2_ASSET_PIPELINE
-//				skeletalAnimationComponent.animModelAssetName.assetNameString = "micro_bat.rmdl";
-//#endif
-//				skeletalAnimationComponent.animModel = microbatAnimModel;
-//				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
-//				skeletalAnimationComponent.startingAnimationIndex = 0; 
-//				skeletalAnimationComponent.startTime = 0; 
-//				skeletalAnimationComponent.shouldLoop = true;
-//				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
-//
-//
-//				skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
-//				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-//
-//				ecs::DebugBoneComponent debugBoneComponent;
-//				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-//				debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
-//				r2::sarr::Clear(*debugBoneComponent.debugBones);
-//
-//				ecs::Entity theNewEntity = e.GetEntity();
-//
-//				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
-//				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
-//				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
-//				
-//
-//				ecs::AudioEmitterComponent audioEmitterComponent;
-//				r2::util::PathCpy(audioEmitterComponent.eventName, "event:/MyEvent");
-//				audioEmitterComponent.releaseAfterPlay = true;
-//				audioEmitterComponent.startCondition = ecs::PLAY_ON_EVENT;
-//				audioEmitterComponent.allowFadeoutWhenStopping = true;
-//				audioEmitterComponent.numParameters = 0;
-//
-//				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterComponent>(theNewEntity, audioEmitterComponent);
-//
-//
-//				//@TEMPORARY!!!! - we would need some other mechanism for adding/loading the bank, probably through the asset catalog tool or something
-//				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND), "TestBank1.bank");
-//
-//
-//			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
-//			//	audioEmitterActionComponent.action = ecs::AEA_CREATE;
-//
-//			//	MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterActionComponent>(theNewEntity, audioEmitterActionComponent);
-//
-//				//transform instance
-//				{
-//					ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
-//					instancedTransformComponent.numInstances = 2;
-//					instancedTransformComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::TransformComponent, 2);
-//
-//					ecs::TransformComponent transformInstance1;
-//					transformInstance1.localTransform.position = glm::vec3(2, 1, 2);
-//					transformInstance1.localTransform.scale = glm::vec3(0.01f);
-//					transformInstance1.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
-//
-//					r2::sarr::Push(*instancedTransformComponent.instances, transformInstance1);
-//
-//					ecs::TransformComponent transformInstance2;
-//					transformInstance2.localTransform.position = glm::vec3(-2, 1, 2);
-//					transformInstance2.localTransform.scale = glm::vec3(0.01f);
-//					transformInstance2.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
-//
-//					r2::sarr::Push(*instancedTransformComponent.instances, transformInstance2);
-//
-//					
-//					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theNewEntity, instancedTransformComponent);
-//				}
-//				
-//				//debug bone instance
-//				{
-//					ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
-//					instancedDebugBoneComponent.numInstances = 2;
-//					instancedDebugBoneComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::DebugBoneComponent, 2);
-//
-//					ecs::DebugBoneComponent debugBoneInstance1;
-//					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
-//					debugBoneInstance1.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
-//					r2::sarr::Clear(*debugBoneInstance1.debugBones);
-//
-//					ecs::DebugBoneComponent debugBoneInstance2;
-//					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
-//					debugBoneInstance2.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
-//					r2::sarr::Clear(*debugBoneInstance2.debugBones);
-//
-//					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
-//					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
-//
-//					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
-//				}
-//
-//				//Skeletal animation instance component
-//				{
-//					ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
-//					instancedSkeletalAnimationComponent.numInstances = 2;
-//					instancedSkeletalAnimationComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::SkeletalAnimationComponent, 2);
-//
-//					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
-//					skeletalAnimationInstance1.animModelAssetName.hashID = microbatAsset.HashID();
-//#ifdef R2_ASSET_PIPELINE
-//					skeletalAnimationInstance1.animModelAssetName.assetNameString = "micro_bat.rmdl";
-//#endif
-//					skeletalAnimationInstance1.animModel = microbatAnimModel;
-//					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-//					skeletalAnimationInstance1.startingAnimationIndex = 1;
-//					skeletalAnimationInstance1.startTime = 0; 
-//					skeletalAnimationInstance1.shouldLoop = true;
-//					
-//					skeletalAnimationInstance1.currentAnimationIndex = skeletalAnimationInstance1.startingAnimationIndex;
-//
-//					skeletalAnimationInstance1.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->optrBoneInfo));
-//					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
-//
-//
-//
-//					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
-//					skeletalAnimationInstance2.animModelAssetName.hashID = microbatAsset.HashID();
-//#ifdef R2_ASSET_PIPELINE
-//					skeletalAnimationInstance2.animModelAssetName.assetNameString = "micro_bat.rmdl";
-//#endif
-//					skeletalAnimationInstance2.animModel = microbatAnimModel;
-//					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-//					skeletalAnimationInstance2.startingAnimationIndex = 2;
-//					skeletalAnimationInstance2.startTime = 0;
-//					skeletalAnimationInstance2.shouldLoop = true;
-//
-//					skeletalAnimationInstance2.currentAnimationIndex = skeletalAnimationInstance2.startingAnimationIndex;
-//
-//
-//					skeletalAnimationInstance2.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->optrBoneInfo));
-//					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
-//
-//					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance1);
-//					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance2);
-//
-//					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theNewEntity, instancedSkeletalAnimationComponent);
-//				}
-//
-//				//debug render component + instances
-//				{
-//					ecs::DebugRenderComponent debugRenderComponent;
-//					debugRenderComponent.debugModelType = draw::DEBUG_QUAD;
-//					debugRenderComponent.direction = glm::normalize(glm::vec3(1, 1, 0.5));
-//					debugRenderComponent.depthTest = true;
-//					debugRenderComponent.filled = true;
-//					debugRenderComponent.color = glm::vec4(1, 1, 0, 1);
-//					debugRenderComponent.scale = glm::vec3(2, 2, 1);
-//					debugRenderComponent.offset = glm::vec3(0);
-//					debugRenderComponent.radius = 1.0f;
-//
-//					ecs::InstanceComponentT<ecs::DebugRenderComponent> instancedDebugRenderComponent;
-//					instancedDebugRenderComponent.numInstances = 2;
-//					instancedDebugRenderComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::DebugRenderComponent, 2);
-//
-//					ecs::DebugRenderComponent debugRenderComponent1;
-//					debugRenderComponent1.color = glm::vec4(1, 0, 0, 1);
-//					debugRenderComponent1.debugModelType = draw::DEBUG_QUAD;
-//					debugRenderComponent1.direction = glm::normalize(glm::vec3(-1, 1, 0.5));
-//					debugRenderComponent1.depthTest = true;
-//					debugRenderComponent1.filled = true;
-//					debugRenderComponent1.scale = glm::vec3(1, 2, 1);
-//					debugRenderComponent1.offset = glm::vec3(0);
-//					debugRenderComponent1.radius = 1.0f;
-//
-//
-//					ecs::DebugRenderComponent debugRenderComponent2;
-//					debugRenderComponent2.color = glm::vec4(1, 0, 1, 1);
-//					debugRenderComponent2.debugModelType = draw::DEBUG_QUAD;
-//					debugRenderComponent2.direction = glm::normalize(glm::vec3(1, -1, -0.5));
-//					debugRenderComponent2.depthTest = true;
-//					debugRenderComponent2.filled = true;
-//					debugRenderComponent2.scale = glm::vec3(2, 1, 1);
-//					debugRenderComponent2.offset = glm::vec3(0);
-//					debugRenderComponent2.radius = 1.0f;
-//
-//					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent1);
-//					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent2);
-//
-//					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
-//					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugRenderComponent>>(theNewEntity, instancedDebugRenderComponent);
-//				}
-//
-//				ecs::TransformComponent& transformComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(theNewEntity);
-//				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
-//				transformComponent.localTransform.scale = glm::vec3(0.01f);
-//				
-//				transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
-//				
-//			return e.ShouldConsume();
-//		});
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e) {
+			if (CENG.IsEditorActive())
+			{
+				//copy the level camera to ours to mimic how the level will initially look
+				Level* level = CENG.GetLevelManager().GetLevel(e.GetLevel());
+
+				Camera* levelCamera = level->GetCurrentCamera();
+
+				mEditorCamera = *levelCamera;
+
+				r2::draw::renderer::SetRenderCamera(&mEditorCamera);
+			}
+
+			return e.ShouldConsume();
+			});
 
 		for (const auto& widget : mEditorWidgets)
 		{
@@ -622,6 +412,11 @@ namespace r2
 	void Editor::ToggleGrid()
 	{
 		mShowGrid = !mShowGrid;
+	}
+
+	void Editor::SetRenderToEditorCamera()
+	{
+		r2::draw::renderer::SetRenderCamera(&mEditorCamera);
 	}
 
 	void Editor::AddModelToLevel(const r2::asset::AssetName& modelAsset)

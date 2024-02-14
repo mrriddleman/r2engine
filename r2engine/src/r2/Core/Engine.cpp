@@ -551,7 +551,7 @@ namespace r2
             DetectGameControllers();
 
             
-            TestSound(CPLAT.RootPath());
+    //        TestSound(CPLAT.RootPath());
             
             
             return true;
@@ -942,6 +942,13 @@ namespace r2
 	}
 #endif
 
+#ifdef R2_EDITOR
+    bool Engine::IsEditorActive() const
+    {
+        return mEditorLayer->IsEnabled();
+    }
+#endif
+
 	void Engine::WindowResizedEvent(u32 width, u32 height)
     {
         auto appResolution = GetApplication().GetAppResolution();
@@ -1234,15 +1241,6 @@ namespace r2
 
 		mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
-#ifdef R2_ASSET_PIPELINE
-        //@Temporary: remove this once we have things more stable
-        std::vector<r2::asset::AssetReferenceAndType> assetReferences;
-
-		noptrApp->AddLooseAssetFiles(assetReferences);
-
-        r2::asset::lib::ImportAssetFiles(*mAssetLib, assetReferences);
-#endif
-		
         auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
         

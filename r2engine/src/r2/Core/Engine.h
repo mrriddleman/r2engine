@@ -119,6 +119,10 @@ namespace r2
         r2::asset::pln::AssetCommandHandler& GetAssetCommandHandler();
 #endif
 
+#ifdef R2_EDITOR
+        bool IsEditorActive() const;
+#endif
+
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
         friend class SDL2Platform;

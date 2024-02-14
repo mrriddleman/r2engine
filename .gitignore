@@ -52,7 +52,7 @@ Sandbox/assets/Sandbox_Sounds/
 Sandbox/assets/Sandbox_Materials/*
 Sandbox/assets/Sandbox_Materials/manifests/*
 Sandbox/assets/Sandbox_Textures/manifests/*
-Sandbox/*.ini
+Sandbox/imgui.ini
 
 # r2engine files/dirs
 

@@ -16,14 +16,31 @@ namespace r2
 	{
 		static const u32 MAX_NUM_LEVEL_CAMERAS;
 
-		r2::SArray<r2::Camera*>* mCameras = nullptr;
-		s32 mCurrentCameraIndex = -1;
+		template<class ARENA>
+		void Init(ARENA& arena)
+		{
+			mCameras = MAKE_SARRAY(arena, r2::Camera, MAX_NUM_LEVEL_CAMERAS);
+		}
+
+		template<class ARENA>
+		void Shutdown(ARENA& arena)
+		{
+			FREE(mCameras, arena);
+			mCameras = nullptr;
+			mCurrentCameraIndex = -1;
+		}
+
+		bool AddCamera(const Camera& camera);
+		bool SetCurrentCamera(s32 cameraIndex);
 
 
-
-
+		Camera* GetCurrentCamera();
 
 		static u32 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
+
+	private:
+		r2::SArray<r2::Camera>* mCameras = nullptr;
+		s32 mCurrentCameraIndex = -1;
 	};
 }
 

@@ -40,6 +40,7 @@ namespace r2
 		,mArena(nullptr)
 		,mLoadedLevels(nullptr)
 		,mLevelArena(nullptr)
+		, mCurrentLevel (-1)
 	{
 
 	}
@@ -141,7 +142,7 @@ namespace r2
 		//@TODO(Serge): should we have to remove the sub areas?
 	}
 
-	Level* LevelManager::MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName)
+	Level* LevelManager::MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName, const r2::Camera& defaultCamera)
 	{
 		Level newLevel;
 
@@ -150,11 +151,16 @@ namespace r2
 		r2::SArray<r2::asset::AssetName>* soundBanks = MAKE_SARRAY(*mLevelArena, r2::asset::AssetName, MAX_NUM_SOUND_BANKS);
 		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
+		LevelRenderSettings newLevelRenderSettings;
+		newLevelRenderSettings.Init(*mLevelArena);
+		newLevelRenderSettings.AddCamera(defaultCamera);
+		newLevelRenderSettings.SetCurrentCamera(0);
+
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		//@NOTE(Serge): sort of weird we're doing this but it's only when we make new levels for the editor
 		//				we may want to have this method only for R2_EDITOR/R2_ASSET_PIPELINE
-		newLevel.Init(1, levelNameStr, groupName, levelName, modelAssets, materials, soundBanks, entities);
+		newLevel.Init(1, levelNameStr, groupName, levelName, modelAssets, materials, soundBanks, entities, newLevelRenderSettings);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -196,8 +202,6 @@ namespace r2
 			return nullptr;
 		}
 
-	//	LevelHandle levelHandle = gameAssetManager.LoadAsset(levelAsset);
-
 		const byte* levelData = gameAssetManager.LoadAndGetAssetConst<byte>(levelAsset);
 
 		const flat::LevelData* flatLevelData = flat::GetLevelData(levelData);
@@ -216,6 +220,20 @@ namespace r2
 		
 		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
+
+		//@TEMPORARY until we have actual serialization for level render settings
+		LevelRenderSettings levelRenderSettings;
+		levelRenderSettings.Init(*mLevelArena);
+
+
+		r2::Camera camera;
+		const auto displaySize = CENG.DisplaySize();
+
+		auto aspect = static_cast<float>(displaySize.width) / static_cast<float>(displaySize.height);
+		r2::cam::InitPerspectiveCam(camera, 70.0f, aspect, 0.1f, 1000.0f, glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		levelRenderSettings.AddCamera(camera);
+		levelRenderSettings.SetCurrentCamera(0);
+		
 		newLevel.Init(
 			flatLevelData->version(),
 			flatLevelData->levelAsset()->assetName()->stringName()->c_str(),
@@ -224,7 +242,7 @@ namespace r2
 			modelAssets,
 			texturePackAssets,
 			soundBanks,
-			entities);
+			entities, levelRenderSettings);
 
 		LoadLevelData(newLevel, flatLevelData);
 
@@ -233,6 +251,11 @@ namespace r2
 		ecsWorld.LoadLevel(newLevel, flatLevelData);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
+
+		//@TODO(Serge): probably not correct - need to think about this
+		r2::draw::renderer::SetRenderCamera(levelRenderSettings.GetCurrentCamera());
+
+		mCurrentLevel = r2::sarr::Size(*mLoadedLevels) - 1;
 
 		return &r2::sarr::Last(*mLoadedLevels);
 	}
@@ -271,9 +294,16 @@ namespace r2
 		
 		Level copyOfLevel = *theLevel;
 
+		if (mCurrentLevel == index)
+		{
+			mCurrentLevel = -1;
+		}
+
 		r2::sarr::RemoveAndSwapWithLastElement(*mLoadedLevels, index);
 
 		UnLoadLevelData(copyOfLevel);
+
+		copyOfLevel.mLevelRenderSettings.Shutdown<r2::mem::FreeListArena>(*mLevelArena);
 
 		FREE(copyOfLevel.mEntities, *mLevelArena);
 		FREE(copyOfLevel.mSoundBanks, *mLevelArena);
@@ -777,5 +807,33 @@ namespace r2
 		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 	}
+
+	void LevelManager::SetCurrentLevel(LevelName levelName)
+	{
+		const auto numLoadedLevels = r2::sarr::Size(*mLoadedLevels);
+
+		for (u32 i = 0; i < numLoadedLevels; ++i)
+		{
+			const Level& level = r2::sarr::At(*mLoadedLevels, i);
+
+			if (level.GetLevelHandle() == levelName)
+			{
+				mCurrentLevel = i;
+				break;
+			}
+		}
+
+	}
+
+	Level* LevelManager::GetCurrentLevel()
+	{
+		if (mCurrentLevel > 0)
+		{
+			return &r2::sarr::At(*mLoadedLevels, mCurrentLevel);
+		}
+
+		return nullptr;
+	}
+
 #endif
 }

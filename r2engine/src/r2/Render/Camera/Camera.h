@@ -45,15 +45,10 @@ namespace r2::cam
     void SetFacingDir(Camera& cam, float pitch, float yaw);
     void SetFacingDir(Camera& cam, const glm::vec3& facingDir);
     void SetFOV(Camera& cam, float fovRadians);
-//    void GetFrustumSplits(const Camera& cam, float frustumSplits[NUM_FRUSTUM_SPLITS]);
 
     glm::vec3 GetWorldRight(const Camera& cam);
     glm::vec3 GetWorldUp(const Camera& cam);
     glm::vec3 GetWorldForward(const Camera& cam);
-
-    //void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
-    //void GetFrustumCorners(const glm::mat4& proj, const glm::mat4& view, glm::vec3 outCorners[NUM_FRUSTUM_CORNERS]);
-    //glm::vec3 GetFrustumCenter(const glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
 
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
     
@@ -80,15 +75,14 @@ namespace r2
 		glm::vec3 facing = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));
 		glm::vec3 up = math::GLOBAL_UP;
 
-
-
 		float fov = glm::radians(90.f);
 		float nearPlane = 0.0f;
 		float farPlane = 1.0f;
 		float aspectRatio = 16.0f / 9.0f;
         float exposure = 1.0f;
         b32 isPerspectiveCam = false;
-      //  glm::mat4 frustumProjections[cam::NUM_FRUSTUM_SPLITS];
+
+        u64 temp; //force 8 byte alignment 
 
 	};
 }
