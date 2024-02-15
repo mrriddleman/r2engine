@@ -60,9 +60,16 @@ namespace r2
 		void RemoveEntity(ecs::Entity e) const;
 		void ClearAllEntities() const;
 
-		bool AddCamera(const r2::Camera& camera);
+		bool AddCamera(
+			const r2::Camera& camera
+#ifdef R2_EDITOR
+			, const std::string& cameraName
+#endif
+		);
 		bool SetCameraIndex(s32 index);
 		Camera* GetCurrentCamera();
+
+		inline LevelRenderSettings& GetLevelRenderSettings() { return mLevelRenderSettings; }
 		
 		static u64 MemorySize(u32 numModelAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 

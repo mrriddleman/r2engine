@@ -153,7 +153,12 @@ namespace r2
 
 		LevelRenderSettings newLevelRenderSettings;
 		newLevelRenderSettings.Init(*mLevelArena);
-		newLevelRenderSettings.AddCamera(defaultCamera);
+		newLevelRenderSettings.AddCamera(
+			defaultCamera
+#ifdef R2_EDITOR
+			,"Default"
+#endif
+			);
 		newLevelRenderSettings.SetCurrentCamera(0);
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
@@ -231,7 +236,12 @@ namespace r2
 
 		auto aspect = static_cast<float>(displaySize.width) / static_cast<float>(displaySize.height);
 		r2::cam::InitPerspectiveCam(camera, 70.0f, aspect, 0.1f, 1000.0f, glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		levelRenderSettings.AddCamera(camera);
+		levelRenderSettings.AddCamera(
+			camera
+#ifdef R2_EDITOR
+			,"Default"
+#endif
+		);
 		levelRenderSettings.SetCurrentCamera(0);
 		
 		newLevel.Init(
@@ -255,7 +265,8 @@ namespace r2
 		//@TODO(Serge): probably not correct - need to think about this
 		r2::draw::renderer::SetRenderCamera(levelRenderSettings.GetCurrentCamera());
 
-		mCurrentLevel = r2::sarr::Size(*mLoadedLevels) - 1;
+		SetCurrentLevel(newLevel.GetLevelHandle());
+
 
 		return &r2::sarr::Last(*mLoadedLevels);
 	}

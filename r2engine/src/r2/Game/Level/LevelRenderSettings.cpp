@@ -8,17 +8,60 @@ namespace r2
 
 
 
-	bool LevelRenderSettings::AddCamera(const Camera& camera)
+	bool LevelRenderSettings::AddCamera(
+		const Camera& camera
+#ifdef R2_EDITOR
+		, const std::string& cameraName
+#endif
+	)
 	{
 		if (mCameras && r2::sarr::Size(*mCameras) +1 < r2::sarr::Capacity(*mCameras))
 		{
 			r2::sarr::Push(*mCameras, camera);
+
+
+#ifdef R2_EDITOR
+			mCameraNames.push_back(cameraName);
+#endif
 
 			return true;
 		}
 
 		return false;
 	}
+
+	bool LevelRenderSettings::RemoveCamera(u32 cameraIndex)
+	{
+		if (mCameras && cameraIndex < r2::sarr::Size(*mCameras) && r2::sarr::Size(*mCameras) > 0)
+		{
+
+			if (cameraIndex == mCurrentCameraIndex)
+			{
+				mCurrentCameraIndex = 0;
+			}
+
+			r2::sarr::RemoveElementAtIndexShiftLeft(*mCameras, cameraIndex);
+
+#ifdef R2_EDITOR
+			mCameraNames.erase(mCameraNames.begin() + cameraIndex);
+#endif
+			return true;
+		}
+
+		return false;
+	}
+
+#ifdef R2_EDITOR
+	const std::string& LevelRenderSettings::GetCameraName(u32 cameraIndex)
+	{
+		if (mCameraNames.size() > 0 && cameraIndex < mCameraNames.size())
+		{
+			return mCameraNames[cameraIndex];
+		}
+		
+		return "Invalid";
+	}
+#endif
 
 	bool LevelRenderSettings::SetCurrentCamera(s32 cameraIndex)
 	{

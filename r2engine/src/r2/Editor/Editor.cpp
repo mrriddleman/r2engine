@@ -180,12 +180,19 @@ namespace r2
 			widget->OnEvent(e);
 		}
 
-		mPerspectiveController.OnEvent(e);
+		if (&mPerspectiveController.GetCamera() == r2::draw::renderer::GetRenderCamera())
+		{
+			mPerspectiveController.OnEvent(e);
+		}
+		
 	}
 
 	void Editor::Update()
 	{
-		mPerspectiveController.Update();
+		if (&mPerspectiveController.GetCamera() == r2::draw::renderer::GetRenderCamera())
+		{
+			mPerspectiveController.Update();
+		}
 
 		for (const auto& widget : mEditorWidgets)
 		{
@@ -417,6 +424,21 @@ namespace r2
 	void Editor::SetRenderToEditorCamera()
 	{
 		r2::draw::renderer::SetRenderCamera(&mEditorCamera);
+	}
+
+	void Editor::SwitchPerspectiveControllerCamera(Camera* camera)
+	{
+		mPerspectiveController.SetCamera(camera, camera->position, camera->facing, 10.0);
+	}
+
+	void Editor::SetDefaultEditorPerspectiveCameraController()
+	{
+		mPerspectiveController.SetCamera(&mEditorCamera, mEditorCamera.position, mEditorCamera.facing, 10.0);
+	}
+
+	bool Editor::IsEditorCameraInControl()
+	{
+		return &mPerspectiveController.GetCamera() == &mEditorCamera;
 	}
 
 	void Editor::AddModelToLevel(const r2::asset::AssetName& modelAsset)

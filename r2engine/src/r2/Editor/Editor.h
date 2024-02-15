@@ -95,6 +95,13 @@ namespace r2
 		void ToggleGrid();
 
 		void SetRenderToEditorCamera();
+		const Camera* GetEditorCamera() const {
+			return &mEditorCamera;
+		}
+
+		void SwitchPerspectiveControllerCamera(Camera* camera);
+		void SetDefaultEditorPerspectiveCameraController();
+		bool IsEditorCameraInControl();
 
 	private:
 

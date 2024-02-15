@@ -30,16 +30,34 @@ namespace r2
 			mCurrentCameraIndex = -1;
 		}
 
-		bool AddCamera(const Camera& camera);
+		bool AddCamera(
+			const Camera& camera
+#ifdef R2_EDITOR
+			, const std::string& cameraName
+#endif
+		);
+
+		bool RemoveCamera(u32 cameraIndex);
+
 		bool SetCurrentCamera(s32 cameraIndex);
 
+#ifdef R2_EDITOR
+		const std::string& GetCameraName(u32 cameraIndex);
+#endif
 
 		Camera* GetCurrentCamera();
 
+		r2::SArray<r2::Camera>* GetLevelCameras() { return mCameras; }
+		inline s32 GetCurrentCameraIndex() {
+			return mCurrentCameraIndex;
+		}
 		static u32 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
 		r2::SArray<r2::Camera>* mCameras = nullptr;
+#ifdef R2_EDITOR
+		std::vector<std::string> mCameraNames;
+#endif
 		s32 mCurrentCameraIndex = -1;
 	};
 }

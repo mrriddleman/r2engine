@@ -100,9 +100,5 @@ namespace r2::ecs
 			
 			audioEngine.SetListener3DAttributes(listenerComponent.listener, attributes);
 		}
-
-
-
 	}
-
 }

@@ -159,9 +159,19 @@ namespace r2
 		r2::sarr::Clear(*mEntities);
 	}
 
-	bool Level::AddCamera(const r2::Camera& camera)
+	bool Level::AddCamera(
+		const r2::Camera& camera
+#ifdef R2_EDITOR
+		, const std::string& cameraName
+#endif
+	)
 	{
-		return mLevelRenderSettings.AddCamera(camera);
+		return mLevelRenderSettings.AddCamera(
+			camera
+#ifdef R2_EDITOR
+			,cameraName
+#endif
+		);
 	}
 
 	bool Level::SetCameraIndex(s32 index)

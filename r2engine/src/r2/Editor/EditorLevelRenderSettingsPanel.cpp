@@ -8,6 +8,7 @@
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SkylightRenderSettingsPanelWidget.h"
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/ColorGradingRenderSettingsPanelWidget.h"
 #include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/SunlightRenderSettingsPanelWidget.h"
+#include "r2/Editor/LevelRenderSettingsPanel/LevelRenderSettingsWidgets/CameraRenderSettingsPanelWidget.h"
 
 #include "imgui.h"
 
@@ -37,6 +38,10 @@ namespace r2::edit
 
 		std::unique_ptr<r2::edit::SunLightRenderSettingsPanelWidget> sunlightWidget = std::make_unique<r2::edit::SunLightRenderSettingsPanelWidget>(mnoptrEditor);
 		RegisterLevelRenderSettingsWidget(std::move(sunlightWidget));
+
+		std::unique_ptr<r2::edit::CameraRenderSettingsPanelWidget> cameraWidget = std::make_unique<r2::edit::CameraRenderSettingsPanelWidget>(mnoptrEditor);
+		RegisterLevelRenderSettingsWidget(std::move(cameraWidget));
+
 	}
 
 	void LevelRenderSettingsPanel::Shutdown()
