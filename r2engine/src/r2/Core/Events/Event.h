@@ -33,7 +33,8 @@ namespace r2
             EVT_EDITOR_LEVEL_LOADED,
             EVT_EDITOR_LEVEL_WILL_UNLOAD,
             EVT_EDITOR_LEVEL_CREATED,
-            EVT_EDITOR_LEVEL_SET
+            EVT_EDITOR_LEVEL_SET,
+            EVT_EDITOR_LEVEL_ASSETS_IMPORTED
 
 #endif
         };
@@ -51,6 +52,7 @@ namespace r2
             ECAT_EDITOR       = BIT(6),
             ECAT_EDITOR_ENTITY = BIT(7),
             ECAT_EDITOR_LEVEL = BIT(8),
+            
 #endif
         };
         

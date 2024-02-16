@@ -88,6 +88,9 @@ namespace r2
 		void AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name);
 		void AddMaterialToLevel(const r2::mat::MaterialName& materialName);
 		void AddModelToLevel(const r2::asset::AssetName& modelAsset);
+		void AddAllMaterialsToLevel(const std::vector<r2::mat::MaterialName>& materials);
+		void AddAllModelsToLevel(const std::vector<r2::asset::AssetName>& models);
+		void AddAllSoundBanksToLevel(const std::vector<r2::asset::AssetName>& sounds);
 
 		inline u32 GetEditorFolderImage() const { return mEditorFolderImage; }
 		inline u32 GetEditorFileImage() const { return mEditorFileImage; }

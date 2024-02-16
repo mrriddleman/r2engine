@@ -11,6 +11,7 @@
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "R2/Render/Model/Textures/TexturePackMetaData_generated.h"
 #include "r2/Render/Model/Materials/MaterialHelpers.h"
+#include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 
 #include "imgui.h"
 namespace r2::edit 
@@ -91,6 +92,13 @@ namespace r2::edit
 
 	bool ColorGradingRenderSettingsPanelWidget::OnEvent(r2::evt::Event& e)
 	{
+		r2::evt::EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<r2::evt::EditorAssetsImportedIntoLevel>([this](const r2::evt::EditorAssetsImportedIntoLevel& e) {
+
+			PopulateColorGradingMaterials();
+			return e.ShouldConsume();
+			});
+
 		return false;
 	}
 

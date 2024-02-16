@@ -11,7 +11,7 @@
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "R2/Render/Model/Textures/TexturePackMetaData_generated.h"
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
-
+#include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "imgui.h"
 
@@ -218,8 +218,12 @@ namespace r2::edit
 
 	bool SkylightRenderSettingsPanelWidget::OnEvent(r2::evt::Event& e)
 	{
-		//@TODO(Serge): performance of this is atrocious right now - do this in a smarter way. We could just do this once then wait for an event or something
-		//				and repopulate it
+		r2::evt::EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<r2::evt::EditorAssetsImportedIntoLevel>([this](const r2::evt::EditorAssetsImportedIntoLevel& e) {
+
+			PopulateSkylightMaterials();
+			return e.ShouldConsume();
+		});
 
 		return false; //Whether it should consume the event or not
 	}

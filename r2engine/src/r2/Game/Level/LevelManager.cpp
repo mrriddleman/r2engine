@@ -819,6 +819,30 @@ namespace r2
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 	}
 
+	void LevelManager::ImportMaterialsToLevel(Level* level, const std::vector<r2::mat::MaterialName>& materials)
+	{
+		for (auto&& materialName : materials)
+		{
+			ImportMaterialToLevel(level, materialName);
+		}
+	}
+
+	void LevelManager::ImportModelsToLevel(Level* level, const std::vector<r2::asset::AssetName>& models)
+	{
+		for (auto&& assetName : models)
+		{
+			ImportModelToLevel(level, assetName);
+		}
+	}
+
+	void LevelManager::ImportSoundsToLevel(Level* level, const std::vector<r2::asset::AssetName>& sounds)
+	{
+		for (auto&& assetName : sounds)
+		{
+			ImportSoundToLevel(level, assetName);
+		}
+	}
+
 	void LevelManager::SetCurrentLevel(LevelName levelName)
 	{
 		const auto numLoadedLevels = r2::sarr::Size(*mLoadedLevels);

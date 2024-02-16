@@ -445,13 +445,60 @@ namespace r2
 	{
 		auto& levelManager = CENG.GetLevelManager();
 		levelManager.ImportModelToLevel(mCurrentEditorLevel, modelAsset);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
 	}
 
 	void Editor::AddMaterialToLevel(const r2::mat::MaterialName& materialName)
 	{
 		auto& levelManager = CENG.GetLevelManager();
 		levelManager.ImportMaterialToLevel(mCurrentEditorLevel, materialName);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
 	}
+
+	void Editor::AddAllMaterialsToLevel(const std::vector<r2::mat::MaterialName>& materials)
+	{
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportMaterialsToLevel(mCurrentEditorLevel, materials);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
+	}
+
+
+	void Editor::AddAllModelsToLevel(const std::vector<r2::asset::AssetName>& models)
+	{
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportModelsToLevel(mCurrentEditorLevel, models);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
+	}
+
+	void Editor::AddAllSoundBanksToLevel(const std::vector<r2::asset::AssetName>& sounds)
+	{
+		auto& levelManager = CENG.GetLevelManager();
+		levelManager.ImportSoundsToLevel(mCurrentEditorLevel, sounds);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
+	}
+
 
 	void Editor::AddSoundBankToLevel(u64 soundBankAssetName, const std::string& name)
 	{
@@ -461,6 +508,11 @@ namespace r2
 
 		auto& levelManager = CENG.GetLevelManager();
 		levelManager.ImportSoundToLevel(mCurrentEditorLevel, soundBankName);
+
+		//@TODO(Serge): add an event so that we can repopulate materials in various widgets
+		evt::EditorAssetsImportedIntoLevel e(mCurrentEditorLevel->GetLevelAssetName());
+
+		PostEditorEvent(e);
 	}
 }
 

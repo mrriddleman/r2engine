@@ -68,6 +68,19 @@ namespace r2::evt
 		return ss.str();
 	}
 
+	EditorAssetsImportedIntoLevel::EditorAssetsImportedIntoLevel(LevelName& editorLevel)
+		:EditorLevelEvent(editorLevel, false)
+	{
+
+	}
+
+	std::string EditorAssetsImportedIntoLevel::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorAssetsImported imported assets into level: " << mLevel.assetNameString;
+		return ss.str();
+	}
+
 }
 
 

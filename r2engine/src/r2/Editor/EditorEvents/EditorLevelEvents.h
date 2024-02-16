@@ -53,6 +53,15 @@ namespace r2::evt
 		std::string ToString() const override;
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_SET)
 	};
+
+
+	class EditorAssetsImportedIntoLevel : public EditorLevelEvent
+	{
+	public:
+		EditorAssetsImportedIntoLevel(LevelName& editorLevel);
+		std::string ToString() const override;
+		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_ASSETS_IMPORTED)
+	};
 }
 
 

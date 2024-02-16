@@ -39,6 +39,7 @@ namespace r2::edit
 
 		void MaterialRawContextMenu(const std::filesystem::path& path);
 		void ModelRawContextMenu(const std::filesystem::path& path);
+		size_t GetNumberOfSelectedDirectories();
 
 		std::filesystem::path FindRawAssetPathFromBinaryAsset(const std::filesystem::path& path);
 
@@ -60,7 +61,7 @@ namespace r2::edit
 
 		asset::pln::tex::TexturePackMetaFile mMetaFile;
 
-
+		std::unordered_map<std::string, bool> mCurrentSelectedItemsInDirectory;
 	
 	};
 }

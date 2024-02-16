@@ -73,6 +73,10 @@ namespace r2
 		void ImportSoundToLevel(Level* level, const r2::asset::AssetName& assetName);
 		void ImportModelToLevel(Level* level, const r2::asset::AssetName& assetName);
 		void ImportMaterialToLevel(Level* level, const r2::mat::MaterialName& materialName);
+
+		void ImportMaterialsToLevel(Level* level, const std::vector<r2::mat::MaterialName>& materials);
+		void ImportModelsToLevel(Level* level, const std::vector<r2::asset::AssetName>& models);
+		void ImportSoundsToLevel(Level* level, const std::vector<r2::asset::AssetName>& sounds);
 #endif
 
 		void SetCurrentLevel(LevelName level);

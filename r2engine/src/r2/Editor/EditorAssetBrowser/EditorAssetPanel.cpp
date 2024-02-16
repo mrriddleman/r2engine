@@ -143,6 +143,7 @@ namespace r2::edit
 				if (ImGui::Button("<-"))
 				{
 					mCurrentDirectory = mCurrentDirectory.parent_path();
+					mCurrentSelectedItemsInDirectory.clear();
 				}
 			}
 			ImGui::SameLine();
@@ -239,15 +240,33 @@ namespace r2::edit
 				ImGui::PushID(filenameString.c_str());
 				unsigned int icon = directoryEntry.is_directory() ? folderIcon : fileIcon;
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				ImGui::ImageButton((ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
 
-				if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+			
+				auto pos = ImGui::GetCursorPos();
+
+				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
+
+				std::string itemid = "##" + filenameString;
+				if (ImGui::Selectable(itemid.c_str(), mCurrentSelectedItemsInDirectory[filenameString], ImGuiSelectableFlags_None, { thumbnailSize, thumbnailSize }))
+				{
+					mCurrentSelectedItemsInDirectory[filenameString] = !mCurrentSelectedItemsInDirectory[filenameString];
+				}
+				ImGui::SetItemAllowOverlap();
+
+				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
+				
+				ImGui::Image((ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+
+			//	ImGui::ImageButton(filenameString.c_str(), (ImTextureID)icon, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+				
+				if (ImGui::BeginPopupContextItem(filenameString.c_str())) // <-- use last item id as popup id
 				{
 					if (!ShowContextMenuForPath(directoryEntry.path(), true))
 						ImGui::CloseCurrentPopup();
 
 					ImGui::EndPopup();
 				}
+			//	ImGui::ShowDemoWindow();
 				//if (ImGui::IsItemHovered())
 				//	ImGui::SetTooltip("Right-click to open popup");
 
@@ -263,9 +282,17 @@ namespace r2::edit
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
 					if (directoryEntry.is_directory())
+					{
+
 						mCurrentDirectory /= path.filename();
+						mCurrentSelectedItemsInDirectory.clear();
+					}
+						
 
 				}
+
+				
+
 				ImGui::TextWrapped(filenameString.c_str());
 
 				ImGui::NextColumn();
@@ -292,6 +319,7 @@ namespace r2::edit
 				if (!wasActivated &&( ImGui::IsItemActivated() || ImGui::IsItemActive()))
 				{
 					mCurrentDirectory = directoryEntry.path();
+					mCurrentSelectedItemsInDirectory.clear();
 					wasActivated = true;
 				}
 
@@ -303,6 +331,7 @@ namespace r2::edit
 			if (!wasActivated && ImGui::IsItemClicked())
 			{
 				mCurrentDirectory = directoryEntry.path();
+				mCurrentSelectedItemsInDirectory.clear();
 				wasActivated = true;
 			}
 		}
@@ -355,6 +384,17 @@ namespace r2::edit
 				}
 
 				TexturePackDirectoryContexMenu(path);
+				return true;
+			}
+			else if (FindStringIC(relativePathString, "sound"))
+			{
+
+				SoundBankContextMenu(path);
+				return true;
+			}
+			else if (FindStringIC(relativePathString, "model"))
+			{
+				ModelBinContextMenu(path);
 				return true;
 			}
 		}
@@ -424,9 +464,65 @@ namespace r2::edit
 		ImGui::NewLine();
 	}
 
+	size_t AssetPanel::GetNumberOfSelectedDirectories()
+	{
+		size_t count = 0;
+		for (auto && iter : mCurrentSelectedItemsInDirectory)
+		{
+			if (iter.second)
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
 	void AssetPanel::MaterialsDirectoryContexMenu(const std::filesystem::path& path)
 	{
 		ContextMenuTitle("Materials");
+
+		if (GetNumberOfSelectedDirectories() > 1)
+		{
+			if (ImGui::Selectable("Import Materials", false))
+			{
+				//printf("Import all\n");
+
+				//now gather all of the materials 
+				std::vector<r2::mat::MaterialName> materialsToImport;
+
+				for (auto&& iter : mCurrentSelectedItemsInDirectory)
+				{
+					if (iter.second)
+					{
+						std::filesystem::path nextPath = mCurrentDirectory / iter.first;
+
+						R2_CHECK(std::filesystem::exists(nextPath), "Should always be the case");
+
+						for (auto& dirEntry : std::filesystem::recursive_directory_iterator(nextPath))
+						{
+							if (dirEntry.is_regular_file() && dirEntry.file_size() > 0 && dirEntry.path().extension() == ".mtrl")
+							{
+								//add to list
+								r2::mat::MaterialName materialName = r2::mat::GetMaterialNameForPath(dirEntry.path().stem().string());
+
+								materialsToImport.push_back(materialName);
+							}
+						}
+					}
+				}
+
+
+				//now import them
+				mnoptrEditor->AddAllMaterialsToLevel(materialsToImport);
+
+				//clear all now
+				mCurrentSelectedItemsInDirectory.clear();
+
+			}
+
+			return;
+		}
+
 
 		if (ImGui::Selectable("Make Material", false))
 		{
@@ -507,6 +603,58 @@ namespace r2::edit
 
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
 
+		if (GetNumberOfSelectedDirectories() > 1)
+		{
+			if (ImGui::Selectable("Import Models", false))
+			{
+				//now gather all of the materials 
+				std::vector<r2::asset::AssetName> modelsToImport;
+
+				for (auto&& iter : mCurrentSelectedItemsInDirectory)
+				{
+					if (iter.second)
+					{
+						std::filesystem::path nextPath = mCurrentDirectory / iter.first;
+
+						R2_CHECK(std::filesystem::exists(nextPath), "Should always be the case");
+
+						for (auto& dirEntry : std::filesystem::recursive_directory_iterator(nextPath))
+						{
+							if (dirEntry.is_regular_file() && dirEntry.file_size() > 0 && dirEntry.path().extension() == ".rmdl")
+							{
+
+								char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+								r2::fs::utils::SanitizeSubPath(dirEntry.path().string().c_str(), sanitizedPath);
+
+								if (r2::asset::lib::HasAsset(assetLib, sanitizedPath, r2::asset::RMODEL))
+								{
+									r2::asset::AssetName asset = r2::asset::MakeAssetNameFromPath(sanitizedPath, r2::asset::RMODEL);
+
+									modelsToImport.push_back(asset);
+								}
+								else
+								{
+									R2_CHECK(false, "Shouldn't be possible?");
+								}
+							}
+						}
+					}
+				}
+
+
+				//now import them
+				mnoptrEditor->AddAllModelsToLevel(modelsToImport);
+
+				//clear all now
+				mCurrentSelectedItemsInDirectory.clear();
+
+			}
+
+			return;
+		}
+
+
+
 		char filePath[r2::fs::FILE_PATH_LENGTH];
 		r2::util::PathCpy(filePath, path.string().c_str());
 		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
@@ -564,6 +712,54 @@ namespace r2::edit
 		ContextMenuTitle("Sound Bank");
 
 		r2::asset::AssetLib& assetLib = MENG.GetAssetLib();
+
+		if (GetNumberOfSelectedDirectories() > 0)
+		{
+			if (ImGui::Selectable("Import Sound Banks", false))
+			{
+				//now gather all of the materials 
+				std::vector<r2::asset::AssetName> soundBanksToImport;
+
+				for (auto&& iter : mCurrentSelectedItemsInDirectory)
+				{
+					if (iter.second)
+					{
+						std::filesystem::path nextPath = mCurrentDirectory / iter.first;
+
+						R2_CHECK(std::filesystem::exists(nextPath), "Should always be the case");
+
+						for (auto& dirEntry : std::filesystem::recursive_directory_iterator(nextPath))
+						{
+							if (dirEntry.is_regular_file() && dirEntry.file_size() > 0 && dirEntry.path().extension() == ".bank")
+							{
+								char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+								r2::fs::utils::SanitizeSubPath(dirEntry.path().string().c_str(), sanitizedPath);
+
+								if (r2::asset::lib::HasAsset(assetLib, sanitizedPath, r2::asset::SOUND))
+								{
+									r2::asset::AssetName asset = r2::asset::MakeAssetNameFromPath(sanitizedPath, r2::asset::SOUND);
+
+									soundBanksToImport.push_back(asset);
+								}
+								else
+								{
+									R2_CHECK(false, "Shouldn't be possible?");
+								}
+							}
+						}
+					}
+				}
+
+				//now import them
+				mnoptrEditor->AddAllSoundBanksToLevel(soundBanksToImport);
+
+				//clear all now
+				mCurrentSelectedItemsInDirectory.clear();
+			}
+
+			return;
+		}
+
 
 		char filePath[r2::fs::FILE_PATH_LENGTH];
 		r2::util::PathCpy(filePath, path.string().c_str());
