@@ -343,6 +343,17 @@ namespace r2::edit
 			}
 			else if (FindStringIC(relativePathString, "texture") && wasButtonItem)
 			{
+
+				//check to see if we have a tmet, rtex or tman file
+				//if we do don't bring up the context menu
+				for (auto dirEntry : std::filesystem::directory_iterator(path))
+				{
+					if (dirEntry.is_regular_file() && (dirEntry.path().extension() == ".tmet" || dirEntry.path().extension() == ".rtex" || dirEntry.path().extension() == ".tman"))
+					{
+						return false;
+					}
+				}
+
 				TexturePackDirectoryContexMenu(path);
 				return true;
 			}
