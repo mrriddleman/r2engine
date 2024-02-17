@@ -142,6 +142,25 @@ namespace r2::draw::rmat
 
 			r2::SArray<r2::asset::AssetHandle>* defaultAssetHandles = nullptr;
 
+			s32 defaultIndex = -1;
+
+			s32 index = r2::shashmap::Get(*cache->mGPURenderMaterialIndices, materialName, defaultIndex);
+
+			if (index == defaultIndex)
+			{
+				return;//?
+			}
+
+			RenderMaterialParams* gpuRenderMaterial = r2::sarr::At(*cache->mGPURenderMaterialArray, index);
+
+			FREE(gpuRenderMaterial, *cache->mGPURenderMaterialArena);
+
+
+			r2::sarr::At(*cache->mGPURenderMaterialArray, index) = nullptr;
+
+			r2::squeue::PushBack(*cache->mFreeIndices, index);
+
+
 			r2::SArray<r2::asset::AssetHandle>* assetHandles = r2::shashmap::Get(*cache->mUploadedTextureForMaterialMap, materialName, defaultAssetHandles);
 
 			if (assetHandles == defaultAssetHandles)
@@ -160,32 +179,9 @@ namespace r2::draw::rmat
 				texsys::UnloadFromGPU(handle);
 			}
 
-			s32 defaultIndex = -1;
-
-			s32 index = r2::shashmap::Get(*cache->mGPURenderMaterialIndices, materialName, defaultIndex);
-
-			if (index == defaultIndex)
-			{
-				return;//?
-			}
-
-			RenderMaterialParams* gpuRenderMaterial = r2::sarr::At(*cache->mGPURenderMaterialArray, index);
-
-			FREE(gpuRenderMaterial, *cache->mGPURenderMaterialArena);
-
-			r2::sarr::At(*cache->mGPURenderMaterialArray, index) = nullptr;
-
-			r2::squeue::PushBack(*cache->mFreeIndices, index);
-
-			//r2::shashmap::Remove(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
-
-			//RemoveGPURenderMaterial(renderMaterialCache, materialName);
-
 			FREE(assetHandles, *cache->mAssetHandleArena);
 
 			r2::shashmap::Remove(*cache->mUploadedTextureForMaterialMap, materialName);
-
-		//	UnloadMaterialParams(*cache, iter->key);
 		}
 
 		FREE(cache->mUploadedTextureForMaterialMap, *arena);
@@ -815,9 +811,14 @@ namespace r2::draw::rmat
 
 			if (!r2::shashmap::Has(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName()))
 			{
-				textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
 
-				r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
+				if (textures && r2::sarr::Size(*textures) > 0)
+				{
+					textureAssetHandles = MAKE_SARRAY(*renderMaterialCache.mAssetHandleArena, r2::asset::AssetHandle, r2::sarr::Size(*textures));
+
+					r2::shashmap::Set(*renderMaterialCache.mUploadedTextureForMaterialMap, material->assetName()->assetName(), textureAssetHandles);
+				}
+			
 			}
 			else
 			{

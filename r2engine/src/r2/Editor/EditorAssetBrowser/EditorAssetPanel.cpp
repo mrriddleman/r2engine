@@ -427,7 +427,7 @@ namespace r2::edit
 					ModelBinContextMenu(path);
 					return true;
 				}
-				else if(extension == ".fbx" || extension == ".gltf") //@TODO(Serge): we should check for proper extensions that we support (when we do lol). I'm thinking we should only really support gltf files
+				else if(extension == ".glb" || extension == ".gltf") //@TODO(Serge): we should check for proper extensions that we support (when we do lol). I'm thinking we should only really support gltf files
 				{
 					ModelRawContextMenu(path);
 					return true;

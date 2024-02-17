@@ -1825,7 +1825,7 @@ namespace r2::assets::assetlib
 		{
 			size_t nodeIndex = skin.joints[i];
 			
-			if (skin.skeleton.value() == nodeIndex)
+			if (skin.skeleton.has_value() && skin.skeleton.value() == nodeIndex)
 			{
 				result.parents[i] = -1;
 				result.joints[i] = GetGlobalTransform(gltf, nodeIndex, nodeLocalTransforms);
