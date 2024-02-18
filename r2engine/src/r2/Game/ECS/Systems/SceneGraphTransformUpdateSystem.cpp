@@ -54,7 +54,11 @@ namespace r2::ecs
 			if (renderComponent)
 			{
 				const r2::draw::Model* model = gameAssetManager.GetAssetData<const r2::draw::Model>(r2::draw::renderer::GetGPUModelRef(renderComponent->gpuModelRefHandle)->assetName.hashID);
-				globalMatrix = model->globalTransform;
+				if (model != nullptr)
+				{
+					globalMatrix = model->globalTransform;
+				}
+				
 			}
 
 

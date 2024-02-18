@@ -136,7 +136,11 @@ namespace r2
 
 			result = mAssetCache->GetAssetBuffer(assetHandle);
 
-			R2_CHECK(result.GetAssetBuffer()->IsLoaded(), "Not loaded?");
+			if (result.GetAssetBuffer() == nullptr || !result.GetAssetBuffer()->IsLoaded())
+			{
+				return nullptr;
+			}
+		//	R2_CHECK(result.GetAssetBuffer()->IsLoaded(), "Not loaded?");
 
 			//store the record
 			r2::sarr::Push(*mCachedRecords, result);

@@ -168,8 +168,11 @@ namespace r2::asset
 		Asset defaultAsset;
         const Asset& asset = bufferRef.mAsset;
 
-        R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset! Probably never loaded it!");
-
+      //  R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset! Probably never loaded it!");
+        if (asset.Empty())
+        {
+            return {};
+        }
 
         AssetBuffer* assetBufferPtr = nullptr;
 
