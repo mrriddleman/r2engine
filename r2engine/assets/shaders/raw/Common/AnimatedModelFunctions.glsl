@@ -11,12 +11,17 @@ mat4 GetAnimatedModel(uint drawID, uint localMeshIndex)
 
 	MeshData meshData = GetMeshData(drawID, localMeshIndex);
 
-	mat4 finalBoneVertexTransform = meshData.globalInvTransform * bonesXForms[BoneIDs[0] + boneOffset].transform * bonesXForms[BoneIDs[0] + boneOffset].invBinPose * BoneWeights[0];
-	finalBoneVertexTransform 	 += meshData.globalInvTransform * bonesXForms[BoneIDs[1] + boneOffset].transform * bonesXForms[BoneIDs[1] + boneOffset].invBinPose * BoneWeights[1];
-	finalBoneVertexTransform	 += meshData.globalInvTransform * bonesXForms[BoneIDs[2] + boneOffset].transform * bonesXForms[BoneIDs[2] + boneOffset].invBinPose * BoneWeights[2];
-	finalBoneVertexTransform	 += meshData.globalInvTransform * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
+	BoneTransform boneXForm0 = bonesXForms[BoneIDs[0] + boneOffset];
+	BoneTransform boneXForm1 = bonesXForms[BoneIDs[1] + boneOffset];
+	BoneTransform boneXForm2 = bonesXForms[BoneIDs[2] + boneOffset];
+	BoneTransform boneXForm3 = bonesXForms[BoneIDs[3] + boneOffset];
 
-	return models[drawID] * meshData.globalTransform * finalBoneVertexTransform;
+	mat4 finalBoneVertexTransform =  boneXForm0.transform * boneXForm0.invBinPose * BoneWeights[0];
+	finalBoneVertexTransform 	 +=  boneXForm1.transform * boneXForm1.invBinPose * BoneWeights[1];
+	finalBoneVertexTransform	 +=  boneXForm2.transform * boneXForm2.invBinPose * BoneWeights[2];
+	finalBoneVertexTransform	 +=  boneXForm3.transform * boneXForm3.invBinPose * BoneWeights[3]; 
+
+	return models[drawID] * meshData.globalTransform * meshData.globalInvTransform * finalBoneVertexTransform;
 }
 
 mat3 GetNormalMatrix(mat4 matrix)

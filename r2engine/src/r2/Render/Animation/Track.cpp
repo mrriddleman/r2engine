@@ -122,7 +122,7 @@ namespace r2::anim
 			{
 				time += duration;
 			}
-	//		time += startTime;
+			time += startTime;
 		}
 		else
 		{

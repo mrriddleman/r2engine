@@ -582,7 +582,7 @@ namespace r2
     const f64 SDL2Platform::TickRate() const
     {
         //@TODO(Serge): fix this
-        return 1000.0 / 144.0;
+        return 1000.0 / 60.0;
     }
     
     const s32 SDL2Platform::NumLogicalCPUCores() const
