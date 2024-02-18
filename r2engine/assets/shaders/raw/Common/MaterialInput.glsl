@@ -340,7 +340,7 @@ void DefaultCharacterMaterialFunction(
 
 	if(material.doubleSided > 0 && NoV > 0)
 	{
-		normalMult = -1.0f;
+		//normalMult = -1.0f;
 	}
 
 	normal = normalMult * normal;
@@ -423,7 +423,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	if(material.doubleSided > 0 && NoV < 0)
 	{
-		normalMult = -1.0f;
+	//	normalMult = -1.0f;
 	}
 
 	normal = normalMult * normal;
@@ -508,7 +508,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	if(material.doubleSided > 0 && NoV < 0)
 	{
-		normalMult = -1.0f;
+		//normalMult = -1.0f;
 	}
 
 	normal = normalMult * normal;
@@ -591,7 +591,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 	if(material.doubleSided > 0 && NoV < 0)
 	{
-		normalMult = -1.0f;
+	//	normalMult = -1.0f;
 	}
 
 	normal = normalMult * normal;
