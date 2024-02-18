@@ -122,7 +122,7 @@ namespace r2::anim
 			{
 				time += duration;
 			}
-			time += startTime;
+	//		time += startTime;
 		}
 		else
 		{
@@ -139,7 +139,14 @@ namespace r2::anim
 		u32 numSampledFrames = r2::sarr::Size(*mSampledFrames);
 
 		float t = time / duration;
-		u32 numSamples = (duration * static_cast<float>(mNumSamples));
+
+		u32 samplesToUse = mNumSamples;// numSampledFrames;
+		if (samplesToUse > numSampledFrames)
+		{
+			samplesToUse = numSampledFrames;
+		}
+
+		u32 numSamples = (duration * static_cast<float>(samplesToUse));
 		u32 index = (t * (float)numSamples);
 		if (index >= numSampledFrames)
 		{

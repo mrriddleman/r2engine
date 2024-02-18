@@ -43,6 +43,7 @@ namespace r2
         virtual const std::string AppPath() const override;
         virtual const std::string SoundDefinitionsPath() const override;
         
+        virtual void ResetAccumulator() override;
 
     private:
         friend Platform;
@@ -64,7 +65,7 @@ namespace r2
         char mApplicationName[r2::fs::FILE_PATH_LENGTH];
         u64 mStartTime;
         bool mRunning;
-        
+        bool mResync;
         
     };
 }

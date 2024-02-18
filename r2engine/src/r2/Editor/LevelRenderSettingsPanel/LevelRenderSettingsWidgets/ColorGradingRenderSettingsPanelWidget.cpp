@@ -99,6 +99,17 @@ namespace r2::edit
 			return e.ShouldConsume();
 			});
 
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e) {
+			PopulateColorGradingMaterials();
+			return e.ShouldConsume();
+			});
+
+		dispatcher.Dispatch<r2::evt::EditorLevelWillUnLoadEvent>([this](const r2::evt::EditorLevelWillUnLoadEvent& e) {
+			PopulateColorGradingMaterials();
+			return e.ShouldConsume();
+			});
+
+
 		return false;
 	}
 

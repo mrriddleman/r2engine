@@ -48,6 +48,16 @@ namespace r2::ecs
 
 			math::Transform parentTransform;
 
+			RenderComponent* renderComponent = mnoptrCoordinator->GetComponentPtr<RenderComponent>(entity);
+
+			glm::mat4 globalMatrix = glm::mat4(1);
+			if (renderComponent)
+			{
+				const r2::draw::Model* model = gameAssetManager.GetAssetData<const r2::draw::Model>(r2::draw::renderer::GetGPUModelRef(renderComponent->gpuModelRefHandle)->assetName.hashID);
+				globalMatrix = model->globalTransform;
+			}
+
+
 			//now get the transform component of the parent if it exists
 			if (entityHeirarchComponent.parent != INVALID_ENTITY)
 			{
@@ -57,9 +67,9 @@ namespace r2::ecs
 
 			UpdateEntityTransformComponent(parentTransform, entityHeirarchComponent, entityTransformDirtyComponent, entityTransformComponent);
 
-			glm::mat4 worldTransform = math::ToMatrix(entityTransformComponent.accumTransform);
+			glm::mat4 worldTransform =  math::ToMatrix(entityTransformComponent.accumTransform) * globalMatrix;
 
-			entityTransformComponent.modelMatrix = worldTransform;
+			entityTransformComponent.modelMatrix =  worldTransform;
 
 			InstanceComponentT<TransformComponent>* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(entity);
 			if (instanceComponent)
@@ -70,7 +80,7 @@ namespace r2::ecs
 
 					UpdateEntityTransformComponent(parentTransform, entityHeirarchComponent, entityTransformDirtyComponent, tranformComponent);
 
-					glm::mat4 worldTransform = math::ToMatrix(tranformComponent.accumTransform);
+					glm::mat4 worldTransform = math::ToMatrix(tranformComponent.accumTransform) * globalMatrix;
 
 					tranformComponent.modelMatrix = worldTransform;
 				}

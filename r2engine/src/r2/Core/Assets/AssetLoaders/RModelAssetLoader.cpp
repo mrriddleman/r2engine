@@ -228,10 +228,10 @@ namespace r2::asset
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(numMeshes));
 
-		//const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
+		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
-		//model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
-	//	model->globalTransform = glm::inverse(model->globalInverseTransform);
+		model->globalInverseTransform = r2::math::GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+		model->globalTransform = glm::inverse(model->globalInverseTransform);
 
 		r2::asset::MakeAssetNameFromFlatAssetName(metaData->modelAssetName(), model->assetName);
 

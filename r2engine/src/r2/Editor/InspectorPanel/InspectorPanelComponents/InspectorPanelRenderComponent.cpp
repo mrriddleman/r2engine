@@ -712,6 +712,9 @@ namespace r2::edit
 							renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
 							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, theEntity, 0, renderComponent);
+
+							ecsWorld.GetSceneGraph().UpdateTransformForEntity(theEntity, r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY);
+							
 						}
 					}
 				}

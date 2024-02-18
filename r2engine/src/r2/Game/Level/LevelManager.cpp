@@ -15,7 +15,7 @@
 #include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Core/Assets/AssetName_generated.h"
 #include "r2/Render/Renderer/Renderer.h"
-
+#include "r2/Platform/Platform.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/AssetReference.h"
 #endif // R2_ASSET_PIPELINE
@@ -267,7 +267,8 @@ namespace r2
 
 		SetCurrentLevel(newLevel.GetLevelHandle());
 
-
+		MPLAT.ResetAccumulator();
+		
 		return &r2::sarr::Last(*mLoadedLevels);
 	}
 

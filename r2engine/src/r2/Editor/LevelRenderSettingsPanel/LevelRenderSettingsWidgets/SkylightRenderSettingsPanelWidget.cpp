@@ -225,6 +225,17 @@ namespace r2::edit
 			return e.ShouldConsume();
 		});
 
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e) {
+			PopulateSkylightMaterials();
+			return e.ShouldConsume();
+		});
+
+		dispatcher.Dispatch<r2::evt::EditorLevelWillUnLoadEvent>([this](const r2::evt::EditorLevelWillUnLoadEvent& e) {
+			PopulateSkylightMaterials();
+			return e.ShouldConsume();
+		});
+
+
 		return false; //Whether it should consume the event or not
 	}
 

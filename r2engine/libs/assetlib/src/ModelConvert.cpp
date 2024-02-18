@@ -2336,7 +2336,7 @@ namespace r2::assets::assetlib
 		//All we support at the moment
 		assert(gltf.scenes.size() == 1);
 
-		//size_t rootSceneNode = gltf.scenes[0].nodeIndices[0];
+		size_t rootSceneNode = gltf.scenes[0].nodeIndices[0];
 		for (size_t i = 0; i < gltf.nodes.size(); ++i)
 		{
 			fastgltf::Node& node = gltf.nodes[i];
@@ -2367,7 +2367,7 @@ namespace r2::assets::assetlib
 		}
 		
 
-		glm::mat4 meshGlobalMatrix = glm::mat4(1);
+		glm::mat4 meshGlobalMatrix = TransformToMat4( GetGlobalTransform(gltf, rootSceneNode, nodeLocalTransform));
 		model.globalInverseTransform = glm::inverse(meshGlobalMatrix);
 
 		BoneMap boneRemapping;

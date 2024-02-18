@@ -53,6 +53,7 @@ namespace r2
         const Engine& EngineConst() { return mEngine; }
         Engine& EngineMutable() {return mEngine;}
         
+        virtual void ResetAccumulator() = 0;
     protected:
         
         Engine mEngine;

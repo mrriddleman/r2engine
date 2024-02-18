@@ -340,9 +340,9 @@ namespace r2
         u64 endTime = startTime;
 
         u64 t = 0;
-        f64 k_desiredUpdateRate = 0.016666666 * 1000.0;
+        f64 k_desiredUpdateRate = TickRate();//0.016666666 * 1000.0;
         const f64 dt = k_desiredUpdateRate;
-        bool resync = false;
+        mResync = false;
 
 		const u64 k_timeHistoryCount = 4;
 		u64 timeAverager[k_timeHistoryCount] = { dt, dt, dt, dt };
@@ -429,21 +429,21 @@ namespace r2
 
 			accumulator += delta;
 
-			//if (accumulator > dt * k_dtUpperToleranceMult) {
-			//	resync = true;
-			//}
+			if (accumulator > dt * k_dtUpperToleranceMult) {
+				mResync = true;
+			}
 
-			////timer resync if requested
-			//if (resync) {
-			//	accumulator = 0;
-			//	delta = dt;
-			//	resync = false; 
+			//timer resync if requested
+			if (mResync) {
+				accumulator = 0;
+				delta = dt;
+				mResync = false; 
 
-			//	for (u32 i = 0; i < k_timeHistoryCount; i++)
-			//	{
-   //                 timeAverager[i] = dt;
-			//	}
-			//}
+				//for (u32 i = 0; i < k_timeHistoryCount; i++)
+				//{
+    //                timeAverager[i] = dt;
+				//}
+			}
            
             ProcessEvents();
 
@@ -451,9 +451,9 @@ namespace r2
 
             while (accumulator >= dt)
             {
-				tempCurrent = SDL_GetPerformanceCounter();
-				auto temp = tempCurrent - tempLast;
-				tempLast = tempCurrent;
+			//	tempCurrent = SDL_GetPerformanceCounter();
+			//	auto temp = tempCurrent - tempLast;
+			//	tempLast = tempCurrent;
 
              //   if (temp > 100)
                 {
@@ -461,20 +461,20 @@ namespace r2
            //         printf("Time: %f\n", (f64(temp) * k_millisecondsToSeconds) / (f64)k_frequency);
                 }
 
-             //   printf("Accum: %f\n", accumulator);
+                printf("Accum: %f\n", accumulator);
                
 
-                r2::util::Timer engineTimer("Engine timer", false);
-                engineTimer.Start();
+               // r2::util::Timer engineTimer("Engine timer", false);
+               // engineTimer.Start();
                 mEngine.Update();
-                f64 result = engineTimer.Stop();
+              //  f64 result = engineTimer.Stop();
 
-				for (u32 i = 0; i < 10 - 1; i++)
-				{
-					engineUpdateTimeHistory[i] = engineUpdateTimeHistory[i + 1];
-				}
+				//for (u32 i = 0; i < 10 - 1; i++)
+				//{
+				//	engineUpdateTimeHistory[i] = engineUpdateTimeHistory[i + 1];
+				//}
 
-                engineUpdateTimeHistory[10 - 1] = result;
+    //            engineUpdateTimeHistory[10 - 1] = result;
 
 
 				accumulator -= dt;
@@ -582,7 +582,7 @@ namespace r2
     const f64 SDL2Platform::TickRate() const
     {
         //@TODO(Serge): fix this
-        return 1000.0 / 60.0;
+        return 1000.0 / 144.0;
     }
     
     const s32 SDL2Platform::NumLogicalCPUCores() const
@@ -615,7 +615,12 @@ namespace r2
         return mSoundDefinitionPath;
     }
     
-    //--------------------------------------------------
+	void SDL2Platform::ResetAccumulator()
+	{
+        mResync = true;
+	}
+
+	//--------------------------------------------------
     //                  Private
     //--------------------------------------------------
     void SDL2Platform::ProcessEvents()
