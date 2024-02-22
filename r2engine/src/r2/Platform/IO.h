@@ -180,6 +180,7 @@ namespace r2::io
     {
 		u8 state = 0;
 		u8 button = 0;
+        u8 numClicks = 0;
     };
 
     struct MouseWheelState
@@ -367,7 +368,23 @@ namespace r2::io
 
         union
         {
-            ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX];
+            ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX] = {
+                {CONTROLLER_BUTTON_A, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_B, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_X, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_Y, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_BACK, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_GUIDE, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_START, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_LEFTSTICK, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_RIGHTSTICK, BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_LEFTSHOULDER,BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_RIGHTSHOULDER,BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_DPAD_UP,BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_DPAD_DOWN,BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_DPAD_LEFT,BUTTON_RELEASED},
+                {CONTROLLER_BUTTON_DPAD_RIGHT,BUTTON_RELEASED}
+            };
             
             struct buttons
             {
@@ -391,7 +408,14 @@ namespace r2::io
         
         union
         {
-            ControllerAxis axes[ControllerAxisName::CONTROLLER_AXIS_MAX];
+            ControllerAxis axes[ControllerAxisName::CONTROLLER_AXIS_MAX] = {
+                 {CONTROLLER_AXIS_LEFTX, 0},
+                 {CONTROLLER_AXIS_LEFTY, 0},
+                 {CONTROLLER_AXIS_RIGHTX, 0},
+                 {CONTROLLER_AXIS_RIGHTY, 0},
+                 {CONTROLLER_AXIS_TRIGGERLEFT, 0},
+                 {CONTROLLER_AXIS_TRIGGERRIGHT, 0}
+            };
             
             struct axis
             {

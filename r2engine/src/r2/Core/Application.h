@@ -128,6 +128,8 @@ namespace r2
         virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
         virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
 
+
+
 #ifdef R2_ASSET_PIPELINE
 
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
@@ -150,7 +152,8 @@ namespace r2
 #endif
 
     protected:
-
+  //      r2::io::InputState mInputState;
+       
     };
     
     std::unique_ptr<Application> CreateApplication();

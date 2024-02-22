@@ -1113,10 +1113,6 @@ namespace r2
         OnEvent(e);
     }
 
-    
-    
-
-
     void Engine::SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp)
     {
         std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
