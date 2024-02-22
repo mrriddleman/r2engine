@@ -81,17 +81,21 @@ namespace r2
         f64 GetTicks() const;
         
         //Game Controllers functions
-        r2::io::ControllerID OpenGameController(r2::io::ControllerID controllerID);
-        u32 NumberOfGameControllers() const;
-        bool IsGameController(r2::io::ControllerID controllerID);
+        void GameControllerOpened(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID);
         void CloseGameController(r2::io::ControllerID controllerID);
-        bool IsGameControllerAttached(r2::io::ControllerID controllerID);
-        const char* GetGameControllerMapping(r2::io::ControllerID controllerID);
-        u8 GetGameControllerButtonState(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName);
-        s16 GetGameControllerAxisValue(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName);
-        const char* GetGameControllerButtonName(r2::io::ControllerButtonName buttonName);
-        const char* GetGameControllerAxisName(r2::io::ControllerAxisName axisName);
-        const char* GetGameControllerName(r2::io::ControllerID controllerID);
+        void GameControllerDisconnected(r2::io::ControllerID controllerID);
+        void GameControllerReconnected(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID);
+
+        u32 NumberOfGameControllers() const;
+        const char* GetGameControllerMapping(r2::io::ControllerID controllerID) const;
+        const char* GetGameControllerButtonName(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName) const;
+        const char* GetGameControllerAxisName(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName) const;
+        const char* GetGameControllerName(r2::io::ControllerID controllerID) const;
+        void SetPlayerIndexToController(s32 playerindex, io::ControllerID controllerID);
+        s32 GetPlayerIndexForController(io::ControllerID controllerID) const;
+        io::ControllerType GetControllerType(r2::io::ControllerID controllerID) const;
+
+        //@TODO(Serge): implement some getters for the controller connected state
 
         void SetResolution(util::Size previousResolution, util::Size newResolution);
         void SetFullScreen();
@@ -123,8 +127,10 @@ namespace r2
         bool IsEditorActive() const;
 #endif
 
-    private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
+
+    private:
+       
         friend class SDL2Platform;
         
         //Platform callbacks
@@ -141,17 +147,17 @@ namespace r2
         using GetTicksFunc = std::function<f64 (void)>;
         
         //Game Controller callbacks from the platform
-        using OpenGameControllerFunc = std::function<void* (r2::io::ControllerID controllerID)>;
-        using IsGameControllerFunc = std::function<bool (r2::io::ControllerID controllerID)>;
-        using NumberOfGameControllersFunc = std::function<u32 (void)>;
-        using CloseGameControllerFunc = std::function<void (void*)>;
-        using IsGameControllerAttachedFunc = std::function<bool (void*)>;
-        using GetGameControllerMappingFunc = std::function<const char* (void*)>;
-        using GetGameControllerButtonStateFunc = std::function<u8 (void*, r2::io::ControllerButtonName)>;
-        using GetGameControllerAxisValueFunc = std::function<s16 (void*, r2::io::ControllerAxisName)>;
-        using GetStringForButtonFunc = std::function<const char* (r2::io::ControllerButtonName)>;
-        using GetStringForAxisFunc = std::function<const char* (r2::io::ControllerAxisName)>;
-        using GetGameControllerNameFunc = std::function<const char* (void*)>;
+        //using OpenGameControllerFunc = std::function<void* (r2::io::ControllerID controllerID)>;
+        //using IsGameControllerFunc = std::function<bool (r2::io::ControllerID controllerID)>;
+        //using NumberOfGameControllersFunc = std::function<u32 (void)>;
+        //using CloseGameControllerFunc = std::function<void (void*)>;
+        //using IsGameControllerAttachedFunc = std::function<bool (void*)>;
+        //using GetGameControllerMappingFunc = std::function<const char* (void*)>;
+        //using GetGameControllerButtonStateFunc = std::function<u8 (void*, r2::io::ControllerButtonName)>;
+        //using GetGameControllerAxisValueFunc = std::function<s16 (void*, r2::io::ControllerAxisName)>;
+        //using GetStringForButtonFunc = std::function<const char* (r2::io::ControllerButtonName)>;
+        //using GetStringForAxisFunc = std::function<const char* (r2::io::ControllerAxisName)>;
+        //using GetGameControllerNameFunc = std::function<const char* (void*)>;
         
         //Platform callbacks
         inline void SetVSyncCallback(SetVSyncFunc vsync) { mSetVSyncFunc = vsync; }
@@ -169,63 +175,63 @@ namespace r2
         }
         
         //Platform Game Controller callbacks
-        inline void SetOpenGameControllerCallback(OpenGameControllerFunc func)
-        {
-            mOpenGameControllerFunc = func;
-        }
-        
-        inline void SetNumberOfGameControllersCallback(NumberOfGameControllersFunc func)
-        {
-            mNumberOfGameControllersFunc = func;
-        }
-        
-        inline void SetIsGameControllerCallback(IsGameControllerFunc func)
-        {
-            mIsGameControllerFunc = func;
-        }
-        
-        inline void SetCloseGameControllerCallback(CloseGameControllerFunc func)
-        {
-            mCloseGameControllerFunc = func;
-        }
-        
-        inline void SetIsGameControllerAttchedCallback(IsGameControllerAttachedFunc func)
-        {
-            mIsGameControllerAttchedFunc = func;
-        }
-        
-        inline void SetGetGameControllerMappingCallback(GetGameControllerMappingFunc func)
-        {
-            mGetGameControllerMappingFunc = func;
-        }
-        
-        inline void SetGetGameControllerButtonStateCallback(GetGameControllerButtonStateFunc func)
-        {
-            mGetGameControllerButtonStateFunc = func;
-        }
-        
-        inline void SetGetGameControllerAxisValueCallback(GetGameControllerAxisValueFunc func)
-        {
-            mGetGameControllerAxisValueFunc = func;
-        }
-        
-        inline void SetGetStringForButtonCallback(GetStringForButtonFunc func)
-        {
-            mGetStringForButtonFunc = func;
-        }
-        
-        inline void SetGetStringForAxisCallback(GetStringForAxisFunc func)
-        {
-            mGetStringForAxisFunc = func;
-        }
-        
-        inline void SetGetGameControllerNameFunc(GetGameControllerNameFunc func)
-        {
-            mGetGameControllerNameFunc = func;
-        }
+        //inline void SetOpenGameControllerCallback(OpenGameControllerFunc func)
+        //{
+        //    mOpenGameControllerFunc = func;
+        //}
+        //
+        //inline void SetNumberOfGameControllersCallback(NumberOfGameControllersFunc func)
+        //{
+        //    mNumberOfGameControllersFunc = func;
+        //}
+        //
+        //inline void SetIsGameControllerCallback(IsGameControllerFunc func)
+        //{
+        //    mIsGameControllerFunc = func;
+        //}
+        //
+        //inline void SetCloseGameControllerCallback(CloseGameControllerFunc func)
+        //{
+        //    mCloseGameControllerFunc = func;
+        //}
+        //
+        //inline void SetIsGameControllerAttchedCallback(IsGameControllerAttachedFunc func)
+        //{
+        //    mIsGameControllerAttchedFunc = func;
+        //}
+        //
+        //inline void SetGetGameControllerMappingCallback(GetGameControllerMappingFunc func)
+        //{
+        //    mGetGameControllerMappingFunc = func;
+        //}
+        //
+        //inline void SetGetGameControllerButtonStateCallback(GetGameControllerButtonStateFunc func)
+        //{
+        //    mGetGameControllerButtonStateFunc = func;
+        //}
+        //
+        //inline void SetGetGameControllerAxisValueCallback(GetGameControllerAxisValueFunc func)
+        //{
+        //    mGetGameControllerAxisValueFunc = func;
+        //}
+        //
+        //inline void SetGetStringForButtonCallback(GetStringForButtonFunc func)
+        //{
+        //    mGetStringForButtonFunc = func;
+        //}
+        //
+        //inline void SetGetStringForAxisCallback(GetStringForAxisFunc func)
+        //{
+        //    mGetStringForAxisFunc = func;
+        //}
+        //
+        //inline void SetGetGameControllerNameFunc(GetGameControllerNameFunc func)
+        //{
+        //    mGetGameControllerNameFunc = func;
+        //}
         
         void OnEvent(evt::Event& e);
-        void DetectGameControllers();
+       // void DetectGameControllers();
         
         //Events
         //@TODO(Serge): have different windows?
@@ -251,8 +257,8 @@ namespace r2
         void TextEvent(const char* text);
         
         //ControllerEvents
-        void ControllerDetectedEvent(io::ControllerID controllerID);
-        void ControllerDisonnectedEvent(io::ControllerID controllerID);
+       // void ControllerDetectedEvent(io::ControllerID controllerID);
+       // void ControllerDisonnectedEvent(io::ControllerID controllerID);
         void ControllerAxisEvent(io::ControllerID controllerID, io::ControllerAxisName axis, s16 value);
         void ControllerButtonEvent(io::ControllerID controllerID, io::ControllerButtonName buttonName, u8 state);
         void ControllerRemappedEvent(io::ControllerID controllerID);
@@ -294,17 +300,18 @@ namespace r2
         GetPerformanceFrequencyFunc mGetPerformanceFrequencyFunc = nullptr;
         GetPerformanceCounterFunc mGetPerformanceCounterFunc = nullptr;
         GetTicksFunc mGetTicksFunc = nullptr;
-        OpenGameControllerFunc mOpenGameControllerFunc = nullptr;
-        IsGameControllerFunc mIsGameControllerFunc = nullptr;
-        NumberOfGameControllersFunc mNumberOfGameControllersFunc = nullptr;
-        CloseGameControllerFunc mCloseGameControllerFunc = nullptr;
-        IsGameControllerAttachedFunc mIsGameControllerAttchedFunc = nullptr;
-        GetGameControllerMappingFunc mGetGameControllerMappingFunc = nullptr;
-        GetGameControllerButtonStateFunc mGetGameControllerButtonStateFunc = nullptr;
-        GetGameControllerAxisValueFunc mGetGameControllerAxisValueFunc = nullptr;
-        GetStringForButtonFunc mGetStringForButtonFunc = nullptr;
-        GetStringForAxisFunc mGetStringForAxisFunc = nullptr;
-        GetGameControllerNameFunc mGetGameControllerNameFunc = nullptr;
+
+        //OpenGameControllerFunc mOpenGameControllerFunc = nullptr;
+        //IsGameControllerFunc mIsGameControllerFunc = nullptr;
+        //NumberOfGameControllersFunc mNumberOfGameControllersFunc = nullptr;
+        //CloseGameControllerFunc mCloseGameControllerFunc = nullptr;
+        //IsGameControllerAttachedFunc mIsGameControllerAttchedFunc = nullptr;
+        //GetGameControllerMappingFunc mGetGameControllerMappingFunc = nullptr;
+        //GetGameControllerButtonStateFunc mGetGameControllerButtonStateFunc = nullptr;
+        //GetGameControllerAxisValueFunc mGetGameControllerAxisValueFunc = nullptr;
+        //GetStringForButtonFunc mGetStringForButtonFunc = nullptr;
+        //GetStringForAxisFunc mGetStringForAxisFunc = nullptr;
+        //GetGameControllerNameFunc mGetGameControllerNameFunc = nullptr;
         
         util::Size mDisplaySize;
         LayerStack mLayerStack;
@@ -323,7 +330,11 @@ namespace r2
         
         draw::RendererBackend mCurrentRendererBackend;
 
-        void* mPlatformControllers[NUM_PLATFORM_CONTROLLERS];
+        io::Controller mOpenedControllers[NUM_PLATFORM_CONTROLLERS];
+    //    u32 mNumControllersOpened;
+
+      //  void* mPlatformControllers[NUM_PLATFORM_CONTROLLERS];
+
         b32 mMinimized;
         b32 mFullScreen;
         b32 mNeedsResolutionChange;

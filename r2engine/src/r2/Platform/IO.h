@@ -175,6 +175,36 @@ namespace r2::io
         u32 direction = MOUSE_DIRECTION_NORMAL;
     };
     
+
+    struct MouseButtonState
+    {
+		u8 state = 0;
+		u8 button = 0;
+    };
+
+    struct MouseWheelState
+    {
+		s32 x = 0;
+		s32 y = 0;
+        u32 direction = MOUSE_DIRECTION_NORMAL;
+    };
+
+    struct MousePositionState
+    {
+        s32 x = 0;
+        s32 y = 0;
+    };
+
+    struct MouseState
+    {
+        MouseButtonState leftMouseButton{MOUSE_BUTTON_LEFT, BUTTON_RELEASED};
+        MouseButtonState middleMouseButton{MOUSE_BUTTON_MIDDLE, BUTTON_RELEASED };
+        MouseButtonState rightMouseButton{ MOUSE_BUTTON_RIGHT, BUTTON_RELEASED};
+
+        MouseWheelState mouseWheelState;
+        MousePositionState mousePositionState;
+    };
+
     struct Key
     {
         enum
@@ -189,15 +219,152 @@ namespace r2::io
         b32 repeated = 0;
         u8 state = 0;
     };
+
+    struct KeyState
+    {
+        s32 code = 0;
+        b32 repeated = 0;
+        u8 state = 0;
+    };
+
+    struct KeyboardState
+    {
+        //ugh...
+        u32 modifiers = 0;
+
+        KeyState key_return{KEY_RETURN, 0, BUTTON_RELEASED};
+		KeyState key_escape{ KEY_ESCAPE, 0, BUTTON_RELEASED };
+		KeyState key_backspace{ KEY_BACKSPACE, 0, BUTTON_RELEASED };
+		KeyState key_tab{ KEY_TAB, 0, BUTTON_RELEASED };
+		KeyState key_space{ KEY_SPACE, 0, BUTTON_RELEASED };
+		KeyState key_exclaim{ KEY_EXCLAIM, 0, BUTTON_RELEASED };
+		KeyState key_quotedbl{ KEY_QUOTEDBL, 0, BUTTON_RELEASED };
+		KeyState key_hash{ KEY_HASH, 0, BUTTON_RELEASED };
+		KeyState key_percent{ KEY_PERCENT, 0, BUTTON_RELEASED };
+		KeyState key_dollar{ KEY_DOLLAR, 0, BUTTON_RELEASED };
+		KeyState key_ampersand{ KEY_AMPERSAND, 0, BUTTON_RELEASED };
+		KeyState key_quote{ KEY_QUOTE, 0, BUTTON_RELEASED };
+		KeyState key_leftparen{ KEY_LEFTPAREN, 0, BUTTON_RELEASED };
+		KeyState key_rightparen{ KEY_RIGHTPAREN, 0, BUTTON_RELEASED };
+		KeyState key_asterisk{ KEY_ASTERISK, 0, BUTTON_RELEASED };
+		KeyState key_plus{ KEY_PLUS, 0, BUTTON_RELEASED };
+		KeyState key_comma{ KEY_COMMA, 0, BUTTON_RELEASED };
+		KeyState key_minus{ KEY_MINUS, 0, BUTTON_RELEASED };
+		KeyState key_period{ KEY_PERIOD, 0, BUTTON_RELEASED };
+		KeyState key_slash{ KEY_SLASH, 0, BUTTON_RELEASED };
+		KeyState key_0{ KEY_0, 0, BUTTON_RELEASED };
+		KeyState key_1{ KEY_1, 0, BUTTON_RELEASED };
+		KeyState key_2{ KEY_2, 0, BUTTON_RELEASED };
+		KeyState key_3{ KEY_3, 0, BUTTON_RELEASED };
+		KeyState key_4{ KEY_4, 0, BUTTON_RELEASED };
+		KeyState key_5{ KEY_5, 0, BUTTON_RELEASED };
+		KeyState key_6{ KEY_6, 0, BUTTON_RELEASED };
+		KeyState key_7{ KEY_7, 0, BUTTON_RELEASED };
+		KeyState key_8{ KEY_8, 0, BUTTON_RELEASED };
+		KeyState key_9{ KEY_9, 0, BUTTON_RELEASED };
+		KeyState key_colon{ KEY_COLON, 0, BUTTON_RELEASED };
+		KeyState key_semicolon{ KEY_SEMICOLON, 0, BUTTON_RELEASED };
+		KeyState key_less{ KEY_LESS, 0, BUTTON_RELEASED };
+		KeyState key_equals{ KEY_EQUALS, 0, BUTTON_RELEASED };
+		KeyState key_greater{ KEY_GREATER, 0, BUTTON_RELEASED };
+		KeyState key_question{ KEY_QUESTION, 0, BUTTON_RELEASED };
+		KeyState key_at{ KEY_AT, 0, BUTTON_RELEASED };
+		KeyState key_leftbracket{ KEY_LEFTBRACKET, 0, BUTTON_RELEASED };
+		KeyState key_backslash{ KEY_BACKSLASH, 0, BUTTON_RELEASED };
+		KeyState key_rightbracket{ KEY_RETURN, 0, BUTTON_RELEASED };
+		KeyState key_caret{ KEY_CARET, 0, BUTTON_RELEASED };
+		KeyState key_underscore{ KEY_UNDERSCORE, 0, BUTTON_RELEASED };
+		KeyState key_backquote{ KEY_BACKQUOTE, 0, BUTTON_RELEASED };
+		KeyState key_a{ KEY_a, 0, BUTTON_RELEASED };
+		KeyState key_b{ KEY_b, 0, BUTTON_RELEASED };
+		KeyState key_c{ KEY_c, 0, BUTTON_RELEASED };
+		KeyState key_d{ KEY_d, 0, BUTTON_RELEASED };
+		KeyState key_e{ KEY_e, 0, BUTTON_RELEASED };
+		KeyState key_f{ KEY_f, 0, BUTTON_RELEASED };
+		KeyState key_g{ KEY_g, 0, BUTTON_RELEASED };
+		KeyState key_h{ KEY_h, 0, BUTTON_RELEASED };
+		KeyState key_i{ KEY_i, 0, BUTTON_RELEASED };
+		KeyState key_j{ KEY_j, 0, BUTTON_RELEASED };
+		KeyState key_k{ KEY_k, 0, BUTTON_RELEASED };
+		KeyState key_l{ KEY_l, 0, BUTTON_RELEASED };
+		KeyState key_m{ KEY_m, 0, BUTTON_RELEASED };
+		KeyState key_n{ KEY_n, 0, BUTTON_RELEASED };
+		KeyState key_o{ KEY_o, 0, BUTTON_RELEASED };
+		KeyState key_p{ KEY_p, 0, BUTTON_RELEASED };
+		KeyState key_q{ KEY_q, 0, BUTTON_RELEASED };
+		KeyState key_r{ KEY_r, 0, BUTTON_RELEASED };
+		KeyState key_s{ KEY_s, 0, BUTTON_RELEASED };
+		KeyState key_t{ KEY_t, 0, BUTTON_RELEASED };
+		KeyState key_u{ KEY_u, 0, BUTTON_RELEASED };
+		KeyState key_v{ KEY_v, 0, BUTTON_RELEASED };
+		KeyState key_w{ KEY_w, 0, BUTTON_RELEASED };
+		KeyState key_x{ KEY_x, 0, BUTTON_RELEASED };
+		KeyState key_y{ KEY_y, 0, BUTTON_RELEASED };
+		KeyState key_z{ KEY_z, 0, BUTTON_RELEASED };
+		KeyState key_capslock{ KEY_CAPSLOCK, 0, BUTTON_RELEASED };
+		KeyState key_f1{ KEY_F1, 0, BUTTON_RELEASED };
+		KeyState key_f2{ KEY_F2, 0, BUTTON_RELEASED };
+		KeyState key_f3{ KEY_F3, 0, BUTTON_RELEASED };
+		KeyState key_f4{ KEY_F4, 0, BUTTON_RELEASED };
+		KeyState key_f5{ KEY_F5, 0, BUTTON_RELEASED };
+		KeyState key_f6{ KEY_F6, 0, BUTTON_RELEASED };
+		KeyState key_f7{ KEY_F7, 0, BUTTON_RELEASED };
+		KeyState key_f8{ KEY_F8, 0, BUTTON_RELEASED };
+		KeyState key_f9{ KEY_F9, 0, BUTTON_RELEASED };
+		KeyState key_f10{ KEY_F10, 0, BUTTON_RELEASED };
+		KeyState key_f11{ KEY_F11, 0, BUTTON_RELEASED };
+		KeyState key_f12{ KEY_F12, 0, BUTTON_RELEASED };
+		KeyState key_printscreen{ KEY_PRINTSCREEN, 0, BUTTON_RELEASED };
+		KeyState key_scrolllock{ KEY_SCROLLLOCK, 0, BUTTON_RELEASED };
+		KeyState key_pause{ KEY_PAUSE, 0, BUTTON_RELEASED };
+		KeyState key_insert{ KEY_INSERT, 0, BUTTON_RELEASED };
+		KeyState key_home{ KEY_HOME, 0, BUTTON_RELEASED };
+		KeyState key_pageup{ KEY_PAGEUP, 0, BUTTON_RELEASED };
+		KeyState key_delete{ KEY_DELETE, 0, BUTTON_RELEASED };
+		KeyState key_end{ KEY_END, 0, BUTTON_RELEASED };
+		KeyState key_pagedown{ KEY_PAGEDOWN, 0, BUTTON_RELEASED };
+		KeyState key_right{ KEY_RIGHT, 0, BUTTON_RELEASED };
+		KeyState key_left{ KEY_LEFT, 0, BUTTON_RELEASED };
+		KeyState key_down{ KEY_DOWN, 0, BUTTON_RELEASED };
+		KeyState key_up{ KEY_UP, 0, BUTTON_RELEASED };
+    };
     
     using ControllerID = s32;
+    using ControllerInstanceID = s32;
+    static const ControllerID INVALID_CONTROLLER_ID = -1;
     
+    enum ControllerType
+    {
+		CONTROLLER_TYPE_UNKNOWN = 0,
+		CONTROLLER_TYPE_XBOX360,
+		CONTROLLER_TYPE_XBOXONE,
+		CONTROLLER_TYPE_PS3,
+		CONTROLLER_TYPE_PS4,
+		CONTROLLER_TYPE_NINTENDO_SWITCH_PRO
+    };
+
+    const char* const controllerTypeStrings[]
+    {
+        "UNKNOWN",
+        "XBOX360",
+        "XBOX_ONE",
+        "PS3",
+        "PS4",
+        "NintendoSwitchPro"
+    };
+
+
+    struct Controller
+    {
+		ControllerID controllerID = INVALID_CONTROLLER_ID;
+        ControllerInstanceID controllerInstanceID = INVALID_CONTROLLER_ID; 
+		b32 connected = false;
+    };
+
     struct ControllerState
     {
-        static const s32 INVALID_CONTROLLER_ID = -1;
-        ControllerID controllerID = INVALID_CONTROLLER_ID;
-        b32 connected = 0;
-        
+        Controller controller;
+
         union
         {
             ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX];

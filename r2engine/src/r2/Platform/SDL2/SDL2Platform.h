@@ -11,6 +11,7 @@
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
 #include "r2/Platform/Platform.h"
+#include "r2/Platform/SDL2/SDL2GameController.h"
 #include <SDL2/SDL.h>
 
 struct SDL_Window;
@@ -45,13 +46,27 @@ namespace r2
         
         virtual void ResetAccumulator() override;
 
+
+		virtual u32 GetNumberOfAttachedGameControllers() const override;
+		virtual void CloseGameController(io::ControllerID index) override;
+		virtual void CloseAllGameControllers() override;
+		virtual bool IsGameControllerConnected(io::ControllerID index) const override;
+		virtual const char* GetGameControllerMapping(r2::io::ControllerID controllerID) const override;
+		virtual const char* GetGameControllerButtonName(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName) const override;
+		virtual const char* GetGameControllerAxisName(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName) const override;
+		virtual const char* GetGameControllerName(r2::io::ControllerID controllerID) const override;
+		virtual s32 GetPlayerIndex(r2::io::ControllerID controllerID) const override;
+		virtual void SetPlayerIndex(r2::io::ControllerID controllerID, s32 playerIndex) override;
+		virtual io::ControllerType GetControllerType(r2::io::ControllerID controllerID)const override;
+
     private:
         friend Platform;
         SDL2Platform();
         
         void SetWindowTitle(const char* title);
         void ProcessEvents();
-        void TestFiles();
+        
+        io::ControllerID GetControllerIDFromControllerInstance(io::ControllerInstanceID instanceID);
         
         static std::unique_ptr<Platform> CreatePlatform();
         static std::unique_ptr<Platform> s_platform;
@@ -59,6 +74,8 @@ namespace r2
         r2::fs::FileStorageArea* mRootStorage;
         r2::fs::FileStorageArea* mAppStorage;
         
+        SDL2GameController mSDLGameControllers[Engine::NUM_PLATFORM_CONTROLLERS];
+
         char mPrefPath[r2::fs::FILE_PATH_LENGTH];
         char mBasePath[r2::fs::FILE_PATH_LENGTH];
         char mSoundDefinitionPath[r2::fs::FILE_PATH_LENGTH];

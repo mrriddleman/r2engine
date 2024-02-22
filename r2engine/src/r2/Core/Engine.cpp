@@ -40,6 +40,7 @@
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 #include "r2/Core/Layer/ECSLayer.h"
+#include "r2/Core/Input/InputState.h"
 
 #ifdef R2_DEBUG
 #include <chrono>
@@ -72,18 +73,6 @@ namespace
 namespace r2
 {
     const u32 Engine::NUM_PLATFORM_CONTROLLERS;
-    
-
-    void TestSound(const std::string& appPath)
-    {
-        r2::audio::AudioEngine audio;
-
-   //     bool loaded = audio.LoadSound((r2::audio::AudioEngine::SoundID)1);
-  //      if (loaded)
- //           audio.PlaySound((r2::audio::AudioEngine::SoundID)1, glm::vec3(0, 0, 0), 0.5, 1.0);
-   //     else
-     //       R2_CHECK(false, "");
-    }
 
     Engine::Engine()
         : mSetVSyncFunc(nullptr)
@@ -102,8 +91,10 @@ namespace r2
     {
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
         {
-            mPlatformControllers[i] = nullptr;
+            mOpenedControllers[i] = {};
         }
+
+      //  mNumControllersOpened = 0;
 
         for (u32 i = 0; i < draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES; ++i)
         {
@@ -548,7 +539,7 @@ namespace r2
 
 
 
-            DetectGameControllers();
+   //         DetectGameControllers();
 
             
     //        TestSound(CPLAT.RootPath());
@@ -609,14 +600,22 @@ namespace r2
                 r2::draw::renderer::Shutdown(nextRenderer);
             }
         }
-        
-        for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
-        {
-            if (mPlatformControllers[i] != nullptr)
-            {
-                CloseGameController(i);
-            }
-        }
+
+        MPLAT.CloseAllGameControllers();
+		for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
+		{
+			mOpenedControllers[i] = {};
+		}
+
+      //  mNumControllersOpened = 0;
+
+        //for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
+        //{
+        //    if (mPlatformControllers[i] != nullptr)
+        //    {
+        //        CloseGameController(i);
+        //    }
+        //}
         
         FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
 		
@@ -684,135 +683,108 @@ namespace r2
         return 0;
     }
     
-    r2::io::ControllerID Engine::OpenGameController(r2::io::ControllerID controllerID)
+    void Engine::GameControllerOpened(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID)
     {
-        if (mOpenGameControllerFunc)
-        {
-            if (controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID &&
-                controllerID < NUM_PLATFORM_CONTROLLERS &&
-                mPlatformControllers[controllerID] == nullptr)
-            {
-                mPlatformControllers[controllerID] = mOpenGameControllerFunc(controllerID);
-                
-                evt::GameControllerConnectedEvent e(controllerID);
-                OnEvent(e);
-                return controllerID;
-            }
-        }
-        return r2::io::ControllerState::INVALID_CONTROLLER_ID;
+        mOpenedControllers[controllerID].controllerID = controllerID;
+        mOpenedControllers[controllerID].controllerInstanceID = instanceID;
+
+        mOpenedControllers[controllerID].connected = CPLAT.IsGameControllerConnected(controllerID);
+
+		evt::GameControllerDetectedEvent e(controllerID);
+	    OnEvent(e);
     }
+
+	void Engine::CloseGameController(r2::io::ControllerID controllerID)
+	{
+        MPLAT.CloseGameController(controllerID);
+        mOpenedControllers[controllerID] = {};
+
+        evt::GameControllerDisconnectedEvent e(controllerID);
+        OnEvent(e);
+	}
+
+    void Engine::GameControllerDisconnected(r2::io::ControllerID controllerID)
+    {
+        mOpenedControllers[controllerID] = {};
+
+		evt::GameControllerDisconnectedEvent e(controllerID);
+		OnEvent(e);
+    }
+
+    void Engine::GameControllerReconnected(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID)
+    {
+		mOpenedControllers[controllerID].controllerID = controllerID;
+		mOpenedControllers[controllerID].controllerInstanceID = instanceID;
+		mOpenedControllers[controllerID].connected = CPLAT.IsGameControllerConnected(controllerID);
+
+        evt::GameControllerConnectedEvent e(controllerID);
+        OnEvent(e);
+    }
+
+    void Engine::SetPlayerIndexToController(s32 playerindex, io::ControllerID controllerID)
+    {
+        MPLAT.SetPlayerIndex(controllerID, playerindex);
+    }
+
+    s32 Engine::GetPlayerIndexForController(io::ControllerID controllerID) const
+    {
+        return CPLAT.GetPlayerIndex(controllerID);
+    }
+
+    io::ControllerType Engine::GetControllerType(r2::io::ControllerID controllerID) const
+    {
+        return CPLAT.GetControllerType(controllerID);
+    }
+
+	void Engine::ControllerRemappedEvent(io::ControllerID controllerID)
+	{
+		evt::GameControllerRemappedEvent e(controllerID);
+		
+		OnEvent(e);
+	}
+
+	void Engine::ControllerAxisEvent(io::ControllerID controllerID, io::ControllerAxisName axis, s16 value)
+	{
+
+		const char* axisNameStr = CPLAT.GetGameControllerAxisName(controllerID, axis);
+
+		evt::GameControllerAxisEvent e(controllerID, { axis, value });
+		
+		OnEvent(e);
+	}
+
+	void Engine::ControllerButtonEvent(io::ControllerID controllerID, io::ControllerButtonName buttonName, u8 state)
+	{
+        const char* buttonNameStr = CPLAT.GetGameControllerButtonName(controllerID, buttonName);
+
+		evt::GameControllerButtonEvent e(controllerID, { buttonName, state });
+		
+		OnEvent(e);
+	}
     
     u32 Engine::NumberOfGameControllers() const
     {
-        if (mNumberOfGameControllersFunc)
-        {
-            return mNumberOfGameControllersFunc();
-        }
-        return 0;
+        return CPLAT.GetNumberOfAttachedGameControllers();
     }
     
-    bool Engine::IsGameController(r2::io::ControllerID controllerID)
+    const char* Engine::GetGameControllerMapping(r2::io::ControllerID controllerID)const
     {
-        if (mIsGameControllerFunc)
-        {
-            return mIsGameControllerFunc(controllerID);
-        }
-        
-        return false;
+        return CPLAT.GetGameControllerMapping(controllerID);
     }
     
-    void Engine::CloseGameController(r2::io::ControllerID controllerID)
+    const char* Engine::GetGameControllerButtonName(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName)const
     {
-        if (mCloseGameControllerFunc)
-        {
-            if (controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                
-                mCloseGameControllerFunc( mPlatformControllers[controllerID] );
-                mPlatformControllers[controllerID] = nullptr;
-            }
-        }
+        return CPLAT.GetGameControllerButtonName(controllerID, buttonName);
     }
     
-    bool Engine::IsGameControllerAttached(r2::io::ControllerID controllerID)
+    const char* Engine::GetGameControllerAxisName(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName)const
     {
-        if (mIsGameControllerAttchedFunc)
-        {
-            if (controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                return mIsGameControllerAttchedFunc(mPlatformControllers[controllerID]);
-            }
-        }
-        return false;
+        return CPLAT.GetGameControllerAxisName(controllerID, axisName);
     }
     
-    const char* Engine::GetGameControllerMapping(r2::io::ControllerID controllerID)
+    const char* Engine::GetGameControllerName(r2::io::ControllerID controllerID)const
     {
-        if (mGetGameControllerMappingFunc)
-        {
-            if (controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                return mGetGameControllerMappingFunc(mPlatformControllers[controllerID]);
-            }
-        }
-        return nullptr;
-    }
-    
-    u8 Engine::GetGameControllerButtonState(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName)
-    {
-        if (mGetGameControllerButtonStateFunc)
-        {
-            if (controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                return mGetGameControllerButtonStateFunc(mPlatformControllers[controllerID], buttonName);
-            }
-        }
-        
-        return 0;
-    }
-    
-    s16 Engine::GetGameControllerAxisValue(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName)
-    {
-        if (mGetGameControllerAxisValueFunc)
-        {
-            if(controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                return mGetGameControllerAxisValueFunc(mPlatformControllers[controllerID], axisName);
-            }
-        }
-        
-        return 0;
-    }
-    
-    const char* Engine::GetGameControllerButtonName(r2::io::ControllerButtonName buttonName)
-    {
-        if(mGetStringForButtonFunc)
-        {
-            return mGetStringForButtonFunc(buttonName);
-        }
-        return nullptr;
-    }
-    
-    const char* Engine::GetGameControllerAxisName(r2::io::ControllerAxisName axisName)
-    {
-        if(mGetStringForAxisFunc)
-        {
-            return mGetStringForAxisFunc(axisName);
-        }
-        return nullptr;
-    }
-    
-    const char* Engine::GetGameControllerName(r2::io::ControllerID controllerID)
-    {
-        if (mGetGameControllerNameFunc)
-        {
-            if(controllerID > r2::io::ControllerState::INVALID_CONTROLLER_ID && controllerID < NUM_PLATFORM_CONTROLLERS && mPlatformControllers[controllerID])
-            {
-                return mGetGameControllerNameFunc(mPlatformControllers[controllerID]);
-            }
-        }
-        
-        return nullptr;
+        return CPLAT.GetGameControllerName(controllerID);
     }
     
     void Engine::SetResolution(util::Size previousResolution, util::Size newResolution)
@@ -948,6 +920,7 @@ namespace r2
         return mEditorLayer->IsEnabled();
     }
 #endif
+
 
 	void Engine::WindowResizedEvent(u32 width, u32 height)
     {
@@ -1139,61 +1112,10 @@ namespace r2
         evt::KeyTypedEvent e(text);
         OnEvent(e);
     }
+
     
-    void Engine::ControllerDetectedEvent(io::ControllerID controllerID)
-    {
-        if (mPlatformControllers[controllerID] == nullptr)
-        {
-            evt::GameControllerDetectedEvent e(controllerID);
-            //  R2_LOGI("%s", e.ToString().c_str());
-            OnEvent(e);
-            
-            auto connectedControllerID = OpenGameController(controllerID);
-            
-            R2_CHECK(connectedControllerID == controllerID, "controller id should be the same");
-        }
-    }
     
-    void Engine::ControllerDisonnectedEvent(io::ControllerID controllerID)
-    {
-        evt::GameControllerDisconnectedEvent e(controllerID);
-        //R2_LOGI("%s", e.ToString().c_str());
-        OnEvent(e);
-    }
-    
-    void Engine::ControllerRemappedEvent(io::ControllerID controllerID)
-    {
-        evt::GameControllerRemappedEvent e(controllerID);
-      //  R2_LOGI("%s", e.ToString().c_str());
-        OnEvent(e);
-    }
-    
-    void Engine::ControllerAxisEvent(io::ControllerID controllerID, io::ControllerAxisName axis, s16 value)
-    {
-        evt::GameControllerAxisEvent e(controllerID, {axis, value});
-      //  R2_LOGI("%s", e.ToString().c_str());
-        OnEvent(e);
-    }
-    
-    void Engine::ControllerButtonEvent(io::ControllerID controllerID, io::ControllerButtonName buttonName, u8 state)
-    {
-        evt::GameControllerButtonEvent e(controllerID, {buttonName, state});
-     //   R2_LOGI("%s", e.ToString().c_str());
-        OnEvent(e);
-    }
-    
-    void Engine::DetectGameControllers()
-    {
-        const u32 numGameControllers = NumberOfGameControllers();
-        
-        for (u32 i = 0; i < numGameControllers; ++i)
-        {
-            if (IsGameController(i))
-            {
-                ControllerDetectedEvent(i);
-            }
-        }
-    }
+
 
     void Engine::SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp)
     {

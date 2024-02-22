@@ -54,6 +54,22 @@ namespace r2
         Engine& EngineMutable() {return mEngine;}
         
         virtual void ResetAccumulator() = 0;
+
+
+        virtual u32 GetNumberOfAttachedGameControllers() const = 0;
+        virtual void CloseGameController(io::ControllerID index) = 0;
+        virtual void CloseAllGameControllers() = 0;
+        virtual bool IsGameControllerConnected(io::ControllerID index) const = 0;
+		virtual const char* GetGameControllerMapping(r2::io::ControllerID controllerID) const  = 0;
+		virtual const char* GetGameControllerButtonName(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName) const  = 0;
+		virtual const char* GetGameControllerAxisName(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName) const = 0;
+		virtual const char* GetGameControllerName(r2::io::ControllerID controllerID) const = 0;
+
+		virtual s32 GetPlayerIndex(r2::io::ControllerID controllerID) const = 0;
+		virtual void SetPlayerIndex(r2::io::ControllerID controllerID, s32 playerIndex) = 0;
+		virtual io::ControllerType GetControllerType(r2::io::ControllerID controllerID)const = 0;
+
+
     protected:
         
         Engine mEngine;

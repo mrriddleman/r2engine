@@ -255,58 +255,6 @@ namespace r2
            
             mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
             mEngine.mGetClipboardTextFunc = SDL2GetClipboardTextFunc;
-            
-            //Game Controller stuff
-            mEngine.SetOpenGameControllerCallback([](r2::io::ControllerID controllerID){
-                SDL_GameController* controller = nullptr;
-                
-                if(SDL_IsGameController(controllerID))
-                {
-                    controller = SDL_GameControllerOpen(controllerID);
-                }
-                
-                return controller;
-            });
-            
-            mEngine.SetNumberOfGameControllersCallback([](){
-                return SDL_NumJoysticks();
-            });
-            
-            mEngine.SetIsGameControllerCallback([](r2::io::ControllerID controllerID){
-                return SDL_IsGameController(controllerID);
-            });
-            
-            mEngine.SetCloseGameControllerCallback([](void* controller){
-                SDL_GameControllerClose((SDL_GameController*)controller);
-            });
-            
-            mEngine.SetIsGameControllerAttchedCallback([](void* gameController){
-                return SDL_GameControllerGetAttached((SDL_GameController*)gameController);
-            });
-            
-            mEngine.SetGetGameControllerMappingCallback([](void* gameController){
-                return SDL_GameControllerMapping((SDL_GameController*)gameController);
-            });
-            
-            mEngine.SetGetGameControllerButtonStateCallback([](void* gameController, r2::io::ControllerButtonName buttonName){
-                return SDL_GameControllerGetButton((SDL_GameController*)gameController, (SDL_GameControllerButton)buttonName);
-            });
-            
-            mEngine.SetGetGameControllerAxisValueCallback([](void* gameController, r2::io::ControllerAxisName axisName){
-                return SDL_GameControllerGetAxis((SDL_GameController*)gameController, (SDL_GameControllerAxis)axisName);
-            });
-            
-            mEngine.SetGetStringForButtonCallback([](r2::io::ControllerButtonName name){
-                return SDL_GameControllerGetStringForButton((SDL_GameControllerButton)name);
-            });
-            
-            mEngine.SetGetStringForAxisCallback([](r2::io::ControllerAxisName name){
-                return SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)name);
-            });
-            
-            mEngine.SetGetGameControllerNameFunc([](void* gameController){
-                return SDL_GameControllerName((SDL_GameController*)gameController);
-            });
         }
         
         if(!mEngine.Init(std::move(app)))
@@ -314,6 +262,22 @@ namespace r2
             R2_LOGE("Failed to initialize the engine!\n");
             return false;
         }
+
+        //Now detect any already attached game controllers - do this after we init the Engine since we want it to be setup before we do this
+
+        auto numGameControllers = SDL2GameController::GetNumberOfConnectedGameControllers();
+
+        /*for (u32 i = 0; i < numGameControllers; ++i)
+        {
+            if (SDL2GameController::IsGameController(i))
+            {
+                bool success = mSDLGameControllers[i].Open(i);
+
+                R2_CHECK(success, "Failed to open the controller: %u!", i);
+
+                mEngine.GameControllerOpened(mSDLGameControllers[i].GetControllerID(), mSDLGameControllers[i].GetControllerInstanceID());
+            }
+        }*/
 
         return mRunning;
     }
@@ -461,7 +425,7 @@ namespace r2
            //         printf("Time: %f\n", (f64(temp) * k_millisecondsToSeconds) / (f64)k_frequency);
                 }
 
-                printf("Accum: %f\n", accumulator);
+            //    printf("Accum: %f\n", accumulator);
                
 
                // r2::util::Timer engineTimer("Engine timer", false);
@@ -620,9 +584,91 @@ namespace r2
         mResync = true;
 	}
 
+    u32 SDL2Platform::GetNumberOfAttachedGameControllers() const
+    {
+        u32 count = 0;
+
+		for (u32 i = 0; i < Engine::NUM_PLATFORM_CONTROLLERS; ++i)
+		{
+			if (mSDLGameControllers[i].IsOpen() && mSDLGameControllers[i].IsAttached())
+			{
+                count++;
+			}
+		}
+
+        return count;
+    }
+
+    void SDL2Platform::CloseGameController(io::ControllerID index)
+    {
+		mSDLGameControllers[index].Close();
+    }
+
+    void SDL2Platform::CloseAllGameControllers()
+    {
+        for (u32 i = 0; i < Engine::NUM_PLATFORM_CONTROLLERS; ++i)
+        {
+            mSDLGameControllers[i].Close();
+        }
+    }
+
+    bool SDL2Platform::IsGameControllerConnected(io::ControllerID index) const
+    {
+        return mSDLGameControllers[index].IsAttached();
+    }
+
+    const char* SDL2Platform::GetGameControllerMapping(r2::io::ControllerID controllerID) const
+    {
+        return mSDLGameControllers[controllerID].GetMapping();
+    }
+
+    const char* SDL2Platform::GetGameControllerButtonName(r2::io::ControllerID controllerID, r2::io::ControllerButtonName buttonName) const
+    {
+        return mSDLGameControllers[controllerID].GetButtonName(buttonName);
+    }
+
+    const char* SDL2Platform::GetGameControllerAxisName(r2::io::ControllerID controllerID, r2::io::ControllerAxisName axisName) const
+    {
+        return mSDLGameControllers[controllerID].GetAxisName(axisName);
+    }
+
+    const char* SDL2Platform::GetGameControllerName(r2::io::ControllerID controllerID) const
+    {
+        return mSDLGameControllers[controllerID].GetControllerName();
+    }
+
+    s32 SDL2Platform::GetPlayerIndex(r2::io::ControllerID controllerID) const
+    {
+        return mSDLGameControllers[controllerID].GetPlayerIndex();
+    }
+
+    void SDL2Platform::SetPlayerIndex(r2::io::ControllerID controllerID, s32 playerIndex)
+    {
+        mSDLGameControllers[controllerID].SetPlayerIndex(playerIndex);
+    }
+
+    io::ControllerType SDL2Platform::GetControllerType(r2::io::ControllerID controllerID)const
+    {
+        return mSDLGameControllers[controllerID].GetControllerType();
+    }
+
 	//--------------------------------------------------
     //                  Private
     //--------------------------------------------------
+
+    io::ControllerID SDL2Platform::GetControllerIDFromControllerInstance(io::ControllerInstanceID instanceID)
+    {
+        for (u32 i= 0; i < Engine::NUM_PLATFORM_CONTROLLERS; ++i)
+        {
+            if (mSDLGameControllers[i].GetControllerInstanceID() == instanceID)
+            {
+                return mSDLGameControllers[i].GetControllerID();
+            }
+        }
+
+        return io::INVALID_CONTROLLER_ID;
+    }
+
     void SDL2Platform::ProcessEvents()
     {
 		SDL_Event e;
@@ -794,17 +840,47 @@ namespace r2
 
 			case SDL_CONTROLLERDEVICEADDED:
 			{
-				mEngine.ControllerDetectedEvent(e.cdevice.which);
+                io::ControllerID controllerID = e.cdevice.which;
+
+
+                bool wasOpen = mSDLGameControllers[controllerID].IsOpen();
+                if (!wasOpen)
+                {
+                    bool success = mSDLGameControllers[controllerID].Open(controllerID);
+
+                    R2_CHECK(success, "Failed to open the game controller");
+                }
+
+                auto instanceID = mSDLGameControllers[controllerID].GetControllerInstanceID();
+                if (!wasOpen)
+                {
+                    mEngine.GameControllerOpened(controllerID, instanceID);
+                }
+                else
+                {
+                    mEngine.GameControllerReconnected(controllerID, instanceID);
+                }
+                
 			}
 			break;
 			case SDL_CONTROLLERDEVICEREMOVED:
 			{
-				mEngine.ControllerDisonnectedEvent(e.cdevice.which);
+                io::ControllerInstanceID instanceID = e.cdevice.which;
+
+                io::ControllerID controllerID = GetControllerIDFromControllerInstance(instanceID);
+
+                CloseGameController(controllerID);
+
+                mEngine.GameControllerDisconnected(controllerID);
 			}
 			break;
 			case SDL_CONTROLLERDEVICEREMAPPED:
 			{
-				mEngine.ControllerRemappedEvent(e.cdevice.which);
+                io::ControllerInstanceID instanceID = e.cdevice.which;
+				io::ControllerID controllerID = GetControllerIDFromControllerInstance(instanceID);
+
+                
+				mEngine.ControllerRemappedEvent(controllerID);
 			}
 			break;
 			case SDL_CONTROLLERBUTTONUP:
@@ -829,165 +905,6 @@ namespace r2
 	{
         r2::draw::rendererimpl::SetWindowName(title);
 	}
-
-    void SDL2Platform::TestFiles()
-    {
-//        char filePath[r2::fs::FILE_PATH_LENGTH];
-//        char filePath2[r2::fs::FILE_PATH_LENGTH];
-//        char filePath3[r2::fs::FILE_PATH_LENGTH];
-//
-//
-//        strcpy(filePath, mPrefPath);
-//        strcpy(filePath2, mPrefPath);
-//        strcpy(filePath3, mPrefPath);
-//
-//
-//        strcat(filePath, "test_pref_path.txt");
-//
-//        R2_LOGI("filePath: %s\n", filePath);
-//
-//        char textToWrite[] = "This is some text that I am writing!";
-//
-//        r2::fs::FileMode mode;
-//        mode |= r2::fs::Mode::Write;
-//
-//        r2::fs::File* fileToWrite = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
-//
-//        R2_CHECK(fileToWrite != nullptr, "We don't have a proper file!");
-//
-//        u64 numBytesWritten = fileToWrite->Write(textToWrite, strlen(textToWrite));
-//
-//        R2_LOGI("I wrote %llu bytes\n", numBytesWritten);
-//
-//        r2::fs::FileSystem::Close(fileToWrite);
-//
-//        mode = r2::fs::Mode::Read;
-//
-//        r2::fs::File* fileToRead = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
-//
-//        u64 fileSize = fileToRead->Size();
-//
-//        R2_LOGI("file size: %llu\n", fileSize);
-//
-//        char textToRead[r2::fs::FILE_PATH_LENGTH];
-//
-//        fileToRead->Skip(5);
-//
-//        u64 bytesRead = fileToRead->Read(textToRead, 2);
-//        textToRead[2] = '\0';
-//
-//        R2_CHECK(bytesRead == 2, "We didn't read all of the file!");
-//
-//        R2_LOGI("Here's what I read:\n%s\n", textToRead);
-//
-//        r2::fs::FileSystem::Close(fileToRead);
-//
-//        //Test file exists, file delete, file rename, and file copy
-//
-//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath), "This file should exist!");
-//
-//        R2_CHECK(!r2::fs::FileSystem::FileExists("some_fake_file.txt"), "This file should not exist!");
-//
-//        strcat(filePath2, "copy_of_file.txt");
-//
-//
-//        R2_CHECK(r2::fs::FileSystem::CopyFile(filePath, filePath2), "We should be able to copy files!");
-//
-//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath2), "filePath2 should exist!");
-//
-//        strcat(filePath3, "renamed_file.txt");
-//
-//        R2_CHECK(r2::fs::FileSystem::RenameFile(filePath2, filePath3), "We should be able to rename a file");
-//
-//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath3), "filePath3 should exist");
-//
-//        R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
-//
-//        R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
-//
-//
-//        r2::fs::DeviceConfig safeConfig;
-//        safeConfig.AddModifier(r2::fs::DeviceModifier::Safe);
-//
-//        r2::fs::File* safeFile = r2::fs::FileSystem::Open(safeConfig, filePath, mode);
-//
-//        r2::fs::FileSystem::Close(safeFile);
-        
-        //Zipity do da
-        
-//        char filePath4[r2::fs::FILE_PATH_LENGTH];
-//        
-//        r2::fs::utils::AppendSubPath(mBasePath, filePath4, "Archive.zip");
-//        
-//        r2::fs::DeviceConfig zipConfig;
-//        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
-//        
-//        r2::fs::ZipFile* zipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, filePath4, r2::fs::Mode::Read | r2::fs::Mode::Binary);
-//        
-//        R2_CHECK(zipFile != nullptr, "We have a zip file");
-//        R2_CHECK(!zipFile->IsOpen(), "Zip file shouldn't be open");
-//        
-//        
-//        zipFile->InitArchive(AllocZip, FreeZip);
-//        
-//        const auto numFiles = zipFile->GetNumberOfFiles();
-//        
-//        for (u64 i = 0; i < numFiles; ++i)
-//        {
-//            r2::fs::ZipFile::ZipFileInfo info;
-//            bool foundExtra = false;
-//            
-//            if (zipFile->GetFileInfo(i, info, &foundExtra))
-//            {
-//                printf("Filename: \"%s\", Comment: \"%s\", Uncompressed size: %u, Compressed size: %u, Is Dir: %u\n", info.filename, info.comment, (uint)info.uncompressedSize, (uint)info.compressedSize, info.isDirectory);
-//            }
-//        }
-//        
-//        r2::fs::FileSystem::Close(zipFile);
-        
-        /* @TODO(Serge): fix async files... again...
-        r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
-        
-       // char filePath4[Kilobytes(1)];
-       // strcpy(filePath4, mPrefPath);
-      //  strcat(filePath4, "test_async_write.txt");
-        
-        
-//        r2::fs::FileMode asyncWriteMode;
-//        asyncWriteMode |= r2::fs::Mode::Write;
-//
-//        r2::fs::DiskFile* asyncFile2 = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath4, asyncWriteMode);
-//
-//        char textToRead2[Kilobytes(1)];
-//        strcpy(textToRead, "");
-//        strcpy(textToRead2, "");
-        
-        r2::fs::DiskFileAsyncOperation op = asyncFile->ReadAsync(textToRead, asyncFile->Size(), 0);
-       // r2::fs::DiskFileAsyncOperation op2 = asyncFile->ReadAsync(textToRead2, asyncFile->Size(), 0);
-        
-        
-        
-        op.WaitUntilFinished(1);
-       // op2.WaitUntilFinished(1);
-        textToRead[asyncFile->Size()] = '\0';
-        //textToRead2[asyncFile->Size()] = '\0';
-        
-        
-       // r2::fs::DiskFileAsyncOperation op3 = asyncFile2->WriteAsync(textToRead2, asyncFile->Size(), 0);
-        
-      //  op3.WaitUntilFinished(1);
-        
-        
-        
-        R2_LOGI("textToRead: %s", textToRead);
-       // R2_LOGI("textToRead2: %s", textToRead2);
-        
-        R2_LOGI("temp");
-        
-        r2::fs::FileSystem::Close(asyncFile);
-       // r2::fs::FileSystem::Close(asyncFile2);
-        */
-    }
 }
 
 
