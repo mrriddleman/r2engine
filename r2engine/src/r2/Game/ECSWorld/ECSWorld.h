@@ -6,6 +6,8 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
 #include "r2/Game/ECS/Component.h"
+#include "r2/Platform/IO.h"
+#include "r2/Game/Player/Player.h"
 
 #define ECS_WORLD_ALLOC(ecsWorld, T) r2::ecs::ECSWorldAlloc<T>(ecsWorld, __FILE__, __LINE__, "" )
 #define ECS_WORLD_ALLOC_PARAMS(ecsWorld, T, ...) r2::ecs::ECSWorldAllocParams<T>(ecsWorld, __FILE__, __LINE__, "", __VA_ARGS__)
@@ -56,6 +58,8 @@ namespace r2::ecs
 
 		bool LoadLevel(const Level& level, const flat::LevelData* levelData);
 		bool UnloadLevel(const Level& level);
+
+		void SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType);
 
 		r2::ecs::ECSCoordinator* GetECSCoordinator();
 		r2::ecs::SceneGraph& GetSceneGraph();
@@ -127,11 +131,10 @@ namespace r2::ecs
 #endif // R2_DEBUG
 #ifdef R2_EDITOR
 		void FreeSelectionComponent(void* selectionComponent);
-
-
 #endif
 
 		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
+		r2::io::InputType GetInputTypeForPlayerID(PlayerID playerID);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle;
@@ -154,6 +157,10 @@ namespace r2::ecs
 #endif
 
 		r2::ecs::SceneGraph mSceneGraph;
+
+
+		//Player Input Mapping
+		r2::io::InputType mPlayerInputMappings[Engine::NUM_PLATFORM_CONTROLLERS]; 
 
 		//@TEMPORARY: This is temporary since we don't know how much memory will be needed for the component allocations
 		//will need to change this later

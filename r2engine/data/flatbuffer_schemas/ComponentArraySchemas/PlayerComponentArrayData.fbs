@@ -1,0 +1,13 @@
+namespace flat;
+
+table Player
+{
+	playerID:int;
+}
+
+table PlayerComponentArrayData
+{
+	playerDataComponentArray:[Player];
+}
+
+root_type PlayerComponentArrayData;

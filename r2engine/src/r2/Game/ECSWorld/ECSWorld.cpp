@@ -18,6 +18,7 @@
 #include "r2/Game/ECS/Components/PointLightComponent.h"
 #include "r2/Game/ECS/Components/SpotLightComponent.h"
 
+
 #include "r2/Game/ECS/Systems/AudioEmitterSystem.h"
 #include "r2/Game/ECS/Systems/AudioListenerSystem.h"
 #include "r2/Game/ECS/Systems/RenderSystem.h"
@@ -186,6 +187,20 @@ namespace r2::ecs
 			}
 		}
 
+		//@NOTE(Serge): we're ensuring that our input is mapped correctly
+		mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::PlayerComponent>(), *tempEntities);
+
+		const auto numPlayerComponents = r2::sarr::Size(*tempEntities);
+		for (u32 i = 0; i < numPlayerComponents; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(*tempEntities, i);
+
+			ecs::PlayerComponent& playerComponent = mECSCoordinator->GetComponent<ecs::PlayerComponent>(e);
+
+			playerComponent.inputType = GetInputTypeForPlayerID(playerComponent.playerID);
+		}
+
+
 		FREE(tempEntities, *MEM_ENG_SCRATCH_PTR);
 		PostLoadLevel(level, levelData);
 
@@ -260,6 +275,23 @@ namespace r2::ecs
 	{
 		mECSCoordinator->UnloadAllECSDataFromLevel(level);
 		return true;
+	}
+
+	void ECSWorld::SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType)
+	{
+		R2_CHECK(playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS, "Passed in Invalid PlayerID");
+		mPlayerInputMappings[playerID] = inputType;
+	}
+
+	r2::io::InputType ECSWorld::GetInputTypeForPlayerID(PlayerID playerID)
+	{
+		if (playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS)
+		{
+			R2_CHECK(false, "Passed in Invalid PlayerID");
+			return {};
+		}
+
+		return mPlayerInputMappings[playerID];
 	}
 
 	void ECSWorld::Shutdown()
@@ -483,6 +515,8 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena, "PointLightComponent", true, false, freePointLightComponentFunc);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena, "SpotLightComponent", true, false, freeSpotLightComponentFunc);
 
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::PlayerComponent>(*mArena, "PlayerComponent", true, false, nullptr);
+
 #ifdef R2_DEBUG
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, false, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena, "DebugBoneComponent", false, false, freeDebugBoneComponent);
@@ -508,6 +542,8 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena);
 #endif
+
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PlayerComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::LightUpdateComponent>(*mArena);
@@ -703,7 +739,7 @@ namespace r2::ecs
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::AudioEmitterSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::SceneGraphSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::SceneGraphTransformUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
-
+		
 		memorySize += r2::ecs::RenderSystem::MemorySize(maxNumInstances, avgMaxNumMeshesPerModel*maxNumModels, maxNumBones, memProperties);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::LightingUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 
@@ -728,6 +764,7 @@ namespace r2::ecs
 		memorySize += ComponentArray<PointLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<SpotLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<LightUpdateComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<PlayerComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 
 #ifdef R2_EDITOR
 		memorySize += ComponentArray<SelectionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);

@@ -428,7 +428,21 @@ namespace r2::io
             };
         };
     };
-    
+
+    enum eInputType
+    {
+        INPUT_TYPE_KEYBOARD = 0,
+        INPUT_TYPE_MOUSE,
+        INPUT_TYPE_KEYBOARD_AND_MOUSE,
+        INPUT_TYPE_CONTROLLER
+    };
+     
+    struct InputType
+    {
+        eInputType inputType = INPUT_TYPE_KEYBOARD;
+        ControllerID controllerID = INVALID_CONTROLLER_ID;
+    };
+
 }
 
 

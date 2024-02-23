@@ -58,7 +58,8 @@ fbsCodeOutputMap = {
 "ComponentArraySchemas/AudioEmitterComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/PointLightComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/LightProperties.fbs":"/r2/Game/ECS/Serialization/",
-"ComponentArraySchemas/SpotLightComponentArrayData.fbs":"/r2/Game/ECS/Serialization/"
+"ComponentArraySchemas/SpotLightComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/PlayerComponentArrayData.fbs":"/r2/Game/ECS/Serialization/"
 }
 
 extraParams = {
@@ -99,7 +100,8 @@ extraParams = {
 "ComponentArraySchemas/AudioEmitterComponentArrayData.fbs":"",
 "ComponentArraySchemas/PointLightComponentArrayData.fbs":"",
 "ComponentArraySchemas/LightProperties.fbs":"",
-"ComponentArraySchemas/SpotLightComponentArrayData.fbs":""
+"ComponentArraySchemas/SpotLightComponentArrayData.fbs":"",
+"ComponentArraySchemas/PlayerComponentArrayData.fbs":""
 }
 
 for filename in os.listdir(dataPath):
