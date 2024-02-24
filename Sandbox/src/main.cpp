@@ -10,181 +10,150 @@
 #include "r2/Core/EntryPoint.h"
 
 
-#include "BreakoutLevelSchema_generated.h"
-#include "BreakoutPowerupSchema_generated.h"
-#include "BreakoutPlayerSettings_generated.h"
-#include "BreakoutHighScoreSchema_generated.h"
 
-#include "r2/Core/File/FileSystem.h"
-#include "r2/Core/File/File.h"
-#include "r2/Core/File/PathUtils.h"
-#include "r2/Core/Assets/AssetCache.h"
-#include "BreakoutLevelsFile.h"
-#include "r2/Core/Containers/SArray.h"
-#include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
-#include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
-#include "r2/Core/Assets/AssetLib.h"
 
-#include "r2/Render/Renderer/Renderer.h"
-
-#include "r2/Utils/Hash.h"
-#include "r2/Utils/Random.h"
-#include "r2/Render/Camera/PerspectiveCameraController.h"
-#include "glm/gtc/type_ptr.hpp"
-#include "r2/Core/Memory/InternalEngineMemory.h"
-#include "r2/Render/Model/Light.h"
-
-#include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
+//#include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
+#include "r2/Core/Events/Events.h"
 
-#include "r2/Game/GameAssetManager/GameAssetManager.h"
-#include "r2/Render/Model/Materials/MaterialPack_generated.h"
-#include "r2/Render/Model/Materials/MaterialHelpers.h"
+//#include "PlayerCommandSystem.h"
+//#include "r2/Game/ECSWorld/ECSWorld.h"
+//#include "r2/Game/ECS/ECSCoordinator.h"
 
-#include "r2/Render/Model/Textures/TexturePacksCache.h"
 
-#include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
-#include "r2/Game/ECSWorld/ECSWorld.h"
-#include "r2/Game/ECS/ECSCoordinator.h"
 
-#ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/AssetManifest.h"
-#include "r2/Core/Assets/AssetReference.h"
-#endif
+//#ifdef R2_EDITOR
+//#include "r2/Editor/EditorInspectorPanel.h"
+//#include "r2/Editor/Editor.h"
+//#include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
+//#endif
 
-#include "r2/Audio/AudioEngine.h"
+//#include "r2/Game/ECS/ComponentArrayData_generated.h"
+//#include "DummyComponentArrayData_generated.h"
 
-#ifdef R2_EDITOR
-#include "r2/Editor/EditorInspectorPanel.h"
-#include "r2/Editor/Editor.h"
-#include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
-#endif
+//#include "../../r2engine/vendor/imgui/imgui.h"
+//#include <mutex>
 
-#include "r2/Game/ECS/ComponentArrayData_generated.h"
-#include "DummyComponentArrayData_generated.h"
-
-#include "../../r2engine/vendor/imgui/imgui.h"
-#include <mutex>
-struct DummyComponent
-{
-	int dummyValue;
-};
-#ifdef R2_EDITOR
-class InspectorPanelDummyComponentDataSource : public r2::edit::InspectorPanelComponentDataSource
-{
-public:
-
-    InspectorPanelDummyComponentDataSource()
-        :InspectorPanelComponentDataSource("Dummy Component", 0, 0)
-    {}
-
-    InspectorPanelDummyComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
-        :InspectorPanelComponentDataSource("Dummy Component", coordinator->GetComponentType<DummyComponent>(), coordinator->GetComponentTypeHash<DummyComponent>())
-    {}
-
-    virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
-    {
-		DummyComponent* dummyComponentPtr = static_cast<DummyComponent*>(componentData);
-        DummyComponent& dummyComponent = *dummyComponentPtr;
-
-        ImGui::Text("Dummy Value:");
-        ImGui::SameLine();
-        ImGui::DragInt("##label dummyvalue", &dummyComponent.dummyValue, 1, -500, 500);
-    }
-
-    virtual bool InstancesEnabled() const override
-    {
-        return false;
-    }
-
-    virtual u32 GetNumInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) const override
-    {
-        return 0;
-    }
-
-    virtual void* GetComponentData(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
-    {
-        return &coordinator->GetComponent<DummyComponent>(theEntity);
-    }
-
-    virtual void* GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
-    {
-        return nullptr;
-    }
-
-    virtual void DeleteComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
-    {
-        coordinator->RemoveComponent<DummyComponent>(theEntity);
-    }
-
-    virtual void DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override {}
-
-    virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
-    {
-        DummyComponent newDummyComponent;
-        newDummyComponent.dummyValue = 0;
-
-        coordinator->AddComponent<DummyComponent>(theEntity, newDummyComponent);
-    }
-
-    virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances) override{}
-
-};
-#endif
-
-namespace r2::ecs
-{
-	template<>
-	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
-	{
-		const auto numComponents = r2::sarr::Size(components);
-
-		r2::SArray<flatbuffers::Offset<flat::DummyComponentData>>* dummyComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::DummyComponentData>, numComponents);
-
-		for (u32 i = 0; i < numComponents; ++i)
-		{
-			const DummyComponent& dummyComponent = r2::sarr::At(components, i);
-
-			flat::DummyComponentDataBuilder dummyComponentBuilder(builder);
-
-            dummyComponentBuilder.add_dummyValue(dummyComponent.dummyValue);
-
-			r2::sarr::Push(*dummyComponents, dummyComponentBuilder.Finish());
-		}
-
-		auto vec = builder.CreateVector(dummyComponents->mData, dummyComponents->mSize);
-
-		flat::DummyComponentArrayDataBuilder dummyComponentArrayDataBuilder(builder);
-
-        dummyComponentArrayDataBuilder.add_dummyComponentArray(vec);
-
-		builder.Finish(dummyComponentArrayDataBuilder.Finish());
-
-		FREE(dummyComponents, *MEM_ENG_SCRATCH_PTR);
-	}
-
-	template<>
-    void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<DummyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
-    {
-		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
-		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
-
-		const flat::DummyComponentArrayData* dummyComponentArrayData = flatbuffers::GetRoot<flat::DummyComponentArrayData>(componentArrayData->componentArray()->data());
-
-		const auto* componentVector = dummyComponentArrayData->dummyComponentArray();
-
-		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
-		{
-			const flat::DummyComponentData* flatDummyComponent = componentVector->Get(i);
-
-			DummyComponent dummyComponent;
-            dummyComponent.dummyValue = flatDummyComponent->dummyValue();
-
-			r2::sarr::Push(components, dummyComponent);
-		}
-    }
-}
+//struct DummyComponent
+//{
+//	int dummyValue;
+//};
+//
+//#ifdef R2_EDITOR
+//class InspectorPanelDummyComponentDataSource : public r2::edit::InspectorPanelComponentDataSource
+//{
+//public:
+//
+//    InspectorPanelDummyComponentDataSource()
+//        :InspectorPanelComponentDataSource("Dummy Component", 0, 0)
+//    {}
+//
+//    InspectorPanelDummyComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+//        :InspectorPanelComponentDataSource("Dummy Component", coordinator->GetComponentType<DummyComponent>(), coordinator->GetComponentTypeHash<DummyComponent>())
+//    {}
+//
+//    virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+//    {
+//		DummyComponent* dummyComponentPtr = static_cast<DummyComponent*>(componentData);
+//        DummyComponent& dummyComponent = *dummyComponentPtr;
+//
+//        ImGui::Text("Dummy Value:");
+//        ImGui::SameLine();
+//        ImGui::DragInt("##label dummyvalue", &dummyComponent.dummyValue, 1, -500, 500);
+//    }
+//
+//    virtual bool InstancesEnabled() const override
+//    {
+//        return false;
+//    }
+//
+//    virtual u32 GetNumInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) const override
+//    {
+//        return 0;
+//    }
+//
+//    virtual void* GetComponentData(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+//    {
+//        return &coordinator->GetComponent<DummyComponent>(theEntity);
+//    }
+//
+//    virtual void* GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+//    {
+//        return nullptr;
+//    }
+//
+//    virtual void DeleteComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+//    {
+//        coordinator->RemoveComponent<DummyComponent>(theEntity);
+//    }
+//
+//    virtual void DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override {}
+//
+//    virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+//    {
+//        DummyComponent newDummyComponent;
+//        newDummyComponent.dummyValue = 0;
+//
+//        coordinator->AddComponent<DummyComponent>(theEntity, newDummyComponent);
+//    }
+//
+//    virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances) override{}
+//
+//};
+//#endif
+//
+//namespace r2::ecs
+//{
+//	template<>
+//	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
+//	{
+//		const auto numComponents = r2::sarr::Size(components);
+//
+//		r2::SArray<flatbuffers::Offset<flat::DummyComponentData>>* dummyComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::DummyComponentData>, numComponents);
+//
+//		for (u32 i = 0; i < numComponents; ++i)
+//		{
+//			const DummyComponent& dummyComponent = r2::sarr::At(components, i);
+//
+//			flat::DummyComponentDataBuilder dummyComponentBuilder(builder);
+//
+//            dummyComponentBuilder.add_dummyValue(dummyComponent.dummyValue);
+//
+//			r2::sarr::Push(*dummyComponents, dummyComponentBuilder.Finish());
+//		}
+//
+//		auto vec = builder.CreateVector(dummyComponents->mData, dummyComponents->mSize);
+//
+//		flat::DummyComponentArrayDataBuilder dummyComponentArrayDataBuilder(builder);
+//
+//        dummyComponentArrayDataBuilder.add_dummyComponentArray(vec);
+//
+//		builder.Finish(dummyComponentArrayDataBuilder.Finish());
+//
+//		FREE(dummyComponents, *MEM_ENG_SCRATCH_PTR);
+//	}
+//
+//	template<>
+//    void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<DummyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+//    {
+//		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
+//		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
+//
+//		const flat::DummyComponentArrayData* dummyComponentArrayData = flatbuffers::GetRoot<flat::DummyComponentArrayData>(componentArrayData->componentArray()->data());
+//
+//		const auto* componentVector = dummyComponentArrayData->dummyComponentArray();
+//
+//		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
+//		{
+//			const flat::DummyComponentData* flatDummyComponent = componentVector->Get(i);
+//
+//			DummyComponent dummyComponent;
+//            dummyComponent.dummyValue = flatDummyComponent->dummyValue();
+//
+//			r2::sarr::Push(components, dummyComponent);
+//		}
+//    }
+//}
 
 namespace
 {
@@ -489,31 +458,6 @@ public:
     {
 		r2::evt::EventDispatcher dispatcher(e);
 
-		//dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
-		//	{
-  //              if (!ShouldKeepAspectRatio())
-  //              {
-  //                  mPersController.SetAspect(static_cast<float>(e.NewWidth()) / static_cast<float>(e.NewHeight()));
-  //              }
-
-		//		//r2::draw::renderer::WindowResized(e.Width(), e.Height());
-		//		// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
-		//		return true;
-		//	});
-
-		//dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
-		//	{
-		//		if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
-		//		{
-		//			r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
-
-		//			//  r2::draw::OpenGLDrawRay(ray);
-		//			return true;
-		//		}
-
-		//		return false;
-		//	});
-
 		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
             if (e.KeyCode() == r2::io::KEY_UP)
             {
@@ -549,166 +493,56 @@ public:
             else if (e.KeyCode() == r2::io::KEY_i)
             {
 
-				printf("======================= Capacity =============================\n");
+				//printf("======================= Capacity =============================\n");
 
-				auto staticVertexBufferCapacity = r2::draw::renderer::GetStaticVertexBufferCapacity();
-				auto animVertexBufferCapacity = r2::draw::renderer::GetAnimVertexBufferCapacity();
+				//auto staticVertexBufferCapacity = r2::draw::renderer::GetStaticVertexBufferCapacity();
+				//auto animVertexBufferCapacity = r2::draw::renderer::GetAnimVertexBufferCapacity();
 
-				printf("Static Vertex Buffer vbo - capacity: %u\n", staticVertexBufferCapacity.vertexBufferSizes[0]);
-				printf("Static Vertex Buffer ibo - capacity: %u\n", staticVertexBufferCapacity.indexBufferSize);
+				//printf("Static Vertex Buffer vbo - capacity: %u\n", staticVertexBufferCapacity.vertexBufferSizes[0]);
+				//printf("Static Vertex Buffer ibo - capacity: %u\n", staticVertexBufferCapacity.indexBufferSize);
 
-				for (int i = 0; i < animVertexBufferCapacity.numVertexBuffers; ++i)
-				{
-					printf("Anim Vertex Buffer vbo[%i] - capacity: %u\n", i, animVertexBufferCapacity.vertexBufferSizes[i]);
-				}
+				//for (int i = 0; i < animVertexBufferCapacity.numVertexBuffers; ++i)
+				//{
+				//	printf("Anim Vertex Buffer vbo[%i] - capacity: %u\n", i, animVertexBufferCapacity.vertexBufferSizes[i]);
+				//}
 
-				printf("Anim Vertex Buffer ibo - capacity: %u\n", animVertexBufferCapacity.indexBufferSize);
+				//printf("Anim Vertex Buffer ibo - capacity: %u\n", animVertexBufferCapacity.indexBufferSize);
 
 
-                printf("======================= Size =============================\n");
+    //            printf("======================= Size =============================\n");
 
-				auto staticVertexBufferSize = r2::draw::renderer::GetStaticVertexBufferSize();
-				auto animVertexBufferSize = r2::draw::renderer::GetAnimVertexBufferSize();
+				//auto staticVertexBufferSize = r2::draw::renderer::GetStaticVertexBufferSize();
+				//auto animVertexBufferSize = r2::draw::renderer::GetAnimVertexBufferSize();
 
-				printf("Static Vertex Buffer vbo - size: %u\n", staticVertexBufferSize.vertexBufferSizes[0]);
-				printf("Static Vertex Buffer ibo - size: %u\n", staticVertexBufferSize.indexBufferSize);
+				//printf("Static Vertex Buffer vbo - size: %u\n", staticVertexBufferSize.vertexBufferSizes[0]);
+				//printf("Static Vertex Buffer ibo - size: %u\n", staticVertexBufferSize.indexBufferSize);
 
-				for (int i = 0; i < animVertexBufferSize.numVertexBuffers; ++i)
-				{
-					printf("Anim Vertex Buffer vbo[%i] - size: %u\n", i, animVertexBufferSize.vertexBufferSizes[i]);
-				}
+				//for (int i = 0; i < animVertexBufferSize.numVertexBuffers; ++i)
+				//{
+				//	printf("Anim Vertex Buffer vbo[%i] - size: %u\n", i, animVertexBufferSize.vertexBufferSizes[i]);
+				//}
 
-				printf("Anim Vertex Buffer ibo - size: %u\n", animVertexBufferSize.indexBufferSize);
+				//printf("Anim Vertex Buffer ibo - size: %u\n", animVertexBufferSize.indexBufferSize);
 
-                printf("======================= Remaining Size =============================\n");
+    //            printf("======================= Remaining Size =============================\n");
 
-                auto staticVertexBufferRemainingSize = r2::draw::renderer::GetStaticVertexBufferRemainingSize();
-                auto animVertexBufferRemainingSize = r2::draw::renderer::GetAnimVertexBufferRemainingSize();
+    //            auto staticVertexBufferRemainingSize = r2::draw::renderer::GetStaticVertexBufferRemainingSize();
+    //            auto animVertexBufferRemainingSize = r2::draw::renderer::GetAnimVertexBufferRemainingSize();
 
-                printf("Static Vertex Buffer vbo - remaining size: %u\n", staticVertexBufferRemainingSize.vertexBufferSizes[0] );
-                printf("Static Vertex Buffer ibo - remaining size: %u\n", staticVertexBufferRemainingSize.indexBufferSize );
+    //            printf("Static Vertex Buffer vbo - remaining size: %u\n", staticVertexBufferRemainingSize.vertexBufferSizes[0] );
+    //            printf("Static Vertex Buffer ibo - remaining size: %u\n", staticVertexBufferRemainingSize.indexBufferSize );
 
-                for (int i = 0; i < animVertexBufferRemainingSize.numVertexBuffers; ++i)
-                {
-                    printf("Anim Vertex Buffer vbo[%i] - remaining size: %u\n", i, animVertexBufferRemainingSize.vertexBufferSizes[i]);
-                }
-
-                printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
-            }
-            else if (e.KeyCode() == r2::io::KEY_m)
-            {
-                
-			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
-			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
-
-			    //if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
-			    //{
-       //             if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<r2::ecs::AudioEmitterComponent>(2))
-       //             {
-       //                 MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(2, audioEmitterActionComponent);
-       //             }
-
-				   // 
-			    //}
-			    
-                /*r2::audio::AudioEngine audioEngine;
-
-                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                {
-                    audioEngine.PlayEvent(mMusicEventHandle, false);
-                }
-                else
-                {
-                    mMusicEventHandle = audioEngine.PlayEvent("event:/Music", false);
-                }*/
-            }
-            else if (e.KeyCode() == r2::io::KEY_p)
-            {
-                //r2::audio::AudioEngine audioEngine;
-                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                //{
-                //    audioEngine.PauseEvent(mMusicEventHandle);
-                //}
-            }
-            else if (e.KeyCode() == r2::io::KEY_n)
-            {
-                //r2::audio::AudioEngine audioEngine;
-                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                //{
-                //    audioEngine.StopEvent(mMusicEventHandle, true);
-                //}
-            }
-            else if (e.KeyCode() == r2::io::KEY_o)
-            {
-                //r2::audio::AudioEngine audioEngine;
-                //if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
-                //{
-                //    bool isPlaying = audioEngine.IsEventPlaying(mMusicEventHandle);
-
-                //    if (isPlaying)
-                //    {
-                //        printf("Music is currently playing\n");
-                //    }
-                //    else
-                //    {
-                //        printf("Music is currently not playing\n");
-                //    }
-
-                //    bool isMusicPaused = audioEngine.IsEventPaused(mMusicEventHandle);
-                //    if (isMusicPaused)
-                //    {
-                //        printf("Music is paused\n");
-                //    }
-                //    else
-                //    {
-                //        printf("Music is not paused\n");
-                //    }
-
-                //    bool hasStopped = audioEngine.HasEventStopped(mMusicEventHandle);
-                //    if (hasStopped)
-                //    {
-                //        printf("Music has stopped\n");
-                //    }
-                //    else
-                //    {
-                //        printf("Music not stopped\n");
-                //    }
-                //}
-            }
-            else if (e.KeyCode() == r2::io::KEY_h)
-            {
-			 //   static r2::util::Random randomizer;
-
-			 //   std::call_once(std::once_flag{}, [&]() {
-				//    randomizer.Randomize();
-				//});
-
-    //            r2::audio::AudioEngine audioEngine;
-    //          //  if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
+    //            for (int i = 0; i < animVertexBufferRemainingSize.numVertexBuffers; ++i)
     //            {
-    //                mEventInstanceHandle = audioEngine.CreateEventInstance("event:/MyEvent");
+    //                printf("Anim Vertex Buffer vbo[%i] - remaining size: %u\n", i, animVertexBufferRemainingSize.vertexBufferSizes[i]);
     //            }
 
-    //            R2_CHECK(r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle), "?");
-
-    //            const r2::Camera& camera = mPersController.GetCamera();
-
-				//r2::audio::AudioEngine::Attributes3D attributes;
-    //            
-    //            float paramValue = randomizer.Randomf();
-
-    //            r2::audio::AudioEngine::SetEventParameterByName(mEventInstanceHandle, "Parameter 1", paramValue);
-
-				//attributes.position.x = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
-    //            attributes.position.y = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
-    //            attributes.position.z = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
-
-				//attributes.look = glm::vec3(0, 0, 1);
-				//attributes.up = camera.up;
-				//attributes.velocity = glm::vec3(0);
-
-    //            audioEngine.PlayEvent(mEventInstanceHandle, attributes);
+    //            printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
             }
+
+
+          
+
 			return false;
 		});
 
@@ -725,43 +559,43 @@ public:
         
 
         //Draw the axis
-#ifdef R2_DEBUG
-        r2::SArray<glm::vec3>* basePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
-        r2::SArray<glm::vec3>* directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
-        r2::SArray<float>* lengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
-        r2::SArray<float>* coneRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
-        r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, 3);
-
-        r2::sarr::Push(*basePositions, glm::vec3(0));
-        r2::sarr::Push(*basePositions, glm::vec3(0));
-        r2::sarr::Push(*basePositions, glm::vec3(0));
-
-        r2::sarr::Push(*directions, glm::vec3(1, 0, 0));
-        r2::sarr::Push(*directions, glm::vec3(0, 1, 0));
-        r2::sarr::Push(*directions, glm::vec3(0, 0, 1));
-
-        r2::sarr::Push(*lengths, 2.0f);
-        r2::sarr::Push(*lengths, 2.0f);
-        r2::sarr::Push(*lengths, 2.0f);
-
-        r2::sarr::Push(*coneRadii, 0.3f);
-        r2::sarr::Push(*coneRadii, 0.3f);
-        r2::sarr::Push(*coneRadii, 0.3f);
-
-        r2::sarr::Push(*colors, glm::vec4(1, 0, 0, 1));
-        r2::sarr::Push(*colors, glm::vec4(0, 1, 0, 1));
-        r2::sarr::Push(*colors, glm::vec4(0, 0, 1, 1));
-
-        r2::draw::renderer::DrawArrowInstanced(*basePositions, *directions, *lengths, *coneRadii, *colors, true, true);
-
-        FREE(colors, *MEM_ENG_SCRATCH_PTR);
-        FREE(coneRadii, *MEM_ENG_SCRATCH_PTR);
-        FREE(lengths, *MEM_ENG_SCRATCH_PTR);
-        FREE(directions, *MEM_ENG_SCRATCH_PTR);
-        FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
-
-    
-#endif
+//#ifdef R2_DEBUG
+//        r2::SArray<glm::vec3>* basePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
+//        r2::SArray<glm::vec3>* directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
+//        r2::SArray<float>* lengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
+//        r2::SArray<float>* coneRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
+//        r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, 3);
+//
+//        r2::sarr::Push(*basePositions, glm::vec3(0));
+//        r2::sarr::Push(*basePositions, glm::vec3(0));
+//        r2::sarr::Push(*basePositions, glm::vec3(0));
+//
+//        r2::sarr::Push(*directions, glm::vec3(1, 0, 0));
+//        r2::sarr::Push(*directions, glm::vec3(0, 1, 0));
+//        r2::sarr::Push(*directions, glm::vec3(0, 0, 1));
+//
+//        r2::sarr::Push(*lengths, 2.0f);
+//        r2::sarr::Push(*lengths, 2.0f);
+//        r2::sarr::Push(*lengths, 2.0f);
+//
+//        r2::sarr::Push(*coneRadii, 0.3f);
+//        r2::sarr::Push(*coneRadii, 0.3f);
+//        r2::sarr::Push(*coneRadii, 0.3f);
+//
+//        r2::sarr::Push(*colors, glm::vec4(1, 0, 0, 1));
+//        r2::sarr::Push(*colors, glm::vec4(0, 1, 0, 1));
+//        r2::sarr::Push(*colors, glm::vec4(0, 0, 1, 1));
+//
+//        r2::draw::renderer::DrawArrowInstanced(*basePositions, *directions, *lengths, *coneRadii, *colors, true, true);
+//
+//        FREE(colors, *MEM_ENG_SCRATCH_PTR);
+//        FREE(coneRadii, *MEM_ENG_SCRATCH_PTR);
+//        FREE(lengths, *MEM_ENG_SCRATCH_PTR);
+//        FREE(directions, *MEM_ENG_SCRATCH_PTR);
+//        FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
+//
+//    
+//#endif
     }
     
     virtual void Shutdown() override
@@ -929,12 +763,12 @@ public:
     
     virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
-        ecsWorld.RegisterComponent<DummyComponent>("DummyComponent", true, false, nullptr);
+     //   ecsWorld.RegisterComponent<DummyComponent>("DummyComponent", true, false, nullptr);
     }
 
     virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
-        ecsWorld.UnRegisterComponent<DummyComponent>();
+       // ecsWorld.UnRegisterComponent<DummyComponent>();
     }
 
 #ifdef R2_ASSET_PIPELINE
@@ -1077,10 +911,10 @@ public:
 #ifdef R2_EDITOR
     virtual void RegisterComponentImGuiWidgets(r2::edit::InspectorPanel& inspectorPanel) const override
     {
-        std::shared_ptr<InspectorPanelDummyComponentDataSource> dummyDataSource = std::make_shared<InspectorPanelDummyComponentDataSource>(inspectorPanel.GetEditor()->GetECSCoordinator());
+  //      std::shared_ptr<InspectorPanelDummyComponentDataSource> dummyDataSource = std::make_shared<InspectorPanelDummyComponentDataSource>(inspectorPanel.GetEditor()->GetECSCoordinator());
 
-		r2::edit::InspectorPanelComponentWidget dummyComponentWidget = r2::edit::InspectorPanelComponentWidget(10, dummyDataSource);
-		inspectorPanel.RegisterComponentWidget(dummyComponentWidget);
+		//r2::edit::InspectorPanelComponentWidget dummyComponentWidget = r2::edit::InspectorPanelComponentWidget(10, dummyDataSource);
+		//inspectorPanel.RegisterComponentWidget(dummyComponentWidget);
     }
 #endif
 

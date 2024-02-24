@@ -2,6 +2,8 @@
 #define __SYSTEM_H__
 
 #include "r2/Game/ECS/Entity.h"
+#include "r2/Core/Containers/SArray.h"
+#include "r2/Utils/Utils.h"
 
 namespace r2::ecs
 {
@@ -15,6 +17,8 @@ namespace r2::ecs
 		ECSCoordinator* mnoptrCoordinator = nullptr;
 
 		virtual s32 FindSortedPlacement(Entity e) { return -1; }
+		virtual void Update() {}
+		virtual void Render() {}
 	};
 }
 

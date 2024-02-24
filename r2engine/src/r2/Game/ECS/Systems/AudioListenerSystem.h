@@ -11,7 +11,7 @@ namespace r2::ecs
 		AudioListenerSystem();
 		~AudioListenerSystem();
 
-		void Update();
+		void Update() override;
 
 	private:
 	};

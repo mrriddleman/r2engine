@@ -13,7 +13,7 @@ namespace r2::io
 
 	}
 
-	const r2::io::InputState& DefaultInputGather::GetCurrentInputState()
+	const r2::io::InputState& DefaultInputGather::GetCurrentInputState() const
 	{
 		return mInputState;
 	}
@@ -74,6 +74,15 @@ namespace r2::io
 		dispatcher.Dispatch<r2::evt::GameControllerButtonEvent>([this](const r2::evt::GameControllerButtonEvent& e) {
 
 			ControllerID controllerID = e.GetControllerID();
+			if (mInputState.mControllersState[controllerID].buttons[e.ButtonName()].IsPressed() && e.ButtonState() == BUTTON_PRESSED)
+			{
+				mInputState.mControllersState[controllerID].buttons[e.ButtonName()].held = true;
+			}
+			else
+			{
+				mInputState.mControllersState[controllerID].buttons[e.ButtonName()].held = false;
+			}
+
 			mInputState.mControllersState[controllerID].buttons[e.ButtonName()].state = e.ButtonState();
 
 			return true;

@@ -14,7 +14,7 @@ namespace r2::io
 	{
 	public:
 		virtual ~IInputGather() {};
-		virtual const InputState& GetCurrentInputState() = 0;
+		virtual const InputState& GetCurrentInputState() const = 0;
 		virtual void OnEvent(r2::evt::Event& event) = 0;
 	};
 }

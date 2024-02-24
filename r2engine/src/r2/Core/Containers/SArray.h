@@ -8,6 +8,7 @@
 #ifndef Array_h
 #define Array_h
 
+#include "R2/Core/Logging/Log.h"
 #include "r2/Core/Memory/Memory.h"
 #include <cassert>
 

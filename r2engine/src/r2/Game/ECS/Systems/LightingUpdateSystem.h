@@ -11,7 +11,7 @@ namespace r2::ecs
 
 		LightingUpdateSystem();
 		~LightingUpdateSystem();
-		void Update();
+		void Update() override;
 
 	private:
 

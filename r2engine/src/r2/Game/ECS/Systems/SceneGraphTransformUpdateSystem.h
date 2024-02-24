@@ -24,7 +24,7 @@ namespace r2::ecs
 
 		SceneGraphTransformUpdateSystem();
 		~SceneGraphTransformUpdateSystem();
-		void Update();
+		void Update() override;
 
 	private:
 

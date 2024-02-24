@@ -11,7 +11,7 @@ namespace r2::ecs
 		SkeletalAnimationSystem();
 		~SkeletalAnimationSystem();
 
-		void Update();
+		void Update() override;
 	};
 }
 

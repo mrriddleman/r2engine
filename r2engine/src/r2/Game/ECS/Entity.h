@@ -2,6 +2,7 @@
 #define __ENTITY_H__
 
 #include "r2/Utils/Utils.h"
+#include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Game/ECS/Component.h"
 #include "r2/Game/ECS/EntityData_generated.h"

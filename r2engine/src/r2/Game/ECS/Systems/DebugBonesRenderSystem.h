@@ -13,7 +13,7 @@ namespace r2::ecs
 		DebugBonesRenderSystem();
 		~DebugBonesRenderSystem();
 
-		void Render();
+		void Render() override;
 	};
 }
 

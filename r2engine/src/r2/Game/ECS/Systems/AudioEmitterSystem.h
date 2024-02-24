@@ -14,7 +14,7 @@ namespace r2::ecs
 		AudioEmitterSystem();
 		~AudioEmitterSystem();
 
-		void Update();
+		void Update() override;
 
 	private:
 		void PlayEvent(AudioEmitterComponent& audioEmitterComponent, const r2::audio::AudioEngine::Attributes3D& attributes, bool attributesValid);

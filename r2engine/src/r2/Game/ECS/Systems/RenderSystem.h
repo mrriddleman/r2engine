@@ -72,7 +72,7 @@ namespace r2::ecs
 			return true;
 		}
 
-		void Render();
+		void Render() override;
 
 		template<class ARENA>
 		void Shutdown(ARENA& arena)

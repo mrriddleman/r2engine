@@ -78,6 +78,18 @@ namespace r2::ecs
 			mECSCoordinator->UnRegisterComponent<mem::StackArena, Component>(*mArena);
 		}
 
+
+		//@NOTE(Serge): no one should use this except the below helper methods
+		struct ECSWorldAllocation
+		{
+			void* memPtr;
+		};
+
+		inline r2::mem::MallocArena& GetECSComponentArena() { return mMallocArena; }
+		inline std::vector<ECSWorldAllocation>& GetComponentAllocations() { return mComponentAllocations; }
+	private:
+
+
 		template<typename SystemType>
 		SystemType* RegisterSystem(ecs::Signature signature)
 		{
@@ -93,16 +105,6 @@ namespace r2::ecs
 		{
 			mECSCoordinator->UnRegisterSystem<mem::StackArena, SystemType>(*mArena);
 		}
-
-		//@NOTE(Serge): no one should use this except the below helper methods
-		struct ECSWorldAllocation
-		{
-			void* memPtr;
-		};
-
-		inline r2::mem::MallocArena& GetECSComponentArena() { return mMallocArena; }
-		inline std::vector<ECSWorldAllocation>& GetComponentAllocations() { return mComponentAllocations; }
-	private:
 
 		static const u32 ALIGNMENT = 16;
 		

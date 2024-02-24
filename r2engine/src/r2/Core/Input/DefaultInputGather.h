@@ -11,7 +11,7 @@ namespace r2::io
 	public:
 		DefaultInputGather();
 		
-		virtual const InputState& GetCurrentInputState() override;
+		virtual const InputState& GetCurrentInputState() const override;
 		virtual void OnEvent(r2::evt::Event& event) override;
 
 	private:

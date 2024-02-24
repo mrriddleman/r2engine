@@ -17,7 +17,7 @@ namespace r2::ecs
 	public:
 		DebugRenderSystem();
 		~DebugRenderSystem();
-		void Render();
+		void Render() override;
 
 	private:
 		void RenderDebug(const DebugRenderComponent& c, const TransformComponent& t);

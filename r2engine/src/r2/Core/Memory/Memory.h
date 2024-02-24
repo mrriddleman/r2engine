@@ -11,6 +11,7 @@
 #include <vector>
 #include <array>
 #include "r2/Utils/Utils.h"
+#include "r2/Core/Logging/Log.h"
 
 #if defined(_MSC_VER)
 #define _ALLOW_KEYWORD_MACROS
@@ -153,7 +154,7 @@ namespace r2
         
         //From https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/
         
-        class R2_API SingleThreadPolicy
+        class SingleThreadPolicy
         {
         public:
             inline void Enter() const {}
@@ -172,14 +173,14 @@ namespace r2
             virtual const u64 UnallocatedBytes() const = 0;
         };
         
-        class R2_API MemoryArea
+        class MemoryArea
         {
         public:
             using Handle = s64;
             static const Handle Invalid = -1;
             static const u64 DefaultScratchBufferSize = Megabytes(4);
             
-            struct R2_API SubArea
+            struct SubArea
             {
                 using Handle = s64;
                 static const Handle Invalid = -1;
@@ -236,7 +237,7 @@ namespace r2
         
         
         template <class AllocationPolicy, class ThreadPolicy, class BoundsCheckingPolicy, class MemoryTrackingPolicy, class MemoryTaggingPolicy>
-        class R2_API MemoryArena//: public MemoryArenaBase
+        class MemoryArena//: public MemoryArenaBase
         {
         public:
             explicit MemoryArena(MemoryArea::SubArea& subArea):mAllocator(subArea.mBoundary)
@@ -374,7 +375,7 @@ namespace r2
         
         struct InternalEngineMemory;
         
-        class R2_API GlobalMemory
+        class GlobalMemory
         {
         public:
             //Internal to r2

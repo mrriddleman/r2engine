@@ -145,6 +145,11 @@ namespace r2::io
     {
         const ControllerButtonName buttonName;
         u8 state = BUTTON_RELEASED;
+        b32 held = false;
+
+        bool IsPressed() const {
+            return state == BUTTON_RELEASED;
+        }
     };
     
     enum ControllerAxisName
@@ -226,6 +231,13 @@ namespace r2::io
         s32 code = 0;
         b32 repeated = 0;
         u8 state = 0;
+
+
+        bool IsPressed() const {
+            return state == BUTTON_PRESSED;
+        }
+
+
     };
 
     struct KeyboardState
@@ -442,6 +454,8 @@ namespace r2::io
         eInputType inputType = INPUT_TYPE_KEYBOARD;
         ControllerID controllerID = INVALID_CONTROLLER_ID;
     };
+
+
 
 }
 
