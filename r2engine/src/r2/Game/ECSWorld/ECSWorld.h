@@ -8,6 +8,7 @@
 #include "r2/Game/ECS/Component.h"
 #include "r2/Platform/IO.h"
 #include "r2/Game/Player/Player.h"
+#include "r2/Game/ECS/System.h"
 
 #define ECS_WORLD_ALLOC(ecsWorld, T) r2::ecs::ECSWorldAlloc<T>(ecsWorld, __FILE__, __LINE__, "" )
 #define ECS_WORLD_ALLOC_PARAMS(ecsWorld, T, ...) r2::ecs::ECSWorldAllocParams<T>(ecsWorld, __FILE__, __LINE__, "", __VA_ARGS__)
@@ -50,7 +51,7 @@ namespace r2::ecs
 		ECSWorld();
 		~ECSWorld();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 auxMemory);
 		void Shutdown();
 
 		void Update();
@@ -64,7 +65,7 @@ namespace r2::ecs
 		r2::ecs::ECSCoordinator* GetECSCoordinator();
 		r2::ecs::SceneGraph& GetSceneGraph();
 
-		u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
+		u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 auxMemory);
 
 		template<typename Component>
 		void RegisterComponent(const char* componentName, bool shouldSerialize, bool isInstanced, FreeComponentFunc freeComponentFunc)
@@ -78,17 +79,9 @@ namespace r2::ecs
 			mECSCoordinator->UnRegisterComponent<mem::StackArena, Component>(*mArena);
 		}
 
-
-		//@NOTE(Serge): no one should use this except the below helper methods
-		struct ECSWorldAllocation
-		{
-			void* memPtr;
-		};
-
-		inline r2::mem::MallocArena& GetECSComponentArena() { return mMallocArena; }
-		inline std::vector<ECSWorldAllocation>& GetComponentAllocations() { return mComponentAllocations; }
-	private:
-
+		//@TODO(Serge): clean up the register appsystem vs register system interface - there should only be one that is public
+		//				doing this right now since it makes things simpler 
+		void RegisterAppSystem(System* system, s32 sortOrder);
 
 		template<typename SystemType>
 		SystemType* RegisterSystem(ecs::Signature signature)
@@ -106,17 +99,22 @@ namespace r2::ecs
 			mECSCoordinator->UnRegisterSystem<mem::StackArena, SystemType>(*mArena);
 		}
 
+		//@NOTE(Serge): no one should use this except the below helper methods
+		struct ECSWorldAllocation
+		{
+			void* memPtr;
+		};
+
+		inline r2::mem::MallocArena& GetECSComponentArena() { return mMallocArena; }
+		inline std::vector<ECSWorldAllocation>& GetComponentAllocations() { return mComponentAllocations; }
+	private:
+
 		static const u32 ALIGNMENT = 16;
 		
 		void RegisterEngineComponents();
 		void RegisterEngineSystems();
 		void UnRegisterEngineComponents();
 		void UnRegisterEngineSystems();
-
-		//void* HydrateRenderComponents(void* tempRenderComponents);
-		//void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
-		//void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
-		//void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 
 		void FreeRenderComponent(void* renderComponent);
 		void FreeSkeletalAnimationComponent(void* skeletalAnimationComponent);
@@ -137,6 +135,14 @@ namespace r2::ecs
 
 		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
 		r2::io::InputType GetInputTypeForPlayerID(PlayerID playerID);
+
+		struct AppSystem
+		{
+			ecs::System* system;
+			int sortOrder;
+		};
+
+		r2::SArray<AppSystem>* mAppSystems = nullptr;
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle;

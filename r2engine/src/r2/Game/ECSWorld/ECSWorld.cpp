@@ -45,7 +45,8 @@
 namespace r2::ecs
 {
 	ECSWorld::ECSWorld()
-		:mMemoryAreaHandle{}
+		:mAppSystems(nullptr)
+		,mMemoryAreaHandle{}
 		,mSubAreaHandle{}
 		,mArena(nullptr)
 		,mECSCoordinator(nullptr)
@@ -60,6 +61,7 @@ namespace r2::ecs
 		,moptrDebugBonesRenderSystem(nullptr)
 #endif
 		, mMallocArena({})
+		
 	{
 	}
 
@@ -67,7 +69,7 @@ namespace r2::ecs
 	{
 	}
 
-	bool ECSWorld::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems)
+	bool ECSWorld::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 auxMemory)
 	{
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 		if (!memoryArea)
@@ -76,7 +78,7 @@ namespace r2::ecs
 			return false;
 		}
 		
-		u64 memorySizeNeeded = MemorySize(maxNumComponents, maxNumEntities, maxNumSystems);
+		u64 memorySizeNeeded = MemorySize(maxNumComponents, maxNumEntities, maxNumSystems, auxMemory);
 
 		if (memoryArea->UnAllocatedSpace() < memorySizeNeeded)
 		{
@@ -113,11 +115,21 @@ namespace r2::ecs
 		bool sceneGraphInitialized = mSceneGraph.Init(moptrSceneGraphSystem, moptrSceneGraphTransformUpdateSystem, mECSCoordinator);
 		R2_CHECK(sceneGraphInitialized, "The scene graph didn't initialize?");
 
+
+		mAppSystems = MAKE_SARRAY(*mArena, AppSystem, maxNumSystems);
+
 		return result && sceneGraphInitialized;
 	}
 
 	void ECSWorld::Update()
 	{
+		const auto numAppSystems = r2::sarr::Size(*mAppSystems);
+
+		for (u32 i = 0; i < numAppSystems; i++)
+		{
+			r2::sarr::At(*mAppSystems, i).system->Update();
+		}
+
 		moptrAudioListenerSystem->Update();
 
 		mSceneGraph.Update();
@@ -133,6 +145,13 @@ namespace r2::ecs
 
 	void ECSWorld::Render()
 	{
+		const auto numAppSystems = r2::sarr::Size(*mAppSystems);
+
+		for (u32 i = 0; i < numAppSystems; i++)
+		{
+			r2::sarr::At(*mAppSystems, i).system->Render();
+		}
+
 		moptrRenderSystem->Render();
 #ifdef R2_DEBUG
 		moptrDebugRenderSystem->Render();
@@ -296,6 +315,10 @@ namespace r2::ecs
 
 	void ECSWorld::Shutdown()
 	{
+
+		r2::sarr::Clear(*mAppSystems);
+
+		FREE(mAppSystems, *mArena);
 		mSceneGraph.Shutdown();
 
 		UnRegisterEngineSystems();
@@ -708,10 +731,40 @@ namespace r2::ecs
 		
 	}
 
+	void ECSWorld::RegisterAppSystem(System* system, s32 sortOrder)
+	{
+		AppSystem newAppSystem;
+		newAppSystem.sortOrder = sortOrder;
+		newAppSystem.system = system;
+
+		const auto numAppSystems = r2::sarr::Size(*mAppSystems);
+		bool found = false;
+		for (u32 i = 0; i < numAppSystems; ++i)
+		{
+			AppSystem& appSystem = r2::sarr::At(*mAppSystems, i);
+			if (appSystem.system == system)
+			{
+				appSystem.sortOrder = sortOrder;
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			r2::sarr::Push(*mAppSystems, newAppSystem);
+		}
+
+		//Sort the app systems now
+		std::sort(r2::sarr::Begin(*mAppSystems), r2::sarr::End(*mAppSystems), [](const AppSystem& appSystem1, const AppSystem& appSystem2) {
+			return appSystem1.sortOrder < appSystem2.sortOrder;
+			});
+	}
+
 
 	//@TODO(Serge): Ultimately when we make more components from outside of this system, this won't work since we'll have no idea what components to add here
 	//				We'll need to pass in some extra memory or do this a different way
-	u64 ECSWorld::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems)
+	u64 ECSWorld::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 auxMemory)
 	{
 		u32 maxNumModels = r2::draw::renderer::GetMaxNumModelsLoadedAtOneTimePerLayout();
 		u32 avgMaxNumMeshesPerModel = r2::draw::renderer::GetAVGMaxNumMeshesPerModel();
@@ -742,6 +795,7 @@ namespace r2::ecs
 		
 		memorySize += r2::ecs::RenderSystem::MemorySize(maxNumInstances, avgMaxNumMeshesPerModel*maxNumModels, maxNumBones, memProperties);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::LightingUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AppSystem>::MemorySize(maxNumSystems), ALIGNMENT, stackHeaderSize, boundsChecking);
 
 #ifdef R2_DEBUG
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::DebugRenderSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
@@ -779,7 +833,7 @@ namespace r2::ecs
 		memorySize += ComponentArray<InstanceComponentT<DebugBoneComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif
 
-		return memorySize;
+		return memorySize + auxMemory;
 	}
 
 }

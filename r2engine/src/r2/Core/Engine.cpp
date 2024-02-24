@@ -503,7 +503,7 @@ namespace r2
 
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
                 //@NOTE(Serge): we're using internal engine memory for this and it might be better to use game memory - leaving it for now
-                mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
+                mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems(), noptrApp->GetECSWorldAuxMemory());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
                 mLevelManager->Init(engineMem.internalEngineMemoryHandle, "Level Manager", 1000);
@@ -537,7 +537,7 @@ namespace r2
                printf("Amount of unallocated space in the internal engine memory area is: %llu\n", unallocated);
            }
 
-
+           printf("Amount of unallocated space in permanent memory: %llu\n", MEM_ENG_PERMANENT_PTR->UnallocatedBytes());
 
    //         DetectGameControllers();
 

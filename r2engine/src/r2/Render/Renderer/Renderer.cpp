@@ -6940,7 +6940,7 @@ namespace r2::draw::renderer
 			completeRenderConstantsCMD->count = totalObjectsToDraw;
 
 
-			if (modelDrawBatchSubCommands)
+			if (modelDrawBatchSubCommands && !r2::sarr::IsEmpty(*modelDrawBatchSubCommands))
 			{
 				FillPreDebugCommandBucketModelData(renderer, modelDrawBatchSubCommands, debugModelsGenericRenderBatch.subCommandsConstantConfigHandle);
 			}

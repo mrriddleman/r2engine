@@ -116,7 +116,7 @@ namespace r2
         virtual u32 GetMaxNumECSSystems() const = 0;
         virtual u32 GetMaxNumECSEntities() const = 0;
         virtual u32 GetMaxNumComponents() const = 0;
-        
+        virtual u64 GetECSWorldAuxMemory() const = 0;
 
 		virtual std::string GetLevelPackDataBinPath() const = 0;
 		virtual std::string GetLevelPackDataJSONPath() const = 0;
