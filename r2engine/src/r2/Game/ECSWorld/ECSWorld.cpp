@@ -298,7 +298,7 @@ namespace r2::ecs
 
 	void ECSWorld::SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType)
 	{
-		R2_CHECK(playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS, "Passed in Invalid PlayerID");
+		R2_CHECK(playerID > InvalidPlayerID && playerID < Engine::NUM_PLATFORM_CONTROLLERS, "Passed in Invalid PlayerID");
 		mPlayerInputMappings[playerID] = inputType;
 	}
 

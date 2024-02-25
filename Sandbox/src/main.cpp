@@ -21,6 +21,7 @@
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "PlayerCommandComponent.h"
 #include "PlayerCommandSystem.h"
+#include "r2/Core/Input/DefaultInputGather.h"
 
 #ifdef R2_EDITOR
 #include "r2/Editor/EditorInspectorPanel.h"
@@ -546,6 +547,9 @@ public:
 			return false;
 		});
 
+
+        mDefaultInputGather.OnEvent(e);
+
 		//mPersController.OnEvent(e);
     }
     
@@ -788,11 +792,34 @@ public:
     virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
        ecsWorld.RegisterComponent<DummyComponent>("DummyComponent", true, false, nullptr);
+       ecsWorld.RegisterComponent<PlayerCommandComponent>("PlayerCommandComponent", false, false, nullptr);
+
+       r2::ecs::ECSCoordinator* ecsCoordinator = ecsWorld.GetECSCoordinator();
+       r2::ecs::Signature playerCommandSystemSignature;
+
+	   const auto playerComponentType = ecsCoordinator->GetComponentType<r2::ecs::PlayerComponent>();
+	   playerCommandSystemSignature.set(playerComponentType);
+
+       PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
+
+       playerCommandSystem->SetInputGather(&mDefaultInputGather);
+
+       ecsWorld.RegisterAppSystem(playerCommandSystem, 0);
+
+       //set the input type for the player
+       r2::io::InputType player0InputType;
+       player0InputType.inputType = r2::io::INPUT_TYPE_KEYBOARD;
+       ecsWorld.SetPlayerInputType(0, player0InputType);
+
     }
 
     virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
+        ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
+        ecsWorld.UnRegisterComponent<PlayerCommandComponent>();
         ecsWorld.UnRegisterComponent<DummyComponent>();
+
+        
     }
 
 #ifdef R2_ASSET_PIPELINE
@@ -944,6 +971,8 @@ public:
 
 private:
     s32 mResolution = 3;
+
+    r2::io::DefaultInputGather mDefaultInputGather;
 };
 
 namespace

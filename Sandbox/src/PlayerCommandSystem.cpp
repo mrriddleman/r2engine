@@ -20,7 +20,7 @@ void PlayerCommandSystem::SetInputGather(const r2::io::IInputGather* inputGather
 
 void PlayerCommandSystem::Update()
 {
-//	R2_CHECK(mnoptrInputGather != nullptr, "Should never happen");
+	R2_CHECK(mnoptrInputGather != nullptr, "Should never happen");
 	const r2::io::InputState& inputState = mnoptrInputGather->GetCurrentInputState();
 
 	const auto numPlayerEntities = r2::sarr::Size(*mEntities);

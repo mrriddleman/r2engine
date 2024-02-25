@@ -86,8 +86,7 @@ namespace r2::ecs
 		template<typename SystemType>
 		SystemType* RegisterSystem(ecs::Signature signature)
 		{
-			SystemType* newSystem = mSystemManager->RegisterSystem<r2::mem::StackArena, SystemType>(*mArena);
-			newSystem->mnoptrCoordinator = this;
+			SystemType* newSystem = mECSCoordinator->RegisterSystem<r2::mem::StackArena, SystemType>(*mArena);
 			mECSCoordinator->SetSystemSignature<SystemType>(signature);
 
 			return newSystem;

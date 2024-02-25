@@ -510,6 +510,7 @@ namespace r2
             }
             
             //@TODO(Serge): don't use make unique!
+            
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             PushLayer(std::make_unique<ECSLayer>(mECSWorld));
