@@ -18,7 +18,6 @@
 
 
 #include "r2/Game/ECSWorld/ECSWorld.h"
-#include "r2/Game/ECS/ECSCoordinator.h"
 #include "PlayerCommandComponent.h"
 #include "PlayerCommandSystem.h"
 #include "r2/Core/Input/DefaultInputGather.h"
@@ -457,95 +456,95 @@ public:
 
     virtual void OnEvent(r2::evt::Event& e) override
     {
-		r2::evt::EventDispatcher dispatcher(e);
+		//r2::evt::EventDispatcher dispatcher(e);
 
-		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
-            if (e.KeyCode() == r2::io::KEY_UP)
-            {
-                s32 prevResolution = mResolution;
-                mResolution = (mResolution + 1) % RESOLUTIONS_COUNT;
-                MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
-                PrintResolution();
-
-
-                return true;
-            }
-            else if (e.KeyCode() == r2::io::KEY_DOWN)
-            {
-                s32 prevResolution = mResolution;
-
-                --mResolution;
-                if (mResolution < 0)
-                {
-                    mResolution = RESOLUTIONS_COUNT - 1;
-                }
-                
-                MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
-
-                PrintResolution();
-
-                return true;
-            }
-            else if (e.KeyCode() == r2::io::KEY_f)
-            {
-                MENG.SetFullScreen();
-                return true;
-            }
-            else if (e.KeyCode() == r2::io::KEY_i)
-            {
-
-				//printf("======================= Capacity =============================\n");
-
-				//auto staticVertexBufferCapacity = r2::draw::renderer::GetStaticVertexBufferCapacity();
-				//auto animVertexBufferCapacity = r2::draw::renderer::GetAnimVertexBufferCapacity();
-
-				//printf("Static Vertex Buffer vbo - capacity: %u\n", staticVertexBufferCapacity.vertexBufferSizes[0]);
-				//printf("Static Vertex Buffer ibo - capacity: %u\n", staticVertexBufferCapacity.indexBufferSize);
-
-				//for (int i = 0; i < animVertexBufferCapacity.numVertexBuffers; ++i)
-				//{
-				//	printf("Anim Vertex Buffer vbo[%i] - capacity: %u\n", i, animVertexBufferCapacity.vertexBufferSizes[i]);
-				//}
-
-				//printf("Anim Vertex Buffer ibo - capacity: %u\n", animVertexBufferCapacity.indexBufferSize);
+		//dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
+  //          if (e.KeyCode() == r2::io::KEY_UP)
+  //          {
+  //              //s32 prevResolution = mResolution;
+  //              //mResolution = (mResolution + 1) % RESOLUTIONS_COUNT;
+  //              //MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
+  //              //PrintResolution();
 
 
-    //            printf("======================= Size =============================\n");
+  //              //return true;
+  //          }
+  //          else if (e.KeyCode() == r2::io::KEY_DOWN)
+  //          {
+  //              //s32 prevResolution = mResolution;
 
-				//auto staticVertexBufferSize = r2::draw::renderer::GetStaticVertexBufferSize();
-				//auto animVertexBufferSize = r2::draw::renderer::GetAnimVertexBufferSize();
+  //              //--mResolution;
+  //              //if (mResolution < 0)
+  //              //{
+  //              //    mResolution = RESOLUTIONS_COUNT - 1;
+  //              //}
+  //              //
+  //              //MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
 
-				//printf("Static Vertex Buffer vbo - size: %u\n", staticVertexBufferSize.vertexBufferSizes[0]);
-				//printf("Static Vertex Buffer ibo - size: %u\n", staticVertexBufferSize.indexBufferSize);
+  //              //PrintResolution();
 
-				//for (int i = 0; i < animVertexBufferSize.numVertexBuffers; ++i)
-				//{
-				//	printf("Anim Vertex Buffer vbo[%i] - size: %u\n", i, animVertexBufferSize.vertexBufferSizes[i]);
-				//}
+  //              //return true;
+  //          }
+  //          else if (e.KeyCode() == r2::io::KEY_f)
+  //          {
+  //              //MENG.SetFullScreen();
+  //              //return true;
+  //          }
+  //          else if (e.KeyCode() == r2::io::KEY_i)
+  //          {
 
-				//printf("Anim Vertex Buffer ibo - size: %u\n", animVertexBufferSize.indexBufferSize);
+		//		//printf("======================= Capacity =============================\n");
 
-    //            printf("======================= Remaining Size =============================\n");
+		//		//auto staticVertexBufferCapacity = r2::draw::renderer::GetStaticVertexBufferCapacity();
+		//		//auto animVertexBufferCapacity = r2::draw::renderer::GetAnimVertexBufferCapacity();
 
-    //            auto staticVertexBufferRemainingSize = r2::draw::renderer::GetStaticVertexBufferRemainingSize();
-    //            auto animVertexBufferRemainingSize = r2::draw::renderer::GetAnimVertexBufferRemainingSize();
+		//		//printf("Static Vertex Buffer vbo - capacity: %u\n", staticVertexBufferCapacity.vertexBufferSizes[0]);
+		//		//printf("Static Vertex Buffer ibo - capacity: %u\n", staticVertexBufferCapacity.indexBufferSize);
 
-    //            printf("Static Vertex Buffer vbo - remaining size: %u\n", staticVertexBufferRemainingSize.vertexBufferSizes[0] );
-    //            printf("Static Vertex Buffer ibo - remaining size: %u\n", staticVertexBufferRemainingSize.indexBufferSize );
+		//		//for (int i = 0; i < animVertexBufferCapacity.numVertexBuffers; ++i)
+		//		//{
+		//		//	printf("Anim Vertex Buffer vbo[%i] - capacity: %u\n", i, animVertexBufferCapacity.vertexBufferSizes[i]);
+		//		//}
 
-    //            for (int i = 0; i < animVertexBufferRemainingSize.numVertexBuffers; ++i)
-    //            {
-    //                printf("Anim Vertex Buffer vbo[%i] - remaining size: %u\n", i, animVertexBufferRemainingSize.vertexBufferSizes[i]);
-    //            }
-
-    //            printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
-            }
+		//		//printf("Anim Vertex Buffer ibo - capacity: %u\n", animVertexBufferCapacity.indexBufferSize);
 
 
-          
+  //  //            printf("======================= Size =============================\n");
 
-			return false;
-		});
+		//		//auto staticVertexBufferSize = r2::draw::renderer::GetStaticVertexBufferSize();
+		//		//auto animVertexBufferSize = r2::draw::renderer::GetAnimVertexBufferSize();
+
+		//		//printf("Static Vertex Buffer vbo - size: %u\n", staticVertexBufferSize.vertexBufferSizes[0]);
+		//		//printf("Static Vertex Buffer ibo - size: %u\n", staticVertexBufferSize.indexBufferSize);
+
+		//		//for (int i = 0; i < animVertexBufferSize.numVertexBuffers; ++i)
+		//		//{
+		//		//	printf("Anim Vertex Buffer vbo[%i] - size: %u\n", i, animVertexBufferSize.vertexBufferSizes[i]);
+		//		//}
+
+		//		//printf("Anim Vertex Buffer ibo - size: %u\n", animVertexBufferSize.indexBufferSize);
+
+  //  //            printf("======================= Remaining Size =============================\n");
+
+  //  //            auto staticVertexBufferRemainingSize = r2::draw::renderer::GetStaticVertexBufferRemainingSize();
+  //  //            auto animVertexBufferRemainingSize = r2::draw::renderer::GetAnimVertexBufferRemainingSize();
+
+  //  //            printf("Static Vertex Buffer vbo - remaining size: %u\n", staticVertexBufferRemainingSize.vertexBufferSizes[0] );
+  //  //            printf("Static Vertex Buffer ibo - remaining size: %u\n", staticVertexBufferRemainingSize.indexBufferSize );
+
+  //  //            for (int i = 0; i < animVertexBufferRemainingSize.numVertexBuffers; ++i)
+  //  //            {
+  //  //                printf("Anim Vertex Buffer vbo[%i] - remaining size: %u\n", i, animVertexBufferRemainingSize.vertexBufferSizes[i]);
+  //  //            }
+
+  //  //            printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
+  //          }
+
+
+  //        
+
+		//	return false;
+		//});
 
 
         mDefaultInputGather.OnEvent(e);
@@ -818,8 +817,6 @@ public:
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
         ecsWorld.UnRegisterComponent<PlayerCommandComponent>();
         ecsWorld.UnRegisterComponent<DummyComponent>();
-
-        
     }
 
 #ifdef R2_ASSET_PIPELINE

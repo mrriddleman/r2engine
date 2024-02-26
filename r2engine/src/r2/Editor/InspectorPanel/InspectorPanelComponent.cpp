@@ -35,6 +35,7 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelRenderComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelPointLightComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelSpotLightComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelPlayerComponent.h"
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 
@@ -61,12 +62,16 @@ namespace r2::edit
 		std::shared_ptr<InspectorPanelSkeletonAnimationComponentDataSource> skeletalAnimationDataSource = std::make_shared<InspectorPanelSkeletonAnimationComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelPointLightDataSource> pointLightDataSource = std::make_shared<InspectorPanelPointLightDataSource>(editor, coordinator, &inspectorPanel);
 		std::shared_ptr<InspectorPanelSpotLightDataSource> spotLightDataSource = std::make_shared<InspectorPanelSpotLightDataSource>(editor, coordinator, &inspectorPanel);
+		std::shared_ptr<InspectorPanelPlayerComponentDataSource> playerDataSource = std::make_shared<InspectorPanelPlayerComponentDataSource>(editor, coordinator);
 
 		InspectorPanelComponentWidget transformComponentWidget = InspectorPanelComponentWidget(sortOrder++, transformDataSource );
 		inspectorPanel.RegisterComponentWidget(transformComponentWidget);
 
 		InspectorPanelComponentWidget hierarchyComponentWidget = InspectorPanelComponentWidget(sortOrder++, hierarchyDataSource);
 		inspectorPanel.RegisterComponentWidget(hierarchyComponentWidget);
+
+		InspectorPanelComponentWidget playerComponentWidget = InspectorPanelComponentWidget(sortOrder++, playerDataSource);
+		inspectorPanel.RegisterComponentWidget(playerComponentWidget);
 
 		InspectorPanelComponentWidget renderComponentWidget = InspectorPanelComponentWidget(sortOrder++, renderDataSource);
 		inspectorPanel.RegisterComponentWidget(renderComponentWidget);

@@ -49,7 +49,8 @@ void PlayerCommandSystem::Update()
 			R2_CHECK(false, "These are the only supported inputs for this game atm");
 		}
 
-		mnoptrCoordinator->AddComponent<PlayerCommandComponent>(e, playerCommandComponent);
+
+		//mnoptrCoordinator->AddComponent<PlayerCommandComponent>(e, playerCommandComponent);
 	}
 }
 
