@@ -114,6 +114,15 @@ namespace r2::ecs
 		}
 
 		template<typename Component>
+		void AddComponentIfNeeded(Entity e, Component component)
+		{
+			if (!HasComponent<Component>(e))
+			{
+				AddComponent<Component>(e, component);
+			}
+		}
+
+		template<typename Component>
 		void AddComponent(Entity entity, Component component)
 		{
 			mComponentManager->AddComponent<Component>(entity, component);
