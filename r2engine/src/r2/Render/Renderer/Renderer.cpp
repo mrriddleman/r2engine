@@ -6865,6 +6865,7 @@ namespace r2::draw::renderer
 		}
 		else
 		{
+			RESET_ARENA(*renderer.mPreRenderStackArena);
 			return; //there's nothing to do!
 		}
 

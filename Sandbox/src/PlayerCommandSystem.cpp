@@ -70,8 +70,8 @@ void PlayerCommandSystem::DoKeyboardMapping(const r2::io::InputState& inputState
 	playerCommandComponent.rightAction.isEnabled = inputState.mKeyboardState.key_right.IsPressed();
 	playerCommandComponent.rightAction.enabledThisFrame = !inputState.mKeyboardState.key_right.repeated;
 
-	playerCommandComponent.grabAction.isEnabled = inputState.mKeyboardState.key_a.IsPressed();
-	playerCommandComponent.grabAction.enabledThisFrame = !inputState.mKeyboardState.key_a.repeated;
+	playerCommandComponent.grabAction.isEnabled = inputState.mKeyboardState.key_q.IsPressed();
+	playerCommandComponent.grabAction.enabledThisFrame = !inputState.mKeyboardState.key_q.repeated;
 }
 
 void PlayerCommandSystem::DoControllerMapping(const r2::io::InputState& inputState, const r2::io::InputType& inputType, PlayerCommandComponent& playerCommandComponent)

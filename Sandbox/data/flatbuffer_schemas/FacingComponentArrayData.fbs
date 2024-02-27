@@ -1,0 +1,15 @@
+namespace flat;
+
+table FacingComponentData
+{
+	x:float;
+	y:float;
+	z:float;
+}
+
+table FacingComponentArrayData
+{
+	facingComponentArray:[FacingComponentData];
+}
+
+root_type FacingComponentArrayData;

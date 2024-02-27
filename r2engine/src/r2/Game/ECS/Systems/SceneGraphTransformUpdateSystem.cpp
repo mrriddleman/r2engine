@@ -79,18 +79,21 @@ namespace r2::ecs
 
 		//We need to make a copy here because we're changing the signature of the entities such that they won't belong 
 		//to our system anymore
-		r2::SArray<Entity>* entitiesCopy = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Entity, numEntitiesToUpdate);
-
-		r2::sarr::Copy(*entitiesCopy, *mEntities);
-
-		for (u32 i = 0; i < numEntitiesToUpdate; ++i)
+		if (numEntitiesToUpdate > 0)
 		{
-			//remove the dirty flags
-			ecs::Entity e = r2::sarr::At(*entitiesCopy, i);
-			mnoptrCoordinator->RemoveComponent<ecs::TransformDirtyComponent>(e);
-		}
+			r2::SArray<Entity>* entitiesCopy = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Entity, numEntitiesToUpdate);
 
-		FREE(entitiesCopy, *MEM_ENG_SCRATCH_PTR);
+			r2::sarr::Copy(*entitiesCopy, *mEntities);
+
+			for (u32 i = 0; i < numEntitiesToUpdate; ++i)
+			{
+				//remove the dirty flags
+				ecs::Entity e = r2::sarr::At(*entitiesCopy, i);
+				mnoptrCoordinator->RemoveComponent<ecs::TransformDirtyComponent>(e);
+			}
+
+			FREE(entitiesCopy, *MEM_ENG_SCRATCH_PTR);
+		}
 	}
 
 	void SceneGraphTransformUpdateSystem::UpdateEntityTransformComponent(const math::Transform& parentTransform, const HierarchyComponent& entityHeirarchComponent, const TransformDirtyComponent& entityTransformDirtyComponent, TransformComponent& entityTransformComponent)

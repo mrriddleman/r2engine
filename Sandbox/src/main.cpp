@@ -9,23 +9,24 @@
 #include "r2.h"
 #include "r2/Core/EntryPoint.h"
 
-
-
-
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
 #include "r2/Core/Events/Events.h"
 
-
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "PlayerCommandComponent.h"
 #include "PlayerCommandSystem.h"
+#include "CharacterControllerSystem.h"
+#include "FacingComponent.h"
 #include "r2/Core/Input/DefaultInputGather.h"
+
+#include "FacingComponentSerialization.h"
 
 #ifdef R2_EDITOR
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
+#include "FacingComponentInspectorPanelDataSource.h"
 #endif
 
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
@@ -707,7 +708,6 @@ public:
 	std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const
 	{
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		//r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
 		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
 		return {std::string( materialsPath )};
 	}
@@ -763,7 +763,9 @@ public:
 
         memorySize += r2::ecs::ComponentArray<DummyComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::ecs::ComponentArray<PlayerCommandComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
+        memorySize += r2::ecs::ComponentArray<FacingComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<PlayerCommandSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+        memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<CharacterControllerSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 
         return memorySize;
     }
@@ -792,11 +794,18 @@ public:
     {
        ecsWorld.RegisterComponent<DummyComponent>("DummyComponent", true, false, nullptr);
        ecsWorld.RegisterComponent<PlayerCommandComponent>("PlayerCommandComponent", false, false, nullptr);
+       ecsWorld.RegisterComponent<FacingComponent>("FacingComponent", true, false, nullptr);
 
        r2::ecs::ECSCoordinator* ecsCoordinator = ecsWorld.GetECSCoordinator();
        r2::ecs::Signature playerCommandSystemSignature;
 
 	   const auto playerComponentType = ecsCoordinator->GetComponentType<r2::ecs::PlayerComponent>();
+
+	   const auto playerCommandComponentType = ecsCoordinator->GetComponentType<PlayerCommandComponent>();
+	   const auto skeletonAnimationComponentType = ecsCoordinator->GetComponentType<r2::ecs::SkeletalAnimationComponent>();
+	   const auto transformComponentType = ecsCoordinator->GetComponentType<r2::ecs::TransformComponent>();
+	   const auto facingComponentType = ecsCoordinator->GetComponentType<FacingComponent>();
+
 	   playerCommandSystemSignature.set(playerComponentType);
 
        PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
@@ -804,6 +813,18 @@ public:
        playerCommandSystem->SetInputGather(&mDefaultInputGather);
 
        ecsWorld.RegisterAppSystem(playerCommandSystem, 0);
+
+
+       r2::ecs::Signature characterControllerSystemSignature;
+       characterControllerSystemSignature.set(playerCommandComponentType);
+       characterControllerSystemSignature.set(skeletonAnimationComponentType);
+       characterControllerSystemSignature.set(transformComponentType);
+       characterControllerSystemSignature.set(facingComponentType);
+
+       CharacterControllerSystem* characterControllerSystem = ecsWorld.RegisterSystem<CharacterControllerSystem>(characterControllerSystemSignature);
+
+       ecsWorld.RegisterAppSystem(characterControllerSystem, 1);
+
 
        //set the input type for the player
        r2::io::InputType player0InputType;
@@ -814,7 +835,10 @@ public:
 
     virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
+        ecsWorld.UnRegisterSystem<CharacterControllerSystem>();
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
+
+        ecsWorld.UnRegisterComponent<FacingComponent>();
         ecsWorld.UnRegisterComponent<PlayerCommandComponent>();
         ecsWorld.UnRegisterComponent<DummyComponent>();
     }
@@ -963,6 +987,12 @@ public:
 
 		r2::edit::InspectorPanelComponentWidget dummyComponentWidget = r2::edit::InspectorPanelComponentWidget(10, dummyDataSource);
 		inspectorPanel.RegisterComponentWidget(dummyComponentWidget);
+
+        std::shared_ptr<InspectorPanelFacingDataSource> facingDataSource = std::make_shared<InspectorPanelFacingDataSource>(inspectorPanel.GetEditor(), inspectorPanel.GetEditor()->GetECSCoordinator(), &inspectorPanel);
+
+        r2::edit::InspectorPanelComponentWidget facingComponentWidget = r2::edit::InspectorPanelComponentWidget(11, facingDataSource);
+        inspectorPanel.RegisterComponentWidget(facingComponentWidget);
+
     }
 #endif
 

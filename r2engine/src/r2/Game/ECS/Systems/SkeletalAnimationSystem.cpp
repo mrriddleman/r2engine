@@ -3,9 +3,10 @@
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Render/Animation/AnimationPlayer.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/ECS/Components/AnimationTransitionComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
-#include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Render/Animation/Pose.h"
 
 namespace r2::ecs
@@ -34,6 +35,9 @@ namespace r2::ecs
 			Entity e = r2::sarr::At(*mEntities, i);
 			SkeletalAnimationComponent& animationComponent = mnoptrCoordinator->GetComponent<SkeletalAnimationComponent>(e);
 			InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
+
+			AnimationTransitionComponent* animationTransitionComponent = mnoptrCoordinator->GetComponentPtr<AnimationTransitionComponent>(e);
+
 
 			r2::SArray<r2::draw::DebugBone>* debugBonesToUse = nullptr;
 #ifdef R2_DEBUG
@@ -67,13 +71,24 @@ namespace r2::ecs
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
 
-			const auto ticks = CENG.GetTicks();
-			
 			u32 offset = 0;
 
 			if (animationComponent.currentAnimationIndex >= 0)
 			{
 				const r2::anim::AnimationClip* clip = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationComponent.currentAnimationIndex);
+
+				//@TODO(Serge): Right now we're just hard transitioning to the new animation. We need to implement the real crossfading 
+				if (animationTransitionComponent && animationTransitionComponent->nextAnimationIndex != animationComponent.currentAnimationIndex)
+				{
+
+					clip = r2::sarr::At(*animationComponent.animModel->optrAnimationClips, animationTransitionComponent->nextAnimationIndex);
+					animationComponent.animationTime = 0.0;
+					animationComponent.shouldLoop = animationTransitionComponent->loop;
+					animationComponent.currentAnimationIndex = animationTransitionComponent->nextAnimationIndex;
+
+					mnoptrCoordinator->RemoveComponent<r2::ecs::AnimationTransitionComponent>(e);
+				}
+
 				animationComponent.animationTime = r2::anim::PlayAnimationClip(*clip, *animationComponent.animationPose, deltaTime + animationComponent.animationTime, animationComponent.shouldLoop);
 			}
 			

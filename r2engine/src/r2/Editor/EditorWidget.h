@@ -3,6 +3,7 @@
 #define __EDITOR_WIDGET_H__
 
 #include <string>
+#include "r2/Utils/Utils.h"
 
 namespace r2
 {

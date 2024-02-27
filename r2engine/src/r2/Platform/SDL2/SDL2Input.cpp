@@ -87,7 +87,7 @@ namespace r2
         s32 KEY_n = SDL_SCANCODE_N;
         s32 KEY_o = SDL_SCANCODE_O;
         s32 KEY_p = SDL_SCANCODE_P;
-        s32 KEY_q = SDL_SCANCODE_A;
+        s32 KEY_q = SDL_SCANCODE_Q;
         s32 KEY_r = SDL_SCANCODE_R;
         s32 KEY_s = SDL_SCANCODE_S;
         s32 KEY_t = SDL_SCANCODE_T;

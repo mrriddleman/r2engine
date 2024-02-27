@@ -17,7 +17,7 @@
 #include "r2/Game/ECS/Components/LightUpdateComponent.h"
 #include "r2/Game/ECS/Components/PointLightComponent.h"
 #include "r2/Game/ECS/Components/SpotLightComponent.h"
-
+#include "r2/Game/ECS/Components/AnimationTransitionComponent.h"
 
 #include "r2/Game/ECS/Systems/AudioEmitterSystem.h"
 #include "r2/Game/ECS/Systems/AudioListenerSystem.h"
@@ -306,7 +306,7 @@ namespace r2::ecs
 	{
 		if (playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS)
 		{
-			R2_CHECK(false, "Passed in Invalid PlayerID");
+			//R2_CHECK(false, "Passed in Invalid PlayerID");
 			return {};
 		}
 
@@ -539,6 +539,7 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena, "SpotLightComponent", true, false, freeSpotLightComponentFunc);
 
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::PlayerComponent>(*mArena, "PlayerComponent", true, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AnimationTransitionComponent>(*mArena, "AnimationTransitionComponent", false, false, nullptr);
 
 #ifdef R2_DEBUG
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, false, nullptr);
@@ -566,6 +567,7 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena);
 #endif
 
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AnimationTransitionComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PlayerComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SpotLightComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::PointLightComponent>(*mArena);
@@ -819,6 +821,7 @@ namespace r2::ecs
 		memorySize += ComponentArray<SpotLightComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<LightUpdateComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<PlayerComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<AnimationTransitionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 
 #ifdef R2_EDITOR
 		memorySize += ComponentArray<SelectionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
