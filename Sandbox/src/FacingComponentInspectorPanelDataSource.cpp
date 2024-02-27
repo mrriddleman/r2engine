@@ -80,26 +80,6 @@ void InspectorPanelFacingDataSource::DrawComponentData(void* componentData, r2::
 	if (transformComponent)
 	{
 		r2::draw::renderer::DrawArrow(transformComponent->accumTransform.position + glm::vec3(0, 0, 1), facingComponent.facing, 1.0, 0.3, glm::vec4(1, 1, 0, 1), true);
-
-		if (changed)
-		{
-			if (glm::length(facingComponent.facing) != 0)
-			{
-				glm::vec3 eulerAngles = glm::eulerAngles(transformComponent->localTransform.rotation);
-				float diffAngle = glm::angle(originalFacing, facingComponent.facing);
-
-				glm::vec3 axis = glm::cross(originalFacing, facingComponent.facing);
-				if (r2::math::NearZero(glm::length(axis)))
-				{
-					axis = glm::vec3(0, 0, 1);
-				}
-				transformComponent->localTransform.rotation = glm::angleAxis(diffAngle, axis) * transformComponent->localTransform.rotation;
-
-				r2::ecs::TransformDirtyComponent transformDirty;
-				transformDirty.dirtyFlags = r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
-				coordinator->AddComponentIfNeeded<r2::ecs::TransformDirtyComponent>(theEntity, transformDirty);
-			}
-		}
 	}
 }
 

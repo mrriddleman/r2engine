@@ -23,6 +23,7 @@
 //@HACK: we need this to get the camera but we should be able to get it through the editor or something
 #include "r2/Render/Renderer/Renderer.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace r2::edit
 {
@@ -33,6 +34,10 @@ namespace r2::edit
 		,mCurrentOperation(ImGuizmo::TRANSLATE)
 		,mCurrentMode(ImGuizmo::LOCAL)
 		,mCurrentInstance(-1)
+		,mPositionSnapFrequencies(glm::vec3(1))
+		,mScaleSnapFrequency(1)
+		,mRotationSnapFrequency(90.0)
+		,mSnappingEnabled(false)
 	{
 
 	}
@@ -191,7 +196,22 @@ namespace r2::edit
 					}
 				}
 
-				return DoImGuizmoOperationKeyInput(keyEvent, mCurrentOperation);
+				if (keyEvent.KeyCode() == r2::io::KEY_SPACE)
+				{
+					mSnappingEnabled = true;
+				}
+
+				return DoImGuizmoOperationKeyInput(keyEvent, mCurrentOperation, mSnappingEnabled);
+			});
+
+		dispatcher.Dispatch<r2::evt::KeyReleasedEvent>([this](const r2::evt::KeyReleasedEvent& keyEvent)
+			{
+				if (keyEvent.KeyCode() == r2::io::KEY_SPACE)
+				{
+					mSnappingEnabled = false;
+				}
+
+				return false;
 			});
 	}
 
@@ -240,7 +260,27 @@ namespace r2::edit
 
 		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformToUse.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformToUse.scale), glm::value_ptr(localMat));
 
-		if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), static_cast<ImGuizmo::OPERATION>(mCurrentOperation), static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat)))
+		float* snapPtr = nullptr;
+
+		ImGuizmo::OPERATION operation = static_cast<ImGuizmo::OPERATION>(mCurrentOperation);
+
+		if (mSnappingEnabled)
+		{
+			if ((operation & ImGuizmo::OPERATION::TRANSLATE) > 0)
+			{
+				snapPtr = &mPositionSnapFrequencies.x;
+			}
+			else if ((operation & ImGuizmo::OPERATION::SCALE) > 0)
+			{
+				snapPtr = &mScaleSnapFrequency;
+			}
+			else if ((operation & ImGuizmo::OPERATION::ROTATE) > 0)
+			{
+				snapPtr = &mRotationSnapFrequency;
+			}
+		}
+		
+		if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), operation, static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat), nullptr, snapPtr))
 		{
 			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformToUse.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformToUse.scale));
 
@@ -259,6 +299,8 @@ namespace r2::edit
 
 			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(mSelectedEntity, dirtyFlags);			
 		}
+
+
 	}
 
 	void InspectorPanel::Render(u32 dockingSpaceID)
@@ -273,206 +315,234 @@ namespace r2::edit
 			return;
 		}
 
-			ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
+		if (ImGui::CollapsingHeader("Inspector Panel Options"))
+		{
+			ImGui::Text("Position Snapping (in units): ");
+			
+			ImGui::PushItemWidth(80);
+			ImGui::Text("X Snap: ");
+			ImGui::SameLine();
+			ImGui::InputFloat("##label snapx", &mPositionSnapFrequencies.x);
+			ImGui::SameLine();
+			ImGui::Text("Y Snap: ");
+			ImGui::SameLine();
+			ImGui::InputFloat("##label snapy", &mPositionSnapFrequencies.y);
+			ImGui::SameLine();
+			ImGui::Text("Z Snap: ");
+			ImGui::SameLine();
+			ImGui::InputFloat("##label snapz", &mPositionSnapFrequencies.z);
+			ImGui::PopItemWidth();
 
-			if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
+			ImGui::Text("Scale Snapping (in units): ");
+			ImGui::SameLine();
+			ImGui::InputFloat("##label scalesnap", &mScaleSnapFrequency);
+
+			ImGui::Text("Rotation Snapping (in Degrees): ");
+			ImGui::SameLine();
+			ImGui::InputFloat("##label rotationsnap", &mRotationSnapFrequency);
+		}
+
+
+		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
+
+		if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
+		{
+			const ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransforms = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
+
+			const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
+
+			R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
+
+			ImGui::Text("Mode: ");
+			ImGui::SameLine();
+			ImGui::RadioButton("LOCAL", &mCurrentMode, ImGuizmo::LOCAL);
+			ImGui::SameLine();
+			ImGui::RadioButton("WORLD", &mCurrentMode, ImGuizmo::WORLD);
+
+			InspectorPanelEditorComponent(mnoptrEditor, mSelectedEntity, coordinator);
+
+			//Add Component here
+			std::vector<std::string> componentNames = coordinator->GetAllRegisteredNonInstancedComponentNames();
+			std::vector<u64> componentTypeHashes = coordinator->GetAllRegisteredNonInstancedComponentTypeHashes();
+
+			std::string currentComponentName = "";
+			if (mCurrentComponentIndexToAdd >= 0)
 			{
-				const ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransforms = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
-
-				const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
-
-				R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
-
-				ImGui::Text("Mode: ");
-				ImGui::SameLine();
-				ImGui::RadioButton("LOCAL", &mCurrentMode, ImGuizmo::LOCAL);
-				ImGui::SameLine();
-				ImGui::RadioButton("WORLD", &mCurrentMode, ImGuizmo::WORLD);
-
-				InspectorPanelEditorComponent(mnoptrEditor, mSelectedEntity, coordinator);
-
-				//Add Component here
-				std::vector<std::string> componentNames = coordinator->GetAllRegisteredNonInstancedComponentNames();
-				std::vector<u64> componentTypeHashes = coordinator->GetAllRegisteredNonInstancedComponentTypeHashes();
-
-				std::string currentComponentName = "";
-				if (mCurrentComponentIndexToAdd >= 0)
+				currentComponentName = componentNames[mCurrentComponentIndexToAdd];
+			}
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.6);
+			if (ImGui::BeginCombo("##label components", currentComponentName.c_str()))
+			{
+				for (s32 i = 0; i < componentNames.size(); i++)
 				{
-					currentComponentName = componentNames[mCurrentComponentIndexToAdd];
-				}
-				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.6);
-				if (ImGui::BeginCombo("##label components", currentComponentName.c_str()))
-				{
-					for (s32 i = 0; i < componentNames.size(); i++)
+					if (ImGui::Selectable(componentNames[i].c_str(), mCurrentComponentIndexToAdd == i))
 					{
-						if (ImGui::Selectable(componentNames[i].c_str(), mCurrentComponentIndexToAdd == i))
-						{
-							mCurrentComponentIndexToAdd = i;
-						}
+						mCurrentComponentIndexToAdd = i;
 					}
-
-					ImGui::EndCombo();
 				}
-				ImGui::PopItemWidth();
 
-				InspectorPanelComponentWidget* inspectorPanelComponentWidget = nullptr;
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+
+			InspectorPanelComponentWidget* inspectorPanelComponentWidget = nullptr;
 				
-				if (mCurrentComponentIndexToAdd >= 0 && !coordinator->HasComponent(mSelectedEntity, componentTypeHashes[mCurrentComponentIndexToAdd]))
+			if (mCurrentComponentIndexToAdd >= 0 && !coordinator->HasComponent(mSelectedEntity, componentTypeHashes[mCurrentComponentIndexToAdd]))
+			{
+				for (u32 i = 0; i < mComponentWidgets.size(); ++i)
 				{
-					for (u32 i = 0; i < mComponentWidgets.size(); ++i)
+					if (mComponentWidgets[i].GetComponentTypeHash() == componentTypeHashes[mCurrentComponentIndexToAdd])
 					{
-						if (mComponentWidgets[i].GetComponentTypeHash() == componentTypeHashes[mCurrentComponentIndexToAdd])
-						{
-							inspectorPanelComponentWidget = &mComponentWidgets[i];
-						}
+						inspectorPanelComponentWidget = &mComponentWidgets[i];
 					}
 				}
+			}
 
-				ImGui::SameLine();
+			ImGui::SameLine();
 
-				const bool hasAddComponentFunc = inspectorPanelComponentWidget && inspectorPanelComponentWidget->CanAddComponent(coordinator, mSelectedEntity);
-				if (!hasAddComponentFunc)
+			const bool hasAddComponentFunc = inspectorPanelComponentWidget && inspectorPanelComponentWidget->CanAddComponent(coordinator, mSelectedEntity);
+			if (!hasAddComponentFunc)
+			{
+				ImGui::BeginDisabled(true);
+				ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+			}
+
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.2);
+			if (ImGui::Button("Add"))
+			{
+				inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
+
+				if (instancedTransforms && instancedTransforms->numInstances > 0 && inspectorPanelComponentWidget->CanAddInstancedComponent())
 				{
-					ImGui::BeginDisabled(true);
-					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+					inspectorPanelComponentWidget->AddInstancedComponentsToEntity(coordinator, mSelectedEntity, instancedTransforms->numInstances);
 				}
+			}
+			ImGui::PopItemWidth();
 
-				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.2);
-				if (ImGui::Button("Add"))
-				{
-					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
-
-					if (instancedTransforms && instancedTransforms->numInstances > 0 && inspectorPanelComponentWidget->CanAddInstancedComponent())
-					{
-						inspectorPanelComponentWidget->AddInstancedComponentsToEntity(coordinator, mSelectedEntity, instancedTransforms->numInstances);
-					}
-				}
-				ImGui::PopItemWidth();
-
-				if (!hasAddComponentFunc)
-				{
-					ImGui::PopStyleVar();
-					ImGui::EndDisabled();
-				}
+			if (!hasAddComponentFunc)
+			{
+				ImGui::PopStyleVar();
+				ImGui::EndDisabled();
+			}
 				
-				const bool hasTransformComponent = coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity);
+			const bool hasTransformComponent = coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity);
 
-				if ( hasTransformComponent)
+			if ( hasTransformComponent)
+			{
+
+				//ImGuizmo stuff here since it has a position + render component
+				//will need to think about how to deal with instances
+
+				ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<ecs::TransformComponent>(mSelectedEntity);
+
+				if (mCurrentInstance >= 0 && coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
 				{
+					const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
 
-					//ImGuizmo stuff here since it has a position + render component
-					//will need to think about how to deal with instances
-
-					ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<ecs::TransformComponent>(mSelectedEntity);
-
-					if (mCurrentInstance >= 0 && coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
+					if (mCurrentInstance < instancedTransformComponent.numInstances)
 					{
-						const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
-
-						if (mCurrentInstance < instancedTransformComponent.numInstances)
-						{
-							transformComponent = &r2::sarr::At(*instancedTransformComponent.instances, mCurrentInstance);
-						}
-					}
-
-					ManipulateTransformComponent(*transformComponent);
-				}
-
-				const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(mSelectedEntity);
-				R2_CHECK(editorComponent != nullptr, "Should always exist");
-
-				bool open = ImGui::CollapsingHeader(editorComponent->editorName.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen);
-				if (open)
-				{
-					for (size_t i = 0; i < mComponentWidgets.size(); ++i)
-					{
-						if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
-						{
-							mComponentWidgets[i].ImGuiDraw(*this, mSelectedEntity);
-						}
+						transformComponent = &r2::sarr::At(*instancedTransformComponent.instances, mCurrentInstance);
 					}
 				}
+
+				ManipulateTransformComponent(*transformComponent);
+			}
+
+			const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(mSelectedEntity);
+			R2_CHECK(editorComponent != nullptr, "Should always exist");
+
+			bool open = ImGui::CollapsingHeader(editorComponent->editorName.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen);
+			if (open)
+			{
+				for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+				{
+					if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
+					{
+						mComponentWidgets[i].ImGuiDraw(*this, mSelectedEntity);
+					}
+				}
+			}
 				
 				
-				if (instancedTransforms && instancedTransforms->numInstances > 0)
+			if (instancedTransforms && instancedTransforms->numInstances > 0)
+			{
+				ImGui::Indent();
+
+				for (u32 instanceIndex = 0; instanceIndex < instancedTransforms->numInstances; ++instanceIndex)
 				{
-					ImGui::Indent();
+					std::string instanceName = editorComponent->editorName + " - Instance: " + std::to_string(instanceIndex);
 
-					for (u32 instanceIndex = 0; instanceIndex < instancedTransforms->numInstances; ++instanceIndex)
+					s32 flags = ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+					if (static_cast<s32>(instanceIndex) == mCurrentInstance)
 					{
-						std::string instanceName = editorComponent->editorName + " - Instance: " + std::to_string(instanceIndex);
+						flags |= ImGuiTreeNodeFlags_DefaultOpen;
+					}
 
-						s32 flags = ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth;
-
-						if (static_cast<s32>(instanceIndex) == mCurrentInstance)
-						{
-							flags |= ImGuiTreeNodeFlags_DefaultOpen;
-						}
-
-						open = ImGui::CollapsingHeader(instanceName.c_str(), flags);
+					open = ImGui::CollapsingHeader(instanceName.c_str(), flags);
 						
-						ImVec2 size = ImGui::GetContentRegionAvail();
-						ImGui::PushID( (std::string("DeleteInstance:") + std::to_string(instanceIndex)).c_str());
-						ImGui::PushItemWidth(40);
-						ImGui::SameLine(size.x - 40);
+					ImVec2 size = ImGui::GetContentRegionAvail();
+					ImGui::PushID( (std::string("DeleteInstance:") + std::to_string(instanceIndex)).c_str());
+					ImGui::PushItemWidth(40);
+					ImGui::SameLine(size.x - 40);
 
-						if (ImGui::SmallButton("Delete"))
-						{
-							open = false;
-
-							//Doing a copy to ensure nothing changes inbetween loop iterations and any event that my happen
-							auto entityToDelete = mSelectedEntity;
-							auto instanceToDelete = instanceIndex;
-
-							for (size_t i = 0; i < mComponentWidgets.size(); ++i)
-							{
-								auto& componentWidget = mComponentWidgets[i];
-								if (entitySignature.test(componentWidget.GetComponentType()) && componentWidget.CanAddInstancedComponent())
-								{
-									componentWidget.DeleteInstanceFromEntity(coordinator, entityToDelete, instanceToDelete);
-								}
-							}
-							
-						}
-
-						ImGui::PopItemWidth();
-						ImGui::PopID();
-
-
-						if (open)
-						{
-							for (size_t i = 0; i < mComponentWidgets.size(); ++i)
-							{
-								if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
-								{
-									mComponentWidgets[i].ImGuiDrawInstance(*this, mSelectedEntity, instanceIndex);
-								}
-							}
-						}
-						
-						
-					}
-				}
-
-				if (hasTransformComponent)
-				{
-					if (ImGui::Button("Add Instance"))
+					if (ImGui::SmallButton("Delete"))
 					{
-						u32 numInstancesToAdd = 1;
+						open = false;
+
+						//Doing a copy to ensure nothing changes inbetween loop iterations and any event that my happen
+						auto entityToDelete = mSelectedEntity;
+						auto instanceToDelete = instanceIndex;
 
 						for (size_t i = 0; i < mComponentWidgets.size(); ++i)
 						{
 							auto& componentWidget = mComponentWidgets[i];
 							if (entitySignature.test(componentWidget.GetComponentType()) && componentWidget.CanAddInstancedComponent())
 							{
-								componentWidget.AddInstancedComponentsToEntity(coordinator, mSelectedEntity, numInstancesToAdd);
+								componentWidget.DeleteInstanceFromEntity(coordinator, entityToDelete, instanceToDelete);
 							}
+						}
+							
+					}
+
+					ImGui::PopItemWidth();
+					ImGui::PopID();
+
+
+					if (open)
+					{
+						for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+						{
+							if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
+							{
+								mComponentWidgets[i].ImGuiDrawInstance(*this, mSelectedEntity, instanceIndex);
+							}
+						}
+					}
+						
+						
+				}
+			}
+
+			if (hasTransformComponent)
+			{
+				if (ImGui::Button("Add Instance"))
+				{
+					u32 numInstancesToAdd = 1;
+
+					for (size_t i = 0; i < mComponentWidgets.size(); ++i)
+					{
+						auto& componentWidget = mComponentWidgets[i];
+						if (entitySignature.test(componentWidget.GetComponentType()) && componentWidget.CanAddInstancedComponent())
+						{
+							componentWidget.AddInstancedComponentsToEntity(coordinator, mSelectedEntity, numInstancesToAdd);
 						}
 					}
 				}
 			}
+		}
 			
-			ImGui::End();
+		ImGui::End();
 		
 	}
 
@@ -513,6 +583,37 @@ namespace r2::edit
 	{
 		return mnoptrEditor;
 	}
+
+	void InspectorPanel::SetPositionSnapFrequencies(float x, float y, float z)
+	{
+		mPositionSnapFrequencies = glm::vec3(x, y, z);
+	}
+
+	glm::vec3 InspectorPanel::GetPositionSnapFrequencies() const
+	{
+		return mPositionSnapFrequencies;
+	}
+
+	void InspectorPanel::SetScaleSnapFrequency(float scaleSnap)
+	{
+		mScaleSnapFrequency = scaleSnap;
+	}
+
+	float InspectorPanel::GetScaleSnapFrequency() const
+	{
+		return mScaleSnapFrequency;
+	}
+
+	void InspectorPanel::SetRotationSnapFrequency(float rotationSnap)
+	{
+		mRotationSnapFrequency = rotationSnap;
+	}
+
+	float InspectorPanel::GetRotationSnapFrequency() const
+	{
+		return mRotationSnapFrequency;
+	}
+
 }
 
 #endif

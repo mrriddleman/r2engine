@@ -7,6 +7,7 @@
 #include "r2/Game/ECS/Components/AnimationTransitionComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+#include <glm/glm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include "r2/Core/Math/MathUtils.h"
 
@@ -141,8 +142,8 @@ void CharacterControllerSystem::Update()
 			axis = glm::vec3(0, 0, 1);
 		}
 
-		glm::quat quaternionDiff = glm::angleAxis(angle, axis);
-		transformComponent.localTransform.rotation = quaternionDiff * transformComponent.localTransform.rotation;
+		glm::quat quaternionDiff = glm::normalize( glm::angleAxis(angle, axis) );
+		transformComponent.localTransform.rotation = glm::normalize( quaternionDiff * transformComponent.localTransform.rotation );
 		
 		facingComponent.facing = newFacing;
 

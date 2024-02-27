@@ -24,6 +24,7 @@ namespace r2::edit
 		, mDirection({0, 0, -1})
 		, mPosition({0, 0, 5})
 		, mImGuizmoOperation(ImGuizmo::OPERATION::ROTATE)
+		, mSnappingEnabled(false)
 	{
 
 	}
@@ -149,7 +150,7 @@ namespace r2::edit
 		r2::evt::EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& keyEvent)
 			{
-				return DoImGuizmoOperationKeyInput(keyEvent, mImGuizmoOperation);
+				return DoImGuizmoOperationKeyInput(keyEvent, mImGuizmoOperation, mSnappingEnabled);
 			});
 
 		return false;

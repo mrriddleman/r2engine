@@ -12,7 +12,7 @@ namespace r2::evt
 
 namespace r2::edit
 {
-	bool DoImGuizmoOperationKeyInput(const r2::evt::KeyPressedEvent& keyEvent, u32& mCurrentOperation);
+	bool DoImGuizmoOperationKeyInput(const r2::evt::KeyPressedEvent& keyEvent, u32& mCurrentOperation, bool& snap);
 }
 
 #endif

@@ -17,8 +17,11 @@
 #include "PlayerCommandComponent.h"
 #include "PlayerCommandSystem.h"
 #include "CharacterControllerSystem.h"
+#include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+
 #include "FacingComponent.h"
 #include "r2/Core/Input/DefaultInputGather.h"
+#include "FacingUpdateSystem.h"
 
 #include "FacingComponentSerialization.h"
 
@@ -766,6 +769,7 @@ public:
         memorySize += r2::ecs::ComponentArray<FacingComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<PlayerCommandSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<CharacterControllerSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+        memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<FacingUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 
         return memorySize;
     }
@@ -805,15 +809,23 @@ public:
 	   const auto skeletonAnimationComponentType = ecsCoordinator->GetComponentType<r2::ecs::SkeletalAnimationComponent>();
 	   const auto transformComponentType = ecsCoordinator->GetComponentType<r2::ecs::TransformComponent>();
 	   const auto facingComponentType = ecsCoordinator->GetComponentType<FacingComponent>();
+       const auto transformDirtyComponentType = ecsCoordinator->GetComponentType<r2::ecs::TransformDirtyComponent>();
+
+       s32 sortOrder = 0;
+
+	   r2::ecs::Signature facingUpdateSystemSignature;
+	   facingUpdateSystemSignature.set(transformComponentType);
+	   facingUpdateSystemSignature.set(facingComponentType);
+	   //facingUpdateSystemSignature.set(transformDirtyComponentType);
+
+	   FacingUpdateSystem* facingUpdateSystem = ecsWorld.RegisterSystem<FacingUpdateSystem>(facingUpdateSystemSignature);
+
+       ecsWorld.RegisterAppSystem(facingUpdateSystem, sortOrder++);
 
 	   playerCommandSystemSignature.set(playerComponentType);
-
-       PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
-
-       playerCommandSystem->SetInputGather(&mDefaultInputGather);
-
-       ecsWorld.RegisterAppSystem(playerCommandSystem, 0);
-
+	   PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
+	   playerCommandSystem->SetInputGather(&mDefaultInputGather);
+       ecsWorld.RegisterAppSystem(playerCommandSystem, sortOrder++);
 
        r2::ecs::Signature characterControllerSystemSignature;
        characterControllerSystemSignature.set(playerCommandComponentType);
@@ -823,10 +835,10 @@ public:
 
        CharacterControllerSystem* characterControllerSystem = ecsWorld.RegisterSystem<CharacterControllerSystem>(characterControllerSystemSignature);
 
-       ecsWorld.RegisterAppSystem(characterControllerSystem, 1);
-
+       ecsWorld.RegisterAppSystem(characterControllerSystem, sortOrder++);
 
        //set the input type for the player
+       //@TODO(Serge): move to the OnEvent so that we can switch back and forth 
        r2::io::InputType player0InputType;
        player0InputType.inputType = r2::io::INPUT_TYPE_KEYBOARD;
        ecsWorld.SetPlayerInputType(0, player0InputType);
@@ -837,6 +849,7 @@ public:
     {
         ecsWorld.UnRegisterSystem<CharacterControllerSystem>();
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
+        ecsWorld.UnRegisterSystem<FacingUpdateSystem>();
 
         ecsWorld.UnRegisterComponent<FacingComponent>();
         ecsWorld.UnRegisterComponent<PlayerCommandComponent>();

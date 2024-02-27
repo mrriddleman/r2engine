@@ -8,7 +8,7 @@
 #include "r2/Game/ECS/Component.h"
 #include "r2/Game/ECS/Entity.h"
 #include <unordered_map>
-
+#include <glm/glm.hpp>
 
 namespace r2::ecs
 {
@@ -34,6 +34,15 @@ namespace r2::edit
 
 		inline s32 GetCurrentMode() const { return mCurrentMode; }
 
+		void SetPositionSnapFrequencies(float x, float y, float z);
+		glm::vec3 GetPositionSnapFrequencies() const;
+
+		void SetScaleSnapFrequency(float scaleSnap);
+		float GetScaleSnapFrequency() const;
+
+		void SetRotationSnapFrequency(float rotationSnap);
+		float GetRotationSnapFrequency() const;
+
 	private:
 
 		InspectorPanelComponentWidget* GetComponentWidgetForComponentTypeHash(u64 componentTypeHash);
@@ -47,6 +56,11 @@ namespace r2::edit
 		u32 mCurrentOperation;
 		s32 mCurrentMode;
 		s32 mCurrentInstance;
+
+		glm::vec3 mPositionSnapFrequencies;
+		float mScaleSnapFrequency;
+		float mRotationSnapFrequency;
+		bool mSnappingEnabled;
 	};
 }
 

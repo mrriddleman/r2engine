@@ -29,6 +29,7 @@ namespace r2::edit
 		glm::vec3 mDirection;
 		glm::vec3 mPosition; //always should be fixed - just for imguizmo
 		u32 mImGuizmoOperation;
+		bool mSnappingEnabled;
 	};
 }
 

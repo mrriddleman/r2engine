@@ -10,8 +10,10 @@
 namespace r2::edit
 {
 
-	bool DoImGuizmoOperationKeyInput(const r2::evt::KeyPressedEvent& keyEvent, u32& currentOperation)
+	bool DoImGuizmoOperationKeyInput(const r2::evt::KeyPressedEvent& keyEvent, u32& currentOperation, bool& snap)
 	{
+
+		
 
 		if (keyEvent.KeyCode() == r2::io::KEY_g)
 		{
