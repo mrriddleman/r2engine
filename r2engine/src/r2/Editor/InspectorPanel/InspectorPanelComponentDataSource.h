@@ -9,6 +9,12 @@
 
 #include "r2/Core/Engine.h"
 
+namespace r2
+{
+	class Editor;
+}
+
+
 namespace r2::edit
 {
 	//Helper function for adding new instances
@@ -88,6 +94,8 @@ namespace r2::edit
 		inline std::string GetComponentName() const { return mComponentName; }
 
 	protected:
+		bool IsInLevelMaterialList(r2::Editor* editor, const r2::asset::AssetName& materialAsset) const;
+
 		std::string mComponentName;
 		r2::ecs::ComponentType mComponentType;
 		u64 mComponentTypeHash;

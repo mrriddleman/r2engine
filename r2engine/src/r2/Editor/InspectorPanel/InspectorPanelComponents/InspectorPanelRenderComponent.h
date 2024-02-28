@@ -33,12 +33,14 @@ namespace r2::edit
 
 	private:
 
+		bool IsMaterialInEngineMaterials(const flat::Material* flatMaterial);
 		
 		r2::Editor* mnoptrEditor;
 
 		bool mOpenMaterialsWindow;
 		r2::mat::MaterialName mMaterialToEdit;
-		
+		std::vector<const flat::Material*> mEngineMaterials;
+
 	};
 }
 

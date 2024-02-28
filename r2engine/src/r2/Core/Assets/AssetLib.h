@@ -81,25 +81,16 @@ namespace r2::asset::lib
     void Update();
     void Shutdown();
 
-    
-
     AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numManifests, u32 cacheSize);
     void Shutdown(AssetLib* assetLib);
     void Update(AssetLib& assetLib);
     
-    //@TODO(Serge): get rid of these
+
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
     void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray);
     u32 GetManifestDataCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type);
 
     void RegisterAndLoadManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
-
-    //not sure if needed?
-//    bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
-
-    //@TODO(Serge): get rid of this
-  //  FileList GetFileList(const AssetLib& assetLib);
-
 
     ManifestAssetFile* GetManifest(AssetLib& assetLib, u64 manifestAssetHandle);
     void GetManifestFilesForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<ManifestAssetFile*>* manifests);
@@ -110,9 +101,6 @@ namespace r2::asset::lib
     bool HasAsset(AssetLib& assetLib, const Asset& asset);
 
     r2::asset::AssetFile* GetAssetFileForAsset(AssetLib& assetLib, const Asset& asset);
-
-
-   
 
 #ifdef R2_ASSET_PIPELINE
     bool ImportAsset(AssetLib& assetLib, const AssetReference& assetReference, r2::asset::AssetType type);

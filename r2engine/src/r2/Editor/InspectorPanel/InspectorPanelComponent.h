@@ -23,6 +23,11 @@ namespace r2::edit
 	
 }
 
+namespace r2::asset
+{
+	struct AssetName;
+}
+
 namespace r2::edit
 {
 	using InspectorPanelComponentWidgetFunc = std::function<void(Editor*editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)>;
@@ -64,6 +69,8 @@ namespace r2::edit
 
 		void DeleteInstanceFromEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 instanceIndex);
 
+	
+		
 	private:
 
 		std::shared_ptr<InspectorPanelComponentDataSource> mComponentDataSource;

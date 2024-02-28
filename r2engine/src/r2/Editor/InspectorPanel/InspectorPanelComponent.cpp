@@ -38,7 +38,7 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelPlayerComponent.h"
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
-
+#include "r2/Game/Level/Level.h"
 #include "imgui.h"
 
 namespace r2::edit

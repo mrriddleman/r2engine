@@ -271,6 +271,66 @@ namespace r2::mat
 		return materialsToReturn;
 	}
 
+	std::vector<const flat::Material*> GetAllEngineMaterials()
+	{
+
+		std::vector<const flat::Material*> materialsToReturn = {};
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		u32 numManifests = r2::asset::lib::GetManifestDataCountForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		R2_CHECK(numManifests > 0, "Should always have at least 1 manifest for materials");
+
+		r2::SArray<const byte*>* manifests = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, numManifests);
+
+		r2::asset::lib::GetManifestDataForType(assetLib, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST, manifests);
+
+		for (u32 i = 0; i < numManifests; ++i)
+		{
+			const byte* manifestData = r2::sarr::At(*manifests, i);
+
+			R2_CHECK(manifestData != nullptr, "");
+
+			const flat::MaterialPack* materialParamsPack = flat::GetMaterialPack(manifestData);
+
+			r2::asset::AssetName packAssetName;
+			packAssetName.hashID = materialParamsPack->assetName()->assetName();
+#ifdef R2_ASSET_PIPELINE
+			packAssetName.assetNameString = materialParamsPack->assetName()->stringName()->str();
+#endif
+
+			const auto* pack = materialParamsPack->pack();
+
+			bool isEngineMaterialPack = false;
+			for (flatbuffers::uoffset_t j = 0; j < pack->size(); ++j)
+			{
+				const flat::Material* material = pack->Get(j);
+
+				//Pretty dumb... should be a way to mark our engine material pack
+				if (material->assetName()->assetName() == STRING_ID("Default"))
+				{
+					isEngineMaterialPack = true;
+					break;
+				}
+			}
+
+			if (isEngineMaterialPack)
+			{
+				for (flatbuffers::uoffset_t j = 0; j < pack->size(); ++j)
+				{
+					const flat::Material* material = pack->Get(j);
+
+					materialsToReturn.push_back(material);
+				}
+			}
+
+		}
+		FREE(manifests, *MEM_ENG_SCRATCH_PTR);
+
+		return materialsToReturn;
+	}
+
 	std::vector<MaterialParam> GetAllMaterialsThatMatchVertexLayout(r2::draw::DrawLayer drawLayer, flat::eMeshPass pass, flat::eVertexLayoutType staticVertexLayout, flat::eVertexLayoutType dynamicVertexLayout)
 	{
 		std::vector<MaterialParam> materialsToReturn = {};

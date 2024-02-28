@@ -623,6 +623,12 @@ namespace r2::edit
 
 	void InspectorPanelRenderComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{
+		if (mEngineMaterials.empty())
+		{
+			mEngineMaterials = r2::mat::GetAllEngineMaterials();
+		}
+
+
 		ecs::RenderComponent* renderComponentPtr = coordinator->GetComponentPtr<ecs::RenderComponent>(theEntity);
 		ecs::RenderComponent& renderComponent = *renderComponentPtr;
 
@@ -837,6 +843,15 @@ namespace r2::edit
 						{
 							r2::mat::MaterialParam materialParam = suitableMaterials[k];
 							const flat::Material* suitableMaterial = materialParam.flatMaterial;
+
+							r2::asset::AssetName assetName;
+							r2::asset::MakeAssetNameFromFlatAssetName(suitableMaterial->assetName(), assetName);
+							if (!IsInLevelMaterialList(mnoptrEditor, assetName) && !IsMaterialInEngineMaterials(suitableMaterial))
+							{
+								continue;
+							}
+
+
 							if (ImGui::Selectable(suitableMaterial->assetName()->stringName()->str().c_str(), flatMaterial->assetName()->stringName()->str() == suitableMaterial->assetName()->stringName()->str()))
 							{
 								r2::sarr::At(*materialsToUse, j) = materialParam.materialName;
@@ -1207,7 +1222,14 @@ namespace r2::edit
 	}
 
 	
+	bool InspectorPanelRenderComponentDataSource::IsMaterialInEngineMaterials(const flat::Material* flatMaterial)
+	{
+		auto iter = std::find_if(mEngineMaterials.begin(), mEngineMaterials.end(), [flatMaterial](const flat::Material* engineMaterial) {
+			return flatMaterial == engineMaterial;
+			});
 
+		return iter != mEngineMaterials.end();
+	}
 }
 
 #endif

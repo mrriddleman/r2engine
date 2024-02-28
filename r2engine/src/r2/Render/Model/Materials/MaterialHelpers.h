@@ -44,6 +44,8 @@ namespace r2::mat
 	std::vector<const flat::Material*> GetAllMaterialsInMaterialPackThatContainTexture(const flat::MaterialPack* materialPack, u64 texturePackName, u64 textureName);
 	std::vector<const flat::Material*> GetAllMaterialsInMaterialPackThatContainTexturePack(const flat::MaterialPack* materialPack, u64 texturePackName);
 
+	std::vector<const flat::Material*> GetAllEngineMaterials();
+
 	struct MaterialParam
 	{
 		const flat::Material* flatMaterial;
