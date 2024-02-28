@@ -98,7 +98,7 @@ void CharacterControllerSystem::Update()
 		{
 			newFacing = GetFacingFromPlayerCommandComponent(playerCommandComponent, newFacing);
 
-			animationClipIndex = GetAnimationClipIndexForAssetName("walking", skeletonAnimationComponent.animModel);
+			animationClipIndex = GetAnimationClipIndexForAssetName("slowrun", skeletonAnimationComponent.animModel);
 			shouldLoop = true;
 		}
 		else if (playerCommandComponent.grabAction.isEnabled && !(
@@ -111,7 +111,7 @@ void CharacterControllerSystem::Update()
 
 			//@TODO(Serge): need more context to make this work correctly but for now just testing
 
-			animationClipIndex = GetAnimationClipIndexForAssetName("pushstart", skeletonAnimationComponent.animModel);
+			animationClipIndex = GetAnimationClipIndexForAssetName("startpull", skeletonAnimationComponent.animModel);
 
 		}
 		else if (playerCommandComponent.grabAction.isEnabled && (

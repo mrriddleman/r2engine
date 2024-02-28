@@ -140,14 +140,7 @@ namespace r2::anim
 
 		float t = time / duration;
 
-		u32 samplesToUse = mNumSamples;// numSampledFrames;
-		if (samplesToUse > numSampledFrames)
-		{
-			samplesToUse = numSampledFrames;
-		}
-
-		u32 numSamples = (duration * static_cast<float>(samplesToUse));
-		u32 index = (t * (float)numSamples);
+		u32 index = (t * (float)(duration * mNumSamples));
 		if (index >= numSampledFrames)
 		{
 			return -1;
