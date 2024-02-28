@@ -10,7 +10,7 @@ namespace r2::ecs
 	struct PlayerComponent
 	{
 		PlayerID playerID;
-		r2::io::InputType inputType;
+	//	r2::io::InputType inputType;
 	};
 }
 

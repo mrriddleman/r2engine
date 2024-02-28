@@ -127,7 +127,26 @@ namespace r2::ecs
 
 		for (u32 i = 0; i < numAppSystems; i++)
 		{
-			r2::sarr::At(*mAppSystems, i).system->Update();
+			const AppSystem& appSystem = r2::sarr::At(*mAppSystems, i);
+
+#ifdef R2_EDITOR
+			bool isEditorEnabled = CENG.IsEditorActive();
+			bool shouldUpdate = true;
+			
+			if (isEditorEnabled)
+			{
+				shouldUpdate = appSystem.runInEditor;
+			}
+
+			if (shouldUpdate)
+			{
+				appSystem.system->Update();
+			}
+#else 
+			appSystem.system->Update();
+#endif
+
+			
 		}
 
 		moptrAudioListenerSystem->Update();
@@ -149,7 +168,25 @@ namespace r2::ecs
 
 		for (u32 i = 0; i < numAppSystems; i++)
 		{
-			r2::sarr::At(*mAppSystems, i).system->Render();
+			const AppSystem& appSystem = r2::sarr::At(*mAppSystems, i);
+
+#ifdef R2_EDITOR
+			bool isEditorEnabled = CENG.IsEditorActive();
+			bool shouldRender = true;
+			
+			if (isEditorEnabled)
+			{
+				shouldRender = appSystem.runInEditor;
+			}
+
+			if (shouldRender)
+			{
+				appSystem.system->Render();
+			}
+#else
+			appSystem.system->Render();
+#endif
+			
 		}
 
 		moptrRenderSystem->Render();
@@ -207,17 +244,17 @@ namespace r2::ecs
 		}
 
 		//@NOTE(Serge): we're ensuring that our input is mapped correctly
-		mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::PlayerComponent>(), *tempEntities);
+		//mECSCoordinator->GetAllEntitiesWithComponent(mECSCoordinator->GetComponentType<ecs::PlayerComponent>(), *tempEntities);
 
-		const auto numPlayerComponents = r2::sarr::Size(*tempEntities);
-		for (u32 i = 0; i < numPlayerComponents; ++i)
-		{
-			ecs::Entity e = r2::sarr::At(*tempEntities, i);
+		//const auto numPlayerComponents = r2::sarr::Size(*tempEntities);
+		//for (u32 i = 0; i < numPlayerComponents; ++i)
+		//{
+		//	ecs::Entity e = r2::sarr::At(*tempEntities, i);
 
-			ecs::PlayerComponent& playerComponent = mECSCoordinator->GetComponent<ecs::PlayerComponent>(e);
+		//	ecs::PlayerComponent& playerComponent = mECSCoordinator->GetComponent<ecs::PlayerComponent>(e);
 
-			playerComponent.inputType = GetInputTypeForPlayerID(playerComponent.playerID);
-		}
+		//	playerComponent.inputType = GetInputTypeForPlayerID(playerComponent.playerID);
+		//}
 
 
 		FREE(tempEntities, *MEM_ENG_SCRATCH_PTR);
@@ -296,22 +333,25 @@ namespace r2::ecs
 		return true;
 	}
 
-	void ECSWorld::SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType)
-	{
-		R2_CHECK(playerID > InvalidPlayerID && playerID < Engine::NUM_PLATFORM_CONTROLLERS, "Passed in Invalid PlayerID");
-		mPlayerInputMappings[playerID] = inputType;
-	}
+	//void ECSWorld::SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType)
+	//{
+	//	R2_CHECK(playerID > InvalidPlayerID && playerID < Engine::NUM_PLATFORM_CONTROLLERS, "Passed in Invalid PlayerID");
+	//	mPlayerInputMappings[playerID] = inputType;
 
-	r2::io::InputType ECSWorld::GetInputTypeForPlayerID(PlayerID playerID)
-	{
-		if (playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS)
-		{
-			//R2_CHECK(false, "Passed in Invalid PlayerID");
-			return {};
-		}
 
-		return mPlayerInputMappings[playerID];
-	}
+
+	//}
+
+	//r2::io::InputType ECSWorld::GetInputTypeForPlayerID(PlayerID playerID)
+	//{
+	//	if (playerID <= InvalidPlayerID || playerID >= Engine::NUM_PLATFORM_CONTROLLERS)
+	//	{
+	//		//R2_CHECK(false, "Passed in Invalid PlayerID");
+	//		return {};
+	//	}
+
+	//	return mPlayerInputMappings[playerID];
+	//}
 
 	void ECSWorld::Shutdown()
 	{
@@ -733,11 +773,12 @@ namespace r2::ecs
 		
 	}
 
-	void ECSWorld::RegisterAppSystem(System* system, s32 sortOrder)
+	void ECSWorld::RegisterAppSystem(System* system, s32 sortOrder, bool runInEditor)
 	{
 		AppSystem newAppSystem;
 		newAppSystem.sortOrder = sortOrder;
 		newAppSystem.system = system;
+		newAppSystem.runInEditor = runInEditor;
 
 		const auto numAppSystems = r2::sarr::Size(*mAppSystems);
 		bool found = false;

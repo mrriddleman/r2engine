@@ -60,7 +60,7 @@ namespace r2::ecs
 		bool LoadLevel(const Level& level, const flat::LevelData* levelData);
 		bool UnloadLevel(const Level& level);
 
-		void SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType);
+//		void SetPlayerInputType(PlayerID playerID, const r2::io::InputType& inputType);
 
 		r2::ecs::ECSCoordinator* GetECSCoordinator();
 		r2::ecs::SceneGraph& GetSceneGraph();
@@ -81,7 +81,7 @@ namespace r2::ecs
 
 		//@TODO(Serge): clean up the register appsystem vs register system interface - there should only be one that is public
 		//				doing this right now since it makes things simpler 
-		void RegisterAppSystem(System* system, s32 sortOrder);
+		void RegisterAppSystem(System* system, s32 sortOrder, bool runInEditor);
 
 		template<typename SystemType>
 		SystemType* RegisterSystem(ecs::Signature signature)
@@ -139,6 +139,7 @@ namespace r2::ecs
 		{
 			ecs::System* system;
 			int sortOrder;
+			bool runInEditor;
 		};
 
 		r2::SArray<AppSystem>* mAppSystems = nullptr;
@@ -167,7 +168,7 @@ namespace r2::ecs
 
 
 		//Player Input Mapping
-		r2::io::InputType mPlayerInputMappings[Engine::NUM_PLATFORM_CONTROLLERS]; 
+	//	r2::io::InputType mPlayerInputMappings[Engine::NUM_PLATFORM_CONTROLLERS]; 
 
 		//@TEMPORARY: This is temporary since we don't know how much memory will be needed for the component allocations
 		//will need to change this later

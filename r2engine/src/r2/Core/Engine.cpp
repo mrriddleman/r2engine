@@ -691,7 +691,7 @@ namespace r2
 
         mOpenedControllers[controllerID].connected = CPLAT.IsGameControllerConnected(controllerID);
 
-		evt::GameControllerDetectedEvent e(controllerID);
+		evt::GameControllerConnectedEvent e(controllerID, instanceID);
 	    OnEvent(e);
     }
 
@@ -718,7 +718,7 @@ namespace r2
 		mOpenedControllers[controllerID].controllerInstanceID = instanceID;
 		mOpenedControllers[controllerID].connected = CPLAT.IsGameControllerConnected(controllerID);
 
-        evt::GameControllerConnectedEvent e(controllerID);
+        evt::GameControllerConnectedEvent e(controllerID, instanceID);
         OnEvent(e);
     }
 

@@ -50,6 +50,12 @@ namespace r2::ecs
     class ECSWorld;
 }
 
+
+namespace r2::io
+{
+    struct InputType;
+}
+
 namespace r2
 {
     namespace evt
@@ -129,6 +135,7 @@ namespace r2
         virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
 
 
+        virtual const r2::io::InputType& GetInputTypeForPlayer(s32 player) const = 0;
 
 #ifdef R2_ASSET_PIPELINE
 

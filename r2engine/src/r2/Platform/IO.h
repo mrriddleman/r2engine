@@ -148,7 +148,7 @@ namespace r2::io
         b32 held = false;
 
         bool IsPressed() const {
-            return state == BUTTON_RELEASED;
+            return state != BUTTON_RELEASED;
         }
     };
     
@@ -378,67 +378,71 @@ namespace r2::io
     {
         Controller controller;
 
-        union
-        {
-            ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX] = {
-                {CONTROLLER_BUTTON_A, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_B, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_X, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_Y, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_BACK, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_GUIDE, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_START, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_LEFTSTICK, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_RIGHTSTICK, BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_LEFTSHOULDER,BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_RIGHTSHOULDER,BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_DPAD_UP,BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_DPAD_DOWN,BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_DPAD_LEFT,BUTTON_RELEASED},
-                {CONTROLLER_BUTTON_DPAD_RIGHT,BUTTON_RELEASED}
-            };
-            
-            struct buttons
-            {
-                ControllerButton buttonA = {CONTROLLER_BUTTON_A, BUTTON_RELEASED};
-                ControllerButton buttonB = {CONTROLLER_BUTTON_B, BUTTON_RELEASED};
-                ControllerButton buttonX = {CONTROLLER_BUTTON_X, BUTTON_RELEASED};
-                ControllerButton buttonY = {CONTROLLER_BUTTON_Y, BUTTON_RELEASED};
-                ControllerButton buttonBack = {CONTROLLER_BUTTON_BACK, BUTTON_RELEASED};
-                ControllerButton buttonGuide = {CONTROLLER_BUTTON_GUIDE, BUTTON_RELEASED};
-                ControllerButton buttonStart = {CONTROLLER_BUTTON_START, BUTTON_RELEASED};
-                ControllerButton buttonLeftStick = {CONTROLLER_BUTTON_LEFTSTICK, BUTTON_RELEASED};
-                ControllerButton buttonRightStick = {CONTROLLER_BUTTON_RIGHTSTICK, BUTTON_RELEASED};
-                ControllerButton buttonLeftShoulder = {CONTROLLER_BUTTON_LEFTSHOULDER,BUTTON_RELEASED};
-                ControllerButton buttonRightShoulder = {CONTROLLER_BUTTON_RIGHTSHOULDER,BUTTON_RELEASED};
-                ControllerButton buttonDPadUp = {CONTROLLER_BUTTON_DPAD_UP,BUTTON_RELEASED};
-                ControllerButton buttonDPadDown = {CONTROLLER_BUTTON_DPAD_DOWN,BUTTON_RELEASED};
-                ControllerButton buttonDPadLeft = {CONTROLLER_BUTTON_DPAD_LEFT,BUTTON_RELEASED};
-                ControllerButton buttonDPadRight = {CONTROLLER_BUTTON_DPAD_RIGHT,BUTTON_RELEASED};
-            };
-        };
-        
-        union
-        {
-            ControllerAxis axes[ControllerAxisName::CONTROLLER_AXIS_MAX] = {
-                 {CONTROLLER_AXIS_LEFTX, 0},
-                 {CONTROLLER_AXIS_LEFTY, 0},
-                 {CONTROLLER_AXIS_RIGHTX, 0},
-                 {CONTROLLER_AXIS_RIGHTY, 0},
-                 {CONTROLLER_AXIS_TRIGGERLEFT, 0},
-                 {CONTROLLER_AXIS_TRIGGERRIGHT, 0}
-            };
-            
-            struct axis
-            {
-                ControllerAxis axisLeftX = {CONTROLLER_AXIS_LEFTX, 0};
-                ControllerAxis axisLeftY = {CONTROLLER_AXIS_LEFTY, 0};
-                ControllerAxis axisRightX = {CONTROLLER_AXIS_RIGHTX, 0};
-                ControllerAxis axisRightY = {CONTROLLER_AXIS_RIGHTY, 0};
-                ControllerAxis axisTriggerLeft = {CONTROLLER_AXIS_TRIGGERLEFT, 0};
-                ControllerAxis axisTriggerRight = {CONTROLLER_AXIS_TRIGGERRIGHT, 0};
-            };
-        };
+		ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX] = {
+			   {CONTROLLER_BUTTON_A, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_B, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_X, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_Y, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_BACK, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_GUIDE, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_START, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_LEFTSTICK, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_RIGHTSTICK, BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_LEFTSHOULDER,BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_RIGHTSHOULDER,BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_DPAD_UP,BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_DPAD_DOWN,BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_DPAD_LEFT,BUTTON_RELEASED},
+			   {CONTROLLER_BUTTON_DPAD_RIGHT,BUTTON_RELEASED}
+		};
+
+		ControllerAxis axes[ControllerAxisName::CONTROLLER_AXIS_MAX] = {
+				 {CONTROLLER_AXIS_LEFTX, 0},
+				 {CONTROLLER_AXIS_LEFTY, 0},
+				 {CONTROLLER_AXIS_RIGHTX, 0},
+				 {CONTROLLER_AXIS_RIGHTY, 0},
+				 {CONTROLLER_AXIS_TRIGGERLEFT, 0},
+				 {CONTROLLER_AXIS_TRIGGERRIGHT, 0}
+		};
+
+        //union
+        //{
+        //   
+        //    
+        //    //struct buttons
+        //    //{
+        //    //    ControllerButton buttonA = {CONTROLLER_BUTTON_A, BUTTON_RELEASED};
+        //    //    ControllerButton buttonB = {CONTROLLER_BUTTON_B, BUTTON_RELEASED};
+        //    //    ControllerButton buttonX = {CONTROLLER_BUTTON_X, BUTTON_RELEASED};
+        //    //    ControllerButton buttonY = {CONTROLLER_BUTTON_Y, BUTTON_RELEASED};
+        //    //    ControllerButton buttonBack = {CONTROLLER_BUTTON_BACK, BUTTON_RELEASED};
+        //    //    ControllerButton buttonGuide = {CONTROLLER_BUTTON_GUIDE, BUTTON_RELEASED};
+        //    //    ControllerButton buttonStart = {CONTROLLER_BUTTON_START, BUTTON_RELEASED};
+        //    //    ControllerButton buttonLeftStick = {CONTROLLER_BUTTON_LEFTSTICK, BUTTON_RELEASED};
+        //    //    ControllerButton buttonRightStick = {CONTROLLER_BUTTON_RIGHTSTICK, BUTTON_RELEASED};
+        //    //    ControllerButton buttonLeftShoulder = {CONTROLLER_BUTTON_LEFTSHOULDER,BUTTON_RELEASED};
+        //    //    ControllerButton buttonRightShoulder = {CONTROLLER_BUTTON_RIGHTSHOULDER,BUTTON_RELEASED};
+        //    //    ControllerButton buttonDPadUp = {CONTROLLER_BUTTON_DPAD_UP,BUTTON_RELEASED};
+        //    //    ControllerButton buttonDPadDown = {CONTROLLER_BUTTON_DPAD_DOWN,BUTTON_RELEASED};
+        //    //    ControllerButton buttonDPadLeft = {CONTROLLER_BUTTON_DPAD_LEFT,BUTTON_RELEASED};
+        //    //    ControllerButton buttonDPadRight = {CONTROLLER_BUTTON_DPAD_RIGHT,BUTTON_RELEASED};
+        //    //};
+        //};
+        //
+        //union
+        //{
+        //    
+        //    
+        //    struct axis
+        //    {
+        //        ControllerAxis axisLeftX = {CONTROLLER_AXIS_LEFTX, 0};
+        //        ControllerAxis axisLeftY = {CONTROLLER_AXIS_LEFTY, 0};
+        //        ControllerAxis axisRightX = {CONTROLLER_AXIS_RIGHTX, 0};
+        //        ControllerAxis axisRightY = {CONTROLLER_AXIS_RIGHTY, 0};
+        //        ControllerAxis axisTriggerLeft = {CONTROLLER_AXIS_TRIGGERLEFT, 0};
+        //        ControllerAxis axisTriggerRight = {CONTROLLER_AXIS_TRIGGERRIGHT, 0};
+        //    };
+        //};
     };
 
     enum eInputType

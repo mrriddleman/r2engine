@@ -6,6 +6,10 @@
 #include "r2/core/Input/InputState.h"
 #include "PlayerCommandComponent.h"
 
+#include "r2/Platform/Platform.h"
+#include "r2/Core/Engine.h"
+#include "r2/Core/Application.h"
+#include "r2/Platform/IO.h"
 
 PlayerCommandSystem::PlayerCommandSystem()
 	:mnoptrInputGather(nullptr)
@@ -25,6 +29,11 @@ void PlayerCommandSystem::Update()
 
 	const auto numPlayerEntities = r2::sarr::Size(*mEntities);
 
+	const r2::Application& application = CENG.GetApplication();
+
+
+	const r2::io::InputType& playerInput = application.GetInputTypeForPlayer(0);
+
 	for (u32 i = 0; i < numPlayerEntities; ++i)
 	{
 		r2::ecs::Entity e = r2::sarr::At(*mEntities, i);
@@ -33,16 +42,16 @@ void PlayerCommandSystem::Update()
 		PlayerCommandComponent playerCommandComponent;
 		playerCommandComponent.playerID = playerComponent.playerID;
 
-		switch (playerComponent.inputType.inputType)
+		switch (playerInput.inputType)
 		{
 		case  r2::io::INPUT_TYPE_KEYBOARD:
 		{
-			DoKeyboardMapping(inputState, playerComponent.inputType, playerCommandComponent);
+			DoKeyboardMapping(inputState, playerInput, playerCommandComponent);
 		}
 		break;
 		case r2::io::INPUT_TYPE_CONTROLLER:
 		{
-			DoControllerMapping(inputState, playerComponent.inputType, playerCommandComponent);
+			DoControllerMapping(inputState, playerInput, playerCommandComponent);
 		}
 		break;
 		default:

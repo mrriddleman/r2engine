@@ -587,4 +587,20 @@ namespace r2::io
 		}
 	}
 
+	void DefaultInputGather::SetControllerIDConnected(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID)
+	{
+
+		for (s32 i = 0; i < r2::io::ControllerButtonName::CONTROLLER_BUTTON_MAX; ++i)
+		{
+			mInputState.mControllersState[controllerID].buttons[i].state = r2::io::BUTTON_RELEASED;
+			mInputState.mControllersState[controllerID].buttons[i].held = false;
+		}
+		
+
+		mInputState.mControllersState[controllerID].controller.controllerID = controllerID;
+		mInputState.mControllersState[controllerID].controller.controllerInstanceID = instanceID;
+		mInputState.mControllersState[controllerID].controller.connected = true;
+
+	}
+
 }

@@ -58,7 +58,7 @@ namespace r2::ecs
 
 			playerComponent.playerID = flatPlayerData->playerID();
 			//@TODO(Serge): now set the input type - not sure how we're going to do that since the game is what controls this - for now set to defaults
-			playerComponent.inputType = {};
+			//playerComponent.inputType = {};
 
 			r2::sarr::Push(components, playerComponent);
 		}

@@ -44,8 +44,9 @@ namespace r2::evt
     {
     public:
         
-        GameControllerConnectedEvent(r2::io::ControllerID controllerID):GameControllerEvent(controllerID){}
+        GameControllerConnectedEvent(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID):GameControllerEvent(controllerID), mInstanceID(instanceID){}
         
+        r2::io::ControllerInstanceID GetInstanceID() const { return mInstanceID; }
         virtual std::string ToString() const override
         {
             std::stringstream ss;
@@ -53,6 +54,9 @@ namespace r2::evt
             return ss.str();
         }
         EVENT_CLASS_TYPE(EVT_CONTROLLER_CONNECTED);
+
+    protected:
+        r2::io::ControllerInstanceID mInstanceID;
     };
     
     class R2_API GameControllerAxisEvent: public GameControllerEvent

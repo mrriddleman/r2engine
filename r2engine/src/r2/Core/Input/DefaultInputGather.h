@@ -14,6 +14,8 @@ namespace r2::io
 		virtual const InputState& GetCurrentInputState() const override;
 		virtual void OnEvent(r2::evt::Event& event) override;
 
+		void SetControllerIDConnected(r2::io::ControllerID controllerID, r2::io::ControllerInstanceID instanceID);
+
 	private:
 
 		void ProcessKeyboardKey(s32 keyCode, b32 repeated, u8 state);

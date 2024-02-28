@@ -460,7 +460,34 @@ public:
 
     virtual void OnEvent(r2::evt::Event& e) override
     {
-		//r2::evt::EventDispatcher dispatcher(e);
+		r2::evt::EventDispatcher dispatcher(e);
+
+        dispatcher.Dispatch<r2::evt::GameControllerConnectedEvent>([this](const r2::evt::GameControllerConnectedEvent& e)
+        {
+                mDefaultInputGather.SetControllerIDConnected(e.GetControllerID(), e.GetInstanceID());
+
+                if (e.GetControllerID() == 0)
+                {					
+                    mPlayerInputType.inputType = r2::io::INPUT_TYPE_CONTROLLER;
+                    mPlayerInputType.controllerID = e.GetControllerID();
+
+                    return true;
+                }
+                return false;
+        });
+
+        dispatcher.Dispatch<r2::evt::GameControllerDisconnectedEvent>([this](const r2::evt::GameControllerDisconnectedEvent& e)
+        {
+            if (e.GetControllerID() == 0)
+            {
+                mPlayerInputType.inputType = r2::io::INPUT_TYPE_KEYBOARD;
+                mPlayerInputType.controllerID = r2::io::INVALID_CONTROLLER_ID;
+
+                return true;
+            }
+
+            return false;
+        });
 
 		//dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
   //          if (e.KeyCode() == r2::io::KEY_UP)
@@ -820,12 +847,12 @@ public:
 
 	   FacingUpdateSystem* facingUpdateSystem = ecsWorld.RegisterSystem<FacingUpdateSystem>(facingUpdateSystemSignature);
 
-       ecsWorld.RegisterAppSystem(facingUpdateSystem, sortOrder++);
+       ecsWorld.RegisterAppSystem(facingUpdateSystem, sortOrder++, true);
 
 	   playerCommandSystemSignature.set(playerComponentType);
 	   PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
 	   playerCommandSystem->SetInputGather(&mDefaultInputGather);
-       ecsWorld.RegisterAppSystem(playerCommandSystem, sortOrder++);
+       ecsWorld.RegisterAppSystem(playerCommandSystem, sortOrder++, false);
 
        r2::ecs::Signature characterControllerSystemSignature;
        characterControllerSystemSignature.set(playerCommandComponentType);
@@ -835,13 +862,13 @@ public:
 
        CharacterControllerSystem* characterControllerSystem = ecsWorld.RegisterSystem<CharacterControllerSystem>(characterControllerSystemSignature);
 
-       ecsWorld.RegisterAppSystem(characterControllerSystem, sortOrder++);
+       ecsWorld.RegisterAppSystem(characterControllerSystem, sortOrder++, false);
 
        //set the input type for the player
        //@TODO(Serge): move to the OnEvent so that we can switch back and forth 
        r2::io::InputType player0InputType;
        player0InputType.inputType = r2::io::INPUT_TYPE_KEYBOARD;
-       ecsWorld.SetPlayerInputType(0, player0InputType);
+       //ecsWorld.SetPlayerInputType(0, player0InputType);
 
     }
 
@@ -1009,10 +1036,18 @@ public:
     }
 #endif
 
+    virtual const r2::io::InputType& GetInputTypeForPlayer(s32 player) const override
+    {
+        return mPlayerInputType;
+    }
+
 private:
     s32 mResolution = 3;
 
     r2::io::DefaultInputGather mDefaultInputGather;
+
+    r2::io::InputType mPlayerInputType;
+
 };
 
 namespace
