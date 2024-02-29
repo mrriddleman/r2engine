@@ -870,9 +870,9 @@ namespace r2::draw::renderer
 
 		newRenderer->linesDrawBatchSubCommands = MAKE_SARRAY(*rendererArena, cmd::DrawDebugBatchSubCommand, MAX_NUM_DRAWS);
 
-		newRenderer->genericModelBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+		newRenderer->genericModelBatchRenderOffsets = MAKE_SARRAY(*rendererArena, BatchRenderOffsets, MAX_NUM_DRAWS);
 
-		newRenderer->modelDrawBatchSubCommands = MAKE_SARRAY(*rendererArena, cmd::DrawBatchSubCommand, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+		newRenderer->modelDrawBatchSubCommands = MAKE_SARRAY(*rendererArena, cmd::DrawBatchSubCommand, MAX_NUM_DRAWS);
 		newRenderer->mDebugVertices = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DRAWS * 2);
 #endif
 
@@ -2754,9 +2754,9 @@ namespace r2::draw::renderer
 
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawDebugBatchSubCommand>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
-			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BatchRenderOffsets>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
 
-			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(MAX_NUM_DRAWS), ALIGNMENT, headerSize, boundsChecking)
 			//r2::SArray<DebugVertex>* mDebugVertices = nullptr;
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugVertex>::MemorySize(MAX_NUM_DRAWS*2), ALIGNMENT, headerSize, boundsChecking)
 #endif
