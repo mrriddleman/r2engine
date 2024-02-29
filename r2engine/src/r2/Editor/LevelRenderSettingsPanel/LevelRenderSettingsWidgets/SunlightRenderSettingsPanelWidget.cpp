@@ -41,6 +41,7 @@ namespace r2::edit
 		mDirectionLightLightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 		mDirectionLightLightProperties.fallOff = 0;
 		mDirectionLightLightProperties.intensity = 1.0f;
+		dirLight.lightProperties = mDirectionLightLightProperties;
 
 		dirLight.direction = glm::vec4(mDirection, 1);
 
@@ -76,11 +77,14 @@ namespace r2::edit
 			needsUpdate = true;
 		}
 
+		bool shadowUpdate = false;
+
 		bool castsShadows = mDirectionLightLightProperties.castsShadowsUseSoftShadows.x > 0u;
 		if (ImGui::Checkbox("Cast Shadows", &castsShadows))
 		{
 			mDirectionLightLightProperties.castsShadowsUseSoftShadows.x = castsShadows ? 1u : 0u;
 			needsUpdate = true;
+			shadowUpdate = true;
 		}
 
 		bool softShadows = mDirectionLightLightProperties.castsShadowsUseSoftShadows.y > 0u;
@@ -140,6 +144,11 @@ namespace r2::edit
 
 			directionLight->lightProperties = mDirectionLightLightProperties;
 			directionLight->direction = glm::vec4(mDirection, 0);
+
+			if (shadowUpdate)
+			{
+				r2::draw::renderer::UpdateShadowsForDirectionLight(mDirectionLightHandle);
+			}
 		}
 		
 		r2::draw::renderer::DrawArrow(mPosition, mDirection, 2, 0.3f, mDirectionLightLightProperties.color, true);

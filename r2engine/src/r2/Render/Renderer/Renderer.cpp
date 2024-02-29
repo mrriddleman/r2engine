@@ -5317,6 +5317,54 @@ namespace r2::draw::renderer
 		renderer.mFlags.Set(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH);
 	}
 
+	void UpdateShadowsForDirectionLight(Renderer& renderer, DirectionLightHandle dirLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		
+		auto light = GetDirectionLightConstPtr(renderer, dirLightHandle);
+
+		if (light->lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			AssignShadowMapPagesForDirectionLight(renderer, *light);
+		}
+		else
+		{
+			RemoveShadowMapPagesForDirectionLight(renderer, *light);
+		}
+	}
+
+	void UpdateShadowsForPointLight(Renderer& renderer, PointLightHandle pointLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+
+		auto light = GetPointLightConstPtr(renderer, pointLightHandle);
+
+		if (light->lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			AssignShadowMapPagesForPointLight(renderer, *light);
+		}
+		else
+		{
+			RemoveShadowMapPagesForPointLight(renderer, *light);
+		}
+	}
+
+	void UpdateShadowsForSpotLight(Renderer& renderer, SpotLightHandle spotLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+
+		auto light = GetSpotLightConstPtr(renderer, spotLightHandle);
+
+		if (light->lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			AssignShadowMapPagesForSpotLight(renderer, *light);
+		}
+		else
+		{
+			RemoveShadowMapPagesForSpotLight(renderer, *light);
+		}
+	}
+
 	void UpdateSDSMShaderParams(Renderer& renderer)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -9626,6 +9674,21 @@ namespace r2::draw::renderer
 	void DrawGrid()
 	{
 		DrawQuad(MENG.GetCurrentRendererRef(), glm::mat4(2), flat::eMeshPass_TRANSPARENT, MENG.GetCurrentRendererRef().mGridShader, true);
+	}
+
+	void UpdateShadowsForDirectionLight(DirectionLightHandle dirLightHandle)
+	{
+		UpdateShadowsForDirectionLight(MENG.GetCurrentRendererRef(), dirLightHandle);
+	}
+
+	void UpdateShadowsForPointLight(PointLightHandle pointLightHandle)
+	{
+		UpdateShadowsForPointLight(MENG.GetCurrentRendererRef(), pointLightHandle);
+	}
+
+	void UpdateShadowsForSpotLight(SpotLightHandle spotLightHandle)
+	{
+		UpdateShadowsForSpotLight(MENG.GetCurrentRendererRef(), spotLightHandle);
 	}
 
 #endif

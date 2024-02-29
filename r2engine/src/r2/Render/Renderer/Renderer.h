@@ -812,6 +812,11 @@ namespace r2::draw::renderer
 
 	void DrawGrid();
 
+
+	void UpdateShadowsForDirectionLight(DirectionLightHandle dirLightHandle);
+	void UpdateShadowsForPointLight(PointLightHandle dirLightHandle);
+	void UpdateShadowsForSpotLight(SpotLightHandle dirLightHandle);
+
 #endif
 
 #ifdef R2_DEBUG
