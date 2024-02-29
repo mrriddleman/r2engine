@@ -21,11 +21,15 @@ srcPath = os.path.realpath(thisFilePath + "/../src")
 flatcPath = os.path.realpath(thisFilePath + "/../../r2engine") + "/vendor/flatbuffers/bin/" + flatc
 dataPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
 fbsCodeOutputMap = {
-"FacingComponentArrayData.fbs":""
+"FacingComponentArrayData.fbs":"",
+"GridPositionComponentArrayData.fbs":"",
+"GridPosition.fbs":""
 }
 
 extraParams = {
-"FacingComponentArrayData.fbs": ""
+"FacingComponentArrayData.fbs": "",
+"GridPositionComponentArrayData.fbs":"",
+"GridPosition.fbs":""
 }
 
 for filename in os.listdir(dataPath):

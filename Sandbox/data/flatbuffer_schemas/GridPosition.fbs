@@ -1,0 +1,10 @@
+namespace flat;
+
+table GridPosition
+{
+	x:int;
+	y:int;
+	z:int;
+}
+
+root_type GridPosition;

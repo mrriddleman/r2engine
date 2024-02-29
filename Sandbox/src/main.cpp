@@ -24,6 +24,7 @@
 #include "FacingUpdateSystem.h"
 
 #include "FacingComponentSerialization.h"
+#include "GridPositionComponentSerialization.h"
 
 #ifdef R2_EDITOR
 #include "r2/Editor/EditorInspectorPanel.h"
@@ -670,6 +671,7 @@ public:
 
         memorySize += r2::ecs::ComponentArray<PlayerCommandComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::ecs::ComponentArray<FacingComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
+        memorySize += r2::ecs::ComponentArray<GridPositionComponent>::MemorySize(GetMaxNumECSEntities(), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<PlayerCommandSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<CharacterControllerSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
         memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::ecs::ECSCoordinator::MemorySizeOfSystemType<FacingUpdateSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
@@ -702,7 +704,7 @@ public:
 
        ecsWorld.RegisterComponent<PlayerCommandComponent>("PlayerCommandComponent", false, false, nullptr);
        ecsWorld.RegisterComponent<FacingComponent>("FacingComponent", true, false, nullptr);
-
+       ecsWorld.RegisterComponent<GridPositionComponent>("GridPositionComponent", true, false, nullptr); //@TODO(Serge): should actually be instanced
        r2::ecs::ECSCoordinator* ecsCoordinator = ecsWorld.GetECSCoordinator();
        r2::ecs::Signature playerCommandSystemSignature;
 
@@ -753,7 +755,7 @@ public:
         ecsWorld.UnRegisterSystem<CharacterControllerSystem>();
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
         ecsWorld.UnRegisterSystem<FacingUpdateSystem>();
-
+        ecsWorld.UnRegisterComponent<GridPositionComponent>();
         ecsWorld.UnRegisterComponent<FacingComponent>();
         ecsWorld.UnRegisterComponent<PlayerCommandComponent>();
 

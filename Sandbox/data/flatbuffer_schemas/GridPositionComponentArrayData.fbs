@@ -1,0 +1,17 @@
+include "GridPosition.fbs";
+
+namespace flat;
+
+
+table GridPositionComponentData
+{
+	localGridPosition:GridPosition;
+	globalGridPosition:GridPosition;
+}
+
+table GridPositionComponentArrayData
+{
+	gridPositionComponentArray:[GridPositionComponentData];
+}
+
+root_type GridPositionComponentArrayData;

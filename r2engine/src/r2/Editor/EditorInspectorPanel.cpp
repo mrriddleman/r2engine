@@ -519,8 +519,6 @@ namespace r2::edit
 							}
 						}
 					}
-						
-						
 				}
 			}
 
