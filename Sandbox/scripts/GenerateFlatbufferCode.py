@@ -23,13 +23,15 @@ dataPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
 fbsCodeOutputMap = {
 "FacingComponentArrayData.fbs":"",
 "GridPositionComponentArrayData.fbs":"",
-"GridPosition.fbs":""
+"GridPosition.fbs":"",
+"InstancedGridPositionComponentArrayData.fbs":""
 }
 
 extraParams = {
 "FacingComponentArrayData.fbs": "",
 "GridPositionComponentArrayData.fbs":"",
-"GridPosition.fbs":""
+"GridPosition.fbs":"",
+"InstancedGridPositionComponentArrayData.fbs":""
 }
 
 for filename in os.listdir(dataPath):

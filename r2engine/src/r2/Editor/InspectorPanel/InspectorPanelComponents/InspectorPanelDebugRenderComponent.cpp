@@ -188,7 +188,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelDebugRenderDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelDebugRenderDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::DebugRenderComponent* debugRenderComponentPtr = static_cast<ecs::DebugRenderComponent*>(componentData);
 		ecs::DebugRenderComponent& debugRenderComponent = *debugRenderComponentPtr;

@@ -24,7 +24,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelPlayerComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelPlayerComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		r2::ecs::PlayerComponent& playerComponent = coordinator->GetComponent<r2::ecs::PlayerComponent>(theEntity);
 

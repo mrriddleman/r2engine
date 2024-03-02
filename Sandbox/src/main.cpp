@@ -31,6 +31,7 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 #include "FacingComponentInspectorPanelDataSource.h"
+#include "GridPositionComponentInspectorPanelDataSource.h"
 #endif
 
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
@@ -701,14 +702,19 @@ public:
     
     virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
+       r2::ecs::FreeComponentFunc freeInstancedGridPositionComponentFunc = std::bind(&Sandbox::FreeInstancedGridPositionComponent, this, std::placeholders::_1);
 
        ecsWorld.RegisterComponent<PlayerCommandComponent>("PlayerCommandComponent", false, false, nullptr);
        ecsWorld.RegisterComponent<FacingComponent>("FacingComponent", true, false, nullptr);
-       ecsWorld.RegisterComponent<GridPositionComponent>("GridPositionComponent", true, false, nullptr); //@TODO(Serge): should actually be instanced
+       ecsWorld.RegisterComponent<GridPositionComponent>("GridPositionComponent", true, false, nullptr); 
+       ecsWorld.RegisterComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>("InstancedGridPosition", true, true, freeInstancedGridPositionComponentFunc);
+
+
        r2::ecs::ECSCoordinator* ecsCoordinator = ecsWorld.GetECSCoordinator();
        r2::ecs::Signature playerCommandSystemSignature;
 
 	   const auto playerComponentType = ecsCoordinator->GetComponentType<r2::ecs::PlayerComponent>();
+
 
 	   const auto playerCommandComponentType = ecsCoordinator->GetComponentType<PlayerCommandComponent>();
 	   const auto skeletonAnimationComponentType = ecsCoordinator->GetComponentType<r2::ecs::SkeletalAnimationComponent>();
@@ -755,6 +761,7 @@ public:
         ecsWorld.UnRegisterSystem<CharacterControllerSystem>();
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
         ecsWorld.UnRegisterSystem<FacingUpdateSystem>();
+        ecsWorld.UnRegisterComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>();
         ecsWorld.UnRegisterComponent<GridPositionComponent>();
         ecsWorld.UnRegisterComponent<FacingComponent>();
         ecsWorld.UnRegisterComponent<PlayerCommandComponent>();
@@ -906,6 +913,10 @@ public:
         r2::edit::InspectorPanelComponentWidget facingComponentWidget = r2::edit::InspectorPanelComponentWidget(10, facingDataSource);
         inspectorPanel.RegisterComponentWidget(facingComponentWidget);
 
+        std::shared_ptr<InspectorPanelGridPositionDataSource> gridPositionDataSource = std::make_shared<InspectorPanelGridPositionDataSource>(inspectorPanel.GetEditor(), inspectorPanel.GetEditor()->GetECSCoordinator(), &inspectorPanel);
+
+        r2::edit::InspectorPanelComponentWidget gridPositionComponentWidget = r2::edit::InspectorPanelComponentWidget(11, gridPositionDataSource);
+        inspectorPanel.RegisterComponentWidget(gridPositionComponentWidget);
     }
 #endif
 
@@ -915,6 +926,20 @@ public:
     }
 
 private:
+
+	void FreeInstancedGridPositionComponent(void* data)
+	{
+		r2::ecs::InstanceComponentT<GridPositionComponent>* instancedGridPositionComponent = static_cast<r2::ecs::InstanceComponentT<GridPositionComponent>*>(data);
+		R2_CHECK(instancedGridPositionComponent != nullptr, "Should never happen");
+
+		if (instancedGridPositionComponent->instances != nullptr)
+		{
+			ECS_WORLD_FREE(MENG.GetECSWorld(), instancedGridPositionComponent->instances);
+            instancedGridPositionComponent->instances = nullptr;
+            instancedGridPositionComponent->numInstances = 0;
+		}
+	}
+
     s32 mResolution = 3;
 
     r2::io::DefaultInputGather mDefaultInputGather;

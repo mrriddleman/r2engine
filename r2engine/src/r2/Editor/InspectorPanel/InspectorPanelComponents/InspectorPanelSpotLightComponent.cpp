@@ -33,7 +33,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelSpotLightDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelSpotLightDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::SpotLightComponent* spotLightComponentPtr = static_cast<ecs::SpotLightComponent*>(componentData);
 

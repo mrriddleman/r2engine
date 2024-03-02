@@ -147,7 +147,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelSkeletonAnimationComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelSkeletonAnimationComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::SkeletalAnimationComponent* animationComponentPtr = static_cast<ecs::SkeletalAnimationComponent*>(componentData);
 		ecs::SkeletalAnimationComponent& animationComponent = *animationComponentPtr;
@@ -178,9 +178,6 @@ namespace r2::edit
 			}
 		}
 		
-		
-		
-
 		bool shouldLoop = animationComponent.shouldLoop;
 		if (ImGui::Checkbox("Loop", &shouldLoop))
 		{

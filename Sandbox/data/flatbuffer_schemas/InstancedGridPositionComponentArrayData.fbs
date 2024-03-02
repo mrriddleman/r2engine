@@ -1,0 +1,10 @@
+include "GridPositionComponentArrayData.fbs";
+
+namespace flat;
+
+table InstancedGridPositionComponentArrayData
+{
+	instancedGridPositionComponentArray:[GridPositionComponentArrayData];
+}
+
+root_type InstancedGridPositionComponentArrayData;

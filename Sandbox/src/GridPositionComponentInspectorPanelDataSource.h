@@ -1,5 +1,5 @@
-#ifndef __FACING_COMPONENT_INSPECTOR_PANEL_WIDGET_H__
-#define __FACING_COMPONENT_INSPECTOR_PANEL_WIDGET_H__
+#ifndef __GRID_POSITION_COMPONENT_INSPECTOR_PANEL_DATA_SOURCE_H__
+#define __GRID_POSITION_COMPONENT_INSPECTOR_PANEL_DATA_SOURCE_H__
 
 #ifdef R2_EDITOR
 
@@ -8,21 +8,22 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 #include "r2/Utils/Utils.h"
 
+
 namespace r2
 {
 	class Editor;
 }
 
-namespace r2::ecs 
+namespace r2::ecs
 {
 	class InspectorPanel;
 }
 
-class InspectorPanelFacingDataSource : public r2::edit::InspectorPanelComponentDataSource
+class InspectorPanelGridPositionDataSource : public r2::edit::InspectorPanelComponentDataSource
 {
 public:
-	InspectorPanelFacingDataSource();
-	InspectorPanelFacingDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator, const r2::edit::InspectorPanel* inspectorPanel);
+	InspectorPanelGridPositionDataSource();
+	InspectorPanelGridPositionDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator, const r2::edit::InspectorPanel* inspectorPanel);
 
 	virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, s32 instance) override;
 
@@ -43,4 +44,5 @@ private:
 };
 
 #endif
-#endif
+
+#endif // __GRID_POSITION_COMPONENT_INSPECTOR_PANEL_DATA_SOURCE_H__

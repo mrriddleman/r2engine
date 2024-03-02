@@ -24,7 +24,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelAudioListenerComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelAudioListenerComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		r2::ecs::AudioListenerComponent& audioListenerComponent = coordinator->GetComponent<r2::ecs::AudioListenerComponent>(theEntity);
 

@@ -70,7 +70,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelDebugBoneComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelDebugBoneComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::DebugBoneComponent* debugBoneComponentPtr = static_cast<ecs::DebugBoneComponent*>(componentData);
 		ecs::DebugBoneComponent& debugBoneComponent = *debugBoneComponentPtr;

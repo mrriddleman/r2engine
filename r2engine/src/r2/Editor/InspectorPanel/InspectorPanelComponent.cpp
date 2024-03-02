@@ -159,7 +159,7 @@ namespace r2::edit
 		if (open)
 		{
 			void* componentData = mComponentDataSource->GetComponentData(coordinator, theEntity);
-			mComponentDataSource->DrawComponentData(componentData, coordinator, theEntity);
+			mComponentDataSource->DrawComponentData(componentData, coordinator, theEntity, -1);
 		}
 
 		if (wasOpen)
@@ -199,7 +199,7 @@ namespace r2::edit
 			{
 				void* componentInstanceData = mComponentDataSource->GetInstancedComponentData(instance, coordinator, theEntity);
 
-				mComponentDataSource->DrawComponentData(componentInstanceData, coordinator, theEntity);
+				mComponentDataSource->DrawComponentData(componentInstanceData, coordinator, theEntity, instance);
 
 				ImGui::TreePop();
 			}

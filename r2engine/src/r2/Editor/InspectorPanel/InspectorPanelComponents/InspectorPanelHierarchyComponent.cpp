@@ -27,7 +27,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelHierarchyComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelHierarchyComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		const r2::SArray<r2::ecs::Entity>& entities = coordinator->GetAllLivingEntities();
 

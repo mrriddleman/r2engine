@@ -14,7 +14,7 @@ namespace r2::edit
 		InspectorPanelDebugRenderDataSource();
 		InspectorPanelDebugRenderDataSource(r2::ecs::ECSCoordinator* coordinator);
 
-		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
+		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance) override;
 
 		virtual bool InstancesEnabled() const override;
 		virtual u32 GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const override;

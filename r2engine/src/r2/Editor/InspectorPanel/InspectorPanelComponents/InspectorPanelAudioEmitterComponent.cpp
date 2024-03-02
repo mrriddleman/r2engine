@@ -74,7 +74,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanelAudioEmitterComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelAudioEmitterComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::AudioEmitterComponent* audioEmitterComponentPtr = static_cast<ecs::AudioEmitterComponent*>(componentData);
 		ecs::AudioEmitterComponent& audioEmitterComponent = *audioEmitterComponentPtr;

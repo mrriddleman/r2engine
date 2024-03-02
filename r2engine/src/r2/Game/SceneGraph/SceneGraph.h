@@ -48,6 +48,7 @@ namespace r2::ecs
 		ecs::Entity GetParent(ecs::Entity entity);
 
 		void UpdateTransformForEntity(ecs::Entity entity, ecs::eTransformDirtyFlags dirtyFlags);
+		//void UpdateTransformInstanceForEntity(ecs::Entity entity, ecs::eTransformDirtyFlags dirtyFlags, s32 instance);
 
 		ecs::ECSCoordinator* GetECSCoordinator() const;
 

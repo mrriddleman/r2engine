@@ -25,7 +25,7 @@ InspectorPanelFacingDataSource::InspectorPanelFacingDataSource(r2::Editor* noptr
 
 }
 
-void InspectorPanelFacingDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity)
+void InspectorPanelFacingDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, s32 instance)
 {
 	FacingComponent* facingComponentPtr = static_cast<FacingComponent*>(componentData);
 	FacingComponent& facingComponent = *facingComponentPtr;

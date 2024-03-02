@@ -31,7 +31,7 @@ namespace r2::edit
 	{
 	}
 
-	void InspectorPanelTransformDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	void InspectorPanelTransformDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance)
 	{
 		ecs::TransformComponent* transformComponentPtr = static_cast<ecs::TransformComponent*>(componentData);
 
