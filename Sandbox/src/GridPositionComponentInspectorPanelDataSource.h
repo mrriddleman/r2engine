@@ -8,6 +8,10 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 #include "r2/Utils/Utils.h"
 
+namespace r2::evt
+{
+	class Event;
+}
 
 namespace r2
 {
@@ -38,6 +42,9 @@ public:
 
 	virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override;
 	virtual void AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances) override;
+
+	virtual bool OnEvent(r2::evt::Event& e) override;
+
 private:
 	r2::Editor* mnoptrEditor;
 	const r2::edit::InspectorPanel* mInspectorPanel;

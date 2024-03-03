@@ -151,6 +151,31 @@ namespace r2::evt
 		return mEnabled;
 	}
 
+	EditorEntityTransformComponentChangedEvent::EditorEntityTransformComponentChangedEvent(ecs::Entity entity, s32 instance, r2::ecs::eTransformDirtyFlags dirtyFlags)
+		:EditorEntityEvent(entity, false)
+		,mInstanceTransformed(instance)
+		,mFlags(dirtyFlags)
+	{
+
+	}
+
+	std::string EditorEntityTransformComponentChangedEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntityTransformComponentChangedEvent entity: " << GetEntity() << ", instance: " << mInstanceTransformed;
+		return ss.str();
+	}
+
+	s32 EditorEntityTransformComponentChangedEvent::GetInstance() const
+	{
+		return mInstanceTransformed;
+	}
+
+	r2::ecs::eTransformDirtyFlags EditorEntityTransformComponentChangedEvent::GetTransformDirtyFlags() const
+	{
+		return mFlags;
+	}
+
 }
 
 

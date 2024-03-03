@@ -109,6 +109,18 @@ namespace r2::evt
 		bool mEnabled;
 	};
 
+	class EditorEntityTransformComponentChangedEvent : public EditorEntityEvent {
+	public:
+		EditorEntityTransformComponentChangedEvent(ecs::Entity entity, s32 instance, r2::ecs::eTransformDirtyFlags flags);
+		std::string ToString() const override;
+		s32 GetInstance() const;
+		r2::ecs::eTransformDirtyFlags GetTransformDirtyFlags() const;
+		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_TRANSFORM_CHANGED)
+	private:
+		s32 mInstanceTransformed;
+		r2::ecs::eTransformDirtyFlags mFlags;
+	};
+
 }
 
 #endif

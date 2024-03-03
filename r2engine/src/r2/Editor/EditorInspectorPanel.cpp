@@ -213,6 +213,12 @@ namespace r2::edit
 
 				return false;
 			});
+
+
+		for (auto&& componentWidget : mComponentWidgets)
+		{
+			componentWidget.OnEvent(e);
+		}
 	}
 
 	void InspectorPanel::Update()
@@ -220,7 +226,7 @@ namespace r2::edit
 
 	}
 
-	void InspectorPanel::ManipulateTransformComponent( r2::ecs::TransformComponent& transformComponent)
+	bool InspectorPanel::ManipulateTransformComponent( r2::ecs::TransformComponent& transformComponent, ecs::eTransformDirtyFlags& dirtyFlags)
 	{
 
 		r2::ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
@@ -230,7 +236,6 @@ namespace r2::edit
 		glm::mat4 localMat = glm::mat4(1);
 
 		math::Transform* transform = nullptr;
-		ecs::eTransformDirtyFlags dirtyFlags;
 
 		math::Transform transformToUse;
 		const auto* hierarchyComponentPtr = coordinator->GetComponentPtr<ecs::HierarchyComponent>(mSelectedEntity);
@@ -298,9 +303,11 @@ namespace r2::edit
 			}
 
 			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(mSelectedEntity, dirtyFlags);			
+
+			return true;
 		}
 
-
+		return false;
 	}
 
 	void InspectorPanel::Render(u32 dockingSpaceID)
@@ -445,7 +452,13 @@ namespace r2::edit
 					}
 				}
 
-				ManipulateTransformComponent(*transformComponent);
+				ecs::eTransformDirtyFlags dirtyFlags;
+				if (ManipulateTransformComponent(*transformComponent, dirtyFlags))
+				{
+					evt::EditorEntityTransformComponentChangedEvent e(mSelectedEntity, mCurrentInstance, dirtyFlags);
+
+					mnoptrEditor->PostEditorEvent(e);
+				}
 			}
 
 			const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(mSelectedEntity);

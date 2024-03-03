@@ -256,5 +256,10 @@ namespace r2::edit
 		}
 	}
 
+	void InspectorPanelComponentWidget::OnEvent(evt::Event& e)
+	{
+		mComponentDataSource->OnEvent(e);
+	}
+
 }
 #endif

@@ -73,6 +73,8 @@ namespace r2::edit
 
 		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, s32 instance) = 0;
 
+		virtual bool OnEvent(evt::Event& e) { return false; }
+
 		virtual bool InstancesEnabled() const = 0;
 		virtual u32 GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const = 0;
 

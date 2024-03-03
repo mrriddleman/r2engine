@@ -23,6 +23,11 @@ namespace r2::edit
 	
 }
 
+namespace r2::evt
+{
+	class Event;
+}
+
 namespace r2::asset
 {
 	struct AssetName;
@@ -70,6 +75,7 @@ namespace r2::edit
 		void DeleteInstanceFromEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity, u32 instanceIndex);
 
 	
+		void OnEvent(r2::evt::Event& e);
 		
 	private:
 

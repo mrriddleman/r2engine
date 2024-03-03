@@ -47,7 +47,7 @@ namespace r2::edit
 
 		InspectorPanelComponentWidget* GetComponentWidgetForComponentTypeHash(u64 componentTypeHash);
 
-		void ManipulateTransformComponent(r2::ecs::TransformComponent& transformComponent);
+		bool ManipulateTransformComponent(r2::ecs::TransformComponent& transformComponent, ecs::eTransformDirtyFlags& dirtyFlags);
 
 		std::vector<InspectorPanelComponentWidget> mComponentWidgets;
 		ecs::Entity mSelectedEntity;

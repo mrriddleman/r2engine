@@ -11,7 +11,69 @@
 #include "r2/Game/ECS/Components/SelectionComponent.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "GameUtils.h"
+#include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "../../r2engine/vendor/ImGuizmo/ImGuizmo.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
+
+void UpdateGridPositionHierarchy(GridPositionComponent& gridPositionComponent, r2::ecs::ECSCoordinator* coordinator, r2::ecs::SceneGraph& sceneGraph, r2::ecs::Entity theEntity, s32 instance, bool isLocal)
+{
+	const r2::ecs::HierarchyComponent* entityHeirarchComponent = coordinator->GetComponentPtr<r2::ecs::HierarchyComponent>(theEntity);
+	//get the parent entity
+
+	r2::ecs::Entity parentEntity = r2::ecs::INVALID_ENTITY;
+	if (entityHeirarchComponent)
+	{
+		parentEntity = entityHeirarchComponent->parent;
+	}
+
+	GridPositionComponent* parentGridComponent = coordinator->GetComponentPtr<GridPositionComponent>(parentEntity);
+
+	if (isLocal)
+	{
+		if (parentGridComponent)
+		{
+			gridPositionComponent.globalGridPosition = parentGridComponent->globalGridPosition + gridPositionComponent.localGridPosition;
+		}
+		else
+		{
+			gridPositionComponent.globalGridPosition = gridPositionComponent.localGridPosition;
+		}
+	}
+	else
+	{
+		if (parentGridComponent)
+		{
+			gridPositionComponent.localGridPosition = gridPositionComponent.globalGridPosition - parentGridComponent->globalGridPosition;
+		}
+		else
+		{
+			gridPositionComponent.localGridPosition = gridPositionComponent.globalGridPosition;
+		}
+	}
+
+	if (instance == -1)
+	{
+		//update all of the children
+
+		r2::SArray<r2::ecs::Entity>* children = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::ecs::Entity, r2::ecs::MAX_NUM_ENTITIES);
+
+		sceneGraph.GetAllChildrenForEntity(theEntity, *children);
+
+		const auto  numChildren = r2::sarr::Size(*children);
+
+		for (u32 i = 0; i < numChildren; ++i)
+		{
+			r2::ecs::Entity child = r2::sarr::At(*children, i);
+
+			GridPositionComponent& childGridPosition = coordinator->GetComponent<GridPositionComponent>(child);
+
+			UpdateGridPositionHierarchy(childGridPosition, coordinator, sceneGraph, child, -1, true);
+		}
+
+		FREE(children, *MEM_ENG_SCRATCH_PTR);
+	}
+}
 
 InspectorPanelGridPositionDataSource::InspectorPanelGridPositionDataSource()
 	:r2::edit::InspectorPanelComponentDataSource("Grid Position Component", 0, 0)
@@ -35,67 +97,45 @@ void InspectorPanelGridPositionDataSource::DrawComponentData(void* componentData
 	GridPositionComponent& gridPositionComponent = *gridPositionComponentPtr;
 
 
-	bool localChanged = false;
-	bool globalChnaged = false;
+	glm::ivec3* gridPosition = &gridPositionComponent.localGridPosition;
+	r2::ecs::eTransformDirtyFlags dirtyFlags = r2::ecs::LOCAL_TRANSFORM_DIRTY;
+	if (mInspectorPanel->GetCurrentMode() == ImGuizmo::MODE::WORLD)
+	{
+		gridPosition = &gridPositionComponent.globalGridPosition;
+		dirtyFlags = r2::ecs::GLOBAL_TRANSFORM_DIRTY;
+	}
 
-	ImGui::Text("Local Grid Position: ");
+	bool changed = false;
+
+	ImGui::Text("Grid Position: ");
 
 	
 	ImGui::Text("X: ");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label localx", &gridPositionComponent.localGridPosition.x))
+	if (ImGui::DragInt("##label localx", &gridPosition->x))
 	{
-		localChanged = true;
+		changed = true;
 	}
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 	ImGui::Text("Y: ");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label localy", &gridPositionComponent.localGridPosition.y))
+	if (ImGui::DragInt("##label localy", &gridPosition->y))
 	{
-		localChanged = true;
+		changed = true;
 	}
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 	ImGui::Text("Z: ");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label localz", &gridPositionComponent.localGridPosition.z))
+	if (ImGui::DragInt("##label localz", &gridPosition->z))
 	{
-		localChanged = true;
+		changed = true;
 	}
 	ImGui::PopItemWidth();
-
-	ImGui::Text("Global Grid Position: ");
-	ImGui::Text("X: ");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label globalx", &gridPositionComponent.globalGridPosition.x))
-	{
-		globalChnaged = true;
-	}
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-	ImGui::Text("Y: ");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label globaly", &gridPositionComponent.globalGridPosition.y))
-	{
-		globalChnaged = true;
-	}
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-	ImGui::Text("Z: ");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(80);
-	if (ImGui::DragInt("##label globalz", &gridPositionComponent.globalGridPosition.z))
-	{
-		globalChnaged = true;
-	}
-	ImGui::PopItemWidth();
-
 
 	r2::ecs::TransformComponent* transformComponent = nullptr;
 	if ( instance == -1)
@@ -113,17 +153,25 @@ void InspectorPanelGridPositionDataSource::DrawComponentData(void* componentData
 
 	if (transformComponent)
 	{
-		if (localChanged)
+		if (changed)
 		{
-			transformComponent->localTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.localGridPosition);
-			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY);
+			if (dirtyFlags == r2::ecs::LOCAL_TRANSFORM_DIRTY)
+			{
+				transformComponent->localTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.localGridPosition);
+			}
+			else
+			{
+				transformComponent->accumTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition);
+			}
+			
+			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, dirtyFlags);
 		}
+	}
 
-		if (globalChnaged)
-		{
-			transformComponent->accumTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition);
-			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY);
-		}
+	if (changed)
+	{
+		//@TODO(Serge): calculate the full grid position based on the hierarchy of the entity
+		UpdateGridPositionHierarchy(gridPositionComponent, coordinator, mnoptrEditor->GetSceneGraph(), theEntity, instance, dirtyFlags == r2::ecs::LOCAL_TRANSFORM_DIRTY);
 	}
 }
 
@@ -263,6 +311,90 @@ void InspectorPanelGridPositionDataSource::AddNewInstances(r2::ecs::ECSCoordinat
 	}
 
 	instancedTransformComponentToUse->numInstances += numInstances;
+}
+
+bool InspectorPanelGridPositionDataSource::OnEvent(r2::evt::Event& e)
+{
+	r2::evt::EventDispatcher dispatch(e);
+
+	dispatch.Dispatch<r2::evt::EditorEntityTransformComponentChangedEvent>([this](const r2::evt::EditorEntityTransformComponentChangedEvent& entityTransformedEvent)
+		{
+			r2::ecs::Entity entity = entityTransformedEvent.GetEntity();
+			r2::ecs::eTransformDirtyFlags dirtyFlags = entityTransformedEvent.GetTransformDirtyFlags();
+			GridPositionComponent* gridPositionComponent = nullptr;
+
+			const r2::ecs::TransformComponent* transformComponent = nullptr;
+
+			if (entityTransformedEvent.GetInstance() < 0)
+			{
+				transformComponent = &mnoptrEditor->GetECSCoordinator()->GetComponent<r2::ecs::TransformComponent>(entity);
+				gridPositionComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<GridPositionComponent>(entity);
+			}
+			else
+			{
+				const r2::ecs::InstanceComponentT<r2::ecs::TransformComponent> instancedTransformComponents = mnoptrEditor->GetECSCoordinator()->GetComponent<r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(entity);
+				transformComponent = &r2::sarr::At(*instancedTransformComponents.instances, entityTransformedEvent.GetInstance());
+
+				const r2::ecs::InstanceComponentT<GridPositionComponent> instancedGridPositionComponents = mnoptrEditor->GetECSCoordinator()->GetComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>(entity);
+				gridPositionComponent = &r2::sarr::At(*instancedGridPositionComponents.instances, entityTransformedEvent.GetInstance());
+			}
+
+			if (!gridPositionComponent)
+			{
+				return false;
+			}
+
+			if ((dirtyFlags & r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY) == r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY)
+			{
+
+				gridPositionComponent->globalGridPosition = utils::CalculateGridPosition(transformComponent->accumTransform.position);
+
+				UpdateGridPositionHierarchy(*gridPositionComponent, mnoptrEditor->GetECSCoordinator(), mnoptrEditor->GetSceneGraph(), entity, entityTransformedEvent.GetInstance(), false);
+				//@TODO(Serge): calculate the full grid position based on the hierarchy of the entity
+			}
+			else if ((dirtyFlags & r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY) == r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY)
+			{
+				gridPositionComponent->localGridPosition = utils::CalculateGridPosition(transformComponent->localTransform.position);
+
+				//@TODO(Serge): calculate the full grid position based on the hierarchy of the entity
+				UpdateGridPositionHierarchy(*gridPositionComponent, mnoptrEditor->GetECSCoordinator(), mnoptrEditor->GetSceneGraph(), entity, entityTransformedEvent.GetInstance(), true);
+			}
+			else
+			{
+				R2_CHECK(false, "Not supported");
+			}
+
+			return false;
+		});
+
+	dispatch.Dispatch<r2::evt::EditorEntityAttachedToNewParentEvent>([this](const r2::evt::EditorEntityAttachedToNewParentEvent& entityAttachedToNewParentEvent)
+		{
+			r2::ecs::Entity entity = entityAttachedToNewParentEvent.GetEntity();
+		
+			GridPositionComponent* gridPositionComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<GridPositionComponent>(entity);
+
+			if (!gridPositionComponent)
+			{
+				return false;
+			}
+
+			r2::ecs::Entity newParent = entityAttachedToNewParentEvent.GetNewParent();
+
+			if (newParent != r2::ecs::INVALID_ENTITY)
+			{
+				GridPositionComponent* parentGridPositionComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<GridPositionComponent>(newParent);
+				gridPositionComponent->localGridPosition = gridPositionComponent->globalGridPosition - parentGridPositionComponent->globalGridPosition;
+			}
+			else
+			{
+				gridPositionComponent->localGridPosition = gridPositionComponent->globalGridPosition;
+			}
+			
+			return false;
+		});
+
+
+	return false;
 }
 
 #endif

@@ -11,6 +11,7 @@
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Editor/Editor.h"
+#include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 #include "ImGuizmo.h"
 #include <glm/gtc/quaternion.hpp>
@@ -122,10 +123,16 @@ namespace r2::edit
 
 		if (needsUpdate && !coordinator->HasComponent<ecs::TransformDirtyComponent>(theEntity))
 		{
+
 			ecs::TransformDirtyComponent transformDirtyComponent;
 			transformDirtyComponent.dirtyFlags = dirtyFlags;
 
 			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, dirtyFlags);
+
+
+			evt::EditorEntityTransformComponentChangedEvent e(theEntity, instance, dirtyFlags);
+
+			mnoptrEditor->PostEditorEvent(e);
 		}
 
 	}
