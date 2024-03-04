@@ -86,6 +86,7 @@ namespace r2::ecs
 					animationComponent.shouldLoop = animationTransitionComponent->loop;
 					animationComponent.currentAnimationIndex = animationTransitionComponent->nextAnimationIndex;
 
+					//@TODO(Serge): the character controller might actually be the one to remove this
 					mnoptrCoordinator->RemoveComponent<r2::ecs::AnimationTransitionComponent>(e);
 				}
 

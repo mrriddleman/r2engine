@@ -265,7 +265,7 @@ namespace r2::ecs
 
 	void ECSWorld::PostLoadLevel(const Level& level, const flat::LevelData* levelData)
 	{
-		const r2::SArray<ecs::Entity>& allEntities = mECSCoordinator->GetAllLivingEntities();
+		/*const r2::SArray<ecs::Entity>& allEntities = mECSCoordinator->GetAllLivingEntities();
 
 		const auto numEntities = r2::sarr::Size(allEntities);
 
@@ -324,7 +324,7 @@ namespace r2::ecs
 				mECSCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
 #endif
 			}
-		}
+		}*/
 	}
 
 	bool ECSWorld::UnloadLevel(const Level& level)

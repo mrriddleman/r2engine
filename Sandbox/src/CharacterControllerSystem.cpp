@@ -7,9 +7,8 @@
 #include "r2/Game/ECS/Components/AnimationTransitionComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
-#include <glm/glm.hpp>
-#include <glm/gtx/vector_angle.hpp>
-#include "r2/Core/Math/MathUtils.h"
+#include "MoveUpdateComponent.h"
+#include "GridPositionComponent.h"
 
 s32 GetAnimationClipIndexForAssetName(const char* animationName, const r2::draw::Model* model)
 {
@@ -59,9 +58,66 @@ glm::vec3 GetFacingFromPlayerCommandComponent(const PlayerCommandComponent& play
 	return newFacing;
 }
 
+
+eMovementType GetMovementType(const glm::vec3& facing)
+{
+	if (facing == glm::vec3(1, 0, 0))
+	{
+		return MOVE_RIGHT;
+	}
+	else if (facing == glm::vec3(-1, 0, 0))
+	{
+		return MOVE_LEFT;
+	}
+	else if (facing == glm::vec3(0, 1, 0))
+	{
+		return MOVE_UP;
+	}
+	else if (facing == glm::vec3(0, -1, 0))
+	{
+		return MOVE_DOWN;
+	}
+
+	R2_CHECK(false, "Not supported!");
+	return MOVE_LEFT;
+}
+
+
+namespace
+{
+	glm::ivec3 GetGridMoveOffset(eMovementType movementType)
+	{
+		switch (movementType)
+		{
+		case MOVE_LEFT:
+			return glm::ivec3(-1, 0, 0);
+			break;
+		case MOVE_RIGHT:
+			return glm::ivec3(1, 0, 0);
+			break;
+		case MOVE_UP:
+			return glm::ivec3(0, 1, 0);
+			break;
+		case MOVE_DOWN:
+			return glm::ivec3(0, -1, 0);
+			break;
+		case MOVE_NONE:
+			return glm::ivec3(0);
+			break;
+		default:
+			R2_CHECK(false, "Unsupported movement type!");
+			break;
+		}
+
+		return glm::ivec3(0);
+	}
+}
+
+
+
 CharacterControllerSystem::CharacterControllerSystem()
 {
-
+	mKeepSorted = false;
 }
 
 void CharacterControllerSystem::Update()
@@ -71,14 +127,30 @@ void CharacterControllerSystem::Update()
 	for (u32 i = 0; i < numPlayerEntities; ++i)
 	{
 		r2::ecs::Entity e = r2::sarr::At(*mEntities, i);
+
+		//@NOTE(Serge): very temporary 
+		const MoveUpdateComponent* moveUpdateComponentPtr = mnoptrCoordinator->GetComponentPtr<MoveUpdateComponent>(e);
+		if (moveUpdateComponentPtr && moveUpdateComponentPtr->hasArrived)
+		{
+			//remove the MoveUpdateComponent
+			mnoptrCoordinator->RemoveComponent<MoveUpdateComponent>(e);
+		}
+		else if(moveUpdateComponentPtr && !moveUpdateComponentPtr->hasArrived)
+		{
+			continue;
+		}
+
 		const PlayerCommandComponent& playerCommandComponent = mnoptrCoordinator->GetComponent<PlayerCommandComponent>(e);
 		const r2::ecs::SkeletalAnimationComponent& skeletonAnimationComponent = mnoptrCoordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(e);
-		r2::ecs::TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<r2::ecs::TransformComponent>(e);
-		FacingComponent& facingComponent = mnoptrCoordinator->GetComponent<FacingComponent>(e);
+		const r2::ecs::TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<r2::ecs::TransformComponent>(e);
+		const FacingComponent& facingComponent = mnoptrCoordinator->GetComponent<FacingComponent>(e);
+		const GridPositionComponent& gridPositionComponent = mnoptrCoordinator->GetComponent<GridPositionComponent>(e);
 
 		glm::vec3 newFacing = facingComponent.facing;
 		s32 animationClipIndex = skeletonAnimationComponent.currentAnimationIndex;
 		bool shouldLoop = false;
+		bool shouldMove = false;
+		eMovementType movementType = MOVE_NONE;
 
 		if (!playerCommandComponent.downAction.isEnabled &&
 			!playerCommandComponent.upAction.isEnabled &&
@@ -100,6 +172,8 @@ void CharacterControllerSystem::Update()
 
 			animationClipIndex = GetAnimationClipIndexForAssetName("slowrun", skeletonAnimationComponent.animModel);
 			shouldLoop = true;
+
+			movementType = GetMovementType(newFacing);
 		}
 		else if (playerCommandComponent.grabAction.isEnabled && !(
 			playerCommandComponent.downAction.isEnabled ||
@@ -124,6 +198,8 @@ void CharacterControllerSystem::Update()
 			newFacing = GetFacingFromPlayerCommandComponent(playerCommandComponent, newFacing);
 			animationClipIndex = GetAnimationClipIndexForAssetName("push", skeletonAnimationComponent.animModel);
 			shouldLoop = true;
+
+			movementType = GetMovementType(newFacing);
 		}
 
 #ifdef R2_EDITOR
@@ -134,18 +210,6 @@ void CharacterControllerSystem::Update()
 #endif
 
 		R2_CHECK(animationClipIndex != -1, "Should never happen");
-
-		float angle = glm::angle(facingComponent.facing, newFacing);
-		glm::vec3 axis = glm::cross(facingComponent.facing, newFacing);
-		if (r2::math::NearZero(glm::length(axis)  ))
-		{
-			axis = glm::vec3(0, 0, 1);
-		}
-
-		glm::quat quaternionDiff = glm::normalize( glm::angleAxis(angle, axis) );
-		transformComponent.localTransform.rotation = glm::normalize( quaternionDiff * transformComponent.localTransform.rotation );
-		
-		facingComponent.facing = newFacing;
 
 		//add the transition if necessary
 		if (animationClipIndex != skeletonAnimationComponent.currentAnimationIndex)
@@ -170,15 +234,27 @@ void CharacterControllerSystem::Update()
 			}
 		}
 		
-		//@TODO(Serge): add the move update as well - for now just testing the animation transitions
-		//				for right now add a TransformationDirtyComponent to make up for it
+		//@TODO(Serge): add the move update component
 
-		//@TODO(Serge): move this to the movement system
-		r2::ecs::TransformDirtyComponent transformDirtyComponent;
-		transformDirtyComponent.dirtyFlags = r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+		if (movementType != MOVE_NONE)
+		{
+			MoveUpdateComponent moveUpdateComponent;
 
-		mnoptrCoordinator->AddComponentIfNeeded(e, transformDirtyComponent);
+			moveUpdateComponent.gridMovementSpeed = 3.0f;
+			moveUpdateComponent.gridMovementCurrentTime = 0.0f;
+			moveUpdateComponent.gridMovementTotalMovementTimeNeeded = r2::util::SecondsToMilliseconds(1.0f / moveUpdateComponent.gridMovementSpeed);
+			moveUpdateComponent.oldFacing = facingComponent.facing;
+			moveUpdateComponent.newFacing = newFacing;
+			moveUpdateComponent.facingTransitionTime = 0.0f;
+			moveUpdateComponent.hasArrived = false;
+			moveUpdateComponent.startingGridPosition = gridPositionComponent.localGridPosition;
+			moveUpdateComponent.endGridPosition = GetGridMoveOffset(movementType) + moveUpdateComponent.startingGridPosition;
+			moveUpdateComponent.movementType = movementType;
 
+			mnoptrCoordinator->AddComponent<MoveUpdateComponent>(e, moveUpdateComponent);
+		}
+
+	
 	}
 
 	//Remove all of the PlayerCommandComponents from the entities

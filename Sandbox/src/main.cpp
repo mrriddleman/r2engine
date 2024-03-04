@@ -18,10 +18,11 @@
 #include "PlayerCommandSystem.h"
 #include "CharacterControllerSystem.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
-
+#include "MoveUpdateComponent.h"
 #include "FacingComponent.h"
 #include "r2/Core/Input/DefaultInputGather.h"
 #include "FacingUpdateSystem.h"
+#include "CharacterMovementSystem.h"
 
 #include "FacingComponentSerialization.h"
 #include "GridPositionComponentSerialization.h"
@@ -708,7 +709,7 @@ public:
        ecsWorld.RegisterComponent<FacingComponent>("FacingComponent", true, false, nullptr);
        ecsWorld.RegisterComponent<GridPositionComponent>("GridPositionComponent", true, false, nullptr); 
        ecsWorld.RegisterComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>("InstancedGridPosition", true, true, freeInstancedGridPositionComponentFunc);
-
+       ecsWorld.RegisterComponent<MoveUpdateComponent>("MoveUpdateComponent", false, false, nullptr);
 
        r2::ecs::ECSCoordinator* ecsCoordinator = ecsWorld.GetECSCoordinator();
        r2::ecs::Signature playerCommandSystemSignature;
@@ -721,6 +722,8 @@ public:
 	   const auto transformComponentType = ecsCoordinator->GetComponentType<r2::ecs::TransformComponent>();
 	   const auto facingComponentType = ecsCoordinator->GetComponentType<FacingComponent>();
        const auto transformDirtyComponentType = ecsCoordinator->GetComponentType<r2::ecs::TransformDirtyComponent>();
+       const auto gridPositionComponenType = ecsCoordinator->GetComponentType<GridPositionComponent>();
+       const auto moveUpdateComponentType = ecsCoordinator->GetComponentType<MoveUpdateComponent>();
 
        s32 sortOrder = 0;
 
@@ -731,7 +734,7 @@ public:
 
 	   FacingUpdateSystem* facingUpdateSystem = ecsWorld.RegisterSystem<FacingUpdateSystem>(facingUpdateSystemSignature);
 
-       ecsWorld.RegisterAppSystem(facingUpdateSystem, sortOrder++, true);
+       ecsWorld.RegisterAppSystem(facingUpdateSystem, sortOrder++, true); //@TODO(Serge): get rid of this system
 
 	   playerCommandSystemSignature.set(playerComponentType);
 	   PlayerCommandSystem* playerCommandSystem = ecsWorld.RegisterSystem<PlayerCommandSystem>(playerCommandSystemSignature);
@@ -743,24 +746,33 @@ public:
        characterControllerSystemSignature.set(skeletonAnimationComponentType);
        characterControllerSystemSignature.set(transformComponentType);
        characterControllerSystemSignature.set(facingComponentType);
+       characterControllerSystemSignature.set(gridPositionComponenType);
 
        CharacterControllerSystem* characterControllerSystem = ecsWorld.RegisterSystem<CharacterControllerSystem>(characterControllerSystemSignature);
 
        ecsWorld.RegisterAppSystem(characterControllerSystem, sortOrder++, false);
 
-       //set the input type for the player
-       //@TODO(Serge): move to the OnEvent so that we can switch back and forth 
-       r2::io::InputType player0InputType;
-       player0InputType.inputType = r2::io::INPUT_TYPE_KEYBOARD;
-       //ecsWorld.SetPlayerInputType(0, player0InputType);
+       r2::ecs::Signature characterMovementSystemSignature;
+       characterMovementSystemSignature.set(facingComponentType);
+       characterMovementSystemSignature.set(transformComponentType);
+       characterMovementSystemSignature.set(moveUpdateComponentType);
+
+       CharacterMovementSystem* characterMovementSystem = ecsWorld.RegisterSystem<CharacterMovementSystem>(characterMovementSystemSignature);
+
+       ecsWorld.RegisterAppSystem(characterMovementSystem, sortOrder++, false);
+
+
 
     }
 
     virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
     {
+        ecsWorld.UnRegisterSystem<CharacterMovementSystem>();
         ecsWorld.UnRegisterSystem<CharacterControllerSystem>();
         ecsWorld.UnRegisterSystem<PlayerCommandSystem>();
         ecsWorld.UnRegisterSystem<FacingUpdateSystem>();
+
+        ecsWorld.UnRegisterComponent<MoveUpdateComponent>();
         ecsWorld.UnRegisterComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>();
         ecsWorld.UnRegisterComponent<GridPositionComponent>();
         ecsWorld.UnRegisterComponent<FacingComponent>();

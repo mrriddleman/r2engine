@@ -235,7 +235,8 @@ namespace r2
 		const auto displaySize = CENG.DisplaySize();
 
 		auto aspect = static_cast<float>(displaySize.width) / static_cast<float>(displaySize.height);
-		r2::cam::InitPerspectiveCam(camera, 70.0f, aspect, 0.1f, 1000.0f, glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//@TODO(Serge): temporary
+		r2::cam::InitPerspectiveCam(camera, 70.0f, aspect, 0.1f, 1000.0f, glm::vec3(5.0f, -8.0f, 7.0f), glm::normalize(glm::vec3(4.0f, 3.0f, 0.0f) - glm::vec3(5.0f, -8.0f, 7.0f)));
 		levelRenderSettings.AddCamera(
 			camera
 #ifdef R2_EDITOR
