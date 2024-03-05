@@ -9,6 +9,7 @@
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "MoveUpdateComponent.h"
 #include "GridPositionComponent.h"
+#include "GameUtils.h"
 
 s32 GetAnimationClipIndexForAssetName(const char* animationName, const r2::draw::Model* model)
 {
@@ -113,8 +114,6 @@ namespace
 	}
 }
 
-
-
 CharacterControllerSystem::CharacterControllerSystem()
 {
 	mKeepSorted = false;
@@ -130,7 +129,30 @@ void CharacterControllerSystem::Update()
 
 		//@NOTE(Serge): very temporary 
 		const MoveUpdateComponent* moveUpdateComponentPtr = mnoptrCoordinator->GetComponentPtr<MoveUpdateComponent>(e);
-		if (moveUpdateComponentPtr && moveUpdateComponentPtr->hasArrived)
+		const PlayerCommandComponent& playerCommandComponent = mnoptrCoordinator->GetComponent<PlayerCommandComponent>(e);
+		r2::ecs::TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<r2::ecs::TransformComponent>(e);
+		GridPositionComponent& gridPositionComponent = mnoptrCoordinator->GetComponent<GridPositionComponent>(e);
+
+		bool shouldStopEarly = (moveUpdateComponentPtr && !moveUpdateComponentPtr->hasArrived && (moveUpdateComponentPtr->gridMovementCurrentTime <= 50) && !(
+			playerCommandComponent.downAction.isEnabled ||
+			playerCommandComponent.upAction.isEnabled ||
+			playerCommandComponent.leftAction.isEnabled ||
+			playerCommandComponent.rightAction.isEnabled));
+
+		if (shouldStopEarly)
+		{
+			//snap to the starting grid position 
+			transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponentPtr->startingGridPosition);
+
+			r2::ecs::TransformDirtyComponent transformDirtyComponent;
+			transformDirtyComponent.dirtyFlags = r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;
+			mnoptrCoordinator->AddComponentIfNeeded(e, transformDirtyComponent);
+			gridPositionComponent.localGridPosition = moveUpdateComponentPtr->startingGridPosition;
+
+			mnoptrCoordinator->RemoveComponent<MoveUpdateComponent>(e);
+			continue;
+		}
+		else if ((moveUpdateComponentPtr && moveUpdateComponentPtr->hasArrived))
 		{
 			//remove the MoveUpdateComponent
 			mnoptrCoordinator->RemoveComponent<MoveUpdateComponent>(e);
@@ -139,18 +161,18 @@ void CharacterControllerSystem::Update()
 		{
 			continue;
 		}
-
-		const PlayerCommandComponent& playerCommandComponent = mnoptrCoordinator->GetComponent<PlayerCommandComponent>(e);
+		
 		const r2::ecs::SkeletalAnimationComponent& skeletonAnimationComponent = mnoptrCoordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(e);
-		const r2::ecs::TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<r2::ecs::TransformComponent>(e);
+		
 		const FacingComponent& facingComponent = mnoptrCoordinator->GetComponent<FacingComponent>(e);
-		const GridPositionComponent& gridPositionComponent = mnoptrCoordinator->GetComponent<GridPositionComponent>(e);
+
 
 		glm::vec3 newFacing = facingComponent.facing;
 		s32 animationClipIndex = skeletonAnimationComponent.currentAnimationIndex;
 		bool shouldLoop = false;
 		bool shouldMove = false;
 		eMovementType movementType = MOVE_NONE;
+		float movementSpeed = 0.0f;
 
 		if (!playerCommandComponent.downAction.isEnabled &&
 			!playerCommandComponent.upAction.isEnabled &&
@@ -172,6 +194,7 @@ void CharacterControllerSystem::Update()
 
 			animationClipIndex = GetAnimationClipIndexForAssetName("slowrun", skeletonAnimationComponent.animModel);
 			shouldLoop = true;
+			movementSpeed = 2.0f;
 
 			movementType = GetMovementType(newFacing);
 		}
@@ -198,7 +221,7 @@ void CharacterControllerSystem::Update()
 			newFacing = GetFacingFromPlayerCommandComponent(playerCommandComponent, newFacing);
 			animationClipIndex = GetAnimationClipIndexForAssetName("push", skeletonAnimationComponent.animModel);
 			shouldLoop = true;
-
+			movementSpeed = 0.75f;
 			movementType = GetMovementType(newFacing);
 		}
 
@@ -240,7 +263,7 @@ void CharacterControllerSystem::Update()
 		{
 			MoveUpdateComponent moveUpdateComponent;
 
-			moveUpdateComponent.gridMovementSpeed = 3.0f;
+			moveUpdateComponent.gridMovementSpeed = movementSpeed;
 			moveUpdateComponent.gridMovementCurrentTime = 0.0f;
 			moveUpdateComponent.gridMovementTotalMovementTimeNeeded = r2::util::SecondsToMilliseconds(1.0f / moveUpdateComponent.gridMovementSpeed);
 			moveUpdateComponent.oldFacing = facingComponent.facing;

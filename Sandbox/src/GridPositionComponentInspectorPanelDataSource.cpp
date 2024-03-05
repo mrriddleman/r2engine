@@ -335,9 +335,13 @@ bool InspectorPanelGridPositionDataSource::OnEvent(r2::evt::Event& e)
 				const r2::ecs::InstanceComponentT<r2::ecs::TransformComponent> instancedTransformComponents = mnoptrEditor->GetECSCoordinator()->GetComponent<r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(entity);
 				transformComponent = &r2::sarr::At(*instancedTransformComponents.instances, entityTransformedEvent.GetInstance());
 
-				const r2::ecs::InstanceComponentT<GridPositionComponent> instancedGridPositionComponents = mnoptrEditor->GetECSCoordinator()->GetComponent<r2::ecs::InstanceComponentT<GridPositionComponent>>(entity);
-				gridPositionComponent = &r2::sarr::At(*instancedGridPositionComponents.instances, entityTransformedEvent.GetInstance());
+				const r2::ecs::InstanceComponentT<GridPositionComponent>* instancedGridPositionComponents = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<r2::ecs::InstanceComponentT<GridPositionComponent>>(entity);
+				if (instancedGridPositionComponents)
+				{
+					gridPositionComponent = &r2::sarr::At(*instancedGridPositionComponents->instances, entityTransformedEvent.GetInstance());
+				}
 			}
+				
 
 			if (!gridPositionComponent)
 			{
