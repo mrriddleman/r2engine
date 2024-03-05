@@ -274,22 +274,21 @@ void InspectorPanelGridPositionDataSource::AddComponent(r2::ecs::ECSCoordinator*
 
 void InspectorPanelGridPositionDataSource::AddNewInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, u32 numInstances)
 {
-	r2::ecs::InstanceComponentT<GridPositionComponent>* tempInstancedComponents = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT<GridPositionComponent>>(theEntity);
 	r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>* instancedTransformComponents = coordinator->GetComponentPtr < r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(theEntity);
 
+	r2::ecs::InstanceComponentT<GridPositionComponent>* instancedTransformComponentToUse = r2::edit::AddNewInstanceCapacity<GridPositionComponent>(coordinator, theEntity, numInstances);
+	
 	u32 instanceStart = 0;
 	bool useTransformComponent = false;
 
-	if (tempInstancedComponents && instancedTransformComponents)
+	if (instancedTransformComponentToUse && instancedTransformComponents)
 	{
-		if (instancedTransformComponents->numInstances >= (tempInstancedComponents->numInstances + numInstances))
+		if (instancedTransformComponents->numInstances >= (instancedTransformComponentToUse->numInstances + numInstances))
 		{
-			instanceStart = tempInstancedComponents->numInstances;
+			instanceStart = instancedTransformComponentToUse->numInstances;
 			useTransformComponent = true;
 		}
 	}
-
-	r2::ecs::InstanceComponentT<GridPositionComponent>* instancedTransformComponentToUse = r2::edit::AddNewInstanceCapacity<GridPositionComponent>(coordinator, theEntity, numInstances);
 
 	for (u32 i = instanceStart; i < instanceStart + numInstances; ++i)
 	{
@@ -310,7 +309,10 @@ void InspectorPanelGridPositionDataSource::AddNewInstances(r2::ecs::ECSCoordinat
 		r2::sarr::Push(*instancedTransformComponentToUse->instances, newGridPositionComponent);
 	}
 
-	instancedTransformComponentToUse->numInstances += numInstances;
+	if (instancedTransformComponentToUse)
+	{
+		instancedTransformComponentToUse->numInstances += numInstances;
+	}
 }
 
 bool InspectorPanelGridPositionDataSource::OnEvent(r2::evt::Event& e)
