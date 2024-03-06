@@ -45,15 +45,15 @@ void main()
 
 				//BEGIN MAJOR HACK TO REDUCE PETER-PANNING
 
-				vec3 cameraVec = gl_in[i].gl_Position.xyz - cameraPosTimeW.xyz;
-				float viewLength = length(cameraVec);
-				vec3 shadowOffset = (cameraVec.xyz / viewLength);// * (1.0 - dot(view, cameraVec));
-				float VoL = dot(normalize(cameraVec), normalize(view) );
-				float VoN = dot(normalize(cameraVec), normal);
+				// vec3 cameraVec = gl_in[i].gl_Position.xyz - cameraPosTimeW.xyz;
+				// float viewLength = length(cameraVec);
+				// vec3 shadowOffset = (cameraVec.xyz / viewLength);// * (1.0 - dot(view, cameraVec));
+				// float VoL = dot(normalize(cameraVec), normalize(view) );
+				// float VoN = dot(normalize(cameraVec), normal);
 
-				vec4 offsetInShadowSpace = shadowMatrix * (vec4(shadowOffset, 0) * (0.14) * clamp((1.0 - VoL), 0.0, 1.0) ) ;
+				// vec4 offsetInShadowSpace = shadowMatrix * (vec4(shadowOffset, 0) * (0.14) * clamp((1.0 - VoL), 0.0, 1.0) ) ;
 
-				vertex[i] += vec4(offsetInShadowSpace.xy, 0, 0);
+				// vertex[i] += vec4(offsetInShadowSpace.xy, 0, 0);
 
 				//END MAJOR HACK TO REDUCE PETER-PANNING
 

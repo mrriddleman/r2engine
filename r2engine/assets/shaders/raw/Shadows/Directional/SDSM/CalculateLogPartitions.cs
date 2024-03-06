@@ -21,9 +21,6 @@ void main(void)
 
 	gPartitions.intervalBegin[cascadeIndex] = LogPartitionFromRange(cascadeIndex, minZ, maxZ);
 	gPartitions.intervalEnd[cascadeIndex] = LogPartitionFromRange(cascadeIndex + 1, minZ, maxZ);
-
-//	gPartitionsU[cascadeIndex].intervalBeginMinCoord.x = floatBitsToUint(gPartitions[cascadeIndex].intervalBeginScale.x);
-//	gPartitionsU[cascadeIndex].intervalEndMaxCoord.x = floatBitsToUint(gPartitions[cascadeIndex].intervalEndBias.x);
 }
 
 
