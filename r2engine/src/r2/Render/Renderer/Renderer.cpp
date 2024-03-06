@@ -4056,7 +4056,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
-					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+					shadowDrawBatch->state.polygonOffset = glm::vec2(0.0, 0.0);
 
 					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
 					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;

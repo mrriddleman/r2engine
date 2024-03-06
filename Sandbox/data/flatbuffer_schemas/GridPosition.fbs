@@ -7,4 +7,11 @@ table GridPosition
 	z:int;
 }
 
+table PivotOffset
+{
+	x:float;
+	y:float;
+	z:float;
+}
+
 root_type GridPosition;

@@ -97,6 +97,7 @@ void InspectorPanelGridPositionDataSource::DrawComponentData(void* componentData
 	GridPositionComponent& gridPositionComponent = *gridPositionComponentPtr;
 
 
+	
 	glm::ivec3* gridPosition = &gridPositionComponent.localGridPosition;
 	r2::ecs::eTransformDirtyFlags dirtyFlags = r2::ecs::LOCAL_TRANSFORM_DIRTY;
 	if (mInspectorPanel->GetCurrentMode() == ImGuizmo::MODE::WORLD)
@@ -137,6 +138,36 @@ void InspectorPanelGridPositionDataSource::DrawComponentData(void* componentData
 	}
 	ImGui::PopItemWidth();
 
+
+	ImGui::Text("Pivot Offset");
+	ImGui::Text("X: ");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(80);
+	if (ImGui::DragFloat("##label pivotx", &gridPositionComponent.pivotOffset.x))
+	{
+		changed = true;
+	}
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+	ImGui::Text("Y: ");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(80);
+	if (ImGui::DragFloat("##label pivoty", &gridPositionComponent.pivotOffset.y))
+	{
+		changed = true;
+	}
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+	ImGui::Text("Z: ");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(80);
+	if (ImGui::DragFloat("##label pivotz", &gridPositionComponent.pivotOffset.z))
+	{
+		changed = true;
+	}
+	ImGui::PopItemWidth();
+
+
 	r2::ecs::TransformComponent* transformComponent = nullptr;
 	if ( instance == -1)
 	{
@@ -157,11 +188,11 @@ void InspectorPanelGridPositionDataSource::DrawComponentData(void* componentData
 		{
 			if (dirtyFlags == r2::ecs::LOCAL_TRANSFORM_DIRTY)
 			{
-				transformComponent->localTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.localGridPosition);
+				transformComponent->localTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.localGridPosition, gridPositionComponent.pivotOffset);
 			}
 			else
 			{
-				transformComponent->accumTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition);
+				transformComponent->accumTransform.position = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition, gridPositionComponent.pivotOffset);
 			}
 			
 			mnoptrEditor->GetSceneGraph().UpdateTransformForEntity(theEntity, dirtyFlags);
@@ -255,13 +286,14 @@ void InspectorPanelGridPositionDataSource::DeleteInstance(u32 i, r2::ecs::ECSCoo
 void InspectorPanelGridPositionDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity)
 {
 	GridPositionComponent newGridPositionComponent;
+	newGridPositionComponent.pivotOffset = glm::vec3(0);
 
 	r2::ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<r2::ecs::TransformComponent>(theEntity);
 
 	if (transformComponent)
 	{
-		newGridPositionComponent.localGridPosition = utils::CalculateGridPosition(transformComponent->localTransform.position);
-		newGridPositionComponent.globalGridPosition = utils::CalculateGridPosition(transformComponent->accumTransform.position);
+		newGridPositionComponent.localGridPosition = utils::CalculateGridPosition(transformComponent->localTransform.position, newGridPositionComponent.pivotOffset);
+		newGridPositionComponent.globalGridPosition = utils::CalculateGridPosition(transformComponent->accumTransform.position, newGridPositionComponent.pivotOffset);
 	}
 	else
 	{
@@ -293,12 +325,13 @@ void InspectorPanelGridPositionDataSource::AddNewInstances(r2::ecs::ECSCoordinat
 	for (u32 i = instanceStart; i < instanceStart + numInstances; ++i)
 	{
 		GridPositionComponent newGridPositionComponent;
-		
+		newGridPositionComponent.pivotOffset = glm::vec3(0);
+
 		if (useTransformComponent)
 		{
 			const r2::ecs::TransformComponent& transformComponent = r2::sarr::At(*instancedTransformComponents->instances, i);
-			newGridPositionComponent.localGridPosition = utils::CalculateGridPosition(transformComponent.localTransform.position);
-			newGridPositionComponent.globalGridPosition = utils::CalculateGridPosition(transformComponent.accumTransform.position);
+			newGridPositionComponent.localGridPosition = utils::CalculateGridPosition(transformComponent.localTransform.position, newGridPositionComponent.pivotOffset);
+			newGridPositionComponent.globalGridPosition = utils::CalculateGridPosition(transformComponent.accumTransform.position, newGridPositionComponent.pivotOffset);
 		}
 		else
 		{
@@ -353,14 +386,14 @@ bool InspectorPanelGridPositionDataSource::OnEvent(r2::evt::Event& e)
 			if ((dirtyFlags & r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY) == r2::ecs::eTransformDirtyFlags::GLOBAL_TRANSFORM_DIRTY)
 			{
 
-				gridPositionComponent->globalGridPosition = utils::CalculateGridPosition(transformComponent->accumTransform.position);
+				gridPositionComponent->globalGridPosition = utils::CalculateGridPosition(transformComponent->accumTransform.position, gridPositionComponent->pivotOffset);
 
 				UpdateGridPositionHierarchy(*gridPositionComponent, mnoptrEditor->GetECSCoordinator(), mnoptrEditor->GetSceneGraph(), entity, entityTransformedEvent.GetInstance(), false);
 				//@TODO(Serge): calculate the full grid position based on the hierarchy of the entity
 			}
 			else if ((dirtyFlags & r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY) == r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY)
 			{
-				gridPositionComponent->localGridPosition = utils::CalculateGridPosition(transformComponent->localTransform.position);
+				gridPositionComponent->localGridPosition = utils::CalculateGridPosition(transformComponent->localTransform.position, gridPositionComponent->pivotOffset);
 
 				//@TODO(Serge): calculate the full grid position based on the hierarchy of the entity
 				UpdateGridPositionHierarchy(*gridPositionComponent, mnoptrEditor->GetECSCoordinator(), mnoptrEditor->GetSceneGraph(), entity, entityTransformedEvent.GetInstance(), true);

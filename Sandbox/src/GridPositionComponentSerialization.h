@@ -28,11 +28,13 @@ namespace r2::ecs
 
 			auto flatLocalGridPosition = flat::CreateGridPosition(builder, gridPositionComponent.localGridPosition.x, gridPositionComponent.localGridPosition.y, gridPositionComponent.localGridPosition.z);
 			auto flatGlobalGridPosition = flat::CreateGridPosition(builder, gridPositionComponent.globalGridPosition.x, gridPositionComponent.globalGridPosition.y, gridPositionComponent.globalGridPosition.z);
+			auto flatPivotOffset = flat::CreatePivotOffset(builder, gridPositionComponent.pivotOffset.x, gridPositionComponent.pivotOffset.y, gridPositionComponent.pivotOffset.z);
 
 			flat::GridPositionComponentDataBuilder gridPositionComponentBuilder(builder);
 
 			gridPositionComponentBuilder.add_localGridPosition(flatLocalGridPosition);
 			gridPositionComponentBuilder.add_globalGridPosition(flatGlobalGridPosition);
+			gridPositionComponentBuilder.add_pivotOffset(flatPivotOffset);
 
 			r2::sarr::Push(*gridPositionComponents, gridPositionComponentBuilder.Finish());
 		}
@@ -65,11 +67,20 @@ namespace r2::ecs
 
 			const auto flatLocalGridPosition = flatGridPositionComponent->localGridPosition();
 			const auto flatGlobalGridPosition = flatGridPositionComponent->globalGridPosition();
+			const auto flatPivotOffset = flatGridPositionComponent->pivotOffset();
 
 			GridPositionComponent gridPositionComponent;
 			gridPositionComponent.localGridPosition = glm::ivec3(flatLocalGridPosition->x(), flatLocalGridPosition->y(), flatLocalGridPosition->z());
 			gridPositionComponent.globalGridPosition = glm::ivec3(flatGlobalGridPosition->x(), flatGlobalGridPosition->y(), flatGlobalGridPosition->z());
-
+			if (flatPivotOffset)
+			{
+				gridPositionComponent.pivotOffset = glm::vec3(flatPivotOffset->x(), flatPivotOffset->y(), flatPivotOffset->z());
+			}
+			else
+			{
+				gridPositionComponent.pivotOffset = glm::vec3(0);
+			}
+			
 
 			r2::sarr::Push(components, gridPositionComponent);
 		}
@@ -96,11 +107,13 @@ namespace r2::ecs
 
 				auto flatLocalGridPosition = flat::CreateGridPosition(fbb, gridPositionComponent.localGridPosition.x, gridPositionComponent.localGridPosition.y, gridPositionComponent.localGridPosition.z);
 				auto flatGlobalGridPosition = flat::CreateGridPosition(fbb, gridPositionComponent.globalGridPosition.x, gridPositionComponent.globalGridPosition.y, gridPositionComponent.globalGridPosition.z);
+				auto flatPivotOffset = flat::CreatePivotOffset(fbb, gridPositionComponent.pivotOffset.x, gridPositionComponent.pivotOffset.y, gridPositionComponent.pivotOffset.z);
 
 				flat::GridPositionComponentDataBuilder gridPositionComponentBuilder(fbb);
 
 				gridPositionComponentBuilder.add_localGridPosition(flatLocalGridPosition);
 				gridPositionComponentBuilder.add_globalGridPosition(flatGlobalGridPosition);
+				gridPositionComponentBuilder.add_pivotOffset(flatPivotOffset);
 
 				r2::sarr::Push(*gridPositionComponents, gridPositionComponentBuilder.Finish());
 			}
@@ -147,10 +160,20 @@ namespace r2::ecs
 
 				const auto flatLocalGridPosition = flatGridPositionComponent->localGridPosition();
 				const auto flatGlobalGridPosition = flatGridPositionComponent->globalGridPosition();
+				const auto flatPivotOffset = flatGridPositionComponent->pivotOffset();
 
 				GridPositionComponent gridPositionComponent;
 				gridPositionComponent.localGridPosition = glm::ivec3(flatLocalGridPosition->x(), flatLocalGridPosition->y(), flatLocalGridPosition->z());
 				gridPositionComponent.globalGridPosition = glm::ivec3(flatGlobalGridPosition->x(), flatGlobalGridPosition->y(), flatGlobalGridPosition->z());
+				
+				if (flatPivotOffset)
+				{
+					gridPositionComponent.pivotOffset = glm::vec3(flatPivotOffset->x(), flatPivotOffset->y(), flatPivotOffset->z());
+				}
+				else
+				{
+					gridPositionComponent.pivotOffset = glm::vec3(0);
+				}
 
 				r2::sarr::Push(*instancedGridPositionComponent.instances, gridPositionComponent);
 			}

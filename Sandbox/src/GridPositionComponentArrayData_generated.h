@@ -20,7 +20,8 @@ struct GridPositionComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::
   typedef GridPositionComponentDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_LOCALGRIDPOSITION = 4,
-    VT_GLOBALGRIDPOSITION = 6
+    VT_GLOBALGRIDPOSITION = 6,
+    VT_PIVOTOFFSET = 8
   };
   const flat::GridPosition *localGridPosition() const {
     return GetPointer<const flat::GridPosition *>(VT_LOCALGRIDPOSITION);
@@ -28,12 +29,17 @@ struct GridPositionComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::
   const flat::GridPosition *globalGridPosition() const {
     return GetPointer<const flat::GridPosition *>(VT_GLOBALGRIDPOSITION);
   }
+  const flat::PivotOffset *pivotOffset() const {
+    return GetPointer<const flat::PivotOffset *>(VT_PIVOTOFFSET);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_LOCALGRIDPOSITION) &&
            verifier.VerifyTable(localGridPosition()) &&
            VerifyOffset(verifier, VT_GLOBALGRIDPOSITION) &&
            verifier.VerifyTable(globalGridPosition()) &&
+           VerifyOffset(verifier, VT_PIVOTOFFSET) &&
+           verifier.VerifyTable(pivotOffset()) &&
            verifier.EndTable();
   }
 };
@@ -47,6 +53,9 @@ struct GridPositionComponentDataBuilder {
   }
   void add_globalGridPosition(flatbuffers::Offset<flat::GridPosition> globalGridPosition) {
     fbb_.AddOffset(GridPositionComponentData::VT_GLOBALGRIDPOSITION, globalGridPosition);
+  }
+  void add_pivotOffset(flatbuffers::Offset<flat::PivotOffset> pivotOffset) {
+    fbb_.AddOffset(GridPositionComponentData::VT_PIVOTOFFSET, pivotOffset);
   }
   explicit GridPositionComponentDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -63,8 +72,10 @@ struct GridPositionComponentDataBuilder {
 inline flatbuffers::Offset<GridPositionComponentData> CreateGridPositionComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flat::GridPosition> localGridPosition = 0,
-    flatbuffers::Offset<flat::GridPosition> globalGridPosition = 0) {
+    flatbuffers::Offset<flat::GridPosition> globalGridPosition = 0,
+    flatbuffers::Offset<flat::PivotOffset> pivotOffset = 0) {
   GridPositionComponentDataBuilder builder_(_fbb);
+  builder_.add_pivotOffset(pivotOffset);
   builder_.add_globalGridPosition(globalGridPosition);
   builder_.add_localGridPosition(localGridPosition);
   return builder_.Finish();

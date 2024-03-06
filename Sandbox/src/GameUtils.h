@@ -9,8 +9,8 @@ namespace constants
 
 namespace utils
 {
-	glm::ivec3 CalculateGridPosition(const glm::vec3& position);
-	glm::vec3 CalculateWorldPositionFromGridPosition(const glm::ivec3& position);
+	glm::ivec3 CalculateGridPosition(const glm::vec3& position, const glm::vec3& pivotOffset);
+	glm::vec3 CalculateWorldPositionFromGridPosition(const glm::ivec3& position, const glm::vec3& pivotOffset);
 }
 
 #endif // __GAME_UTILS_H__

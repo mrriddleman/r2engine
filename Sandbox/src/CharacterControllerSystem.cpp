@@ -142,7 +142,7 @@ void CharacterControllerSystem::Update()
 		if (shouldStopEarly)
 		{
 			//snap to the starting grid position 
-			transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponentPtr->startingGridPosition);
+			transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponentPtr->startingGridPosition, gridPositionComponent.pivotOffset);
 
 			r2::ecs::TransformDirtyComponent transformDirtyComponent;
 			transformDirtyComponent.dirtyFlags = r2::ecs::eTransformDirtyFlags::LOCAL_TRANSFORM_DIRTY;

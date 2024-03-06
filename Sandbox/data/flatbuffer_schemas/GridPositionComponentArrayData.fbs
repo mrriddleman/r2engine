@@ -7,6 +7,7 @@ table GridPositionComponentData
 {
 	localGridPosition:GridPosition;
 	globalGridPosition:GridPosition;
+	pivotOffset:PivotOffset;
 }
 
 table GridPositionComponentArrayData

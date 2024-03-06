@@ -115,7 +115,7 @@ void CharacterMovementSystem::Update()
 
 		//Now update the visual position
 
-		glm::vec3 worldOffset = utils::CalculateWorldPositionFromGridPosition(gridMoveOffset);
+		glm::vec3 worldOffset = utils::CalculateWorldPositionFromGridPosition(gridMoveOffset, gridPositionComponent.pivotOffset);
 
 		//@TODO(Serge): acceleration/deceleration
 
@@ -129,7 +129,7 @@ void CharacterMovementSystem::Update()
 				moveUpdateComponent.hasArrived = true;
 				moveUpdateComponent.gridMovementCurrentTime = moveUpdateComponent.gridMovementTotalMovementTimeNeeded;
 
-				transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponent.endGridPosition);
+				transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponent.endGridPosition, gridPositionComponent.pivotOffset);
 			}
 		}
 		else
@@ -137,7 +137,7 @@ void CharacterMovementSystem::Update()
 			moveUpdateComponent.gridMovementCurrentTime = moveUpdateComponent.gridMovementTotalMovementTimeNeeded;
 			moveUpdateComponent.hasArrived = true;
 
-			transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponent.endGridPosition);
+			transformComponent.localTransform.position = utils::CalculateWorldPositionFromGridPosition(moveUpdateComponent.endGridPosition, gridPositionComponent.pivotOffset);
 		}
 
 		r2::ecs::TransformDirtyComponent transformDirtyComponent;
@@ -159,7 +159,7 @@ void CharacterMovementSystem::Render()
 		r2::ecs::Entity e = r2::sarr::At(*mEntities, i);
 		const GridPositionComponent& gridPositionComponent = mnoptrCoordinator->GetComponent<GridPositionComponent>(e);
 
-		glm::vec3 worldPosition = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition);
+		glm::vec3 worldPosition = utils::CalculateWorldPositionFromGridPosition(gridPositionComponent.globalGridPosition, gridPositionComponent.pivotOffset);
 		r2::draw::renderer::DrawCube(worldPosition, 0.25, glm::vec4(1, 0, 0, 1), true);
 
 	}
